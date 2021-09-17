@@ -1,0 +1,5 @@
+//arch = zynq; split = false; format = BIN
+the_ROM_image:
+{
+	/home/fils/git/sicdrive-hdl/Applications/mc_adc_test/MC_scope_test_top/MC_scope_test_top.runs/impl_1/MC_scope_test_top.bit
+}

@@ -1,0 +1,24 @@
+{
+    "general":{
+        "project_name":"ApbToSimplebus",
+        "target_part":"xc7z020clg400",
+        "synth_modules":[],
+        "synth_tl": "APB_to_Simplebus",
+        "sim_modules":[],
+        "sim_tl":"apb_to_sb_tb",
+        "include_paths":[
+            "Components/Common"
+        ]
+    },
+    "scripts":[
+        {
+            "name":"set_properties.tcl",
+            "type": "tcl",
+            "arguments":[]
+        }
+    ],
+    "excluded_modules":[
+        "AXI_VIP"
+    ],
+    "constraints": []
+}

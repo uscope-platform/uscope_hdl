@@ -1,0 +1,42 @@
+{
+    "general":{
+        "project_name":"MC_scope_test_top",
+        "target_part":"xc7z020clg400",
+	    "synth_modules":[],
+        "synth_tl": "MC_scope_test_top",
+        "sim_modules":[],
+        "sim_tl":"mc_scope_tb",
+        "include_paths":[
+            "Components/Common"
+        ]
+    },
+    "scripts":[
+        {
+            "name":"set_properties.tcl",
+            "type": "tcl",
+            "arguments":[]
+        },
+        {
+            "name":"zynqAxiStreamBd.tcl",
+            "type": "tcl",
+            "arguments":[]
+        },
+        {
+            "name":"dma_axi_vip.tcl",
+            "type": "tcl",
+            "arguments":[]
+        },
+        {
+            "name":"mc_scope_test_source.tcl",
+            "type": "tcl",
+            "arguments":[]
+        }
+    ],
+    "excluded_modules":[
+       "PS_AXI_stream",
+       "Data_source",
+       "VIP"
+    ],
+    "constraints": [
+    ]
+}
