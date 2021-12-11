@@ -30,6 +30,7 @@ module I2CControlUnit #(parameter BASE_ADDRESS = 0)(
     Simplebus.slave sb
 );
 
+
     //FSM state registers
     reg [2:0] state;
 
@@ -38,6 +39,20 @@ module I2CControlUnit #(parameter BASE_ADDRESS = 0)(
 
     reg [31:0]  latched_adress;
     reg [31:0] latched_writedata;
+
+    logic [31:0] register_readback; 
+
+   //REGISTER FILE FOR READBACK
+    RegisterFile Registers(
+        .clk(clock),
+        .reset(reset),
+        .addr_a(sb.sb_address-BASE_ADDRESS),
+        .data_a(sb.sb_write_data),
+        .we_a(sb.sb_write_strobe),
+        .q_a(register_readback)
+    );
+
+    assign sb.sb_read_data = sb.sb_read_valid ? register_readback : 0;
 
     // FSM states
     parameter idle_state = 0, act_state = 1, comm_start_state = 2, comm_in_progress_state=3;
@@ -60,7 +75,6 @@ module I2CControlUnit #(parameter BASE_ADDRESS = 0)(
     always @ (posedge clock) begin : control_state_machine
         if (~reset) begin
             state <= idle_state;
-            sb.sb_read_data <= 0;
             act_state_ended <= 0;
             sb.sb_ready <= 1;
             data <= 0;
@@ -71,9 +85,12 @@ module I2CControlUnit #(parameter BASE_ADDRESS = 0)(
             slave_adress <= 0;
             start <= 0;
         end else begin
+            sb.sb_read_valid <= 0;
             case (state)
                 idle_state: //wait for command
-                    if(sb.sb_write_strobe) begin
+                    if(sb.sb_read_strobe) begin
+                        sb.sb_read_valid <= 1;
+                    end else if(sb.sb_write_strobe) begin
                         if(sb.sb_address==BASE_ADDRESS+32'h14)begin
                             state <= comm_start_state;
                         end else if(sb.sb_address == BASE_ADDRESS+31'h18)begin

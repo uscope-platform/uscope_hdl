@@ -79,6 +79,7 @@ module I2C_tb();
 
     );
 
+    logic [31:0] readdata;
     
     //clock generation
     initial clk = 0; 
@@ -94,6 +95,9 @@ module I2C_tb();
         #10.5 rst <=1;
         
         BFM.write(0+8'h10,32'h30);
+        
+        #5 BFM.read(0+8'h10,readdata);
+        
         //BFM.write(0+8'h4,32'h100);
 
         #30 start <= 1;

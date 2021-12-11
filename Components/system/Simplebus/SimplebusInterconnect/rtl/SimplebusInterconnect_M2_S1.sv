@@ -22,7 +22,7 @@ module SimplebusInterconnect_M2_S1 #(
     )(
         input wire clock,
         Simplebus.slave master_1,
-        Simplebus.slave master_2,
+        Simplebus.slave master_2, 
         Simplebus.master slave
     );
 
@@ -68,9 +68,11 @@ module SimplebusInterconnect_M2_S1 #(
     
         // MASTER #1 CONNECTIONS
         assign master_1.sb_read_data[31:0] = slave.sb_read_data[31:0];
+        assign master_1.sb_read_valid = slave.sb_read_valid;
         assign master_1.sb_ready = slave.sb_ready;
         // MASTER #2 CONNECTIONS
         assign master_2.sb_read_data[31:0] = slave.sb_read_data[31:0];
+        assign master_2.sb_read_valid = slave.sb_read_valid;
         assign master_2.sb_ready = slave.sb_ready;
 
 endmodule

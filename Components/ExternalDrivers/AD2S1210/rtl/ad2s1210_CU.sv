@@ -90,14 +90,13 @@ module ad2s1210_cu #(parameter BASE_ADDRESS = 32'h43c00000)(
     RegisterFile Registers(
         .clk(clock),
         .reset(reset),
-        .addr_a(BASE_ADDRESS-sb.sb_address),
+        .addr_a(sb.sb_address-BASE_ADDRESS),
         .data_a(sb.sb_write_data),
         .we_a(sb.sb_write_strobe),
         .q_a(int_readdata)
     );
-
-    assign sb.sb_read_data = int_readdata;
-     
+    
+    assign sb.sb_read_data = sb.sb_read_valid ? int_readdata : 0;
      
     assign SPI_data_out = state==do_configuration_state ? config_SPI_data : read_SPI_data | fc_SPI_data;
     assign SPI_valid = state==do_configuration_state ? config_SPI_valid : read_SPI_valid | fc_SPI_valid;
@@ -133,6 +132,7 @@ module ad2s1210_cu #(parameter BASE_ADDRESS = 32'h43c00000)(
             spi_transfer_length <= 22;
             rdc_reset <= 0;
         end else begin
+            sb.sb_read_valid <= 0;
             case (state)
                 idle_state: //wait for command
                     if(read_angle) begin
@@ -153,6 +153,8 @@ module ad2s1210_cu #(parameter BASE_ADDRESS = 32'h43c00000)(
                             state <= fault_clear_state;
                             start_fault_clear <= 1;
                         end
+                    end else if(sb.sb_read_strobe) begin
+                        sb.sb_read_valid <= 1;
                     end else begin
                         state <=idle_state;
                     end

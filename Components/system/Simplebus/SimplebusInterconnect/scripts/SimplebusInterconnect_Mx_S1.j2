@@ -22,9 +22,9 @@ module SimplebusInterconnect_M{{masters_n}}_S1 #(
     )(
         input wire clock,
     {%- for number in masters %}
-        Simplebus.master master_{{number}},
+        Simplebus.slave master_{{number}},
     {%- endfor %} 
-        Simplebus.slave slave
+        Simplebus.master slave
     );
 
     reg [31:0] selected_address;
@@ -65,6 +65,7 @@ module SimplebusInterconnect_M{{masters_n}}_S1 #(
     {% for number in masters %}
         // MASTER #{{number}} CONNECTIONS
         assign master_{{number}}.sb_read_data[31:0] = slave.sb_read_data[31:0];
+        assign master_{{number}}.sb_read_valid = slave.sb_read_valid;
         assign master_{{number}}.sb_ready = slave.sb_ready;
     {%- endfor %}
 

@@ -131,6 +131,8 @@ module AdcProcessingControlUnit #(parameter BASE_ADDRESS = 'h43c00000)(
     always @ (posedge clock) begin
         if (~reset) begin
             simple_bus.sb_ready <= 1'b1;
+            simple_bus.sb_read_valid <= 1'b0;
+            
             read_data_blanking <= 1;
             state <= wait_state;
             comparator_address <=0;
@@ -153,16 +155,18 @@ module AdcProcessingControlUnit #(parameter BASE_ADDRESS = 'h43c00000)(
             case (state)
                 wait_state: begin //wait for command
                     clear_fault <= 0;
+                    simple_bus.sb_read_valid <= 1'b0;
                     if(simple_bus.sb_write_strobe) begin
                         simple_bus.sb_ready <= 1'b0;
                         state <= act_state;
                     end else if(simple_bus.sb_read_strobe)begin
-                        simple_bus.sb_ready <= 0;
-                        read_data_blanking <= 0;
+                        simple_bus.sb_ready <= 1'b0;
+                        read_data_blanking <= 1'b0;
+                        simple_bus.sb_read_valid <= 1'b1;
                         state <= wait_state;
                     end else begin
-                        simple_bus.sb_ready <= 1;
-                        read_data_blanking <= 1;
+                        simple_bus.sb_ready <= 1'b1;
+                        read_data_blanking <= 1'b1;
                         state <=wait_state;
                     end
                 end

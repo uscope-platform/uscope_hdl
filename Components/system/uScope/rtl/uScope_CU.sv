@@ -39,7 +39,7 @@ module uScope_CU #(parameter BASE_ADDRESS = 'h43c00000, parameter DATA_WIDTH = 1
         .q_a(int_readdata)
     );
 
-    assign sb.sb_read_data = int_readdata;
+    assign sb.sb_read_data = sb.sb_read_valid ? int_readdata : 0;
     
     //FSM state registers
     reg [2:0] state;
@@ -80,11 +80,14 @@ module uScope_CU #(parameter BASE_ADDRESS = 'h43c00000, parameter DATA_WIDTH = 1
             dma_transfer_size <=0;
             dma_buffer_base <= 0;
         end else begin
+            sb.sb_read_valid <=0;
             case (state)
                 idle_state: //wait for command
                     if(sb.sb_write_strobe) begin
                         sb.sb_ready <=0;
                         state <= act_state;
+                    end else if(sb.sb_read_strobe) begin
+                        sb.sb_read_valid <=1;
                     end else
                         state <=idle_state;
                 act_state: // Act on shadowed write

@@ -24,10 +24,10 @@ module SimplebusInterconnect_M{{masters_n}}_S{{slaves_n}} #(
     )(
         input wire clock,
     {%- for number in masters %}
-        Simplebus.master master_{{number}},
+        Simplebus.slave master_{{number}},
     {%- endfor %} 
     {%- for number in slaves %}
-        Simplebus.slave slave_{{number}}{%- if not loop.last %},{%- endif %}
+        Simplebus.master slave_{{number}}{%- if not loop.last %},{%- endif %}
     {%- endfor %} 
     );
 
@@ -72,6 +72,7 @@ module SimplebusInterconnect_M{{masters_n}}_S{{slaves_n}} #(
 {% for number in masters %}
     // MASTER #{{number}} CONNECTIONS
     assign master_{{number}}.sb_read_data[31:0] = {% for nslave in slaves %}slave_{{nslave}}_read_data[31:0]{%- if not loop.last %} | {% endif %}{%- endfor %};
+    assign  master_{{number}}.sb_read_valid <= {% for nslave in slaves %}slave_{{nslave}}.sb_read_valid{%- if not loop.last %} | {% endif %}{%- endfor %};
     assign master_{{number}}.sb_ready = {% for nslave in slaves %}slave_{{nslave}}_ready{%- if not loop.last %} & {% endif %}{%- endfor %};
 {%- endfor %}
 

@@ -40,7 +40,7 @@ module SimplebusInterconnect_M1_S7 #(
         Simplebus.master slave_4,
         Simplebus.master slave_5,
         Simplebus.master slave_6,
-        Simplebus.master slave_7
+        Simplebus.master slave_7 
     );
 
 
@@ -131,7 +131,9 @@ module SimplebusInterconnect_M1_S7 #(
         end 
 
         master.sb_read_data[31:0] <= slave_1.sb_read_data[31:0] | slave_2.sb_read_data[31:0] | slave_3.sb_read_data[31:0] | slave_4.sb_read_data[31:0] | slave_5.sb_read_data[31:0] | slave_6.sb_read_data[31:0] | slave_7.sb_read_data[31:0];
+        master.sb_read_valid <= slave_1.sb_read_valid | slave_2.sb_read_valid | slave_3.sb_read_valid | slave_4.sb_read_valid | slave_5.sb_read_valid | slave_6.sb_read_valid | slave_7.sb_read_valid;
         master.sb_ready <= slave_1.sb_ready & slave_2.sb_ready & slave_3.sb_ready & slave_4.sb_ready & slave_5.sb_ready & slave_6.sb_ready & slave_7.sb_ready;
+        
     end
 
 endmodule

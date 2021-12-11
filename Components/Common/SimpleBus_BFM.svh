@@ -45,6 +45,16 @@ class simplebus_BFM;
         this.spb.sb_write_data <=0;
         @(posedge this.spb.sb_ready);
     endtask
+
+
+    task write_nb(input logic [31:0] address, write_data);
+        wait(this.spb.sb_ready);
+        this.spb.sb_address <= address;
+        this.spb.sb_write_data <= write_data;
+        this.spb.sb_write_strobe <= 1'b1;
+        #(this.clock_period) this.spb.sb_write_strobe <= 1'b0;
+        this.spb.sb_write_data <=0;
+    endtask
     
     task read(input logic [31:0] address, output logic [31:0] read_data);
         this.spb.sb_address <= address;

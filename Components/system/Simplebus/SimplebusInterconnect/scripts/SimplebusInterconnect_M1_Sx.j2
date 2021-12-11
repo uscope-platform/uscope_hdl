@@ -47,7 +47,9 @@ module SimplebusInterconnect_M1_S{{slaves_n}} #(
     {%- endfor %} 
 
         master.sb_read_data[31:0] <= {% for nslave in slaves %}slave_{{nslave}}.sb_read_data[31:0]{%- if not loop.last %} | {% endif %}{%- endfor %};
+        master.sb_read_valid <= {% for nslave in slaves %}slave_{{nslave}}.sb_read_valid{%- if not loop.last %} | {% endif %}{%- endfor %};
         master.sb_ready <= {% for nslave in slaves %}slave_{{nslave}}.sb_ready{%- if not loop.last %} & {% endif %}{%- endfor %};
+        
     end
 
 endmodule

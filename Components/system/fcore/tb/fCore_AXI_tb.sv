@@ -26,6 +26,7 @@ module fCore_AXI_tb();
     reg core_clk, io_clk, rst, run,programming_start;
     
     axi_stream op_a();
+    axi_stream dummy();
     axi_stream op_res();
     Simplebus s();
     AXI axi_programmer();
@@ -44,6 +45,7 @@ module fCore_AXI_tb();
     .reset(rst),
     .run(run),
     .sb(s),
+    .axis_dma(dummy),
     .axi(axi_programmer)
     );
 
@@ -77,8 +79,8 @@ module fCore_AXI_tb();
     initial begin
         BFM = new(s,1);
         
-        //$readmemh("/home/fils/git/sicdrive-hdl/Components/system/fcore/tb/build/test_program.mem", test_program);
-        $readmemh("/home/fils/git/sicdrive-hdl/Applications/SicDriveMaster/tb/sogi.mem", test_program);
+        $readmemh("/home/fils/git/uscope_hdl/Components/system/fcore/tb/test_program.mem", test_program);
+        //$readmemh("/home/fils/git/sicdrive-hdl/Applications/SicDriveMaster/tb/sogi.mem", test_program);
 
 
         

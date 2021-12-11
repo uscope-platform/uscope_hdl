@@ -72,6 +72,8 @@ module fCore_dma_endpoint #(parameter BASE_ADDRESS = 32'h43c00000, DATAPATH_WIDT
     // Determine the next state
     always @ (posedge clock) begin
         dma_write_valid <= 0;
+        int_readdata <= 0;
+        sb.sb_read_valid <= 0;
         case (state)
             wait_state: begin //wait for command
                 if(sb.sb_write_strobe) begin
@@ -141,11 +143,13 @@ module fCore_dma_endpoint #(parameter BASE_ADDRESS = 32'h43c00000, DATAPATH_WIDT
             end
     
             act_read: begin
-                if(LEGACY_READ) begin
-                    int_readdata <= {16'b0,dma_read_data[15:0]};
+                
+                if(latched_address<'h4)begin
+                    int_readdata <= n_channels;
                 end else begin
                     int_readdata <= dma_read_data[31:0];
                 end
+                sb.sb_read_valid <= 1;
                 act_state_ended <= 1;
             end
         endcase

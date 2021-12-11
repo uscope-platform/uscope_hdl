@@ -41,7 +41,7 @@ module axis_limiter #(parameter BASE_ADDRESS = 'h43c00000)(
         .q_a(int_readdata)
     );
 
-    assign sb.sb_read_data = int_readdata;
+    assign sb.sb_read_data = sb.sb_read_valid ? int_readdata : 0;
     
     //FSM state registers
     enum reg {
@@ -103,9 +103,12 @@ module axis_limiter #(parameter BASE_ADDRESS = 'h43c00000)(
             limit_down <= 0;
             limit_up <= 32'hffffffff;
         end else begin
+            sb.sb_read_valid <= 0;
             case (state)
                 idle_state: begin
-                    if(sb.sb_write_strobe) begin
+                    if(sb.sb_read_strobe) begin
+                        sb.sb_read_valid <= 1;
+                    end else if(sb.sb_write_strobe) begin
                         sb.sb_ready <=0;
                         state <= act_state;
                     end else

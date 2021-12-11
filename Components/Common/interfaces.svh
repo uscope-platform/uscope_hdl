@@ -18,6 +18,7 @@
 interface Simplebus;
     logic [31:0] sb_address;
     logic        sb_read_strobe;
+    logic        sb_read_valid;
     logic [31:0] sb_read_data;
     logic        sb_write_strobe;
     logic [31:0] sb_write_data;
@@ -49,12 +50,11 @@ interface Simplebus;
         #clk_per sb_write_strobe <= 1'b0;
         sb_write_data <=0;
         @(posedge sb_ready);
-
     endtask
 
 
-    modport master(input sb_read_data, sb_ready, output sb_address, sb_read_strobe, sb_write_strobe, sb_write_data);
-    modport slave(input sb_address, sb_read_strobe, sb_write_strobe, sb_write_data, output sb_read_data, sb_ready);
+    modport master(input sb_read_data, sb_read_valid, sb_ready, output sb_address, sb_read_strobe, sb_write_strobe, sb_write_data);
+    modport slave(input sb_address, sb_read_strobe, sb_write_strobe, sb_write_data, output sb_read_data, sb_read_valid, sb_ready);
 endinterface
 
 

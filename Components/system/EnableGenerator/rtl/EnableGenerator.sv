@@ -31,6 +31,19 @@ module enable_generator #(parameter BASE_ADDRESS = 0, COUNTER_WIDTH = 32, EXTERN
     reg state,act_state_ended, bus_enable;
     reg [COUNTER_WIDTH-1:0] enable_threshold_1;
 
+    wire [31:0] int_read_data;
+
+    assign sb.sb_read_data = sb.sb_read_valid ? int_read_data : 0;
+
+    //REGISTER FILE FOR READBACK
+    RegisterFile Registers(
+        .clk(clock),
+        .reset(reset),
+        .addr_a(sb.sb_address-BASE_ADDRESS),
+        .data_a(sb.sb_write_data),
+        .we_a(sb.sb_write_strobe),
+        .q_a(int_read_data)
+    );
 
     generate
         if(EXTERNAL_TIMEBASE_ENABLE==1)begin
@@ -52,9 +65,7 @@ module enable_generator #(parameter BASE_ADDRESS = 0, COUNTER_WIDTH = 32, EXTERN
             end else begin
                 synchronized_tb<= 0;
             end
-            
         end
-       
     end
     
     defparam counter.COUNTER_WIDTH = COUNTER_WIDTH;
@@ -102,10 +113,14 @@ module enable_generator #(parameter BASE_ADDRESS = 0, COUNTER_WIDTH = 32, EXTERN
             bus_enable<=0;
             sb.sb_ready <= 1;
         end else begin
+            sb.sb_read_valid <= 0;
+            sb.sb_read_data <= 0;
             // Determine the next state
             case (state)
                 idle_state: //wait for command
-                    if(sb.sb_write_strobe) begin
+                    if(sb.sb_read_strobe) begin
+                        sb.sb_read_valid <= 1;
+                    end else if(sb.sb_write_strobe) begin
                         sb.sb_ready <=0;
                         state <= act_state;
                     end else

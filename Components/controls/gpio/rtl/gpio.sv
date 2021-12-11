@@ -56,32 +56,30 @@ always @ (posedge clock) begin
         sb.sb_read_data <= 0;
         gpio_o <= 0;
     end else begin
+        sb.sb_read_valid <= 0;
+        sb.sb_read_data <= 0;
         case (state)
             wait_state: begin //wait for command
-                if(sb.sb_read_strobe|sb.sb_write_strobe) begin
+                if(sb.sb_write_strobe) begin
                     state <= act_state;
                     sb.sb_ready <= 1'b0;
+                end else if(sb.sb_read_strobe)begin
+                    if(latched_adress == 4) begin
+                        sb.sb_read_data <= gpio_i[INPUT_WIDTH-1:0];
+                    end else if(latched_adress == 0)begin
+                        sb.sb_read_data <= gpio_o[OUTPUT_WIDTH-1:0];
+                    end else
+                        sb.sb_read_data <= 0;
+                    sb.sb_read_valid <= 1;
                 end else
                     state <= wait_state;
                 end
 
             act_state:begin
                 state <= wait_state;
+                gpio_o[OUTPUT_WIDTH-1:0] <= latched_writedata[OUTPUT_WIDTH-1:0];
                 sb.sb_ready <= 1'b1;
             end 
-        endcase
-
-        //act if necessary
-        case (state)
-            act_state:
-                case (latched_adress)
-                    8'h0: begin  
-                        gpio_o[OUTPUT_WIDTH-1:0] <= latched_writedata[OUTPUT_WIDTH-1:0];
-                    end
-                    8'h4: begin  
-                        sb.sb_read_data <= gpio_i[INPUT_WIDTH-1:0];
-                    end
-                endcase
         endcase
     end
 end

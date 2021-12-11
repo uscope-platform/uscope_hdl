@@ -31,7 +31,7 @@ module SimplebusInterconnect_M1_S4 #(
         Simplebus.master slave_1,
         Simplebus.master slave_2,
         Simplebus.master slave_3,
-        Simplebus.master slave_4
+        Simplebus.master slave_4 
     );
 
 
@@ -86,7 +86,9 @@ module SimplebusInterconnect_M1_S4 #(
         end 
 
         master.sb_read_data[31:0] <= slave_1.sb_read_data[31:0] | slave_2.sb_read_data[31:0] | slave_3.sb_read_data[31:0] | slave_4.sb_read_data[31:0];
+        master.sb_read_valid <= slave_1.sb_read_valid | slave_2.sb_read_valid | slave_3.sb_read_valid | slave_4.sb_read_valid;
         master.sb_ready <= slave_1.sb_ready & slave_2.sb_ready & slave_3.sb_ready & slave_4.sb_ready;
+        
     end
 
 endmodule

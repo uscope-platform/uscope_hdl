@@ -87,11 +87,13 @@ module SpiControlUnit #(parameter BASE_ADDRESS = 32'h43c0000, SS_POLARITY_DEFAUL
         end else begin
             if(read_data_blanking) begin
                 simple_bus.sb_read_data <= 0;
+                simple_bus.sb_read_valid <= 0;
             end else begin
                 if(latched_address==8'h10) simple_bus.sb_read_data <= spi_data_in[0];
                 else if(latched_address==8'h20) simple_bus.sb_read_data <= spi_data_in[1];
                 else if(latched_address==8'h24) simple_bus.sb_read_data <= spi_data_in[2];
-                else simple_bus.sb_read_data <=register_readback;
+                else simple_bus.sb_read_data <= register_readback;
+                simple_bus.sb_read_valid <= 1;
             end
         end
     end
@@ -129,6 +131,7 @@ module SpiControlUnit #(parameter BASE_ADDRESS = 32'h43c0000, SS_POLARITY_DEFAUL
             period <= 0;
             ss_polarity <= SS_POLARITY_DEFAULT;
             latching_edge <= 0;
+            
             //RESET INTERNAL VARIABLES
             spi_transfer_length <= 14;
 

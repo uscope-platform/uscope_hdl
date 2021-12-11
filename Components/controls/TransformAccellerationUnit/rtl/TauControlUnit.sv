@@ -27,14 +27,15 @@ module TauControlUnit #(parameter BASE_ADDRESS = 'h43c00000)(
 
 
 
-    assign spb.sb_read_data = 1'b0;
+    assign spb.sb_read_data = spb.sb_read_valid ? readback_data : 0;
+    
     RegisterFile Registers(
         .clk(clock),
         .reset(reset),
         .addr_a(BASE_ADDRESS-spb.sb_address),
         .data_a(spb.sb_write_data),
         .we_a(spb.sb_write_strobe),
-        .q_a()
+        .q_a(readback_data)
     );
 
     //Timer state registers
@@ -46,7 +47,7 @@ module TauControlUnit #(parameter BASE_ADDRESS = 'h43c00000)(
     reg [7:0]  latched_adress;
     reg [31:0] latched_writedata;
 
-
+    reg [31:0] readback_data;
 
     // FSM states
     parameter wait_state = 0, act_state = 1;
@@ -83,7 +84,9 @@ module TauControlUnit #(parameter BASE_ADDRESS = 'h43c00000)(
 
             case (state)
                 wait_state: //wait for command
-                    if(spb.sb_write_strobe) begin
+                    if(spb.sb_read_strobe) begin
+                        spb.sb_read_valid <= 1;
+                    end else if(spb.sb_write_strobe) begin
                         spb.sb_ready <=0;
                         state <= act_state;
                     end else 

@@ -45,9 +45,11 @@ class apb_BFM;
         this.apb.PADDR <= address;
         this.apb.PWRITE <= 1;
         this.apb.PSEL <= 1;
-        #1 this.apb.PENABLE <= 1;
+        this.apb.PENABLE <= 1;
         #1 this.apb.PENABLE <= 0;
         #1 this.apb.PSEL <= 0;
+        this.apb.PWRITE <= 0;
+
     endtask
 
     task read(input logic [31:0] address, output logic [31:0] data);
@@ -56,7 +58,7 @@ class apb_BFM;
         this.apb.PSEL <= 1;
         #1 this.apb.PENABLE <= 1;
         wait(this.apb.PREADY) this.apb.PENABLE <= 0;
-        #1 this.apb.PSEL <= 0;
+        this.apb.PSEL <= 0;
     endtask
 
 endclass

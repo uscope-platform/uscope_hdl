@@ -26,33 +26,27 @@ module APB_to_Simplebus#(parameter READ_LATENCY = 2)(
 
     
     localparam IDLE = 3'b001;
-    localparam WAIT_LATENCY = 3'b010;
+    localparam WAIT_READ_DATA = 3'b010;
     localparam WAIT_ACK = 3'b100;
 
     reg [2:0] state = IDLE;
-    reg [8:0] latency_counter;
-
     always@(posedge PCLK)begin
         if(~PRESETn)begin
             state <= IDLE;
             apb.PREADY <= 1;
-            latency_counter <= READ_LATENCY;
         end else begin
             if(state == IDLE)begin
                 if(apb.PSEL & ~apb.PENABLE & ~apb.PWRITE)begin
-                    state <= WAIT_LATENCY;
+                    state <= WAIT_READ_DATA;
                     apb.PREADY <= 0;
                 end
-            end else if (state == WAIT_LATENCY)begin
-                if(latency_counter == 0)begin
+            end else if (state == WAIT_READ_DATA)begin
+                if(spb.sb_read_valid)begin
                     apb.PRDATA <= spb.sb_read_data;
                     apb.PREADY <=1;
                     state <= IDLE;
-                    latency_counter <= READ_LATENCY;
-                end else begin
-                    latency_counter <= latency_counter-1;
-                end
-            end
+                end 
+           end
         end
     end
 

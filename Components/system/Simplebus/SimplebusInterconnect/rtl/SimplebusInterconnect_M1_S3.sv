@@ -17,21 +17,23 @@
 `include "interfaces.svh"
 
 module SimplebusInterconnect_M1_S3 #(
-    parameter SLAVE_1_LOW = 32'h00000000,
-    parameter SLAVE_1_HIGH = 32'hffffffff,
-    parameter SLAVE_2_LOW = 32'h00000000,
-    parameter SLAVE_2_HIGH = 32'hffffffff,
-    parameter SLAVE_3_LOW = 32'h00000000,
-    parameter SLAVE_3_HIGH = 32'hffffffff
-)(
-    input wire clock,
-    Simplebus.slave master,
-    Simplebus.master slave_1,
-    Simplebus.master slave_2,
-    Simplebus.master slave_3
-);
+        parameter SLAVE_1_LOW = 32'h00000000,
+        parameter SLAVE_1_HIGH = 32'hffffffff,
+        parameter SLAVE_2_LOW = 32'h00000000,
+        parameter SLAVE_2_HIGH = 32'hffffffff,
+        parameter SLAVE_3_LOW = 32'h00000000,
+        parameter SLAVE_3_HIGH = 32'hffffffff
+    )(
+        input wire clock,
+        Simplebus.slave master,
+        Simplebus.master slave_1,
+        Simplebus.master slave_2,
+        Simplebus.master slave_3 
+    );
+
 
     always@(posedge clock) begin
+        // SLAVE #1 CONNECTIONS
         if((master.sb_address>=SLAVE_1_LOW) && (master.sb_address<SLAVE_1_HIGH))begin
             slave_1.sb_address[31:0] <= master.sb_address[31:0];
             slave_1.sb_write_strobe <= master.sb_write_strobe;
@@ -43,6 +45,7 @@ module SimplebusInterconnect_M1_S3 #(
             slave_1.sb_read_strobe <= 0;
             slave_1.sb_write_data[31:0] <= 0;
         end
+        // SLAVE #2 CONNECTIONS
         if((master.sb_address>=SLAVE_2_LOW) && (master.sb_address<SLAVE_2_HIGH))begin
             slave_2.sb_address[31:0] <= master.sb_address[31:0];
             slave_2.sb_write_strobe <= master.sb_write_strobe;
@@ -54,7 +57,7 @@ module SimplebusInterconnect_M1_S3 #(
             slave_2.sb_read_strobe <= 0;
             slave_2.sb_write_data[31:0] <= 0;
         end
-
+        // SLAVE #3 CONNECTIONS
         if((master.sb_address>=SLAVE_3_LOW) && (master.sb_address<SLAVE_3_HIGH))begin
             slave_3.sb_address[31:0] <= master.sb_address[31:0];
             slave_3.sb_write_strobe <= master.sb_write_strobe;
@@ -65,10 +68,12 @@ module SimplebusInterconnect_M1_S3 #(
             slave_3.sb_write_strobe <= 0;
             slave_3.sb_read_strobe <= 0;
             slave_3.sb_write_data[31:0] <= 0;
-        end
+        end 
 
-        master.sb_read_data[31:0] <=  slave_1.sb_read_data[31:0] | slave_2.sb_read_data[31:0] | slave_3.sb_read_data[31:0];
+        master.sb_read_data[31:0] <= slave_1.sb_read_data[31:0] | slave_2.sb_read_data[31:0] | slave_3.sb_read_data[31:0];
+        master.sb_read_valid <= slave_1.sb_read_valid | slave_2.sb_read_valid | slave_3.sb_read_valid;
         master.sb_ready <= slave_1.sb_ready & slave_2.sb_ready & slave_3.sb_ready;
+        
     end
 
 endmodule

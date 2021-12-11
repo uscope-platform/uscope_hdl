@@ -3,7 +3,7 @@
 from jinja2 import Template
 import argparse, os, subprocess
 
-parser = argparse.ArgumentParser(description='Generate Multichannel enable generator')
+parser = argparse.ArgumentParser(description='Generate RTCU Multichannel module')
 parser.add_argument('target', metavar='TARGET', type=str,
                     help='Directory where the output will be generated')
 parser.add_argument('n_enables', metavar='N_ENABLES', type=int,

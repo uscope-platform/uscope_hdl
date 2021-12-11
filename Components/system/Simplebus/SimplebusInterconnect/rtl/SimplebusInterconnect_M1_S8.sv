@@ -17,34 +17,34 @@
 `include "interfaces.svh"
 
 module SimplebusInterconnect_M1_S8 #(
-    parameter SLAVE_1_LOW = 32'h00000000,
-    parameter SLAVE_1_HIGH = 32'hffffffff,
-    parameter SLAVE_2_LOW = 32'h00000000,
-    parameter SLAVE_2_HIGH = 32'hffffffff,
-    parameter SLAVE_3_LOW = 32'h00000000,
-    parameter SLAVE_3_HIGH = 32'hffffffff,
-    parameter SLAVE_4_LOW = 32'h00000000,
-    parameter SLAVE_4_HIGH = 32'hffffffff,
-    parameter SLAVE_5_LOW = 32'h00000000,
-    parameter SLAVE_5_HIGH = 32'hffffffff,
-    parameter SLAVE_6_LOW = 32'h00000000,
-    parameter SLAVE_6_HIGH = 32'hffffffff,
-    parameter SLAVE_7_LOW = 32'h00000000,
-    parameter SLAVE_7_HIGH = 32'hffffffff,
-    parameter SLAVE_8_LOW = 32'h00000000,
-    parameter SLAVE_8_HIGH = 32'hffffffff
-)(
-    input wire clock,
-    Simplebus.slave master,
-    Simplebus.master slave_1,
-    Simplebus.master slave_2,
-    Simplebus.master slave_3,
-    Simplebus.master slave_4,
-    Simplebus.master slave_5,
-    Simplebus.master slave_6,
-    Simplebus.master slave_7,
-    Simplebus.master slave_8 
-);
+        parameter SLAVE_1_LOW = 32'h00000000,
+        parameter SLAVE_1_HIGH = 32'hffffffff,
+        parameter SLAVE_2_LOW = 32'h00000000,
+        parameter SLAVE_2_HIGH = 32'hffffffff,
+        parameter SLAVE_3_LOW = 32'h00000000,
+        parameter SLAVE_3_HIGH = 32'hffffffff,
+        parameter SLAVE_4_LOW = 32'h00000000,
+        parameter SLAVE_4_HIGH = 32'hffffffff,
+        parameter SLAVE_5_LOW = 32'h00000000,
+        parameter SLAVE_5_HIGH = 32'hffffffff,
+        parameter SLAVE_6_LOW = 32'h00000000,
+        parameter SLAVE_6_HIGH = 32'hffffffff,
+        parameter SLAVE_7_LOW = 32'h00000000,
+        parameter SLAVE_7_HIGH = 32'hffffffff,
+        parameter SLAVE_8_LOW = 32'h00000000,
+        parameter SLAVE_8_HIGH = 32'hffffffff
+    )(
+        input wire clock,
+        Simplebus.slave master,
+        Simplebus.master slave_1,
+        Simplebus.master slave_2,
+        Simplebus.master slave_3,
+        Simplebus.master slave_4,
+        Simplebus.master slave_5,
+        Simplebus.master slave_6,
+        Simplebus.master slave_7,
+        Simplebus.master slave_8 
+    );
 
 
     always@(posedge clock) begin
@@ -146,7 +146,9 @@ module SimplebusInterconnect_M1_S8 #(
         end 
 
         master.sb_read_data[31:0] <= slave_1.sb_read_data[31:0] | slave_2.sb_read_data[31:0] | slave_3.sb_read_data[31:0] | slave_4.sb_read_data[31:0] | slave_5.sb_read_data[31:0] | slave_6.sb_read_data[31:0] | slave_7.sb_read_data[31:0] | slave_8.sb_read_data[31:0];
+        master.sb_read_valid <= slave_1.sb_read_valid | slave_2.sb_read_valid | slave_3.sb_read_valid | slave_4.sb_read_valid | slave_5.sb_read_valid | slave_6.sb_read_valid | slave_7.sb_read_valid | slave_8.sb_read_valid;
         master.sb_ready <= slave_1.sb_ready & slave_2.sb_ready & slave_3.sb_ready & slave_4.sb_ready & slave_5.sb_ready & slave_6.sb_ready & slave_7.sb_ready & slave_8.sb_ready;
+        
     end
 
 endmodule
