@@ -59,25 +59,26 @@ endinterface
 
 
 interface axi_lite;
-    wire [31:0] ARADDR;
-    wire ARREADY;
-    wire ARVALID;
-    wire [31:0] AWADDR;
-    wire AWREADY;
-    wire AWVALID;
-    wire BREADY;
-    wire [31:0] BRESP;
-    wire BVALID;
-    wire [31:0] RDATA;
-    wire RREADY;
-    wire [31:0] RRESP;
-    wire RVALID;
-    wire [31:0] WDATA;
-    wire WREADY;
-    wire WVALID;
+    logic [31:0] ARADDR;
+    logic ARREADY;
+    logic ARVALID;
+    logic [31:0] AWADDR;
+    logic AWREADY;
+    logic AWVALID;
+    logic BREADY;
+    logic [31:0] BRESP;
+    logic BVALID;
+    logic [31:0] RDATA;
+    logic RREADY;
+    logic [31:0] RRESP;
+    logic RVALID;
+    logic [31:0] WDATA;
+    logic WREADY;
+    logic WVALID;
+    logic [3:0] WSTRB;
 
     modport master (input AWREADY, WREADY, BRESP, BVALID, ARREADY, RDATA, RRESP, RVALID, 
-    output AWADDR, AWVALID, WDATA, WVALID, BREADY, ARADDR, ARVALID, RREADY);
+    output AWADDR, AWVALID, WDATA, WVALID, WSTRB, BREADY, ARADDR, ARVALID, RREADY);
     modport slave (output AWREADY, WREADY, BRESP, BVALID, ARREADY, RDATA, RRESP, RVALID,
     input AWADDR, AWVALID, WDATA, WVALID, BREADY, ARADDR, ARVALID, RREADY);
 

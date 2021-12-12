@@ -87,3 +87,5 @@ Components/system/axi_terminator/AXI terminator/
 Applications/SicDriveMaster/SicDriveMaster_old/
 
 Applications/MpcTestbed/MpcTestbed/
+
+Components/system/axi_lite/skid_buffer/skid_buffer/
