@@ -106,7 +106,7 @@ module enable_generator_2 #(parameter BASE_ADDRESS = 0, COUNTER_WIDTH = 32)(
                     if(sb.sb_read_strobe) begin
                         sb.sb_read_data  <= int_read_data;
                         sb.sb_read_valid <= 1;
-                    end if(sb.sb_write_strobe) begin
+                    end else if(sb.sb_write_strobe) begin
                         sb.sb_ready <=0;
                         state <= act_state;
                     end else
