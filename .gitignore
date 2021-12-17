@@ -89,3 +89,5 @@ Applications/SicDriveMaster/SicDriveMaster_old/
 Applications/MpcTestbed/MpcTestbed/
 
 Components/system/axi_lite/skid_buffer/skid_buffer/
+
+Components/system/axi_lite/simple_register_cu/simple_register_cu/
