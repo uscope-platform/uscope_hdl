@@ -21,8 +21,27 @@ module gpio #(parameter BASE_ADDRESS = 0,INPUT_WIDTH = 8,OUTPUT_WIDTH = 8)(
     input wire reset,
     input wire [INPUT_WIDTH-1:0] gpio_i,
     output reg [OUTPUT_WIDTH-1:0] gpio_o,
+    axi_lite.slave axi,
     Simplebus.slave sb
 );
+
+
+always @ (posedge clock) begin
+    if (~reset) begin
+        axi.AWREADY <= 0;
+        axi.WREADY <= 0;
+        axi.BRESP <= 0;
+        axi.BVALID <= 0;
+        axi.ARREADY <= 0;
+        axi.RDATA <= 0;
+        axi.RRESP <= 0;
+        axi.RVALID <= 0;
+    end else begin
+        
+    end
+end
+
+
 
 reg [7:0]  latched_adress;
 reg [31:0] latched_writedata;
