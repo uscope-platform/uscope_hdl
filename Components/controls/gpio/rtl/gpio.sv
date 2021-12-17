@@ -21,87 +21,22 @@ module gpio #(parameter BASE_ADDRESS = 0,INPUT_WIDTH = 8,OUTPUT_WIDTH = 8)(
     input wire reset,
     input wire [INPUT_WIDTH-1:0] gpio_i,
     output reg [OUTPUT_WIDTH-1:0] gpio_o,
-    axi_lite.slave axi,
-    Simplebus.slave sb
+    axi_lite.slave axil
 );
 
 
-always @ (posedge clock) begin
-    if (~reset) begin
-        axi.AWREADY <= 0;
-        axi.WREADY <= 0;
-        axi.BRESP <= 0;
-        axi.BVALID <= 0;
-        axi.ARREADY <= 0;
-        axi.RDATA <= 0;
-        axi.RRESP <= 0;
-        axi.RVALID <= 0;
-    end else begin
-        
-    end
-end
-
-
-
-reg [7:0]  latched_adress;
-reg [31:0] latched_writedata;
-reg state;
-
-localparam wait_state = 0, act_state = 1;
-
-always @(posedge clock) begin
-    if(~reset) begin
-        latched_adress<=0;
-        latched_writedata<=0;
-    end else begin
-        if(sb.sb_write_strobe) begin
-            latched_adress <= sb.sb_address-BASE_ADDRESS;
-            latched_writedata <= sb.sb_write_data;
-        end else if(sb.sb_read_strobe) begin
-            latched_adress <= sb.sb_address-BASE_ADDRESS;
-        end else begin
-            latched_adress <= latched_adress;
-            latched_writedata <= latched_writedata;
-        end
-    end
-end
-
-
-// Determine the next state
-always @ (posedge clock) begin
-    if (~reset) begin
-        sb.sb_ready <= 1'b1;
-        state <= wait_state;
-        sb.sb_read_data <= 0;
-        gpio_o <= 0;
-    end else begin
-        sb.sb_read_valid <= 0;
-        sb.sb_read_data <= 0;
-        case (state)
-            wait_state: begin //wait for command
-                if(sb.sb_write_strobe) begin
-                    state <= act_state;
-                    sb.sb_ready <= 1'b0;
-                end else if(sb.sb_read_strobe)begin
-                    if(latched_adress == 4) begin
-                        sb.sb_read_data <= gpio_i[INPUT_WIDTH-1:0];
-                    end else if(latched_adress == 0)begin
-                        sb.sb_read_data <= gpio_o[OUTPUT_WIDTH-1:0];
-                    end else
-                        sb.sb_read_data <= 0;
-                    sb.sb_read_valid <= 1;
-                end else
-                    state <= wait_state;
-                end
-
-            act_state:begin
-                state <= wait_state;
-                gpio_o[OUTPUT_WIDTH-1:0] <= latched_writedata[OUTPUT_WIDTH-1:0];
-                sb.sb_ready <= 1'b1;
-            end 
-        endcase
-    end
-end
+axil_simple_register_cu #(
+    .N_READ_REGISTERS(2),
+    .N_WRITE_REGISTERS(1),
+    .REGISTERS_WIDTH(32),
+    .BASE_ADDRESS(BASE_ADDRESS)
+) CU (
+    .clock(clock),
+    .reset(reset),
+    .input_registers('{gpio_i, gpio_o}),
+    .output_registers('{gpio_o}),
+    .axil(axil)
+);
 
 
 endmodule
