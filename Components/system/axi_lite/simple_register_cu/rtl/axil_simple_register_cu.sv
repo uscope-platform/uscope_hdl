@@ -19,7 +19,8 @@
 module axil_simple_register_cu #(
     parameter N_READ_REGISTERS = 1,
     N_WRITE_REGISTERS = 1,
-    REGISTERS_WIDTH = 32
+    REGISTERS_WIDTH = 32,
+    BASE_ADDRESS = 0
 ) (
     input wire clock,
     input wire reset,
@@ -54,7 +55,7 @@ assign	axil.RRESP = 2'b00;
 // HANDLE READ ADDRESS CHANNEL
 
 logic [31:0] read_address;
-logic read_address_valid, read_address_ready;
+logic read_address_valid;
 
 
 axil_skid_buffer #(
@@ -133,6 +134,12 @@ assign write_ready = write_valid && (~axil.BVALID || axil.BREADY);
 assign write_valid = write_data_valid && write_address_valid;
 
 
+wire [31:0] register_read_address;
+wire [31:0] register_write_address;
+
+assign register_read_address = read_address - BASE_ADDRESS;
+assign register_write_address = write_address - BASE_ADDRESS;
+
 always @ (posedge clock) begin
     if (~reset) begin
         for(integer idx = 0; idx <N_WRITE_REGISTERS; idx = idx+1) begin
@@ -142,11 +149,11 @@ always @ (posedge clock) begin
     end else begin
         
         if(read_address_valid) begin
-            read_data <= input_registers[read_address];
+            read_data <= input_registers[register_read_address];
         end
 
         if(write_valid) begin
-            output_registers[write_address] <= write_data;
+            output_registers[register_write_address] <= write_data;
         end
     end
 end
