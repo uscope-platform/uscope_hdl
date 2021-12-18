@@ -33,7 +33,7 @@ module axil_simple_register_cu_vip_tb();
 
     VIP_axi_vip_0_0_mst_t master_agent;
 
-    logic [31:0] input_registers [2:0] = {0,0,0};
+    logic [31:0] input_registers [2:0] = {0,0,'hBEEF};
     logic [31:0] output_registers [2:0];
 
     axil_simple_register_cu #(
@@ -76,8 +76,12 @@ module axil_simple_register_cu_vip_tb();
         #30;
         addr = 0;
         data = 32'hCAFE;
+        // TEST WRITE
         master_agent.AXI4LITE_WRITE_BURST(base_addr+addr,0,data,resp);
-
+        #10;
+        // TEST READ
+        master_agent.AXI4LITE_READ_BURST(base_addr+addr,0,data,resp);
+    
     end
 
 endmodule
