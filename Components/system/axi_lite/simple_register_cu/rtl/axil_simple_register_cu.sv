@@ -49,6 +49,8 @@ function [REGISTERS_WIDTH-1:0]	apply_strobe;
 logic read_ready;
 logic [31:0] read_data;
 
+initial axil.RVALID = 0;
+
 always @ (posedge clock) begin
     if (~reset) begin
         axil.RVALID <= 0;
@@ -88,6 +90,7 @@ axil_skid_buffer #(
 // HANDLE BRESP CHANNEL
 
 logic write_ready;
+initial axil.BVALID = 0;
 
 always @ (posedge clock) begin
     if (~reset) begin

@@ -28,20 +28,7 @@ module axil_skid_buffer_tb();
         .out_data(consumer_data)
     );
     
-    
-    skidbuffer #(
-        .DW(32),
-        .OPT_INITIAL(0)
-    )check (
-        .i_clk(clk),
-        .i_reset(~rst),
-        .i_valid(producer_valid),
-        .i_ready(consumer_ready),
-        .i_data(producer_data)
-    );
 
-    
-    
     // reset generation
     initial begin
         producer_data <= 'hCAFECABE;;

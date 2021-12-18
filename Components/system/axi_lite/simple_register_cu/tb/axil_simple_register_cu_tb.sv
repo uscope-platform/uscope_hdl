@@ -21,7 +21,7 @@ module axil_simple_register_cu_tb();
     axi_lite test_axi();
 
     reg clk, reset;
-    reg sclk = 0;
+
 
   
     axi_lite_BFM axil_bfm;
