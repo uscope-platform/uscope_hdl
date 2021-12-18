@@ -47,7 +47,14 @@ module axil_skid_buffer #(
         end
     end
     
-    assign in_ready = !input_skidding;
+
+    reg registered_ready_reset;
+
+    always_ff @(posedge clock) begin
+        registered_ready_reset <= reset;
+    end
+
+    assign in_ready = registered_ready_reset & !input_skidding;
 
     reg	[DATA_WIDTH-1:0] data_buffer = 0;
 
@@ -55,7 +62,7 @@ module axil_skid_buffer #(
     always_ff @(posedge clock) begin
         if (~reset) begin
             data_buffer <= 0;
-        end else if ((!REGISTER_OUTPUT || in_valid) && in_ready) begin
+        end else begin
             data_buffer <= in_data;
         end
     end
@@ -95,10 +102,8 @@ module axil_skid_buffer #(
                 end else if (!out_valid || out_ready) begin
                     if (input_skidding) begin
                         out_data <= data_buffer;
-                    end else if (in_valid) begin
-                        out_data <= in_data;
                     end else begin
-                        out_data <= 0;
+                        out_data <= in_data;
                     end
                 end
             end

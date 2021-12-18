@@ -1,17 +1,3 @@
-// Copyright 2021 Filippo Savi
-// Author: Filippo Savi <filssavi@gmail.com>
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
 `timescale 10 ns / 1 ns
 
 module axil_skid_buffer_tb();
@@ -42,10 +28,23 @@ module axil_skid_buffer_tb();
         .out_data(consumer_data)
     );
     
+    
+    skidbuffer #(
+        .DW(32),
+        .OPT_INITIAL(0)
+    )check (
+        .i_clk(clk),
+        .i_reset(~rst),
+        .i_valid(producer_valid),
+        .i_ready(consumer_ready),
+        .i_data(producer_data)
+    );
 
+    
+    
     // reset generation
     initial begin
-        producer_data <= 0;
+        producer_data <= 'hCAFECABE;;
         producer_valid <= 0;
         consumer_ready <= 0;
         #3.5 rst<=0;
@@ -54,20 +53,21 @@ module axil_skid_buffer_tb();
         // NO BACKPRESSURE
         #10;
         consumer_ready <= 1;
-        producer_data <= 'hCAFECABE;
         producer_valid <= 1;
         #1 producer_valid <= 0;
-        consumer_ready <= 0;
-
+        #1 consumer_ready <= 0;
+        
         // WITH BACKPRESSURE
-        #10;
-        producer_valid <= 1;
+        #10
         producer_data <= 'hDEADCAFE;
+        #90;
+        producer_valid <= 1;
         #3 consumer_ready <= 1;
         #1 consumer_ready <= 0;
         #1 producer_valid <= 0;
 
         #2 consumer_ready <= 1;
+        #4 consumer_ready <= 0;
     end
 
     reg [2:0] input_transactions_count = 0;
@@ -75,7 +75,7 @@ module axil_skid_buffer_tb();
 
     always @(posedge clk) begin : input_transactions_counter
         if(rst)begin
-            @(posedge producer_valid) input_transactions_count <= input_transactions_count+1;
+            @(posedge producer_valid & producer_ready) input_transactions_count <= input_transactions_count+1;
         end else begin
             input_transactions_count <= 0;
         end
@@ -91,7 +91,7 @@ module axil_skid_buffer_tb();
 
     always @(posedge clk) begin : output_transactions_counter
         if(rst)begin
-            @(posedge producer_ready) output_transactions_count <= output_transactions_count+1;
+            @(posedge consumer_valid & consumer_ready) output_transactions_count <= output_transactions_count+1;
         end else begin
             output_transactions_count <= 0;
         end        
@@ -106,11 +106,15 @@ module axil_skid_buffer_tb();
 
     initial begin
         wait(output_transactions_count == 2 && input_transactions_count == 2);
+        wait(consumer_ready);
+        wait(producer_ready);
         if((output_data[0][31:0] != input_data[0][31:0]) || (output_data[1][31:0] != input_data[1][31:0])) begin
             $error("SIMULATION FAILED");
-        end else
+            $finish();
+        end else begin
             $display("SIMULATION SUCCESSFUL");
             $finish();
+        end
     end
 
 endmodule
