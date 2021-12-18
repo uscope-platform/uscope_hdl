@@ -1,5 +1,4 @@
-// Copyright (C) : 3/17/2019, 6:09:40 PM Filippo Savi - All Rights Reserved
-// Copyright 2021 University of Nottingham Ningbo China
+// Copyright 2021 Filippo Savi
 // Author: Filippo Savi <filssavi@gmail.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +28,20 @@ module axil_simple_register_cu #(
     axi_lite.slave axil
 
 );
+
+
+function [REGISTERS_WIDTH-1:0]	apply_strobe;
+		input	[REGISTERS_WIDTH-1:0]		prior_data;
+		input	[REGISTERS_WIDTH-1:0]		new_data;
+		input	[REGISTERS_WIDTH/8-1:0]	strobe;
+
+		integer	k;
+		for(k=0; k<REGISTERS_WIDTH/8; k=k+1)
+		begin
+			apply_strobe[k*8 +: 8]
+				= strobe[k] ? new_data[k*8 +: 8] : prior_data[k*8 +: 8];
+		end
+	endfunction
 
 
 // HANDLE READ DATA CHANNEL 
@@ -153,7 +166,7 @@ always @ (posedge clock) begin
         end
 
         if(write_valid) begin
-            output_registers[register_write_address] <= write_data;
+            output_registers[register_write_address] <= apply_strobe(output_registers[register_write_address], write_data, write_strobe);
         end
     end
 end

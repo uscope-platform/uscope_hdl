@@ -1,4 +1,3 @@
-// Copyright (C) : 3/17/2019, 5:57:35 PM Filippo Savi - All Rights Reserved
 // Copyright 2021 University of Nottingham Ningbo China
 // Author: Filippo Savi <filssavi@gmail.com>
 //
@@ -21,7 +20,8 @@ module gpio #(parameter BASE_ADDRESS = 0,INPUT_WIDTH = 8,OUTPUT_WIDTH = 8)(
     input wire reset,
     input wire [INPUT_WIDTH-1:0] gpio_i,
     output reg [OUTPUT_WIDTH-1:0] gpio_o,
-    axi_lite.slave axil
+    axi_lite.slave axil,
+    Simplebus.slave sb
 );
 
 

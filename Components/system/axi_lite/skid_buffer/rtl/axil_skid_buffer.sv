@@ -1,5 +1,4 @@
-// Copyright (C) : 3/17/2019, 6:09:40 PM Filippo Savi - All Rights Reserved
-// Copyright 2021 University of Nottingham Ningbo China
+// Copyright 2021 Filippo Savi
 // Author: Filippo Savi <filssavi@gmail.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
