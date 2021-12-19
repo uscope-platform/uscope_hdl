@@ -58,24 +58,24 @@ interface Simplebus;
 endinterface
 
 
-interface axi_lite;
-    logic [31:0] ARADDR;
+interface axi_lite #(DATA_WIDTH = 32, ADDR_WIDTH = 32);
+    logic [ADDR_WIDTH-1:0] ARADDR;
     logic ARREADY;
     logic ARVALID;
-    logic [31:0] AWADDR;
+    logic [ADDR_WIDTH-1:0] AWADDR;
     logic AWREADY;
     logic AWVALID;
     logic BREADY;
-    logic [31:0] BRESP;
+    logic [1:0] BRESP;
     logic BVALID;
-    logic [31:0] RDATA;
+    logic [DATA_WIDTH-1:0] RDATA;
     logic RREADY;
-    logic [31:0] RRESP;
+    logic [1:0] RRESP;
     logic RVALID;
-    logic [31:0] WDATA;
+    logic [DATA_WIDTH-1:0] WDATA;
     logic WREADY;
     logic WVALID;
-    logic [3:0] WSTRB;
+    logic [DATA_WIDTH/8-1:0] WSTRB;
 
     modport master (input AWREADY, WREADY, BRESP, BVALID, ARREADY, RDATA, RRESP, RVALID, 
     output AWADDR, AWVALID, WDATA, WVALID, WSTRB, BREADY, ARADDR, ARVALID, RREADY);
