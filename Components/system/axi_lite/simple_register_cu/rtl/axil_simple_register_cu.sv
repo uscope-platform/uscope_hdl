@@ -153,8 +153,8 @@ assign write_valid = write_data_valid && write_address_valid;
 wire [31:0] register_read_address;
 wire [31:0] register_write_address;
 
-assign register_read_address = read_address - BASE_ADDRESS;
-assign register_write_address = write_address - BASE_ADDRESS;
+assign register_read_address = (read_address - BASE_ADDRESS) >> 2;
+assign register_write_address = (write_address - BASE_ADDRESS) >> 2;
 
 always @ (posedge clock) begin
     if (~reset) begin
