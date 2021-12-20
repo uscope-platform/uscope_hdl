@@ -62,7 +62,7 @@ module axil_skid_buffer #(
     always_ff @(posedge clock) begin
         if (~reset) begin
             data_buffer <= 0;
-        end else begin
+        end else if(in_ready) begin
             data_buffer <= in_data;
         end
     end
