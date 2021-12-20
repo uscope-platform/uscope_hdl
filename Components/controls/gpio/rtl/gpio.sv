@@ -20,23 +20,23 @@ module gpio #(parameter BASE_ADDRESS = 0,INPUT_WIDTH = 8,OUTPUT_WIDTH = 8)(
     input wire reset,
     input wire [INPUT_WIDTH-1:0] gpio_i,
     output reg [OUTPUT_WIDTH-1:0] gpio_o,
-    axi_lite.slave axil,
-    Simplebus.slave sb
+    axi_lite.slave axil
 );
 
-
-axil_simple_register_cu #(
-    .N_READ_REGISTERS(2),
-    .N_WRITE_REGISTERS(1),
-    .REGISTERS_WIDTH(32),
-    .BASE_ADDRESS(BASE_ADDRESS)
-) CU (
-    .clock(clock),
-    .reset(reset),
-    .input_registers('{gpio_i, gpio_o}),
-    .output_registers('{gpio_o}),
-    .axil(axil)
-);
+    localparam ADDITIONAL_INPUT_BITS = 32 - INPUT_WIDTH;
+    localparam ADDITIONAL_OUTPUT_BITS = 32 - OUTPUT_WIDTH;
+    axil_simple_register_cu #(
+        .N_READ_REGISTERS(2),
+        .N_WRITE_REGISTERS(1),
+        .REGISTERS_WIDTH(32),
+        .BASE_ADDRESS(BASE_ADDRESS)
+    ) CU (
+        .clock(clock),
+        .reset(reset),
+        .input_registers('{{{ADDITIONAL_INPUT_BITS{1'b0}},{gpio_i}}, {{ADDITIONAL_OUTPUT_BITS{1'b0}},{gpio_o}}}),
+        .output_registers('{gpio_o}),
+        .axil(axil)
+    );
 
 
 endmodule
