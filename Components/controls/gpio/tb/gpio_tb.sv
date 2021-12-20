@@ -14,11 +14,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 `timescale 10 ns / 1 ns
-`include "SimpleBus_BFM.svh"
+`include "axi_lite_BFM.svh"
+`include "interfaces.svh"
 
 module gpio_tb();
     
     logic clk, rst;
+    
+    axi_lite axil();
+    axi_lite_BFM axil_bfm;
 
     //clock generation
     initial clk = 0; 
@@ -39,22 +43,21 @@ module gpio_tb();
         .reset(rst),
         .gpio_i(gpio_i),
         .gpio_o(gpio_o),
-        .sb(s)
+        .axil(axil)
     );
 
 
-    simplebus_BFM BFM;
-
     // reset generation
     initial begin
-        BFM = new(s,1);
+        axil_bfm = new(axil,1);
+
         gpio_i = 8'hfe;
         rst <=1;
         #3.5 rst<=0;
         #5 rst <=1;
 
-        #8 BFM.write(32'h0,32'hCA);
-        #8 BFM.read(32'h4,sb_read_data_test);
+        #8 axil_bfm.write(32'h0,32'hCA);
+        #8 axil_bfm.read(32'h4,sb_read_data_test);
     end
 
 

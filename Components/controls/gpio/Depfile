@@ -3,7 +3,7 @@
         "project_name":"gpio",
         "target_part":"xc7z020clg400",
         "synth_modules":[],
-        "synth_tl": "gpio.v",
+        "synth_tl": "gpio",
         "sim_modules":[],
         "sim_tl":"gpio_tb",
         "include_paths":[
