@@ -27,20 +27,8 @@ module PID #(parameter BASE_ADDRESS = 32'h43c00000, parameter INPUT_DATA_WIDTH =
     axi_stream.slave feedback,
     axi_stream.master out,
     axi_stream.master error_mon,
-    Simplebus.slave sb
+    axi_lite.slave axil
 );
-
-  // PID parameters
-    wire [OUTPUT_DATA_WIDTH-1:0] kP;
-    wire [OUTPUT_DATA_WIDTH-1:0] kI;
-    wire [OUTPUT_DATA_WIDTH-1:0] kD;
-    wire [7:0] kP_den;
-    wire [7:0] kI_den;
-    wire [7:0] kD_den;
-    wire signed [OUTPUT_DATA_WIDTH-1:0] limit_out_up;
-    wire signed [OUTPUT_DATA_WIDTH-1:0] limit_out_down;
-    wire signed [OUTPUT_DATA_WIDTH-1:0] limit_int_up;
-    wire signed [OUTPUT_DATA_WIDTH-1:0] limit_int_down;
 
 
     assign reference.ready = 1;
@@ -57,15 +45,66 @@ module PID #(parameter BASE_ADDRESS = 32'h43c00000, parameter INPUT_DATA_WIDTH =
     reg signed [OUTPUT_DATA_WIDTH-1:0] differential_out;
     reg signed [OUTPUT_DATA_WIDTH-1:0] int_pid_out;
 
-    wire inputs_valid, nonblocking_output;
+    wire inputs_valid;
     assign inputs_valid = reference.valid && feedback.valid;
-
 
     reg error_valid, integrator_in_valid, integrator_out_valid;
 
     assign diff_out = 0;
 
+    reg [31:0] cu_write_registers [8:0];
+    reg [31:0] cu_read_registers [8:0];
 
+    localparam ADDITIONAL_BITS = 32 - OUTPUT_DATA_WIDTH;
+    axil_simple_register_cu #(
+        .N_READ_REGISTERS(9),
+        .N_WRITE_REGISTERS(9),
+        .REGISTERS_WIDTH(32),
+        .BASE_ADDRESS(BASE_ADDRESS)
+    ) CU (
+        .clock(clock),
+        .reset(reset),
+        .input_registers(cu_read_registers),
+        .output_registers(cu_write_registers),
+        .axil(axil)
+    );
+
+    reg nonblocking_output;
+    reg [OUTPUT_DATA_WIDTH-1:0] kP;
+    reg [OUTPUT_DATA_WIDTH-1:0] kI;
+    reg [OUTPUT_DATA_WIDTH-1:0] kD;
+    reg signed [OUTPUT_DATA_WIDTH-1:0] limit_out_up;
+    reg signed [OUTPUT_DATA_WIDTH-1:0] limit_out_down;
+    reg signed [OUTPUT_DATA_WIDTH-1:0] limit_int_up;
+    reg signed [OUTPUT_DATA_WIDTH-1:0] limit_int_down;
+    reg [7:0] kP_den;
+    reg [7:0] kI_den;
+    reg [7:0] kD_den;
+
+    always_comb begin 
+        nonblocking_output <= cu_write_registers[0];
+        kP <= cu_write_registers[1];
+        kI <= cu_write_registers[2];
+        kD <= cu_write_registers[3];
+        limit_out_up <= cu_write_registers[4];
+        limit_out_down <= cu_write_registers[5];
+        limit_int_up <= cu_write_registers[6];
+        limit_int_down <= cu_write_registers[7];
+        kP_den <= cu_write_registers[8][7:0];
+        kI_den <= cu_write_registers[8][15:8];
+        kD_den <= cu_write_registers[8][23:16];
+
+        cu_read_registers[0] <= {31'b0, {nonblocking_output}};
+        cu_read_registers[1] <= {{ADDITIONAL_BITS{1'b0}},kP};
+        cu_read_registers[2] <= {{ADDITIONAL_BITS{1'b0}},kI};
+        cu_read_registers[3] <= {{ADDITIONAL_BITS{1'b0}},kD};
+        cu_read_registers[4] <= {{ADDITIONAL_BITS{1'b0}},limit_out_up};
+        cu_read_registers[5] <= {{ADDITIONAL_BITS{1'b0}},limit_out_down};
+        cu_read_registers[6] <= {{ADDITIONAL_BITS{1'b0}},limit_int_up};
+        cu_read_registers[7] <= {{ADDITIONAL_BITS{1'b0}},limit_int_down};
+        cu_read_registers[8] <= {8'b0, kD_den, kI_den, kP_den};
+    end
+    
     defparam pid_int.DATA_WIDTH = OUTPUT_DATA_WIDTH;
     Integrator pid_int(
         .clock(clock),
@@ -76,26 +115,6 @@ module PID #(parameter BASE_ADDRESS = 32'h43c00000, parameter INPUT_DATA_WIDTH =
         .limit_int_down(limit_int_down),
         .error_in(integrator_in),
         .out(integral_out)
-    );
-
-
-    defparam PIDControlUnit.DATA_WIDTH = OUTPUT_DATA_WIDTH;
-    defparam PIDControlUnit.BASE_ADDRESS = BASE_ADDRESS;
-    PIDControlUnit PIDControlUnit(
-        .clock(clock),
-        .reset(reset),
-        .sb(sb),
-        .kP(kP),
-        .kP_den(kP_den),
-        .kI(kI),
-        .kI_den(kI_den),
-        .kD(kD),
-        .kD_den(kD_den),
-        .nonblocking_output(nonblocking_output),
-        .limit_out_up(limit_out_up),
-        .limit_out_down(limit_out_down),
-        .limit_int_up(limit_int_up),
-        .limit_int_down(limit_int_down)
     );
 
    always@(posedge clock)begin

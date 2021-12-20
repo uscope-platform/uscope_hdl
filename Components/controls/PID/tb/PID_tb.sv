@@ -16,22 +16,21 @@
 // limitations under the License.
 
 `timescale 10 ns / 1 ns
-`include "SimpleBus_BFM.svh"
+`include "axi_lite_BFM.svh"
 `include "interfaces.svh"
 
 module PID_tb();
     reg  clk, reset;
 
-    reg signed [15:0] reference;
-    reg signed [15:0] feedback;
-    reg signed [15:0] PID_out;
-    reg ref_v, fed_v,out_ready;
+    axi_lite axil();
+    axi_lite_BFM axil_bfm;
 
-    Simplebus s();
+    axi_stream reference();
+    axi_stream feedback();
+    axi_stream out();
+    axi_stream error_mon();
 
 
-    simplebus_BFM BFM;
-    
     //clock generation
     initial clk = 0; 
     always #0.5 clk = ~clk; 
@@ -41,58 +40,35 @@ module PID_tb();
     PID uut (
         .clock(clk),
         .reset(reset),
-        .reference_valid(ref_v),
-        .feedback_valid(fed_v),
-        .sb(s),
+        .axil(axil),
         .reference(reference),
         .feedback(feedback),
-        .PID_out(PID_out),
-        .out_ready(out_ready)
+        .out(out),
+        .error_mon(error_mon)
     );
-    initial begin
 
-        BFM = new(s,1);
+    initial begin
+        axil_bfm = new(axil, 1);
+        reference.initialize();
+        feedback.initialize();
         //Initial status
         reset <=1'h1;
-        reference <= 0;
-        feedback <= 0;
-        fed_v <= 0;
-        ref_v <= 0;
-        out_ready <= 1;
         #1 reset <=1'h0;
         //TESTS
         #5.5 reset <=1'h1;
 
 
         //Compare low 1
-        #8 BFM.write(32'h00,32'h0);
-        BFM.write(32'h04,32'h1);
-        BFM.write(32'h08,32'h0);
-        BFM.write(32'h0C,32'h0);
-        BFM.write(32'h10,32767);
-        BFM.write(32'h14,0);
-        BFM.write(32'h18,32767);
-        BFM.write(32'h1C,0);
-        BFM.write(32'h20,0);
-    
-        reference <= 0;
-        feedback <= 19;
-        fed_v <= 1;
-        ref_v <= 1;
-        #10 out_ready <= 0;
-        #5 fed_v <= 0;
-        #10 out_ready <= 1;
-        #90 feedback <= 21;
-        fed_v <= 1;
-        
-
-        forever begin
-            #10 feedback <= $urandom;
-                feedback[15] <= 0;
-                fed_v <= 1;
-                #1 fed_v <= 0;
-        end
-
+        #8;
+        axil_bfm.write(32'h00, 32'h1);
+        axil_bfm.write(32'h04, 32'h154);
+        axil_bfm.write(32'h08, 32'h2645);
+        axil_bfm.write(32'h0C, 32'h64);
+        axil_bfm.write(32'h10, 32'h333);
+        axil_bfm.write(32'h14, 32'h222);
+        axil_bfm.write(32'h18, 32'h555);
+        axil_bfm.write(32'h1C, 32'h666);
+        axil_bfm.write(32'h20, 32'h777);
 
     end
 
