@@ -197,11 +197,11 @@ module axilxbar #(
     reg [NS-1:0] mwgrant = 0;
     reg [NS-1:0] mrgrant;
 
-    // verilator lint_off UNUSED
+
     wire [LGMAXBURST-1:0] w_sawpending [0:NM-1];
     wire [LGMAXBURST-1:0] w_swpending [0:NM-1];
     wire [LGMAXBURST-1:0] w_srpending [0:NM-1];
-    // verilator lint_on  UNUSED
+
     reg [NM-1:0] swfull = {NM{1'b0}};
     reg [NM-1:0] srfull = {NM{1'b0}};
     reg [NM-1:0] swempty = {NM{1'b1}};
@@ -243,13 +243,9 @@ module axilxbar #(
     reg [1:0] m_axi_bresp [0:NSFULL-1];
 
     reg [NSFULL-1:0] m_axi_arvalid;
-    // Verilator lint_off UNUSED
     reg [NSFULL-1:0] m_axi_arready;
-    // Verilator lint_on  UNUSED
     reg [NSFULL-1:0] m_axi_rvalid;
-    // Verilator lint_off UNUSED
     reg [NSFULL-1:0] m_axi_rready;
-    // Verilator lint_on  UNUSED
 
     reg r_rvalid [0:NM-1] = '{NM{0}};
     reg [1:0] r_rresp [0:NM-1] = '{NM{0}};
@@ -480,11 +476,11 @@ module axilxbar #(
                 if (srfull[N]) begin
                     slave_raccepts[N] = 1'b0;
                 end
-                // verilator lint_off  WIDTH
+
                 if (!rrequest[N][srindex[N]]) begin
                     slave_raccepts[N] = 1'b0;
                 end
-                // verilator lint_on  WIDTH
+
                 if (!rgrant[N][NS]) begin
                     if (m_axi_arvalid[srindex[N]] && !m_axi_arready[srindex[N]]) begin
                         slave_raccepts[N] = 1'b0;

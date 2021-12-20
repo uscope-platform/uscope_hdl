@@ -111,7 +111,7 @@ module address_decoder #(
     reg [DW-1:0] int_o_data;
     assign o_data = int_o_data;
 
-    reg [DW-1:0] int_o_valid;
+    reg int_o_valid;
     assign o_valid = int_o_valid;
 
 
@@ -238,7 +238,7 @@ module address_decoder #(
 
             // o_stall
             always_comb begin
-                o_stall = (int_o_valid && i_stall);
+                o_stall = (int_o_valid & i_stall);
             end
 
         end else begin
