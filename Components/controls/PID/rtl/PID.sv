@@ -56,11 +56,25 @@ module PID #(parameter BASE_ADDRESS = 32'h43c00000, parameter INPUT_DATA_WIDTH =
     reg [31:0] cu_read_registers [8:0];
 
     localparam ADDITIONAL_BITS = 32 - OUTPUT_DATA_WIDTH;
+    localparam [31:0] INITIAL_OUTPUT_VALUES [8:0]= '{
+            'h010101,
+            -16'sd32767,
+            16'sd32767,
+            -16'sd32767,
+            16'sd32767,
+            0,
+            0,
+            0,
+            0
+        };
+
+
     axil_simple_register_cu #(
         .N_READ_REGISTERS(9),
         .N_WRITE_REGISTERS(9),
         .REGISTERS_WIDTH(32),
-        .BASE_ADDRESS(BASE_ADDRESS)
+        .BASE_ADDRESS(BASE_ADDRESS),
+        .INITIAL_OUTPUT_VALUES(INITIAL_OUTPUT_VALUES)
     ) CU (
         .clock(clock),
         .reset(reset),

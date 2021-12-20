@@ -19,6 +19,7 @@ module axil_simple_register_cu #(
     parameter N_READ_REGISTERS = 1,
     N_WRITE_REGISTERS = 1,
     REGISTERS_WIDTH = 32,
+    [REGISTERS_WIDTH-1:0] INITIAL_OUTPUT_VALUES [N_WRITE_REGISTERS-1:0]= '{N_WRITE_REGISTERS{0}},
     BASE_ADDRESS = 0
 ) (
     input wire clock,
@@ -158,9 +159,7 @@ assign register_write_address = (write_address - BASE_ADDRESS) >> 2;
 
 always @ (posedge clock) begin
     if (~reset) begin
-        for(integer idx = 0; idx <N_WRITE_REGISTERS; idx = idx+1) begin
-            output_registers[idx] <= 0;
-        end
+        output_registers <= INITIAL_OUTPUT_VALUES;
         read_data <= 0;
     end else begin
         
