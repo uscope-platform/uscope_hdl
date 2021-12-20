@@ -39,10 +39,8 @@ module axil_crossbar_tb();
     ) UUT (
         .clock(clk),
         .reset(reset),
-        .s1(axi_m1),
-        .s2(axi_m2),
-        .m1(axi_s1),
-        .m2(axi_s2)
+        .masters('{axi_s2, axi_s1}),
+        .slaves('{axi_m2, axi_m1})
     );
 
     logic [31:0] input_registers [2:0] = {0,0,0};
