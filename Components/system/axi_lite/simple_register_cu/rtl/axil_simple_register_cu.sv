@@ -19,13 +19,16 @@ module axil_simple_register_cu #(
     parameter N_READ_REGISTERS = 1,
     N_WRITE_REGISTERS = 1,
     REGISTERS_WIDTH = 32,
-    [REGISTERS_WIDTH-1:0] INITIAL_OUTPUT_VALUES [N_WRITE_REGISTERS-1:0] = '{N_WRITE_REGISTERS{0}},
+    N_TRIGGER_REGISTERS = 1,
+    parameter [REGISTERS_WIDTH-1:0] INITIAL_OUTPUT_VALUES [N_WRITE_REGISTERS-1:0] = '{N_WRITE_REGISTERS{0}},
+    parameter [31:0] TRIGGER_REGISTERS_IDX [N_TRIGGER_REGISTERS-1:0] = '{N_TRIGGER_REGISTERS{0}},
     BASE_ADDRESS = 0
 ) (
     input wire clock,
     input wire reset,
     input wire [REGISTERS_WIDTH-1:0] input_registers [N_READ_REGISTERS-1:0],
     output reg [REGISTERS_WIDTH-1:0] output_registers [N_WRITE_REGISTERS-1:0],
+    output reg [N_TRIGGER_REGISTERS-1:0] trigger_out,
     axi_lite.slave axil
 
 );
@@ -159,14 +162,20 @@ assign register_write_address = (write_address - BASE_ADDRESS) >> 2;
 
 always @ (posedge clock) begin
     if (~reset) begin
-        output_registers <= INITIAL_OUTPUT_VALUES;
         read_data <= 0;
     end else begin
-        
         if(read_address_valid) begin
             read_data <= input_registers[register_read_address];
         end
+    end
+end
 
+
+
+always @ (posedge clock) begin
+    if (~reset) begin
+        output_registers <= INITIAL_OUTPUT_VALUES;
+    end else begin
         if(write_valid) begin
             output_registers[register_write_address] <= apply_strobe(output_registers[register_write_address], write_data, write_strobe);
         end
@@ -174,6 +183,20 @@ always @ (posedge clock) begin
 end
 
 
+always @ (posedge clock) begin
+    if (~reset) begin
+        trigger_out <= 1'b0;
+    end else begin
+        trigger_out <= 1'b0;
 
+        if(write_valid) begin
+            for(integer i = 0; i< N_TRIGGER_REGISTERS; i= i+1)begin
+                if(register_write_address == TRIGGER_REGISTERS_IDX[i]) begin
+                    trigger_out[i] <= 1'b1;
+                end                            
+            end
+        end
+    end
+end
 
 endmodule
