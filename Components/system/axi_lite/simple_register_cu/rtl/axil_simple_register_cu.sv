@@ -19,7 +19,7 @@ module axil_simple_register_cu #(
     parameter N_READ_REGISTERS = 1,
     N_WRITE_REGISTERS = 1,
     REGISTERS_WIDTH = 32,
-    [REGISTERS_WIDTH-1:0] INITIAL_OUTPUT_VALUES [N_WRITE_REGISTERS-1:0]= '{N_WRITE_REGISTERS{0}},
+    [REGISTERS_WIDTH-1:0] INITIAL_OUTPUT_VALUES [N_WRITE_REGISTERS-1:0] = '{N_WRITE_REGISTERS{0}},
     BASE_ADDRESS = 0
 ) (
     input wire clock,
@@ -31,18 +31,18 @@ module axil_simple_register_cu #(
 );
 
 
-function [REGISTERS_WIDTH-1:0]	apply_strobe;
-		input	[REGISTERS_WIDTH-1:0]		prior_data;
-		input	[REGISTERS_WIDTH-1:0]		new_data;
-		input	[REGISTERS_WIDTH/8-1:0]	strobe;
+    function [REGISTERS_WIDTH-1:0]	apply_strobe;
+        input [REGISTERS_WIDTH-1:0] prior_data;
+        input [REGISTERS_WIDTH-1:0] new_data;
+        input [REGISTERS_WIDTH/8-1:0] strobe;
 
-		integer	k;
-		for(k=0; k<REGISTERS_WIDTH/8; k=k+1)
-		begin
-			apply_strobe[k*8 +: 8]
-				= strobe[k] ? new_data[k*8 +: 8] : prior_data[k*8 +: 8];
-		end
-	endfunction
+        integer	k;
+        for(k=0; k<REGISTERS_WIDTH/8; k=k+1)
+        begin
+            apply_strobe[k*8 +: 8]
+                = strobe[k] ? new_data[k*8 +: 8] : prior_data[k*8 +: 8];
+        end
+    endfunction
 
 
 // HANDLE READ DATA CHANNEL 
