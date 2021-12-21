@@ -176,7 +176,7 @@ always @ (posedge clock) begin
     if (~reset) begin
         output_registers <= INITIAL_OUTPUT_VALUES;
     end else begin
-        if(write_valid) begin
+        if(write_valid & write_ready) begin
             output_registers[register_write_address] <= apply_strobe(output_registers[register_write_address], write_data, write_strobe);
         end
     end
@@ -189,7 +189,7 @@ always @ (posedge clock) begin
     end else begin
         trigger_out <= 1'b0;
 
-        if(write_valid) begin
+        if(write_valid & write_ready) begin
             for(integer i = 0; i< N_TRIGGER_REGISTERS; i= i+1)begin
                 if(register_write_address == TRIGGER_REGISTERS_IDX[i]) begin
                     trigger_out[i] <= 1'b1;
