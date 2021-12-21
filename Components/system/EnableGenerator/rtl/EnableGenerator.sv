@@ -114,7 +114,6 @@ module enable_generator #(parameter BASE_ADDRESS = 0, COUNTER_WIDTH = 32, EXTERN
             sb.sb_ready <= 1;
         end else begin
             sb.sb_read_valid <= 0;
-            sb.sb_read_data <= 0;
             // Determine the next state
             case (state)
                 idle_state: //wait for command
