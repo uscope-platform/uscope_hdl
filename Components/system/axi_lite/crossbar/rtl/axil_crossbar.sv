@@ -89,24 +89,16 @@ module axilxbar #(
         // SLAVE_ADDR is a bit vector containing ADDR_WIDTH bits for each of the
         // slaves indicating the base address of the slave.  This
         // goes with SLAVE_MASK below.
-        parameter [NS*ADDR_WIDTH-1:0] SLAVE_ADDR = {
-            3'b111,  {(ADDR_WIDTH-3){1'b0}},
-            3'b110,  {(ADDR_WIDTH-3){1'b0}},
-            3'b101,  {(ADDR_WIDTH-3){1'b0}},
-            3'b100,  {(ADDR_WIDTH-3){1'b0}},
-            3'b011,  {(ADDR_WIDTH-3){1'b0}},
-            3'b010,  {(ADDR_WIDTH-3){1'b0}},
-            4'b0001, {(ADDR_WIDTH-4){1'b0}},
-            4'b0000, {(ADDR_WIDTH-4){1'b0}} },
+        parameter [ADDR_WIDTH-1:0] SLAVE_ADDR [NS-1:0] = '{NS{0}},    
         //
         // SLAVE_MASK indicates which bits in the SLAVE_ADDR bit vector
         // need to be checked to determine if a given address request
-        // maps to the given slave or not
+        // maps to the given slave or not .
+        // slave selection is done through simple address pattern matching,
+        // if a bit in the mask is 1 the corresponding bit in the SLAVE_ADDR
+        // field is checked against the incoming transaction, those bits are ignored
         // Verilator lint_off WIDTH
-        parameter [NS*ADDR_WIDTH-1:0] SLAVE_MASK =
-            (NS <= 1) ? { 4'b1111, {(ADDR_WIDTH-4){1'b0}} }
-            : { {(NS-2){ 3'b111, {(ADDR_WIDTH-3){1'b0}} }},
-                {(2){ 4'b1111, {(ADDR_WIDTH-4){1'b0}} }} },
+        parameter [ADDR_WIDTH-1:0] SLAVE_MASK [NS-1:0] =  '{NS{0}},
         // Verilator lint_on WIDTH
         //
         // If set, OPT_LOWPOWER will set all unused registers, both

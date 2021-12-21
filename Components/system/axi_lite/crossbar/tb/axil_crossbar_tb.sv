@@ -34,8 +34,8 @@ module axil_crossbar_tb();
     axil_crossbar_interface #(
         .NM(2),
         .NS(2),
-        .SLAVE_ADDR({'h20000000,'h00000000}),
-        .SLAVE_MASK({'hF0000000,'hF0000000})
+        .SLAVE_ADDR('{'h20000000,'h00000000}),
+        .SLAVE_MASK('{'hF0000000,'hF0000000})
     ) UUT (
         .clock(clk),
         .reset(reset),

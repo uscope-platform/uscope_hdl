@@ -37,25 +37,17 @@ module address_decoder #(
 
         parameter NS=8,
         parameter AW = 32, DW=32+32/8+1+1,
+    
+        // Verilator lint_on WIDTH
         //
         // SLAVE_ADDR contains address assignments for each of the
         // various slaves we are adjudicating between.
-        parameter [NS*AW-1:0] SLAVE_ADDR = {
-                { 3'b111,  {(AW-3){1'b0}} },
-                { 3'b110,  {(AW-3){1'b0}} },
-                { 3'b101,  {(AW-3){1'b0}} },
-                { 3'b100,  {(AW-3){1'b0}} },
-                { 3'b011,  {(AW-3){1'b0}} },
-                { 3'b010,  {(AW-3){1'b0}} },
-                { 4'b0010, {(AW-4){1'b0}} },
-                { 4'b0000, {(AW-4){1'b0}} }},
+        parameter [AW-1:0] SLAVE_ADDR [NS-1:0] = '{NS{0}},    
         //
         // SLAVE_MASK contains a mask of those address bits in
         // SLAVE_ADDR which are relevant.  It shall be true that if
         // !SLAVE_MASK[k] then !SLAVE_ADDR[k], for any bits of k
-        parameter [NS*AW-1:0] SLAVE_MASK = (NS <= 1) ? 0
-            : { {(NS-2){ 3'b111, {(AW-3){1'b0}} }},
-                {(2){ 4'b1111, {(AW-4){1'b0}} }} },
+        parameter [AW-1:0] SLAVE_MASK [NS-1:0] =  '{NS{0}},
         //
         // ACCESS_ALLOWED is a bit-wise mask indicating which slaves
         // may get access to the bus.  If ACCESS_ALLOWED[slave] is true,
@@ -99,7 +91,7 @@ module address_decoder #(
     // be created.  To avoid a "no-slave selected" output, slave zero must
     // have no mask bits set (and therefore no address bits set), and it
     // must also allow access.
-    localparam [0:0] OPT_NONESEL = (!ACCESS_ALLOWED[0]) || (SLAVE_MASK[AW-1:0] != 0);
+    localparam [0:0] OPT_NONESEL = (!ACCESS_ALLOWED[0]) || (SLAVE_MASK[0] != 0);
 
 
     reg [NS:0] int_o_decode;
@@ -121,7 +113,7 @@ module address_decoder #(
     // prerequest
     always_comb begin
         for(integer int_m=0; int_m<NS; int_m=int_m+1) begin
-            prerequest[int_m] = (((i_addr ^ SLAVE_ADDR[int_m*AW +: AW]) &SLAVE_MASK[int_m*AW +: AW])==0) &&(ACCESS_ALLOWED[int_m]);
+            prerequest[int_m] = (((i_addr ^ SLAVE_ADDR[int_m]) &SLAVE_MASK[int_m])==0) &&(ACCESS_ALLOWED[int_m]);
         end    
     end
 

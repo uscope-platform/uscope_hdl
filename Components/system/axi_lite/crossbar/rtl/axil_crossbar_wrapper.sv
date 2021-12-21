@@ -18,16 +18,8 @@ module axil_crossbar_interface #(
         parameter integer ADDR_WIDTH = 32,
         parameter NM = 4,
         parameter NS = 8,
-        parameter [NS*ADDR_WIDTH-1:0] SLAVE_ADDR = {
-            3'b111,  {(ADDR_WIDTH-3){1'b0}},
-            3'b110,  {(ADDR_WIDTH-3){1'b0}},
-            3'b101,  {(ADDR_WIDTH-3){1'b0}},
-            3'b100,  {(ADDR_WIDTH-3){1'b0}},
-            3'b011,  {(ADDR_WIDTH-3){1'b0}},
-            3'b010,  {(ADDR_WIDTH-3){1'b0}},
-            4'b0001, {(ADDR_WIDTH-4){1'b0}},
-            4'b0000, {(ADDR_WIDTH-4){1'b0}} },
-        parameter [NS*ADDR_WIDTH-1:0] SLAVE_MASK = (NS <= 1) ? { 4'b1111, {(ADDR_WIDTH-4){1'b0}} } : { {(NS-2){ 3'b111, {(ADDR_WIDTH-3){1'b0}} }}, {(2){ 4'b1111, {(ADDR_WIDTH-4){1'b0}} }} },
+        parameter [ADDR_WIDTH-1:0] SLAVE_ADDR [NS-1:0] = '{NS{0}},
+        parameter [ADDR_WIDTH-1:0] SLAVE_MASK [NS-1:0] =  '{NS{0}},
         parameter [0:0] OPT_LOWPOWER = 1,
         parameter OPT_LINGER = 4,
         parameter LGMAXBURST = 5
@@ -39,7 +31,6 @@ module axil_crossbar_interface #(
     );
 
     localparam STROBE_WIDTH = DATA_WIDTH/8;
-
 
     // SLAVE INTERFACES FLATTENING
     wire [NM-1:0] S_AXI_AWVALID;

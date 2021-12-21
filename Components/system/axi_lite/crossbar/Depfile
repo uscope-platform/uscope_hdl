@@ -3,7 +3,7 @@
         "project_name":"axil_crossbar",
         "target_part":"xc7z020clg400",
         "synth_modules":[],
-        "synth_tl": "axil_crossbar",
+        "synth_tl": "axil_crossbar_interface",
         "sim_modules":[],
         "sim_tl":"axil_crossbar_tb",
         "include_paths":[
