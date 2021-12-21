@@ -16,21 +16,43 @@
 `timescale 10ns / 1ns
 `include "interfaces.svh"
 `include "axis_BFM.svh"
-							
+`include "axi_lite_BFM.svh"						
+
 module axis_constant_tb();
 
     reg  clk, reset;
 
+    axi_lite axil();
+    axi_lite_BFM axil_bfm;
+    
+    axi_stream out();
+    
     //clock generation
     initial clk = 0; 
     always #0.5 clk = ~clk; 
 
+    axis_constant UUT(
+        .clock(clk),
+        .reset(reset),
+        .sync(1),
+        .const_out(out),
+        .axil(axil)
+    );
+
 
     initial begin
+        out.ready = 1;
+        axil_bfm = new(axil, 1);
         reset <=1'h1;
         #1 reset <=1'h0;
         //TESTS
         #5.5 reset <=1'h1;
+
+        # 10 axil_bfm.write('h43c00004, 'h333);
+        #1 axil_bfm.write('h43c00008, 'h44);
+        #1 axil_bfm.write('h43c00000, 'h999);
+
+
     end
 
 endmodule

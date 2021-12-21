@@ -23,115 +23,66 @@ module axis_constant #(parameter BASE_ADDRESS = 'h43c00000, parameter CONSTANT_W
     input wire        reset,
     input wire        sync,
     axi_stream.master const_out,
-    Simplebus.slave   sb
+    axi_lite axil
 );
 
-    wire[31:0] int_readdata;
-    reg act_state_ended;
 
-    RegisterFile Registers(
-        .clk(clock),
+    localparam ADDITIONAL_BITS = 32 - CONSTANT_WIDTH;
+
+    wire trigger_axis_write;
+    reg [31:0] cu_write_registers [2:0];
+    reg [31:0] cu_read_registers [2:0];
+
+
+    axil_simple_register_cu #(
+        .N_READ_REGISTERS(3),
+        .N_WRITE_REGISTERS(3),
+        .REGISTERS_WIDTH(32),
+        .BASE_ADDRESS(BASE_ADDRESS),
+        .N_TRIGGER_REGISTERS(1),
+        .TRIGGER_REGISTERS_IDX({0})
+    ) CU (
+        .clock(clock),
         .reset(reset),
-        .addr_a(BASE_ADDRESS-sb.sb_address),
-        .data_a(sb.sb_write_data),
-        .we_a(sb.sb_write_strobe),
-        .q_a(int_readdata)
+        .input_registers(cu_read_registers),
+        .output_registers(cu_write_registers),
+        .trigger_out(trigger_axis_write),
+        .axil(axil)
     );
 
-    assign sb.sb_read_data = sb.sb_read_valid ? int_readdata : 0;
-    
-    //FSM state registers
-    enum reg {
-        idle_state = 0,
-        act_state = 1
-    } state;
- 
 
-    reg [31:0] latched_adress;
-    reg [31:0] latched_writedata;
-
+    reg [31:0] constant_low_bytes;
     reg [31:0] constant_high_bytes;
     reg [31:0] constant_dest;
 
-    //latch bus writes
-    always @(posedge clock) begin
-        if(~reset) begin
-            latched_adress<=0;
-            latched_writedata<=0;
-        end else begin
-            if(sb.sb_write_strobe & state == idle_state) begin
-                latched_adress <= sb.sb_address-BASE_ADDRESS;
-                latched_writedata <= sb.sb_write_data;
-            end else begin
-                latched_adress <= latched_adress;
-                latched_writedata <= latched_writedata;
-            end
-        end
+    always_comb begin 
+        constant_low_bytes <= cu_write_registers[0];
+        constant_high_bytes <= cu_write_registers[1];
+        constant_dest <= cu_write_registers[2];
+
+        cu_read_registers[0] <= {{ADDITIONAL_BITS{1'b0}}, constant_low_bytes};
+        cu_read_registers[1] <= {{ADDITIONAL_BITS{1'b0}},constant_high_bytes};
+        cu_read_registers[2] <= {{ADDITIONAL_BITS{1'b0}},constant_dest};
+
     end
-    
 
     // Determine the next state
     always @ (posedge clock) begin : control_state_machine
         if (~reset) begin
-            state <=idle_state;
-            act_state_ended <= 0;
-            sb.sb_ready <= 1;
             const_out.valid <= 0;
             const_out.data <= 0;
-            constant_dest <= 0;
-            constant_high_bytes <= 0;
+            const_out.dest <= 0;
         end else begin
-            sb.sb_read_valid <= 0;
-            case (state)
-                idle_state: begin
-                    const_out.valid<= 0;
-                    if(sb.sb_write_strobe) begin
-                        sb.sb_ready <=0;
-                        state <= act_state;
-                    end else if(sb.sb_read_strobe) begin
-                        sb.sb_read_valid <= 1;
-                    end else
-                        state <=idle_state;
-                end
-                act_state: begin
-                    sb.sb_ready <=1;
-                    if(act_state_ended) begin
-                        state <= idle_state;
-                    end else begin
-                        state <= act_state;
-                    end
-                end        
-            endcase
+            const_out.valid <= 0;
+            if(trigger_axis_write)begin
+                if(const_out.ready & sync) begin
+                    const_out.data <= {constant_high_bytes, constant_low_bytes};
+                    const_out.dest <= constant_dest;
+                    const_out.valid <= 1;
+                end    
+            end
+            
 
-            //act if necessary
-            //State act_shadowed_state
-            //State disable_pwm_state
-            case (state)
-                idle_state: begin
-                        act_state_ended <= 0;
-                    end
-                act_state: begin
-                    case (latched_adress)
-                        'h00: begin
-                            if(const_out.ready & sync) begin
-                                const_out.data <= {constant_high_bytes, latched_writedata[31:0]};
-                                const_out.dest <= constant_dest;
-                                const_out.valid <= 1;
-                                act_state_ended<=1;
-                            end
-                        end
-                        'h04:begin
-                            constant_high_bytes <= latched_writedata[31:0];
-                            act_state_ended<=1;
-                        end
-                        'h08:begin
-                            constant_dest <= latched_writedata[31:0];
-                            act_state_ended<=1;
-                        end
-                    endcase
-                    
-                    end
-            endcase
         end
     end
 

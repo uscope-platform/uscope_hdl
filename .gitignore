@@ -93,3 +93,5 @@ Components/system/axi_lite/skid_buffer/skid_buffer/
 Components/system/axi_lite/simple_register_cu/simple_register_cu/
 
 Components/system/axi_lite/crossbar/axil_crossbar/
+
+Components/system/axi_stream/constant/constant/
