@@ -58,7 +58,7 @@ interface Simplebus;
 endinterface
 
 
-interface axi_lite #(DATA_WIDTH = 32, ADDR_WIDTH = 32);
+interface axi_lite #(DATA_WIDTH = 32, ADDR_WIDTH = 32, INTERFACE_NAME = "IF");
     logic [ADDR_WIDTH-1:0] ARADDR;
     logic ARREADY;
     logic ARVALID;
