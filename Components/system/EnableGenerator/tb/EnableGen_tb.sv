@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 `timescale 10 ns / 1 ns
-`include "SimpleBus_BFM.svh"
-
+`include "axi_lite_BFM.svh"
+`include "interfaces.svh"
 module EnableGen_tb();
     
     logic clk, rst;
@@ -34,28 +34,76 @@ module EnableGen_tb();
         #5 rst <=1;
     end
 
-    Simplebus s();
+    axi_lite axil();
 
 
     enable_generator gen(
         .clock(clk),
         .reset(rst),
+        .ext_timebase(0),
         .gen_enable_in(gen_en),
         .enable_out(en_out),
-        .sb(s)
+        .axil(axil)
     );
 
-    simplebus_BFM BFM;
-    
+    axi_lite_BFM axi_bfm;
+    reg [31:0] period;
+
     initial begin
         //INITIAL SETTINGS AND INSTANTIATIONS OF CLASSES
-        BFM = new(s,1);
+        axi_bfm = new(axil,1);
         gen_en = 0;
-
-        #10 BFM.write(32'h0,31'h2);
+        period = 'h10;
+        #10 axi_bfm.write(32'h4, period);
+        #3 axi_bfm.write(32'h8,32'h4);
         #5 gen_en =1;
-        #20 BFM.write(32'h0,31'hC);
-        #100 BFM.write(32'h0,31'h2);
+        #2000 
+        period = 'h20;
+        axi_bfm.write(32'h4, period);
+        #100 axi_bfm.write(32'h8,32'h10);
     end
     
+    reg [31:0] check_counter = 0;
+
+    always_ff @(posedge clk) begin
+        if(gen_en)begin
+            check_counter <= check_counter + 1;    
+        end
+    end
+
+    reg [31:0] expected_period = 0;
+
+    initial begin
+        expected_period <= 'h10;
+        #2130;
+        expected_period = 43;
+        #30;
+        expected_period = 'h20;
+    end
+
+    reg initialized_checker = 0;
+    reg [31:0] prev_check_counter = 0;
+    
+    wire [31:0] current_period;
+    assign current_period = check_counter - prev_check_counter;
+
+
+    always @(posedge en_out) begin
+        if(check_counter % 4 != 0) begin
+            $error("Wrong enable output phase");
+        end
+
+        if(!initialized_checker) begin
+            initialized_checker <= 1;
+        end else begin
+            if(expected_period == period)begin
+                if(prev_check_counter != check_counter-expected_period) begin
+                    $error("Wrong enable output period");
+                end    
+            end
+            
+        end
+        prev_check_counter <= check_counter;
+    end
+
 endmodule
