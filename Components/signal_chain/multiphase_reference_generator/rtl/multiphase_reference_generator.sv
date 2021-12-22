@@ -26,12 +26,9 @@ module multiphase_reference_generator #(parameter N_PHASES=6, DATA_PATH_WIDTH=16
     axi_stream.master angle_out,
     axi_stream.slave phase,
     axi_stream.master reference_out,
-    Simplebus sb
+    axi_lite.slave axil
 );
 
-    reg emulate_angle;
-    reg [31:0] emulation_sampling_period;
-    reg [31:0] emulation_phase_advance;
     reg [31:0] emulator_tb;
     reg [15:0] emulator_counter;
 
@@ -40,15 +37,39 @@ module multiphase_reference_generator #(parameter N_PHASES=6, DATA_PATH_WIDTH=16
     defparam emulated_phase.DATA_WIDTH = 16;
     axi_stream emulated_phase();
     
-    defparam gen_cu.BASE_ADDRESS=BASE_ADDRESS;
-    multiphase_reference_generator_CU gen_cu(
+    reg [31:0] cu_write_registers [2:0];
+    reg [31:0] cu_read_registers [2:0];
+
+
+    axil_simple_register_cu #(
+        .N_READ_REGISTERS(3),
+        .N_WRITE_REGISTERS(3),
+        .REGISTERS_WIDTH(32),
+        .BASE_ADDRESS(BASE_ADDRESS)
+    ) CU (
         .clock(clock),
         .reset(reset),
-        .emulation_mode(emulate_angle),
-        .emulation_phase_advance(emulation_phase_advance),
-        .emulation_sampling_period(emulation_sampling_period),
-        .sb(sb)
+        .input_registers(cu_read_registers),
+        .output_registers(cu_write_registers),
+        .axil(axil)
     );
+
+
+    reg emulate_angle;
+    reg [31:0] emulation_phase_advance;
+    reg [31:0] emulation_sampling_period;
+
+    always_comb begin 
+        emulate_angle <= cu_write_registers[0];
+        emulation_phase_advance <= cu_write_registers[1];
+        emulation_sampling_period <= cu_write_registers[2];
+
+        cu_read_registers[0] <= {{31{1'b0}}, emulate_angle};
+        cu_read_registers[1][31:0] <= emulation_phase_advance[31:0];
+        cu_read_registers[2] <= emulation_sampling_period;
+
+    end
+
 
     
     enable_generator_counter angle_emulator_tb(

@@ -14,9 +14,8 @@
 // limitations under the License.
 
 `timescale 10 ns / 1 ns
-`include "SimpleBus_BFM.svh"
+`include "axi_lite_BFM.svh"
 `include "interfaces.svh"
-`include "SPI_BFM.svh"
 
 module multiphase_sinusoid_generator_tb();
     
@@ -29,11 +28,12 @@ module multiphase_sinusoid_generator_tb();
 
     localparam N_PHASES = 6;
 
-    Simplebus s();
+    axi_lite axil();
+    axi_lite_BFM axil_bfm;
+
     axi_stream phase();
     defparam currents.DATA_WIDTH = 16;
     axi_stream currents();
-    simplebus_BFM sb_BFM;
     axi_stream angle_out();
     reg clk, reset;
 
@@ -42,17 +42,21 @@ module multiphase_sinusoid_generator_tb();
     reg [15:0] phase_accumulator;
     reg [15:0] iq;
 
-multiphase_reference_generator UUT(
-    .clock(clk),
-    .reset(reset),
-    .phase(phase),
-    .sync(1),
-    .Id(100),
-    .Iq(iq),
-    .angle_out(angle_out),
-    .reference_out(currents),
-    .sb(s)
-);
+    reg [15:0] phase_shifts [N_PHASES-1:0];
+    reg sync;
+
+    multiphase_reference_generator UUT(
+        .clock(clk),
+        .reset(reset),
+        .phase(phase),
+        .sync(sync),
+        .Id(100),
+        .Iq(iq),
+        .angle_out(angle_out),
+        .reference_out(currents),
+        .phase_shifts(phase_shifts),
+        .axil(axil)
+    );
     //clock generation
     initial clk = 0; 
     always #0.5 clk = ~clk; 
@@ -60,8 +64,9 @@ multiphase_reference_generator UUT(
     initial begin  
         phase.valid = 0;
         phase.data = 0;
+        phase_shifts = '{0, 4000, 8000, 12000, 16000, 20000};
         iq = 0;
-        sb_BFM = new(s,1);
+        axil_bfm = new(axil,1);
         phase_accumulator <= 0;
         frequency = 1;
         //Initial status
@@ -69,9 +74,25 @@ multiphase_reference_generator UUT(
         #10 reset <=1'h0;
         //TESTS
         #20.5 reset <=1'h1;
+
         #2000000 iq = 200;
         //#100000 frequency = 3;
     end
+
+    reg [31:0] sync_counter = 0;
+
+    always_ff @(posedge clk) begin
+        
+        if(sync_counter == 30)begin
+            sync_counter <= 0;
+            sync <= 1;
+        end else begin
+            sync <= 0;
+            sync_counter <= sync_counter +1;
+        end
+
+    end
+
 
     initial begin
         #35.5
