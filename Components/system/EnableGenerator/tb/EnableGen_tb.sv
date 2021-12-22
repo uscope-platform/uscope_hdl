@@ -45,7 +45,7 @@ module EnableGen_tb();
         .enable_out(en_out),
         .axil(axil)
     );
-
+    
     axi_lite_BFM axi_bfm;
     reg [31:0] period;
 

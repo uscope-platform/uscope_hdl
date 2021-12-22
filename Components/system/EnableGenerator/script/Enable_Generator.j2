@@ -18,39 +18,61 @@
 module enable_generator_{{n_enables}} #(parameter BASE_ADDRESS = 0, COUNTER_WIDTH = 32)(
     input wire        clock,
     input wire        reset,
+    input wire        ext_timebase,
     input wire        gen_enable_in,
     {%- for i in range(n_enables) %}
     output wire enable_out_{{i+1}},
     {%- endfor %}
-    Simplebus.slave sb
+    axi_lite.slave axil
 );
 
     reg [COUNTER_WIDTH-1:0] period;
     wire [COUNTER_WIDTH-1:0] count;
-    reg [31:0] latched_adress;
-    reg [31:0] latched_writedata;
-    reg state,act_state_ended, bus_enable;
+
+    reg bus_enable;
     {% for i in range(n_enables) %}
     reg [COUNTER_WIDTH-1:0] enable_threshold_{{i+1}};
     {%- endfor %}
 
-    wire [31:0] int_read_data;
-    
-    assign sb.sb_read_data = sb.sb_read_valid ? int_read_data : 0;
 
-    //REGISTER FILE FOR READBACK
-    RegisterFile Registers(
-        .clk(clock),
+
+    reg [31:0] cu_write_registers [{{n_enables+1}}:0];
+    reg [31:0] cu_read_registers [{{n_enables+1}}:0];
+
+    localparam ADDITIONAL_BITS = 32 - COUNTER_WIDTH;
+
+    axil_simple_register_cu #(
+        .N_READ_REGISTERS({{n_enables+2}}),
+        .N_WRITE_REGISTERS({{n_enables+2}}),
+        .REGISTERS_WIDTH(32),
+        .BASE_ADDRESS(BASE_ADDRESS)
+    ) CU (
+        .clock(clock),
         .reset(reset),
-        .addr_a(sb.sb_address-BASE_ADDRESS),
-        .data_a(sb.sb_write_data),
-        .we_a(sb.sb_write_strobe),
-        .q_a(int_read_data)
+        .input_registers(cu_read_registers),
+        .output_registers(cu_write_registers),
+        .axil(axil)
     );
+
+
+    always_comb begin 
+        bus_enable <= cu_write_registers[0];
+        period <= cu_write_registers[1];
+        {%- for i in range(n_enables) %}
+        enable_threshold_{{i+1}} <= cu_write_registers[{{i+2}}];
+        {%- endfor %}
+        cu_read_registers[0] <= {{"{31'b0, {bus_enable}}"}};
+        cu_read_registers[1] <= {{"{{ADDITIONAL_BITS{1'b0}},period}"}};
+
+        {%- for i in range(n_enables) %}
+        cu_read_registers[{{2+i}}] <= {{"{{ADDITIONAL_BITS{1'b0}}"}},enable_threshold_{{i+1}}};
+        {%- endfor %}
+    end
 
     enable_generator_counter counter(
         .clock(clock),
         .reset(reset),
+        .external_timebase(ext_timebase),
         .gen_enable_in(bus_enable | gen_enable_in),
         .period(period),
         .counter_out(count)
@@ -66,75 +88,6 @@ module enable_generator_{{n_enables}} #(parameter BASE_ADDRESS = 0, COUNTER_WIDT
     );
     {% endfor %}
 
-    // FSM states
-    parameter idle_state = 0, act_state = 1;
 
-    //latch bus writes
-    always @(posedge clock) begin : sb_registration_logic
-        if(~reset) begin
-            latched_adress<=0;
-            latched_writedata<=0;
-        end else begin
-            if(sb.sb_write_strobe & state == idle_state) begin
-                latched_adress <= sb.sb_address;
-                latched_writedata <= sb.sb_write_data;
-            end 
-        end
-    end
-
-    always @ (posedge clock) begin : control_state_machine
-        if (~reset) begin
-            state <=idle_state;
-            act_state_ended <= 0;
-            bus_enable<=0;
-            sb.sb_ready <= 1;
-            {% for i in range(n_enables) %}
-            enable_threshold_{{i+1}} <= 0;
-            {%- endfor %}
-        end else begin
-            sb.sb_read_valid <= 0;
-            // Determine the next state
-            case (state)
-                idle_state: //wait for command
-                    if(sb.sb_read_strobe) begin
-                        sb.sb_read_valid <= 1;
-                    end else if(sb.sb_write_strobe) begin
-                        sb.sb_ready <=0;
-                        state <= act_state;
-                    end else
-                        state <=idle_state;
-                act_state: // Act on shadowed write
-                    if(act_state_ended) begin
-                        state <= idle_state;
-                        sb.sb_ready <=1;
-                    end else begin
-                        state <= act_state;
-                    end
-            endcase
-            // act
-            case (state)
-                idle_state: begin
-                        act_state_ended <= 0;
-                    end
-                act_state: begin
-                    case (latched_adress)
-                        BASE_ADDRESS+32'h00: begin
-                            bus_enable <= latched_writedata[0];
-                        end
-                        BASE_ADDRESS+32'h04: begin
-                            period <= latched_writedata[31:0];
-                        end
-                        {%- for i in range(n_enables) %}
-                        BASE_ADDRESS+32'h{{hexify(i*4+8)}}: begin
-                            enable_threshold_{{i+1}} <= latched_writedata[31:0];
-                        end
-                        {%- endfor %}
-                        
-                    endcase
-                    act_state_ended<=1;
-                    end
-            endcase
-        end
-    end
 
 endmodule
