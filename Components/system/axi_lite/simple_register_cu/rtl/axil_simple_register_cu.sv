@@ -22,6 +22,7 @@ module axil_simple_register_cu #(
     N_TRIGGER_REGISTERS = 1,
     parameter [REGISTERS_WIDTH-1:0] INITIAL_OUTPUT_VALUES [N_WRITE_REGISTERS-1:0] = '{N_WRITE_REGISTERS{0}},
     parameter [31:0] TRIGGER_REGISTERS_IDX [N_TRIGGER_REGISTERS-1:0] = '{N_TRIGGER_REGISTERS{0}},
+    REGISTERED_BUFFERS = 0,
     BASE_ADDRESS = 0
 ) (
     input wire clock,
@@ -78,7 +79,7 @@ logic read_address_valid;
 
 
 axil_skid_buffer #(
-    .REGISTER_OUTPUT(1),
+    .REGISTER_OUTPUT(REGISTERED_BUFFERS),
     .DATA_WIDTH(32)
 ) address_read_buffer (
     .clock(clock),
@@ -120,7 +121,7 @@ logic [31:0] write_address;
 logic write_address_valid;
 
 axil_skid_buffer #(
-    .REGISTER_OUTPUT(1),
+    .REGISTER_OUTPUT(REGISTERED_BUFFERS),
     .DATA_WIDTH(32)
 ) address_write_buffer (
     .clock(clock),
@@ -137,7 +138,7 @@ logic [3:0] write_strobe;
 logic write_data_valid;
 
 axil_skid_buffer #(
-    .REGISTER_OUTPUT(1),
+    .REGISTER_OUTPUT(REGISTERED_BUFFERS),
     .DATA_WIDTH(32+4)
 ) write_data_buffer (
     .clock(clock),
