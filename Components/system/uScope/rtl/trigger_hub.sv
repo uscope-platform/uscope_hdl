@@ -17,20 +17,20 @@
 `include "interfaces.svh"
 
 
-module trigger_hub #(parameter BASE_ADDRESS = 'h43c00000, N_TRIGGERS = 16)(
+module trigger_hub #(parameter N_TRIGGERS = 16)(
     input wire        clock,
     input wire        reset,
     input wire [15:0] buffer_level,
+    input wire trigger_in,
+    input wire [31:0] selected_trigger,
     input wire capture_done,
+    input wire capture_ack,
+    input wire [15:0] trigger_position,
     output reg capture_inhibit,
-    output reg [N_TRIGGERS-1:0] trigger_out,
-    Simplebus.slave sb
+    output reg [N_TRIGGERS-1:0] trigger_out
 );
 
     reg [N_TRIGGERS-1:0] trigger_armed = 0;
-    wire capture_ack;
-    wire [N_TRIGGERS-1:0] trigger_request;
-    wire [15:0] trigger_position;
 
 
     always_ff@(posedge clock) begin
@@ -40,10 +40,8 @@ module trigger_hub #(parameter BASE_ADDRESS = 'h43c00000, N_TRIGGERS = 16)(
             if (|trigger_out) begin
                 trigger_out <= 0;
             end
-            for(integer i= 0; i<N_TRIGGERS; i++)begin 
-                if(trigger_request[i])begin
-                    trigger_armed[i] <= 1;
-                end
+            if(trigger_in)begin
+                trigger_armed[selected_trigger] <= 1;
             end
             if(|trigger_armed)begin
                 if(buffer_level == trigger_position) begin
@@ -87,20 +85,6 @@ module trigger_hub #(parameter BASE_ADDRESS = 'h43c00000, N_TRIGGERS = 16)(
             
         endcase
     end
-
-    trigger_hub_CU #(
-        .BASE_ADDRESS(BASE_ADDRESS),
-        .N_TRIGGERS(N_TRIGGERS)
-        ) UUT (
-        .clock(clock),
-        .reset(reset),
-        .trigger_out(trigger_request),
-        .trigger_position(trigger_position),
-        .capture_ack(capture_ack),
-        .sb(sb)
-    );
-
-
 
 
 endmodule

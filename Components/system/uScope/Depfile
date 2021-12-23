@@ -1,11 +1,11 @@
 {
     "general":{
-        "project_name":"sb_axis_dma_master",
+        "project_name":"uscope",
         "target_part":"xc7z020clg400",
         "synth_modules":[],
-        "synth_tl": "sb_axis_dma_master",
+        "synth_tl": "uScope",
         "sim_modules":[],
-        "sim_tl":"sb_axis_dma_master_tb",
+        "sim_tl":"uScope_tb",
         "include_paths":[
             "Components/Common"
         ]
