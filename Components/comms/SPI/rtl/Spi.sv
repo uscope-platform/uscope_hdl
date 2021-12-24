@@ -27,7 +27,7 @@ module SPI #(parameter BASE_ADDRESS = 32'h43c00000, SS_POLARITY_DEFAULT=0, N_CHA
     output logic [N_CHANNELS-1:0] MOSI,
     output logic SS,
     // SIMPLEBUS
-    Simplebus.slave simple_bus,
+    axi_lite.slave axi_in,
     input wire SPI_write_valid,
     input wire [31:0] SPI_write_data,
     output reg SPI_write_ready
@@ -165,6 +165,7 @@ module SPI #(parameter BASE_ADDRESS = 32'h43c00000, SS_POLARITY_DEFAULT=0, N_CHA
         .period(start_generator_period),
         .start_generator_enable(start_generator_enable),
         .transfer_length_choice(transfer_length_choice),
+        .axi_in(axi_in),
         .simple_bus(simple_bus),
         .SPI_write_valid(SPI_write_valid),
         .SPI_write_data(SPI_write_data),

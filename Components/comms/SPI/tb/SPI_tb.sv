@@ -14,6 +14,7 @@
 // limitations under the License.
 `timescale 10 ns / 1 ns
 `include "SimpleBus_BFM.svh"
+`include "axi_lite_BFM.svh"
 
 module SPI_tb();
     
@@ -29,7 +30,7 @@ module SPI_tb();
     logic miso;
 
     logic [31:0] read_result;
-    logic [15:0] out;
+    logic [31:0] out [2:0];
 
     reg [31:0] SPI_write_data;
     reg SPI_write_valid;
@@ -57,12 +58,14 @@ module SPI_tb();
         #5 rst <=1;
     end
 
+    axi_lite axil();
+    axi_lite_BFM axil_bfm;
+
     Simplebus s();
 
     SPI DUT(
         .clock(clk),
         .reset(rst),
-        .SPI_write_valid(ext_start),
         .data_valid(out_val),
         .data_out(out),
         .MISO(miso),
@@ -70,15 +73,32 @@ module SPI_tb();
         .MOSI(mosi),
         .SS(ss_in),
         .simple_bus(s),
+        .axi_in(axil),
         .SPI_write_data(SPI_write_data),
         .SPI_write_valid(SPI_write_valid)
     );
 
     simplebus_BFM BFM;
+
+
+
+    initial begin
+        
+        //TEST MASTER MODE
+        #10 axil_bfm.write(32'h43C00000,31'h101c4);
+        #5 axil_bfm.write(32'h43C00004,31'h1c);
+        #5 axil_bfm.write(32'h43C00008,31'h0);
+        #5 axil_bfm.write(32'h43C0000C,31'hCAFE);
+        #50 axil_bfm.write(32'h43C0000C,31'h0);
+        #10 axil_bfm.write(32'h43C00000,31'h111c4);
+        #50 axil_bfm.write(32'h43C00014,31'hff);
+    
+    end
     
     initial begin
         //INITIAL SETTINGS AND INSTANTIATIONS OF CLASSES
         BFM = new(s,1);
+        axil_bfm = new(axil,1);
         spi_mode <=spi_mode_master;
         miso <= 0;
         sclk_en <= 0;

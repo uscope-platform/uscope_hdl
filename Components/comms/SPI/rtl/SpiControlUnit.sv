@@ -37,213 +37,110 @@ module SpiControlUnit #(parameter BASE_ADDRESS = 32'h43c0000, SS_POLARITY_DEFAUL
     output logic latching_edge,
     output logic transfer_length_choice,
     // SIMPLEBUS
-    Simplebus.slave simple_bus,
+    axi_lite.slave axi_in,
     // AXI STREAM WRITE
     input wire SPI_write_valid,
     input wire [31:0] SPI_write_data,
     output reg SPI_write_ready
 );
 
+    localparam  N_REGISTERS = 4 + N_CHANNELS;
 
-    //Latched SimpleBus registers
-    logic [31:0] latched_write_data = 0;
-    logic [31:0] latched_address = 0;
-    logic [31:0] register_readback;
+    localparam [31:0] TRIGGER_REGISTERS_IDX [0:0] = '{3};
 
-    //SPI settings Registers 
-    logic [31:0] spi_start_delay = 0;
+    localparam [31:0] INITIAL_OUTPUT_VALUES [N_REGISTERS-1:0]= '{
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        {SS_POLARITY_DEFAULT,3'b0,SS_POLARITY_DEFAULT,5'b0,4'hE,4'b0}
+    };
 
-    //Data registers
-    logic [31:0] read_spi_data = 0;
-    
-    //FSM registers
-    enum logic [2:0] {
-        wait_state = 0,
-        bus_write_state = 1,
-        start_transfer_state=3,
-        transfer_in_progress_state=4
-    } state = wait_state;
+    reg [31:0] cu_write_registers [N_REGISTERS-1:0];
+    reg [31:0] cu_read_registers [N_REGISTERS-1:0];
+    reg trigger_transfer;
 
-    logic bus_write_done = 0;
-
-    reg read_data_blanking;
-
-
-
-    //REGISTER FILE FOR READBACK
-    RegisterFile Registers(
-        .clk(clock),
+    axil_simple_register_cu #(
+        .N_READ_REGISTERS(N_REGISTERS),
+        .N_WRITE_REGISTERS(N_REGISTERS),
+        .REGISTERS_WIDTH(32),
+        .N_TRIGGER_REGISTERS(1),
+        .INITIAL_OUTPUT_VALUES(INITIAL_OUTPUT_VALUES),
+        .TRIGGER_REGISTERS_IDX(TRIGGER_REGISTERS_IDX),
+        .BASE_ADDRESS(BASE_ADDRESS)
+    ) axi_if(
+        .clock(clock),
         .reset(reset),
-        .addr_a(simple_bus.sb_address-BASE_ADDRESS),
-        .data_a(simple_bus.sb_write_data),
-        .we_a(simple_bus.sb_write_strobe),
-        .q_a(register_readback)
-    );
+        .input_registers(cu_read_registers),
+        .output_registers(cu_write_registers),
+        .trigger_out(trigger_transfer),
+        .axil(axi_in)
+        );
+
+    always_comb begin 
+
+        spi_mode <= cu_write_registers[0][0];
+        divider_setting <= cu_write_registers[0][3:1];
+        spi_transfer_length <= cu_write_registers[0][7:4];
+        clockgen_enable <= cu_write_registers[0][8];
+        spi_direction <= cu_write_registers[0][9];
+        start_generator_enable <= cu_write_registers[0][12];
+        ss_polarity <= cu_write_registers[0][13];
+        ss_deassert_delay_enable <= cu_write_registers[0][14];
+        transfer_length_choice <= cu_write_registers[0][15];
+        latching_edge <= cu_write_registers[0][16];
+        clock_polarity <= cu_write_registers[0][17];
+
+        spi_delay <= cu_write_registers[1];
+        period <= cu_write_registers[2];
+        // a write to cu_write_registers[3] is used to trigger a spi transfer
+
+        for(int i = 0; i <N_CHANNELS; i = i+1)begin
+            spi_data_out[i] <= cu_write_registers[i+4];    
+        end
+
+        cu_read_registers[0][0] <= spi_mode;
+        cu_read_registers[0][3:1] <= divider_setting;
+        cu_read_registers[0][7:4] <= spi_transfer_length;
+        cu_read_registers[0][8] <= clockgen_enable;
+        cu_read_registers[0][9] <= spi_direction;
+        cu_read_registers[0][8] <= clockgen_enable;
+        cu_read_registers[0][11:10] <= 0;
+        cu_read_registers[0][12] <= start_generator_enable;
+        cu_read_registers[0][13] <= ss_polarity;
+        cu_read_registers[0][14] <= ss_deassert_delay_enable;
+        cu_read_registers[0][15] <= transfer_length_choice;
+        cu_read_registers[0][16] <= latching_edge;
+        cu_read_registers[0][17] <= clock_polarity;
+        cu_read_registers[0][31:18] <= 0;
+
+        cu_read_registers[1] <= spi_delay;
+        cu_read_registers[2] <= period;
+        cu_read_registers[3] <= unit_busy;
+        for(int i = 0; i <N_CHANNELS; i = i+1)begin
+            cu_read_registers[i+4] <= spi_data_in[i];
+        end
+        spi_start_transfer <= trigger_transfer;
+    end
+
+    reg unit_busy = 0;
     
-
-    always_comb begin
-        if(~reset) begin
-            simple_bus.sb_read_data <=0;
+    always_ff @(posedge clock) begin
+        if(!reset)begin
+            unit_busy <= 0;
+            SPI_write_ready <= 1;
         end else begin
-            if(read_data_blanking) begin
-                simple_bus.sb_read_data <= 0;
-                simple_bus.sb_read_valid <= 0;
-            end else begin
-                if(latched_address==8'h10) simple_bus.sb_read_data <= spi_data_in[0];
-                else if(latched_address==8'h20) simple_bus.sb_read_data <= spi_data_in[1];
-                else if(latched_address==8'h24) simple_bus.sb_read_data <= spi_data_in[2];
-                else simple_bus.sb_read_data <= register_readback;
-                simple_bus.sb_read_valid <= 1;
+            if(spi_start_transfer) begin
+                unit_busy <= 1;
+                SPI_write_ready <= 0;
+            end else if(transfer_done) begin
+                unit_busy <= 0;
+                SPI_write_ready <= 1;
             end
         end
-    end
-
-    always @(posedge clock) begin
-        if(~reset) begin
-            latched_address<=0;
-            latched_write_data<=0;
-        end else begin
-            if((simple_bus.sb_write_strobe || simple_bus.sb_read_strobe) & state == wait_state) begin
-                latched_address <= simple_bus.sb_address-BASE_ADDRESS;
-                latched_write_data <= simple_bus.sb_write_data;
-            end else begin
-                latched_address <= latched_address;
-            end
-        end
-    end
-
-// Determine the next state
-    always @ (posedge clock) begin
-        if (!reset) begin
-            //RESET OUTPUTS
-            read_data_blanking <= 1;
-            simple_bus.sb_ready <= 1'b1;
-            divider_setting <= 0;
-            spi_data_out <= '{N_CHANNELS{0}};
-            spi_mode <= 0;
-            spi_delay <= 1;
-            clockgen_enable <= 0;
-            transfer_length_choice <= 0;
-            ss_deassert_delay_enable <= 0;
-            start_generator_enable <= 0;
-            spi_start_transfer <= 0;
-            spi_direction <= 0;
-            period <= 0;
-            ss_polarity <= SS_POLARITY_DEFAULT;
-            latching_edge <= 0;
-            
-            //RESET INTERNAL VARIABLES
-            spi_transfer_length <= 14;
-
-            state <= wait_state;
-            
-        end else begin
-            case (state)
-                wait_state: begin
-                    if(SPI_write_valid)begin
-                        state <= start_transfer_state;
-                        spi_data_out[0] <= SPI_write_data[31:0];
-                        simple_bus.sb_ready <= 0;
-                        SPI_write_ready <= 0;
-                    end else if(simple_bus.sb_write_strobe)begin
-                        simple_bus.sb_ready <= 0;
-                        SPI_write_ready <= 0;
-                        if(simple_bus.sb_address-BASE_ADDRESS == 8'h0C) begin
-                            state <= start_transfer_state;
-                        end else begin
-                            state<=bus_write_state;
-                        end
-                    end else if(simple_bus.sb_read_strobe) begin
-                        simple_bus.sb_ready <= 0;
-                        SPI_write_ready <= 0;
-                        read_data_blanking <= 0;
-                        state<=wait_state;
-                    end else begin
-                        read_data_blanking <= 1;
-                        simple_bus.sb_ready <= 1;
-                        SPI_write_ready <= 1;
-                        state<=wait_state;
-                    end
-                end
-                bus_write_state: begin
-                    if(bus_write_done) begin
-                        simple_bus.sb_ready <=1;
-                        SPI_write_ready <= 1;
-                        state <= wait_state;
-                    end else begin
-                        state <= bus_write_state;
-                    end
-                end
-                start_transfer_state: begin
-                    state <= transfer_in_progress_state;
-                end 
-                transfer_in_progress_state: begin
-                    if(transfer_done) begin
-                        simple_bus.sb_ready <=1;
-                        SPI_write_ready <= 1;
-                        state <= wait_state;
-                    end else begin
-                        state <= transfer_in_progress_state;
-                    end
-                end
-                default: begin
-                    state <= wait_state;
-                end
-            endcase
-
-            case (state)
-                wait_state: begin 
-                    bus_write_done <=0;
-                end
-                bus_write_state: begin
-                    case (latched_address)
-                        8'h00: begin
-                            spi_mode <= latched_write_data[0];
-                            divider_setting <= latched_write_data[3:1];
-                            spi_transfer_length <= latched_write_data[7:4];
-                            clockgen_enable <= latched_write_data[8];
-                            spi_direction <= latched_write_data[9];
-                            start_generator_enable <= latched_write_data[12];
-                            ss_polarity <= latched_write_data[13];
-                            ss_deassert_delay_enable <= latched_write_data[14];
-                            transfer_length_choice <= latched_write_data[15];
-                            latching_edge <= latched_write_data[16];
-                            clock_polarity <= latched_write_data[17];
-                            bus_write_done <=1;
-                        end
-                        8'h04: begin
-                            spi_delay <= latched_write_data[31:0];
-                            bus_write_done <=1;
-                        end
-                        8'h08: begin
-                            spi_data_out[0] <= latched_write_data[31:0];
-                            bus_write_done <=1;
-                        end
-                        8'h14: begin
-                            period <= latched_write_data[31:0];
-                            bus_write_done <=1;
-                        end
-                        8'h18: begin
-                            spi_data_out[1] <= latched_write_data[31:0];
-                            bus_write_done <=1;
-                        end
-                        8'h1C: begin
-                            spi_data_out[2] <= latched_write_data[31:0];
-                            bus_write_done <=1;
-                        end
-                    endcase
-                   
-                end
-                start_transfer_state: begin
-                    spi_start_transfer <=1;
-                end
-                transfer_in_progress_state: begin
-                    spi_start_transfer <=0;
-                end
-
-            endcase
-
-        end
+        
     end
 
 

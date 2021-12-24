@@ -15,6 +15,7 @@
 `timescale 10 ns / 1 ns
 `include "SimpleBus_BFM.svh"
 `include "SPI_BFM.svh"
+`include "axi_lite_BFM.svh"
 
 module MC_spi_bfm_tb();
     
@@ -34,7 +35,6 @@ module MC_spi_bfm_tb();
     reg [31:0] SPI_write_data;
     reg SPI_write_valid;
 
-    Simplebus s();
     SPI_if spi_if_1();
     SPI_if spi_if_2();
     SPI_if spi_if_3();
@@ -68,6 +68,9 @@ module MC_spi_bfm_tb();
         #5 rst <=1;
     end
 
+    axi_lite axil();
+    axi_lite_BFM axil_bfm;
+
     
     defparam DUT.N_CHANNELS = 3;
     SPI DUT(
@@ -79,19 +82,19 @@ module MC_spi_bfm_tb();
         .SCLK(sclk),
         .MOSI(mosi),
         .SS(ss),
-        .simple_bus(s),
+        .axi_in(axil),
         .SPI_write_data(SPI_write_data),
         .SPI_write_valid(SPI_write_valid)
     );
 
-    simplebus_BFM BFM;
+
     SPI_BFM spi_bfm_1;
     SPI_BFM spi_bfm_2;
     SPI_BFM spi_bfm_3;
 
     initial begin
         //INITIAL SETTINGS AND INSTANTIATIONS OF CLASSES
-        BFM = new(s,1);
+        axil_bfm = new(axil, 1);
         spi_bfm_1 = new(spi_if_1,1);
         spi_bfm_2 = new(spi_if_2,1);
         spi_bfm_3 = new(spi_if_3,1);
@@ -102,118 +105,148 @@ module MC_spi_bfm_tb();
         #10 -> slave_task_start;
         #2 -> master_task_start;
     end
+
+    spi_checker #(
+        .spi_width(spi_width)
+    ) slave_1 (
+        .clk(clk),
+        .reset(rst),
+        .SCLK(spi_if_1.SCLK),
+        .SS(spi_if_1.SS),
+        .MOSI(spi_if_1.MOSI),
+        .MISO(spi_if_1.MISO)
+    );
+
+    spi_checker #(
+        .spi_width(spi_width)
+    ) slave_2 (
+        .clk(clk),
+        .reset(rst),
+        .SCLK(spi_if_2.SCLK),
+        .SS(spi_if_2.SS),
+        .MOSI(spi_if_2.MOSI),
+        .MISO(spi_if_2.MISO)
+    );
+
+    spi_checker #(
+        .spi_width(spi_width)
+    ) slave_3 (
+        .clk(clk),
+        .reset(rst),
+        .SCLK(spi_if_3.SCLK),
+        .SS(spi_if_3.SS),
+        .MOSI(spi_if_3.MOSI),
+        .MISO(spi_if_3.MISO)
+    );
+
+    logic [spi_width-1:0] master_data_s1;
+    logic [spi_width-1:0] master_data_s2;
+    logic [spi_width-1:0] master_data_s3;
     
-
-    logic [spi_width-1:0] slave_data_s1 = 0;
-    logic [spi_width-1:0] slave_data_e1 = 0;
-    logic [spi_width-1:0] slave_data_r1 = 0;
-    logic [spi_width-1:0] master_data_s1 =0;
-    logic [spi_width-1:0] master_data_e1 =0;
-    logic [spi_width-1:0] master_data_r1 =0;
-    
-    logic [spi_width-1:0] slave_data_s2 = 0;
-    logic [spi_width-1:0] slave_data_e2 = 0;
-    logic [spi_width-1:0] slave_data_r2 = 0;
-    logic [spi_width-1:0] master_data_s2 =0;
-    logic [spi_width-1:0] master_data_e2 =0;
-    logic [spi_width-1:0] master_data_r2 =0;
-
-    logic [spi_width-1:0] slave_data_s3 = 0;
-    logic [spi_width-1:0] slave_data_e3 = 0;
-    logic [spi_width-1:0] slave_data_r3 = 0;
-    logic [spi_width-1:0] master_data_s3 =0;
-    logic [spi_width-1:0] master_data_e3 =0;
-    logic [spi_width-1:0] master_data_r3 =0;
-
-
-    initial begin : slave_1
-        @(slave_task_start);
-        forever begin
-            slave_data_s1 = $urandom;
-            spi_bfm_1.transfer(slave_data_s1, spi_width,master_data_r1);
-            slave_data_e1 = slave_data_s1;
-        end
-    end
-
-
-    initial begin : slave_2
-        @(slave_task_start);
-        forever begin
-            slave_data_s2 = $urandom;
-            spi_bfm_2.transfer(slave_data_s2, spi_width,master_data_r2);
-            slave_data_e2 = slave_data_s2;
-        end
-    end
-
-    initial begin : slave_3
-        @(slave_task_start);
-        forever begin
-            slave_data_s3 = $urandom;
-            spi_bfm_3.transfer(slave_data_s3, spi_width,master_data_r3);
-            slave_data_e3 = slave_data_s3;
-        end
-    end
-
-    initial begin : master_1
+    initial begin : master_1_axi
         @(master_task_start);
-            #10 BFM.write(32'h43C00000,31'h131c2);
-            #5 BFM.write(32'h43C00004,31'h1b);
+            #10 axil_bfm.write(32'h43C00000,31'h131c2);
+            #5 axil_bfm.write(32'h43C00004,31'h1b);
             
         forever begin
-            #5 master_data_s1 = $urandom;
-            master_data_s2 = $urandom;
-            master_data_s3 = $urandom;
-            BFM.write(32'h43C00008,master_data_s1);
-            BFM.write(32'h43C00018,master_data_s2);
-            BFM.write(32'h43C0001C,master_data_s3);
-            #5 BFM.write(32'h43C0000C,31'h0);
-            BFM.read(32'h43C00010,slave_data_r1);
-            master_data_e1 <= master_data_s1;
-            BFM.read(32'h43C00020,slave_data_r2);
-            master_data_e2 <= master_data_s2;
-            BFM.read(32'h43C00024,slave_data_r3);
-            master_data_e3 <= master_data_s3;
-            #3->transaction_check;
+            #5;
+            master_data_s1 = $urandom();
+            master_data_s2 = $urandom();
+            master_data_s3 = $urandom();
+
+            axil_bfm.write(32'h43C00010,master_data_s1);
+            axil_bfm.write(32'h43C00014,master_data_s2);
+            axil_bfm.write(32'h43C00018,master_data_s3);
+            #5 axil_bfm.write(32'h43C0000C,31'h0);
+            #120;
+            #3;
         end
     end
 
-    initial begin: test_checker_1
-        @(transaction_check);
-        #1;
-        //SLAVE 1
-        assert (slave_data_e1[11:0] == slave_data_r1[11:0]) 
-        else begin
-            $display("MOSI 1 SIDE ERROR: expected value %h | recived value %h", slave_data_e1[11:0], slave_data_r1[11:0]);
-            $stop();
-        end
-        assert (master_data_e1[11:0] == master_data_r1[11:0]) 
-        else begin
-            $display("MISO 1 SIDE ERROR: expected value %h | recived value %h", master_data_e1[11:0], master_data_r1[11:0]);
-            $stop();
-        end
-        //SLAVE 2
-        assert (slave_data_e2[11:0] == slave_data_r2[11:0]) 
-        else begin
-            $display("MOSI 2 SIDE ERROR: expected value %h | recived value %h", slave_data_e2[11:0], slave_data_r2[11:0]);
-            $stop();
-        end
-        assert (master_data_e2[11:0] == master_data_r2[11:0]) 
-        else begin
-            $display("MISO 2 SIDE ERROR: expected value %h | recived value %h", master_data_e2[11:0], master_data_r2[11:0]);
-            $stop();
-        end
-        //SLAVE 3
-        assert (slave_data_e3[11:0] == slave_data_r3[11:0]) 
-        else begin
-            $display("MOSI 3 SIDE ERROR: expected value %h | recived value %h", slave_data_e3[11:0], slave_data_r3[11:0]);
-            $stop();
-        end
-        assert (master_data_e3[11:0] == master_data_r3[11:0]) 
-        else begin
-            $display("MISO 3 SIDE ERROR: expected value %h | recived value %h", master_data_e3[11:0], master_data_r3[11:0]);
-            $stop();
-        end
-        #1;
+
+
+
+    // initial begin: test_checker_1
+    //     @(transaction_check);
+    //     #1;
+    //     //SLAVE 1
+    //     assert (slave_data_e1[11:0] == slave_data_r1[11:0]) 
+    //     else begin
+    //         $display("MOSI 1 SIDE ERROR: expected value %h | recived value %h", slave_data_e1[11:0], slave_data_r1[11:0]);
+    //         $stop();
+    //     end
+    //     assert (master_data_e1[11:0] == master_data_r1[11:0]) 
+    //     else begin
+    //         $display("MISO 1 SIDE ERROR: expected value %h | recived value %h", master_data_e1[11:0], master_data_r1[11:0]);
+    //         $stop();
+    //     end
+    //     //SLAVE 2
+    //     assert (slave_data_e2[11:0] == slave_data_r2[11:0]) 
+    //     else begin
+    //         $display("MOSI 2 SIDE ERROR: expected value %h | recived value %h", slave_data_e2[11:0], slave_data_r2[11:0]);
+    //         $stop();
+    //     end
+    //     assert (master_data_e2[11:0] == master_data_r2[11:0]) 
+    //     else begin
+    //         $display("MISO 2 SIDE ERROR: expected value %h | recived value %h", master_data_e2[11:0], master_data_r2[11:0]);
+    //         $stop();
+    //     end
+    //     //SLAVE 3
+    //     assert (slave_data_e3[11:0] == slave_data_r3[11:0]) 
+    //     else begin
+    //         $display("MOSI 3 SIDE ERROR: expected value %h | recived value %h", slave_data_e3[11:0], slave_data_r3[11:0]);
+    //         $stop();
+    //     end
+    //     assert (master_data_e3[11:0] == master_data_r3[11:0]) 
+    //     else begin
+    //         $display("MISO 3 SIDE ERROR: expected value %h | recived value %h", master_data_e3[11:0], master_data_r3[11:0]);
+    //         $stop();
+    //     end
+    //     #1;
+    // end
+
+endmodule
+
+
+module spi_checker #(
+    parameter spi_width = 12
+) (
+    input wire clk,
+    input wire reset,
+    input wire SCLK,
+    input wire SS,
+    input wire MOSI,
+    output reg MISO
+);
+
+    reg [11:0] slave_register = 0;
+
+    always @(negedge SS) begin
+        slave_register = $urandom;
     end
 
+    always @(posedge SCLK) begin
+        if(!reset)begin
+            MISO <= 0;
+        end else begin
+            MISO <= slave_register[11]; 
+
+        end
+    end
+
+    always @(negedge SCLK) begin
+        slave_register[0] = MOSI;
+        slave_register[11:0] = (slave_register[11:0] << 1);     
+    end
+
+
+    wire [11:0] output_reg;
+    
+    genvar i;
+    for(i = 0; i<12; i = i+1)begin
+        assign output_reg[i] = slave_register[11-i];
+    end
+
+
+    
 endmodule
