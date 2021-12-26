@@ -38,8 +38,14 @@ module AdcProcessing #(parameter BASE_ADDRESS = 'h43c00000, DATA_PATH_WIDTH = 16
     wire [1:0] trip_low;
     wire [7:0] decimation_ratio;
     wire pipeline_flush;
-    wire signed [DATA_PATH_WIDTH-1:0] cal_data_in;
-    wire cal_in_valid, cal_in_ready;
+
+
+    wire signed [DATA_PATH_WIDTH-1:0] cal_coefficients [2:0];
+
+
+    axi_stream #(
+        .DATA_WIDTH(DATA_PATH_WIDTH)
+    ) cal_in();
 
     AdcProcessingControlUnit #(.BASE_ADDRESS(BASE_ADDRESS), .STICKY_FAULT(STICKY_FAULT)) AdcCU(
         .clock(clock),
@@ -55,9 +61,7 @@ module AdcProcessing #(parameter BASE_ADDRESS = 'h43c00000, DATA_PATH_WIDTH = 16
         .trip_high(trip_high),
         .trip_low(trip_low),
         // CALIBRATION
-        .cal_address(cal_settings_address),
-        .cal_data(cal_settings_data),
-        .cal_we(cal_we),
+        .calibrator_coefficients(cal_coefficients),
         .gain_enable(gain_enable),
         .pipeline_flush(pipeline_flush),
         .fault(fault),
@@ -80,15 +84,11 @@ module AdcProcessing #(parameter BASE_ADDRESS = 'h43c00000, DATA_PATH_WIDTH = 16
 
     generate
         if(DECIMATED==0)begin
-            assign cal_data_in = data_in.data;
-            assign cal_in_valid = data_in.valid;
-            assign data_in.ready = cal_in_ready;
-        end else if(DECIMATED==1)begin
+            assign cal_in.data = data_in.data;
+            assign cal_in.valid = data_in.valid;
+            assign data_in.ready = cal_in.ready;
 
-            axi_stream decimated_data();        
-            assign cal_data_in = decimated_data.data;
-            assign cal_in_valid = decimated_data.valid;
-            assign decimated_data.ready = cal_in_ready;
+        end else if(DECIMATED==1)begin
             
             defparam dec.MAX_DECIMATION_RATIO = 16;
             defparam dec.DATA_WIDTH = DATA_PATH_WIDTH;
@@ -97,7 +97,7 @@ module AdcProcessing #(parameter BASE_ADDRESS = 'h43c00000, DATA_PATH_WIDTH = 16
                 .clock(clock),
                 .reset(reset),
                 .data_in(data_in),
-                .data_out(decimated_data),
+                .data_out(cal_in),
                 .decimation_ratio(decimation_ratio)
             );
 
@@ -108,9 +108,9 @@ module AdcProcessing #(parameter BASE_ADDRESS = 'h43c00000, DATA_PATH_WIDTH = 16
                 .data_in_tdata(data_in.data),
                 .data_in_tvalid(data_in.valid),
                 .data_in_tready(data_in.ready),
-                .data_out_tdata(cal_data_in),
-                .data_out_tvalid(cal_in_valid),
-                .data_out_tready(cal_in_ready)
+                .data_out_tdata(cal_in.data),
+                .data_out_tvalid(cal_in.valid),
+                .data_out_tready(cal_in.ready)
             );
         end
     endgenerate
@@ -123,7 +123,7 @@ module AdcProcessing #(parameter BASE_ADDRESS = 'h43c00000, DATA_PATH_WIDTH = 16
         .threshold_address(comparator_address),
         .threshold_in(comparator_threshold[31:16]),
         .threshold_write_enable(comparator_we[1]),
-        .data_in(cal_data_in),
+        .data_in(cal_in.data),
         .latching_mode(latch_mode[1]),
         .clear_latch(clear_latch[1]),
         .trip_high(trip_high[1]),
@@ -135,13 +135,9 @@ module AdcProcessing #(parameter BASE_ADDRESS = 'h43c00000, DATA_PATH_WIDTH = 16
     calibration calibrator(
         .clock(clock),
         .reset(reset),
-        .in_valid(cal_in_valid),
-        .in_ready(cal_in_ready),
+        .data_in(cal_in),
         .pipeline_flush(pipeline_flush),
-        .cal_address(cal_settings_address),
-        .cal_data(cal_settings_data),
-        .cal_we(cal_we),
-        .data_in(cal_data_in),
+        .calibrator_coefficients(cal_coefficients),
         .gain_enable(gain_enable),
         .data_out(data_out.data),
         .out_ready(data_out.ready),

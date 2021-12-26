@@ -15,7 +15,7 @@
 `timescale 10 ns / 1 ns
 `include "interfaces.svh"
 
-module AdcProcessingControlUnit #(parameter BASE_ADDRESS = 'h43c00000)(
+module AdcProcessingControlUnit #(parameter BASE_ADDRESS = 'h43c00000, STICKY_FAULT = 0)(
     input wire clock,
     input wire reset,
     input wire data_in_valid,
@@ -28,15 +28,8 @@ module AdcProcessingControlUnit #(parameter BASE_ADDRESS = 'h43c00000)(
     output reg [1:0]  clear_latch,
     input wire [1:0]  trip_high,
     input wire [1:0]  trip_low,
-    // FILTERS
-    output reg [3:0]  filter_address,
-    output reg [15:0] filter_tap,
-    output reg        filter_we,
-    output reg        filter_bypass,
     // CALIBRATION
-    output reg [2:0]  cal_address,
-    output reg [15:0] cal_data,
-    output reg        cal_we,
+    output reg signed [15:0] calibrator_coefficients [2:0],
     output reg        gain_enable,
     output reg        pipeline_flush,
     output reg        fault,
@@ -141,7 +134,6 @@ module AdcProcessingControlUnit #(parameter BASE_ADDRESS = 'h43c00000)(
         if (~reset) begin
             simple_bus.sb_ready <= 1'b1;
             simple_bus.sb_read_valid <= 1'b0;
-            
             read_data_blanking <= 1;
             state <= wait_state;
             comparator_address <=0;
@@ -149,13 +141,6 @@ module AdcProcessingControlUnit #(parameter BASE_ADDRESS = 'h43c00000)(
             comparator_we <=0;
             latch_mode <=0;
             clear_latch <=0;
-            filter_address <=0;
-            filter_tap <=0;
-            filter_we <=0;
-            filter_bypass <=0;
-            cal_address <=0;
-            cal_data <=0;
-            cal_we <=0;
             clear_fault<=0;
             disable_fault <= 0;
             gain_enable <=0;
@@ -231,31 +216,20 @@ module AdcProcessingControlUnit #(parameter BASE_ADDRESS = 'h43c00000)(
                         end
 
                         32'h10: begin
-                            if(~first_register_write_done) begin
-                                cal_we <= 1;
-                                cal_address <= 1;
-                                cal_data <=latched_writedata[15:0];
-                                first_register_write_done <= 1;
-                            end else begin
-                                cal_we <= 1;
-                                cal_address <= 0;
-                                cal_data <=latched_writedata[31:16];
-                                first_register_write_done <= 0;
-                                act_state_ended <= 1;
-                            end
+                            calibrator_coefficients[1] <= latched_writedata[15:0];
+                            calibrator_coefficients[0] <= latched_writedata[31:16];
+                            act_state_ended <= 1;
                         end
 
                         32'h14: begin
-                            filter_bypass <= latched_writedata[0];
                             latch_mode <= latched_writedata[2:1];
                             clear_latch <= latched_writedata[4:3];
-                            cal_data <=latched_writedata[7:5];
+                            calibrator_coefficients[2] <= latched_writedata[7:5];
                             slow_fault_threshold <= latched_writedata[15:8];
                             clear_fault <= latched_writedata[16];
                             disable_fault <= latched_writedata[17];
                             decimation_ratio <= latched_writedata[31:24];
-                            cal_we <= 1;
-                            cal_address <= 2;
+                        
                             act_state_ended <= 1;
                         end
 
@@ -265,8 +239,6 @@ module AdcProcessingControlUnit #(parameter BASE_ADDRESS = 'h43c00000)(
                 end
 
                 pipeline_flush_state: begin
-                    cal_we <= 0;
-                    filter_we <= 0;
                     comparator_we <= 0;
                     act_state_ended <= 0;
                     pipeline_flush <= 1;
