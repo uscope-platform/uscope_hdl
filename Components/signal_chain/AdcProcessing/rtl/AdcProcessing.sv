@@ -24,13 +24,6 @@ module AdcProcessing #(parameter BASE_ADDRESS = 'h43c00000, DATA_PATH_WIDTH = 16
     output reg                 fault
 );
 
-
-    wire [1:0] comparator_address;
-    wire [31:0] comparator_threshold;
-    wire [1:0] comparator_we;
-    wire [2:0] cal_settings_address;
-    wire [15:0] cal_settings_data;
-    wire cal_we;
     wire gain_enable;
     wire [1:0] latch_mode;
     wire [1:0] clear_latch;
@@ -41,21 +34,19 @@ module AdcProcessing #(parameter BASE_ADDRESS = 'h43c00000, DATA_PATH_WIDTH = 16
 
 
     wire signed [DATA_PATH_WIDTH-1:0] cal_coefficients [2:0];
-
+    wire signed [DATA_PATH_WIDTH-1:0] comparator_thresholds [0:7];
 
     axi_stream #(
         .DATA_WIDTH(DATA_PATH_WIDTH)
     ) cal_in();
 
-    AdcProcessingControlUnit #(.BASE_ADDRESS(BASE_ADDRESS), .STICKY_FAULT(STICKY_FAULT)) AdcCU(
+    AdcProcessingControlUnit #(.BASE_ADDRESS(BASE_ADDRESS), .STICKY_FAULT(STICKY_FAULT), .DATA_PATH_WIDTH(DATA_PATH_WIDTH)) AdcCU(
         .clock(clock),
         .reset(reset),
         .simple_bus(simple_bus),
         .data_in_valid(data_in.valid),
         // COMPARATORS
-        .comparator_address(comparator_address),
-        .comparator_threshold(comparator_threshold), 
-        .comparator_we(comparator_we),
+        .comparator_thresholds(comparator_thresholds),
         .latch_mode(latch_mode),
         .clear_latch(clear_latch),
         .trip_high(trip_high),
@@ -72,9 +63,7 @@ module AdcProcessing #(parameter BASE_ADDRESS = 'h43c00000, DATA_PATH_WIDTH = 16
     comparator fast_cmp(
         .clock(clock),
         .reset(reset),
-        .threshold_address(comparator_address),
-        .threshold_in(comparator_threshold[15:0]),
-        .threshold_write_enable(comparator_we[0]),
+        .thresholds(comparator_thresholds[0:3]),
         .data_in(data_in.data),
         .latching_mode(latch_mode[0]),
         .clear_latch(clear_latch[0]),
@@ -120,9 +109,7 @@ module AdcProcessing #(parameter BASE_ADDRESS = 'h43c00000, DATA_PATH_WIDTH = 16
     comparator slow_cmp(
         .clock(clock),
         .reset(reset),
-        .threshold_address(comparator_address),
-        .threshold_in(comparator_threshold[31:16]),
-        .threshold_write_enable(comparator_we[1]),
+        .thresholds(comparator_thresholds[4:7]),
         .data_in(cal_in.data),
         .latching_mode(latch_mode[1]),
         .clear_latch(clear_latch[1]),
@@ -139,9 +126,7 @@ module AdcProcessing #(parameter BASE_ADDRESS = 'h43c00000, DATA_PATH_WIDTH = 16
         .pipeline_flush(pipeline_flush),
         .calibrator_coefficients(cal_coefficients),
         .gain_enable(gain_enable),
-        .data_out(data_out.data),
-        .out_ready(data_out.ready),
-        .out_valid(data_out.valid)
+        .data_out(data_out)
     );
 
 endmodule

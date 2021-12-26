@@ -17,14 +17,11 @@
 module calibration #(parameter DATA_PATH_WIDTH = 16)(
     input wire clock,
     input wire reset,
-    axi_stream.slave data_in,
     input wire pipeline_flush,
     input wire signed [15:0] calibrator_coefficients [2:0],
-
     input wire gain_enable,
-    output reg signed [DATA_PATH_WIDTH-1:0] data_out,
-    output reg out_valid,
-    input wire out_ready
+    axi_stream.slave data_in,
+    axi_stream.master data_out
 );
 
     wire signed [DATA_PATH_WIDTH-1:0] raw_data_out;
@@ -32,7 +29,7 @@ module calibration #(parameter DATA_PATH_WIDTH = 16)(
     reg signed [DATA_PATH_WIDTH-1:0] truncated_gain_corrected_data;
 
     
-    assign data_in.ready = out_ready | ~reset ? 1 : 0;
+    assign data_in.ready = data_out.ready | ~reset ? 1 : 0;
 
     saturating_adder #(.DATA_WIDTH(DATA_PATH_WIDTH)) offset_adder(
         .a(data_in.data),
@@ -46,18 +43,18 @@ module calibration #(parameter DATA_PATH_WIDTH = 16)(
         if(~reset | pipeline_flush) begin
             gain_corrected_data <= 0;
             truncated_gain_corrected_data <= 0;
-            data_out <= 0;
-            out_valid <=0;
+            data_out.data <= 0;
+            data_out.valid <=0;
         end else begin
-            if(data_in.valid & out_ready) begin
+            if(data_in.valid & data_out.ready) begin
                 if(gain_enable) begin
-                    data_out <= raw_data_out << calibrator_coefficients[2];
+                    data_out.data <= raw_data_out << calibrator_coefficients[2];
                 end else begin
-                    data_out <= raw_data_out;
+                    data_out.data <= raw_data_out;
                 end
-                out_valid <=1;
+                data_out.valid <=1;
             end else begin
-                out_valid <=0;
+                data_out.valid <=0;
             end
         end
     end

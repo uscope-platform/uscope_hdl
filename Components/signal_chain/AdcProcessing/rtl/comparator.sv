@@ -17,9 +17,7 @@
 module comparator #(parameter DATA_PATH_WIDTH = 16)(
     input wire clock,
     input wire reset,
-    input wire [1:0] threshold_address,
-    input wire [DATA_PATH_WIDTH-1:0] threshold_in,
-    input wire threshold_write_enable,
+    input wire signed [DATA_PATH_WIDTH-1:0] thresholds [0:3],
     input wire signed [DATA_PATH_WIDTH-1:0] data_in,
     input wire latching_mode,
     input wire clear_latch,
@@ -33,49 +31,38 @@ module comparator #(parameter DATA_PATH_WIDTH = 16)(
     // thresholds[2] = high falling  | thresholds[2] = --------------
     // thresholds[3] = high raising  | thresholds[3] = threshold high
 
-    reg signed [DATA_PATH_WIDTH-1:0] thresholds[3:0];
     reg latched = 0;
     
     always @(posedge clock or negedge reset) begin
         if(~reset)begin
             trip_high <= 0;
             trip_low <= 0;
-            thresholds[0] <=0;
-            thresholds[1] <=0;
-            thresholds[2] <=0;
-            thresholds[3] <=0;
         end else begin
-            if(threshold_write_enable & ~latched) begin
-                trip_high <=0;
-                trip_low <=0;
-                thresholds[threshold_address] <= threshold_in;
-            end else begin
-                if(latching_mode) begin
-                    if(clear_latch) latched <= 0; 
-                    if(data_in < thresholds[0]) begin
-                        trip_low <= 1;
-                        latched <=1;
-                    end else if(data_in > thresholds[1] & ~latched) begin
-                        trip_low <= 0;
-                    end
-                    if(data_in > thresholds[3]) begin
-                        trip_high <= 1;
-                        latched <=1;
-                    end else if(data_in < thresholds[2] & ~latched) begin
-                        trip_high <= 0;
-                    end
+            if(latching_mode) begin
+                if(clear_latch) latched <= 0; 
+                if(data_in < thresholds[0]) begin
+                    trip_low <= 1;
+                    latched <=1;
+                end else if(data_in > thresholds[1] & ~latched) begin
+                    trip_low <= 0;
+                end
+                if(data_in > thresholds[3]) begin
+                    trip_high <= 1;
+                    latched <=1;
+                end else if(data_in < thresholds[2] & ~latched) begin
+                    trip_high <= 0;
+                end
 
-                end else begin
-                    if(data_in < thresholds[0]) begin
-                        trip_low <= 1;
-                    end else if(data_in > thresholds[1]) begin
-                        trip_low <= 0;
-                    end 
-                    if(data_in > thresholds[3]) begin
-                        trip_high <=1;
-                    end else if(data_in < thresholds[2]) begin
-                        trip_high <=0;
-                    end
+            end else begin
+                if(data_in < thresholds[0]) begin
+                    trip_low <= 1;
+                end else if(data_in > thresholds[1]) begin
+                    trip_low <= 0;
+                end 
+                if(data_in > thresholds[3]) begin
+                    trip_high <=1;
+                end else if(data_in < thresholds[2]) begin
+                    trip_high <=0;
                 end
             end
         end

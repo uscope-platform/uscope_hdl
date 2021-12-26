@@ -15,21 +15,19 @@
 `timescale 10 ns / 1 ns
 `include "interfaces.svh"
 
-module AdcProcessingControlUnit #(parameter BASE_ADDRESS = 'h43c00000, STICKY_FAULT = 0)(
+module AdcProcessingControlUnit #(parameter BASE_ADDRESS = 'h43c00000, STICKY_FAULT = 0, DATA_PATH_WIDTH = 16)(
     input wire clock,
     input wire reset,
     input wire data_in_valid,
     Simplebus.slave simple_bus,
     // COMPARATORS
-    output reg [1:0]  comparator_address,
-    output reg [31:0] comparator_threshold, 
-    output reg [1:0] comparator_we,
+    output reg signed [DATA_PATH_WIDTH-1:0] comparator_thresholds [0:7],
     output reg [1:0]  latch_mode,
     output reg [1:0]  clear_latch,
     input wire [1:0]  trip_high,
     input wire [1:0]  trip_low,
     // CALIBRATION
-    output reg signed [15:0] calibrator_coefficients [2:0],
+    output reg signed [DATA_PATH_WIDTH-1:0] calibrator_coefficients [2:0],
     output reg        gain_enable,
     output reg        pipeline_flush,
     output reg        fault,
@@ -136,9 +134,6 @@ module AdcProcessingControlUnit #(parameter BASE_ADDRESS = 'h43c00000, STICKY_FA
             simple_bus.sb_read_valid <= 1'b0;
             read_data_blanking <= 1;
             state <= wait_state;
-            comparator_address <=0;
-            comparator_threshold <=0;
-            comparator_we <=0;
             latch_mode <=0;
             clear_latch <=0;
             clear_fault<=0;
@@ -188,30 +183,30 @@ module AdcProcessingControlUnit #(parameter BASE_ADDRESS = 'h43c00000, STICKY_FA
                 act_state: begin
                     case (latched_address)
                         32'h00: begin 
-                            comparator_we <= 2'b11; //comp thresh low/low falling
-                            comparator_address <= 0;
-                            comparator_threshold <=latched_writedata[31:0]; // fast [15:0] slow [31:16]
+                            //comp thresh low/low falling
+                            comparator_thresholds[0] <= latched_writedata[15:0];
+                            comparator_thresholds[4] <= latched_writedata[31:16];
                             act_state_ended <= 1;
                         end
 
                         32'h04: begin
-                            comparator_we <= 2'b11; //comp thresh --/low raising
-                            comparator_address <= 1;
-                            comparator_threshold <=latched_writedata[31:0]; // fast [15:0] slow [31:16]
+                            //comp thresh --/low raising
+                            comparator_thresholds[1] <= latched_writedata[15:0];
+                            comparator_thresholds[5] <= latched_writedata[31:16];
                             act_state_ended <= 1;
                          end
                            
                         32'h08: begin
-                            comparator_we <= 2'b11; // comp thresh --/high falling
-                            comparator_address <= 2;
-                            comparator_threshold <=latched_writedata[31:0]; // fast [15:0] slow [31:16]
+                            // comp thresh --/high falling
+                            comparator_thresholds[2] <= latched_writedata[15:0];
+                            comparator_thresholds[6] <= latched_writedata[31:16];
                             act_state_ended <= 1;
                         end
                         
                         32'hC: begin
-                            comparator_we <= 2'b11; // comp thresh high/high raising
-                            comparator_address <= 3;
-                            comparator_threshold <=latched_writedata[31:0]; // fast [15:0] slow [31:16]
+                            // comp thresh high/high raising
+                            comparator_thresholds[3] <= latched_writedata[15:0];
+                            comparator_thresholds[7] <= latched_writedata[31:16];
                             act_state_ended <= 1;
                         end
 
@@ -229,7 +224,6 @@ module AdcProcessingControlUnit #(parameter BASE_ADDRESS = 'h43c00000, STICKY_FA
                             clear_fault <= latched_writedata[16];
                             disable_fault <= latched_writedata[17];
                             decimation_ratio <= latched_writedata[31:24];
-                        
                             act_state_ended <= 1;
                         end
 
@@ -239,7 +233,6 @@ module AdcProcessingControlUnit #(parameter BASE_ADDRESS = 'h43c00000, STICKY_FA
                 end
 
                 pipeline_flush_state: begin
-                    comparator_we <= 0;
                     act_state_ended <= 0;
                     pipeline_flush <= 1;
                 end
