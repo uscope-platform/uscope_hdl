@@ -91,25 +91,34 @@ module AdcProcessingControlUnit #(parameter BASE_ADDRESS = 'h43c00000)(
         
     end
 
-    always @(posedge clock) begin : fault_trip
-        if(~reset | ~arm_fault) begin
-            fault <= 0;
-            slow_fault_counter <= 0;
+    generate
+        if(STICKY_FAULT==0) begin
+            always_comb begin
+                fault <= trip_high[0] | trip_low[0] | trip_high[1] | trip_low[1];
+            end       
         end else begin
-            if(trip_high[0] | trip_low[0])begin
-                fault <= 1;
-            end else if (trip_high[1] | trip_low[1]) begin
-                if(slow_fault_counter == slow_fault_threshold-1)begin
-                    fault <= 1;
+            always @(posedge clock) begin : fault_trip
+                if(~reset | ~arm_fault) begin
+                    fault <= 0;
+                    slow_fault_counter <= 0;
                 end else begin
-                    slow_fault_counter <= slow_fault_counter +1;    
-                end                
-            end else if(clear_fault)begin
-                fault <= 0;
-            end
+                    if(trip_high[0] | trip_low[0])begin
+                        fault <= 1;
+                    end else if (trip_high[1] | trip_low[1]) begin
+                        if(slow_fault_counter == slow_fault_threshold-1)begin
+                            fault <= 1;
+                        end else begin
+                            slow_fault_counter <= slow_fault_counter +1;    
+                        end                
+                    end else if(clear_fault)begin
+                        fault <= 0;
+                    end
+                end
+            end        
         end
-    end
+    endgenerate
 
+    
     //latch bus writes
     always @(posedge clock) begin
         if(~reset) begin

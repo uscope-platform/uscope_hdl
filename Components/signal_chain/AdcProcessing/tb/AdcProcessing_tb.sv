@@ -15,130 +15,176 @@
 
 `timescale 10 ns / 1 ns
 `include "SimpleBus_BFM.svh"
+`include "axis_BFM.svh"
 `include "interfaces.svh"
-import sock::*;
+
 
 module AdcProcessing_tb();
 
-    reg  clk, reset,in_valid,out_ready;
-    reg [15:0] adc_post_in;
-    wire [15:0] adc_post_out;
-    wire in_ready,out_valid;
+    reg  clk, reset;
     reg [31:0] sb_read_out;
-    string out;
-    
+    wire processed_fault;
+
     parameter SB_ADDR = 'h43C00000;
-	chandle h;
-
+    event configuration_done;
     Simplebus s();
+    
+    axi_stream axis_bfm_if();
 
-    axi_stream processing_in();
-    assign in_ready = processing_in.ready;
-    assign processing_in.data = adc_post_in;
-    assign processing_in.valid = in_valid;
+    assign processing_in.data = axis_bfm_if.data;
+    assign processing_in.valid = axis_bfm_if.valid;
+    assign axis_bfm_if.ready = processing_in.ready;
 
-    axi_stream processing_out();
-    assign adc_post_out = processing_out.data;
-    assign out_valid = processing_out.valid;
-    assign processing_out.ready = out_ready;
+    axi_stream #(
+        .DATA_WIDTH(16)
+    ) processing_in ();
+    axi_stream #(
+        .DATA_WIDTH(16)
+    ) processing_out();
 
-    AdcProcessing UUT (
+    AdcProcessing #(
+        .ENABLE_AVERAGE(1),
+        .STICKY_FAULT(0)
+    ) UUT (
         .clock(clk),
         .reset(reset),
         .data_in(processing_in),
         .data_out(processing_out),
+        .fault(processed_fault),
         .simple_bus(s)
     );
 
     simplebus_BFM BFM;
     
+    axis_BFM axis_BFM;
+
+    reg [15:0] cal_gain = 1;
+    reg [15:0] cal_offset = 5;
+    reg signed [15:0] trip_high_f2 = 16'sd29000;
+    reg signed [15:0] trip_high_f1 = 16'sd29000;
+    reg signed [15:0] trip_low_f1 = -16'sd28999;
+    reg signed [15:0] trip_low_f2 = -16'sd29000;
+
+    reg signed [15:0] trip_high_s = 16'sd27000;
+    reg signed [15:0] trip_low_s = -16'sd27000;
+
     //clock generation
     initial clk = 0; 
     always #0.5 clk = ~clk; 
 
     initial begin
-    
-        if(sock_init() < 0) begin
-		    $error("Aww shucks couldn't init the library");
-		    $stop();
-	    end 
-
-	    //Connect
-	    h = sock_open("tcp://localhost:1234");
-
+        axis_BFM = new(axis_bfm_if,1);
         BFM = new(s,1);
         
         //Initial status
         reset <=1'h1;
-        in_valid <=0;
-        out_ready <= 1;
+        processing_out.ready <= 1;
         #1 reset <=1'h0;
         //TESTS
         #5.5 reset <=1'h1;
-        adc_post_in[15:0] <= 0;
-        //Comparators tresholds
-        #8 BFM.write(SB_ADDR+8'h00,32'hA004A004);
-        #8 BFM.write(SB_ADDR+8'h04,32'hA004A004);
-        #8 BFM.write(SB_ADDR+8'h08,32'hA004A004);
-        #8 BFM.write(SB_ADDR+8'h0C,32'hA004A004);
-
-
-        //Filter taps
-        #8 BFM.write(SB_ADDR+8'h10,32'h0B04051B);
-        #8 BFM.write(SB_ADDR+8'h14,32'h146D1086);
-        #8 BFM.write(SB_ADDR+8'h18,32'h146D15D6);
-        #8 BFM.write(SB_ADDR+8'h1C,32'h0B041086);
-        #8 BFM.write(SB_ADDR+8'h20,32'h051B);
-
+        //Comparators
+        #1 BFM.write(SB_ADDR+8'h00,{trip_low_s, trip_low_f2});
+        #1 BFM.write(SB_ADDR+8'h04,{trip_low_s, trip_low_f1});
+        #1 BFM.write(SB_ADDR+8'h08,{trip_high_s, trip_high_f1});
+        #1 BFM.write(SB_ADDR+8'h0C,{trip_high_s, trip_high_f2});
         //Calibration
-        #8 BFM.write(SB_ADDR+8'h24,32'h0);
-        #8 BFM.write(SB_ADDR+8'h28,32'h2);
-
-        if(sock_init() < 0) begin
-		    $error("Aww shucks couldn't init the library");
-		    $stop();
-	    end 
-
-        for (int idx = 0; idx<365; idx++) begin
-            int in  = sock_readln(h).atoi();
-            #1 adc_post_in <= in;
-            in_valid <=1;
-            out.itoa(adc_post_out);
-            if(idx>3) sock_writeln(h,out);
-        end
-        for (int idx = 356; idx<367; idx++) begin
-            adc_post_in<= 0;
-            out.itoa(adc_post_out);
-            #1 sock_writeln(h,out);
-        end
-        
-        // Done
-        sock_close(h);
-        sock_shutdown();
-
-        #8 BFM.write(SB_ADDR+8'h10,32'h0B04051B);
-
-        #10 BFM.read(SB_ADDR+8'h10,sb_read_out);
-
-        in_valid <=0;
-        
-        for (int idx = 0; idx<20; idx++) begin
-            #5 adc_post_in <= idx*13;
-            in_valid <=1;
-            #1 in_valid <=0;
-        end
-
-        #10 in_valid <= 1;
-        #5 out_ready <= 0;
-        #20 out_ready <= 1;
-        #1 in_valid <= 0;
-        #200;
-        #8 BFM.write(SB_ADDR+8'h28,32'h1);
-        forever begin
-            #10 adc_post_in <=$urandom;
-            in_valid <=1;
-            #1 in_valid <=0;
-        end
+        #1 BFM.write(SB_ADDR+8'h10,{cal_gain, cal_offset});
+        //CU
+        #1 BFM.write(SB_ADDR+8'h14,32'h04010000);
+        #1 ->configuration_done;
     end
 
+    reg writer_started = 0;
+
+    
+    reg [19:0] accumulated_input = 0;
+    integer uncalibrated_accumulator = 0;
+
+    reg [15:0] input_data = 0;
+    reg [3:0] input_counter = 0;
+    initial begin
+        @(configuration_done);
+        forever begin
+            #10;
+            if(input_counter == 3) 
+                input_counter = 0;
+            else 
+                input_counter = input_counter + 1;
+
+            input_data = $urandom() % ((2<<15)-1);
+            accumulated_input = $signed(accumulated_input) + $signed(input_data);
+            uncalibrated_accumulator = $signed(uncalibrated_accumulator) + $signed(input_data);
+            axis_BFM.write(input_data);
+        end    
+    end
+
+
+    reg fast_trip_high;
+    reg fast_trip_low;
+    wire fast_fault;
+
+    reg slow_trip_high;
+    reg slow_trip_low;
+    reg slow_fault;
+   
+    wire expected_fault;
+    assign expected_fault = fast_fault || slow_fault;
+    assign fast_fault = fast_trip_high || fast_trip_low;
+
+    wire signed [15:0] fast_comp_in;
+    assign fast_comp_in = $signed(processing_in.data);
+    wire signed [15:0] slow_comp_in;
+    assign slow_comp_in = $signed(uncalibrated_out);
+    always_ff @(posedge clk) begin
+
+        if(fast_trip_low) begin
+            fast_trip_low <= fast_comp_in < trip_low_f1;
+        end else begin
+            fast_trip_low <= fast_comp_in < trip_low_f2;
+        end
+        
+        fast_trip_high <= fast_comp_in > trip_high_f2;
+        slow_trip_low <= slow_comp_in < trip_low_s;
+        slow_trip_high <= slow_comp_in > trip_high_s;
+        slow_fault <= slow_trip_high || slow_trip_low;
+    end    
+
+
+    reg [15:0] expected_out = 0;
+    reg [15:0] uncalibrated_out = 0;
+
+    initial begin
+        @(configuration_done);
+        forever begin
+            @(posedge input_counter==0)
+            #1;
+            uncalibrated_out = uncalibrated_accumulator/4;
+            #2;
+            expected_out = ((accumulated_input>>>2) + cal_offset)*cal_gain;
+            
+            assert (expected_out==processing_out.data) 
+            else begin
+                $display("OUTPUT DATA ERROR: expected value %h | actual value %h", expected_out[15:0], processing_out.data[15:0]);
+                $stop();
+            end
+            uncalibrated_accumulator = 0;
+            accumulated_input = 0;
+        end    
+    end
+
+
+
+    initial begin
+        @(configuration_done);
+        forever begin
+            assert (expected_fault==processed_fault) 
+            else begin
+                $display("FAULT ERROR: Expected fault is different from fault output");
+                $stop();
+            end
+            #1;
+        end    
+    end
+
+    
 endmodule

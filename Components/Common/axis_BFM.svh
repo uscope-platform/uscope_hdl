@@ -29,6 +29,8 @@ class axis_BFM;
         begin
             this.axis = stream;
             this.axis.data <= 32'b0;
+            this.axis.user <= 32'b0;
+            this.axis.dest <= 32'b0;
             this.axis.valid <= 32'b0;
             this.axis.tlast <= 1'b0;
             this.clock_period = period;

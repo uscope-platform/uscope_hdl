@@ -3,7 +3,7 @@
         "project_name":"AdcProcessing",
         "target_part":"xc7z020clg400",
         "synth_modules":[],
-        "synth_tl": "TopLevelAdcProcessing ",
+        "synth_tl": "AdcProcessing",
         "sim_modules":[],
         "sim_tl":"AdcProcessing_tb",
         "include_paths":[
@@ -15,15 +15,11 @@
             "name":"set_properties.tcl",
             "type": "tcl",
             "arguments":[]
-        },
-        {
-            "name":"zynqApbBd.tcl",
-            "type": "tcl",
-            "arguments":[]
         }
     ],
     "excluded_modules":[
-        "zynq_apb_bd"
+        "zynq_apb_bd",
+        "Decimator"
     ],
     "constraints": [
         "adcProcessing.xdc"
