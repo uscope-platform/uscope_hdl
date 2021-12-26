@@ -166,7 +166,6 @@ module SPI #(parameter BASE_ADDRESS = 32'h43c00000, SS_POLARITY_DEFAULT=0, N_CHA
         .start_generator_enable(start_generator_enable),
         .transfer_length_choice(transfer_length_choice),
         .axi_in(axi_in),
-        .simple_bus(simple_bus),
         .SPI_write_valid(SPI_write_valid),
         .SPI_write_data(SPI_write_data),
         .SPI_write_ready(SPI_write_ready)
