@@ -60,32 +60,23 @@ module ad2s1210_cu #(parameter BASE_ADDRESS = 32'h43c00000)(
     reg [31:0] latched_writedata;
 
     reg configuration_done, start_configuration;
-    reg [3:0] configuration_counter;
+    
+
+    reg read_in_progress;
 
     reg start_fault_clear;
     reg fault_clear_done;
     
     reg [15:0] fc_SPI_data;
-    reg fc_SPI_valid;
-
-    reg [7:0] reader_counter;
+    reg fc_SPI_valid;    
     
     enum logic [2:0] {
         idle_state =             3'b000,
         act_state =              3'b001,
         do_configuration_state = 3'b010,
-        do_read_state =          3'b011,
-        fault_clear_state =      3'b100
+        fault_clear_state =      3'b011
     } state;
     
-    enum logic [2:0] {
-        sample_pulse_state = 3'b000,
-        main_read_state    = 3'b001,
-        backoff_state      = 3'b010
-    } reader_state;
-
-
-
     
     RegisterFile Registers(
         .clk(clock),
@@ -136,28 +127,22 @@ module ad2s1210_cu #(parameter BASE_ADDRESS = 32'h43c00000)(
             sb.sb_read_valid <= 0;
             case (state)
                 idle_state: //wait for command
-                    if(read_angle) begin
-                        read_type <= resolver_dest_angle;
-                        state <= do_read_state;
-                        sb.sb_ready <= 0;
-                    end else if(read_speed)begin
-                        read_type <= resolver_dest_speed;
-                        state <= do_read_state;
-                        sb.sb_ready <= 0;
-                    end else if(sb.sb_write_strobe) begin
-                        sb.sb_ready <=0;
-                        state <= act_state;
-                        if(sb.sb_address-BASE_ADDRESS == 32'h24 & sb.sb_write_data==0) begin
-                            state <= do_configuration_state;
-                            start_configuration <= 1;
-                        end else if(sb.sb_address-BASE_ADDRESS == 32'h24 & sb.sb_write_data==1) begin
-                            state <= fault_clear_state;
-                            start_fault_clear <= 1;
-                        end
-                    end else if(sb.sb_read_strobe) begin
-                        sb.sb_read_valid <= 1;
-                    end else begin
-                        state <=idle_state;
+                    if(read_in_progress) begin
+                        if(sb.sb_write_strobe) begin
+                            sb.sb_ready <=0;
+                            state <= act_state;
+                            if(sb.sb_address-BASE_ADDRESS == 32'h24 & sb.sb_write_data==0) begin
+                                state <= do_configuration_state;
+                                start_configuration <= 1;
+                            end else if(sb.sb_address-BASE_ADDRESS == 32'h24 & sb.sb_write_data==1) begin
+                                state <= fault_clear_state;
+                                start_fault_clear <= 1;
+                            end
+                        end else if(sb.sb_read_strobe) begin
+                            sb.sb_read_valid <= 1;
+                        end else begin
+                            state <=idle_state;
+                        end    
                     end
                 act_state: // Act on shadowed write
                     if(act_state_ended) begin
@@ -173,14 +158,6 @@ module ad2s1210_cu #(parameter BASE_ADDRESS = 32'h43c00000)(
                         sb.sb_ready <=1;
                     end else begin
                         state <= do_configuration_state;
-                    end
-                end
-                do_read_state: begin
-                    if((reader_counter == sample_pulse_length-1) & reader_state == backoff_state)begin
-                        state <= idle_state;
-                        sb.sb_ready <=1;
-                    end else begin
-                        state <= do_read_state;
                     end
                 end
                 fault_clear_state: begin
@@ -242,253 +219,59 @@ module ad2s1210_cu #(parameter BASE_ADDRESS = 32'h43c00000)(
     end
 
 
-     
+    axi_stream read_spi();
+    assign read_SPI_data = read_spi.data;
+    assign read_SPI_valid = read_spi.valid;
+    assign read_spi.ready = SPI_ready;
+
+    ad2s1210_reader reader (
+        .clock(clock),
+        .reset(reset),
+        .start(read_angle | read_speed),
+        .transfer_type(read_speed),
+        .sample_length(sample_pulse_length),
+        .sample_delay(sample_read_delay),
+        .spi_data_in(SPI_data_in),
+        .spi_transfer(read_spi),
+        .sample(read_sample),
+        .read_in_progress(read_in_progress),
+        .mode(internal_mode),
+        .data_out(data_out)
+    );
+    
+
+    axi_stream cfg_spi();
+    assign config_SPI_data = cfg_spi.data;
+    assign config_SPI_valid = cfg_spi.valid;
+    assign cfg_spi.ready = SPI_ready;
+
+    ad2s1210_configurator configurator (
+        .clock(clock),
+        .reset(reset),
+        .start(start_configuration),
+        .config_address(AD2S1210_addr),
+        .config_data(AD2S1210_values),
+        .spi_transfer(cfg_spi),
+        .done(configuration_done)
+    );
 
 
-    always@(posedge clock)begin : read_FSM
-        if(!reset)begin
-            read_sample <= 1;
-            reader_state <= sample_pulse_state;
-            reader_counter <= 0;
-            read_SPI_valid <= 0;
-            read_SPI_data <= 0;
-            internal_mode <= 0;
-            data_out.data <= 0;
-            data_out.valid <= 0;
-            data_out.dest <= 0;
-            data_out.user <= 0;   
-        end else begin
-            if(state==do_read_state)begin
-                case(reader_state)
-                    sample_pulse_state: begin
-                        if(reader_counter == sample_pulse_length-1)begin
-                            read_sample <= 1;
-                            reader_counter <= 0;
-                            reader_state <= main_read_state;
-                        end else begin
-                            read_sample <= 0;
-                            if(read_type)begin
-                                internal_mode <= 2'b10;
-                            end else begin
-                                internal_mode <= 2'b00;
-                            end
-                            reader_counter <= reader_counter+1;
-                            reader_state <= sample_pulse_state;
-                        end
-                    end
-                    main_read_state: begin
-                        reader_counter <= 0;
-                        if(reader_counter ==sample_read_delay)begin
-                             if(SPI_ready & ~read_SPI_valid) begin
-                                read_SPI_data <= 0;
-                                read_SPI_valid <= 1;
-                                reader_counter <= 0;
-                                reader_state <= backoff_state;
-                            end else begin
-                                reader_state <=main_read_state;
-                            end
-                        end else begin
-                            reader_counter <= reader_counter+1;
-                            reader_state <= main_read_state;
-                        end
-                    end
-                    backoff_state: begin
-                        read_SPI_valid <= 0;
-                        if(SPI_ready & ~SPI_valid)begin
-                            if(reader_counter == 1)begin
-                                data_out.data <= {8'b0,SPI_data_in[31:8]};
-                                data_out.valid <= 1;
-                                data_out.dest <= read_type;
-                                data_out.user <= SPI_data_in[7:0];    
-                            end else begin
-                                data_out.valid <= 0;
-                            end
+    axi_stream fc_spi();
+    assign fc_SPI_data = fc_spi.data;
+    assign fc_SPI_valid = fc_spi.valid;
+    assign fc_spi.ready = SPI_ready;
 
-                            if(reader_counter == sample_pulse_length-1)begin
-                                reader_counter <= 0;
-                                reader_state <= sample_pulse_state;
-                            end else begin
-                                reader_counter <= reader_counter+1;
-                                reader_state <= backoff_state;
-                            end
-                        end
-                    end
-                endcase
-            end
-        end
-    end
-
-
-     
-    enum logic [1:0]{
-        configurator_idle = 2'b00,
-        configurator_send_address = 2'b01,
-        configurator_send_data    = 2'b10
-    } configurator_state;
-
-    always@(posedge clock)begin : configuration_FSM
-        if(!reset)begin
-            configurator_state <= configurator_idle;
-            configuration_done <= 0;
-            configuration_counter <= 4;
-            config_SPI_valid <= 0;
-            config_SPI_data <= 0;
-        end else begin
-            case (configurator_state)
-                configurator_idle:begin
-                    if(start_configuration)begin
-                        configurator_state <= configurator_send_address;
-                    end else begin
-                        configurator_state <= configurator_idle;
-                    end
-                    configuration_done <= 0;
-                end
-                configurator_send_address: begin
-                    if(configuration_counter==13 & SPI_ready & ~config_SPI_valid)begin
-                        configuration_done <= 1;
-                        configurator_state <= configurator_idle;
-                        configuration_counter <= 4;
-                    end else if(configuration_counter==13 & config_SPI_valid) begin
-                         config_SPI_valid <= 0;
-                    end else begin
-                        if(SPI_ready & ~config_SPI_valid) begin
-                            config_SPI_data <= AD2S1210_addr[configuration_counter];
-                            config_SPI_valid <= 1;
-                            configurator_state <=configurator_send_data;
-                        end else begin
-                            configurator_state <=configurator_send_address;
-                            config_SPI_valid <= 0;
-                        end
-                    end
-                end
-                configurator_send_data: begin
-                    if(SPI_ready & ~config_SPI_valid) begin
-                        config_SPI_data <= AD2S1210_values[configuration_counter];
-                        config_SPI_valid <= 1;
-                        configuration_counter <= configuration_counter+1;
-                        configurator_state <= configurator_send_address;
-                    end else begin
-                        config_SPI_valid <= 0;
-                        configurator_state <= configurator_send_data;
-                    end
-                end
-            endcase
-        end
-    end
-
-
-
-
-    enum logic [2:0] {
-        fc_idle_state =                   3'b000,
-        fc_first_sample_state =           3'b001,
-        fc_start_shift_address_in_state = 3'b010,
-        fc_wait_address_in_state =        3'b011,
-        fc_start_read_fault_state =       3'b100,
-        fc_wait_read_fault_state =        3'b101,
-        fc_wait_before_resample =         3'b110,
-        fc_second_sample_state =          3'b111 
-    } fc_state;
-
-    reg [15:0] fc_counter;
-    always@(posedge clock)begin : fc_fsm
-        if(!reset)begin
-            fc_state <= fc_idle_state;
-            fault_clear_sample <= 1;
-            fault_clear_done <= 0;
-            fc_counter <= 0;
-            fc_SPI_data <= 0;
-            fc_SPI_valid <= 0;
-            fc_mode <= 0;
-        end else begin
-            case (fc_state)
-                fc_idle_state: begin
-                    fault_clear_done <= 0;
-                    if(start_fault_clear)begin
-                        fault_clear_sample <= 0;
-                        fc_counter <= 0;
-                        fc_state <= fc_first_sample_state;
-                    end
-                end        
-                fc_first_sample_state:begin
-                    if(fc_counter == sample_pulse_length-1)begin
-                        fault_clear_sample <= 1;
-                        fc_SPI_data <= 'hff;
-                        fc_counter <= 0;
-                        fc_mode <= 1;
-                        fc_state <= fc_start_shift_address_in_state;
-                    end else begin
-                        fc_counter <= fc_counter+1;
-                    end
-                end
-                fc_start_shift_address_in_state: begin
-                    if(fc_counter ==sample_read_delay)begin
-                        if(~SPI_ready) begin
-                            fc_state <= fc_wait_address_in_state;
-                            fc_counter <= 0;
-                            fc_SPI_valid <= 0;
-                        end
-                        fc_SPI_valid <= 1;
-                    end else begin
-                        fc_counter <= fc_counter+1;
-                    end
-                end
-                fc_wait_address_in_state:begin
-                    fc_SPI_valid <= 0;
-                    if(SPI_ready)begin
-                        fc_state<= fc_start_read_fault_state;
-                        fc_SPI_data <= 'h0;
-                    end
-                end
-                fc_start_read_fault_state: begin
-                    if(fc_counter == 20)begin
-                        if(~SPI_ready) begin
-                            fc_state <= fc_wait_read_fault_state;
-                            fc_counter <= 0;
-                            fc_SPI_valid <= 0;
-                        end
-                        fc_SPI_valid <= 1;
-
-                    end else begin
-                        fc_SPI_valid  <=0;
-                        fc_counter <= fc_counter+1;
-                    end 
-                end
-                fc_wait_read_fault_state: begin
-                    fc_SPI_data <= 0;
-                    fc_SPI_valid <= 0;
-                    if(SPI_ready & ~fc_SPI_valid) begin
-                        fc_counter <= 0;
-                        fc_state <= fc_wait_before_resample;
-                    end 
-                end
-                fc_wait_before_resample: begin
-                    if(fc_counter ==sample_read_delay)begin
-                        fc_state <= fc_second_sample_state;
-                        fc_counter <= 0;
-                        fc_mode <= 0;
-                        fault_clear_sample <= 0;
-                    end else begin
-                        fc_counter <= fc_counter+1;
-                    end
-                      
-                end
-                fc_second_sample_state:begin
-                    if(SPI_ready & ~fc_SPI_valid)begin
-                        if(fc_counter == sample_pulse_length-1)begin
-                            fault_clear_sample <= 1;
-                            fault_clear_done <= 1;
-                            fc_counter <= 0;
-                            fc_state <= fc_idle_state;
-                        end else begin
-                            fc_counter <= fc_counter+1;
-                        end
-                    end
-                end
-            endcase
-        end
-    end
-
+    ad2s1210_fault_handler fault_handler (
+        .clock(clock),
+        .reset(reset),
+        .start(start_fault_clear),
+        .sample_delay(sample_read_delay),
+        .sample_length(sample_pulse_length),
+        .spi_transfer(fc_spi),
+        .mode(fc_mode),
+        .sample(fault_clear_sample), 
+        .done(fault_clear_done)
+    );
 
 
 

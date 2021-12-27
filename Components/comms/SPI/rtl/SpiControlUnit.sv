@@ -64,6 +64,8 @@ module SpiControlUnit #(parameter BASE_ADDRESS = 32'h43c0000, SS_POLARITY_DEFAUL
 
     reg bus_start_transfer, axis_start_transfer;
 
+    
+    reg [31:0] axis_spi_data;
     axil_simple_register_cu #(
         .N_READ_REGISTERS(N_REGISTERS),
         .N_WRITE_REGISTERS(N_REGISTERS),
@@ -98,10 +100,14 @@ module SpiControlUnit #(parameter BASE_ADDRESS = 32'h43c0000, SS_POLARITY_DEFAUL
         period <= cu_write_registers[2];
         // a write to cu_write_registers[3] is used to trigger a spi transfer
 
-
-        for(int i = 0; i <N_CHANNELS; i = i+1)begin
-            spi_data_out[i] <= cu_write_registers[i+4];    
+        if(axis_start_transfer)begin
+            spi_data_out[0] <= axis_spi_data;
+        end else begin
+            for(int i = 0; i <N_CHANNELS; i = i+1)begin
+                spi_data_out[i] <= cu_write_registers[i+4];    
+            end
         end
+
 
         cu_read_registers[0][0] <= spi_mode;
         cu_read_registers[0][3:1] <= divider_setting;
@@ -136,7 +142,7 @@ module SpiControlUnit #(parameter BASE_ADDRESS = 32'h43c0000, SS_POLARITY_DEFAUL
         end else begin
             axis_start_transfer <= 0;
             if(SPI_write_valid) begin
-                spi_data_out[0] <= SPI_write_data[31:0];
+                axis_spi_data  <= SPI_write_data[31:0];
                 axis_start_transfer <=1;
                 unit_busy <= 1;
                 SPI_write_ready <= 0;

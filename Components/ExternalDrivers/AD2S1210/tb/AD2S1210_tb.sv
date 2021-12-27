@@ -63,6 +63,7 @@ module AD2S1210_tb();
     initial clk = 0; 
     always #0.5 clk = ~clk; 
 
+    reg config_done = 0;
     // reset generation
     initial begin
         BFM = new(s,1);
@@ -73,9 +74,12 @@ module AD2S1210_tb();
         #5 rst <=1;
         #8;
 
-        #5 BFM.write(BASE_ADDRESS + 'h28, 'h16501c14);
-        #500 axil_bfm.write(BASE_ADDRESS + 'h04 ,31'h1c);
+        BFM.write(BASE_ADDRESS + 'h28, 'h16501c14);
+        axil_bfm.write(BASE_ADDRESS + 'h04 ,31'h1c);
         #5 axil_bfm.write(BASE_ADDRESS + 'h00 ,31'h3e184);
+        BFM.write(BASE_ADDRESS + 'h24, 'h0);
+        #60 BFM.write(BASE_ADDRESS + 'h24, 'h1); 
+        #5 config_done = 1;
         //#100 BFM.write(BASE_ADDRESS + 'h24, 'h0);
 
 
@@ -90,28 +94,30 @@ module AD2S1210_tb();
 
     reg test_read = 0;
     reg [31:0] prev_data = 0;
-    always@(negedge RES_SAMPLE)begin
-        test_read = 1;
-        prev_data = resolver_out.data; 
-        #265.5;
-        assert(resolver_out.valid == 1)
-        else begin
-            $display("RESOLVER OUT VALID ERROR: Resolver out valid did not raise when expected");
-            $stop();
-        end
-        test_read = 0;
-        assert(resolver_out.data != prev_data)
-        else begin
-            $display("RESOLVER OUT DATA ERROR: Resolver out data is stuck and did not change as expected");
-            $stop();
-        end
-        #1;
-        assert(resolver_out.valid == 0)
-        else begin
-            $display("RESOLVER OUT VALID ERROR: Resolver out valid remained high more than necessary");
-            $stop();
-        end
 
+    always@(negedge RES_SAMPLE)begin
+        if(config_done)begin
+            test_read = 1;
+            prev_data = resolver_out.data; 
+            #264.5;
+            assert(resolver_out.valid == 1)
+            else begin
+                $display("RESOLVER OUT VALID ERROR: Resolver out valid did not raise when expected");
+                $stop();
+            end
+            test_read = 0;
+            assert(resolver_out.data != prev_data)
+            else begin
+                $display("RESOLVER OUT DATA ERROR: Resolver out data is stuck and did not change as expected");
+                $stop();
+            end
+            #1;
+            assert(resolver_out.valid == 0)
+            else begin
+                $display("RESOLVER OUT VALID ERROR: Resolver out valid remained high more than necessary");
+                $stop();
+            end
+        end
     end
 
 
