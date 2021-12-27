@@ -14,7 +14,7 @@
 // limitations under the License.
 
 `timescale 10 ns / 1 ns
-`include "SimpleBus_BFM.svh"
+`include "axi_lite_BFM.svh"
 `include "axis_BFM.svh"
 `include "interfaces.svh"
 
@@ -27,7 +27,7 @@ module AdcProcessing_tb();
 
     parameter SB_ADDR = 'h43C00000;
     event configuration_done;
-    Simplebus s();
+    axi_lite test_axi();
     
     axi_stream axis_bfm_if();
 
@@ -51,10 +51,10 @@ module AdcProcessing_tb();
         .data_in(processing_in),
         .data_out(processing_out),
         .fault(processed_fault),
-        .simple_bus(s)
+        .axi_in(test_axi)
     );
 
-    simplebus_BFM BFM;
+    axi_lite_BFM axil_bfm;
     
     axis_BFM axis_BFM;
 
@@ -74,7 +74,7 @@ module AdcProcessing_tb();
 
     initial begin
         axis_BFM = new(axis_bfm_if,1);
-        BFM = new(s,1);
+        axil_bfm = new(test_axi,1);
         
         //Initial status
         reset <=1'h1;
@@ -83,14 +83,14 @@ module AdcProcessing_tb();
         //TESTS
         #5.5 reset <=1'h1;
         //Comparators
-        #1 BFM.write(SB_ADDR+8'h00,{trip_low_s, trip_low_f2});
-        #1 BFM.write(SB_ADDR+8'h04,{trip_low_s, trip_low_f1});
-        #1 BFM.write(SB_ADDR+8'h08,{trip_high_s, trip_high_f1});
-        #1 BFM.write(SB_ADDR+8'h0C,{trip_high_s, trip_high_f2});
+        #1 axil_bfm.write(SB_ADDR+8'h00,{trip_low_s, trip_low_f2});
+        #1 axil_bfm.write(SB_ADDR+8'h04,{trip_low_s, trip_low_f1});
+        #1 axil_bfm.write(SB_ADDR+8'h08,{trip_high_s, trip_high_f1});
+        #1 axil_bfm.write(SB_ADDR+8'h0C,{trip_high_s, trip_high_f2});
         //Calibration
-        #1 BFM.write(SB_ADDR+8'h10,{cal_gain, cal_offset});
+        #1 axil_bfm.write(SB_ADDR+8'h10,{cal_gain, cal_offset});
         //CU
-        #1 BFM.write(SB_ADDR+8'h14,32'h04010000);
+        #1 axil_bfm.write(SB_ADDR+8'h14,32'h04010000);
         #1 ->configuration_done;
     end
 
