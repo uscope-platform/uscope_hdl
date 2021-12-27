@@ -40,8 +40,6 @@ module AdcProcessingControlUnit #(parameter BASE_ADDRESS = 'h43c00000, STICKY_FA
     reg [31:0] cu_write_registers [5:0];
     reg [31:0] cu_read_registers [5:0];
 
-    localparam ADDITIONAL_BITS = 32 - DATA_PATH_WIDTH;
-
     axil_simple_register_cu #(
         .N_READ_REGISTERS(6),
         .N_WRITE_REGISTERS(6),

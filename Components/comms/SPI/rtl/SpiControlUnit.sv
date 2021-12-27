@@ -26,7 +26,6 @@ module SpiControlUnit #(parameter BASE_ADDRESS = 32'h43c0000, SS_POLARITY_DEFAUL
     output logic [31:0] spi_data_out [N_CHANNELS-1:0],
     output logic [2:0] divider_setting,
     output logic spi_mode,
-    output logic clockgen_enable,
     output logic spi_start_transfer,
     output logic spi_direction,
     output logic [31:0] period,
@@ -48,26 +47,29 @@ module SpiControlUnit #(parameter BASE_ADDRESS = 32'h43c0000, SS_POLARITY_DEFAUL
 
     localparam [31:0] TRIGGER_REGISTERS_IDX [0:0] = '{3};
 
-    localparam [31:0] INITIAL_OUTPUT_VALUES [N_REGISTERS-1:0]= '{
-        0,
-        0,
-        0,
+    localparam [31:0] INITIAL_OUTPUT_VALUES [3:0]= '{
         0,
         0,
         1,
         {SS_POLARITY_DEFAULT,3'b0,SS_POLARITY_DEFAULT,5'b0,4'hE,4'b0}
     };
 
+    localparam [31:0] VARIABLE_INITIAL_VALUES [N_CHANNELS-1:0] = '{N_CHANNELS{1'b0}};
+    
+    assign spi_start_transfer = bus_start_transfer | axis_start_transfer;
+
     reg [31:0] cu_write_registers [N_REGISTERS-1:0];
     reg [31:0] cu_read_registers [N_REGISTERS-1:0];
     reg trigger_transfer;
+
+    reg bus_start_transfer, axis_start_transfer;
 
     axil_simple_register_cu #(
         .N_READ_REGISTERS(N_REGISTERS),
         .N_WRITE_REGISTERS(N_REGISTERS),
         .REGISTERS_WIDTH(32),
         .N_TRIGGER_REGISTERS(1),
-        .INITIAL_OUTPUT_VALUES(INITIAL_OUTPUT_VALUES),
+        .INITIAL_OUTPUT_VALUES({INITIAL_OUTPUT_VALUES, VARIABLE_INITIAL_VALUES}),
         .TRIGGER_REGISTERS_IDX(TRIGGER_REGISTERS_IDX),
         .BASE_ADDRESS(BASE_ADDRESS)
     ) axi_if(
@@ -84,7 +86,6 @@ module SpiControlUnit #(parameter BASE_ADDRESS = 32'h43c0000, SS_POLARITY_DEFAUL
         spi_mode <= cu_write_registers[0][0];
         divider_setting <= cu_write_registers[0][3:1];
         spi_transfer_length <= cu_write_registers[0][7:4];
-        clockgen_enable <= cu_write_registers[0][8];
         spi_direction <= cu_write_registers[0][9];
         start_generator_enable <= cu_write_registers[0][12];
         ss_polarity <= cu_write_registers[0][13];
@@ -97,6 +98,7 @@ module SpiControlUnit #(parameter BASE_ADDRESS = 32'h43c0000, SS_POLARITY_DEFAUL
         period <= cu_write_registers[2];
         // a write to cu_write_registers[3] is used to trigger a spi transfer
 
+
         for(int i = 0; i <N_CHANNELS; i = i+1)begin
             spi_data_out[i] <= cu_write_registers[i+4];    
         end
@@ -104,9 +106,8 @@ module SpiControlUnit #(parameter BASE_ADDRESS = 32'h43c0000, SS_POLARITY_DEFAUL
         cu_read_registers[0][0] <= spi_mode;
         cu_read_registers[0][3:1] <= divider_setting;
         cu_read_registers[0][7:4] <= spi_transfer_length;
-        cu_read_registers[0][8] <= clockgen_enable;
+        cu_read_registers[0][8] <= 0;
         cu_read_registers[0][9] <= spi_direction;
-        cu_read_registers[0][8] <= clockgen_enable;
         cu_read_registers[0][11:10] <= 0;
         cu_read_registers[0][12] <= start_generator_enable;
         cu_read_registers[0][13] <= ss_polarity;
@@ -122,16 +123,25 @@ module SpiControlUnit #(parameter BASE_ADDRESS = 32'h43c0000, SS_POLARITY_DEFAUL
         for(int i = 0; i <N_CHANNELS; i = i+1)begin
             cu_read_registers[i+4] <= spi_data_in[i];
         end
-        spi_start_transfer <= trigger_transfer;
+        bus_start_transfer <= trigger_transfer;
     end
 
     reg unit_busy = 0;
+
     
     always_ff @(posedge clock) begin
         if(!reset)begin
             unit_busy <= 0;
             SPI_write_ready <= 1;
         end else begin
+            axis_start_transfer <= 0;
+            if(SPI_write_valid) begin
+                spi_data_out[0] <= SPI_write_data[31:0];
+                axis_start_transfer <=1;
+                unit_busy <= 1;
+                SPI_write_ready <= 0;
+            end
+
             if(spi_start_transfer) begin
                 unit_busy <= 1;
                 SPI_write_ready <= 0;

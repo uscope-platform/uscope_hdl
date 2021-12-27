@@ -34,7 +34,7 @@ module SPI #(parameter BASE_ADDRESS = 32'h43c00000, SS_POLARITY_DEFAULT=0, N_CHA
 );
 
 
-    logic clockgen_out, spi_mode, clockgen_enable,register_enable,enable_clockgen, ss_polarity, pol_master_ss, ss_deassert_delay_enable, transfer_length_choice;
+    logic clockgen_out, spi_mode,register_enable,enable_clockgen, ss_polarity, ss_deassert_delay_enable, transfer_length_choice;
     logic generated_sclk;
     logic register_load,int_transfer_start,spi_direction,transfer_start, latching_edge;
     logic internal_start;
@@ -155,7 +155,6 @@ module SPI #(parameter BASE_ADDRESS = 32'h43c00000, SS_POLARITY_DEFAULT=0, N_CHA
         .spi_data_out(cu_out),
         .divider_setting(divider_setting),
         .spi_mode(spi_mode),
-        .clockgen_enable(clockgen_enable),
         .spi_start_transfer(int_transfer_start),
         .spi_direction(spi_direction),
         .ss_polarity(ss_polarity),
