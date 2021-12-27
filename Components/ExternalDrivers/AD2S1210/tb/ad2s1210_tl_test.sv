@@ -29,10 +29,11 @@ module ad2s1210_tl_test (
     output wire R_SAMPLE,
     output wire R_RESET,
     Simplebus s,
+    axi_stream.master resolver_out,
     axi_lite.slave axi_in
 );
     
-    axi_stream resolver_out();
+    
     assign R_RESET = 1;
     
     wire SS;
