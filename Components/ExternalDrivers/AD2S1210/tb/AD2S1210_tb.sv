@@ -63,9 +63,10 @@ module AD2S1210_tb();
             #5 rst <=1;
             #8;
 
-            BFM.write(SPI_BASE_ADDRESS + 'h00 ,31'hE184);
+            
             BFM.write(SPI_BASE_ADDRESS + 'h04 ,31'h1c);
-            #500 BFM.write(BASE_ADDRESS + 'h28, 'h501c18);
+            BFM.write(SPI_BASE_ADDRESS + 'h00 ,31'h3E184);
+            #500 BFM.write(BASE_ADDRESS + 'h28, 'h16501c14);
             //#100 BFM.write(BASE_ADDRESS + 'h24, 'h0);
 
             
