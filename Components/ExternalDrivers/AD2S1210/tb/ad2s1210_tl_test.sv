@@ -28,11 +28,10 @@ module ad2s1210_tl_test (
     output wire R_RE1,
     output wire R_SAMPLE,
     output wire R_RESET,
-    Simplebus s
+    Simplebus s,
+    axi_lite.slave axi_in
 );
     
-    Simplebus slave_1();
-    Simplebus slave_2();
     axi_stream resolver_out();
     assign R_RESET = 1;
     
@@ -41,22 +40,30 @@ module ad2s1210_tl_test (
     assign R_WR = SS;
     wire start_read;
 
-    parameter BASE_ADDRESS = 'h43c00000;
+    parameter UUT_BASE_ADDRESS = 'h43c00000;
+    parameter ENGEN_BASE_ADDRESS = 'h43c00100;
 
-    defparam xbar.SLAVE_1_LOW = BASE_ADDRESS;
-    defparam xbar.SLAVE_1_HIGH = BASE_ADDRESS+'h100;
-    defparam xbar.SLAVE_2_LOW = BASE_ADDRESS+'h100;
-    defparam xbar.SLAVE_2_HIGH = BASE_ADDRESS+'h200;
-    
-    SimplebusInterconnect_M1_S2 xbar(
+    axi_lite #(.INTERFACE_NAME("UUT A")) uut_axi();
+    axi_lite #(.INTERFACE_NAME("ENABLE GEN")) en_gen_axi();
+
+    axil_crossbar_interface #(
+        .DATA_WIDTH(32),
+        .ADDR_WIDTH(32),
+        .NM(1),
+        .NS(2),
+        .SLAVE_ADDR('{UUT_BASE_ADDRESS, ENGEN_BASE_ADDRESS}),
+        .SLAVE_MASK('{2{32'hf00}})
+    ) axi_xbar (
         .clock(clock),
-        .master(s),
-        .slave_1(slave_1),
-        .slave_2(slave_2)
+        .reset(reset),
+        .slaves('{axi_in}),
+        .masters('{uut_axi, en_gen_axi})
     );
 
-    defparam test.BASE_ADDRESS = BASE_ADDRESS;
-    ad2s1210 test(
+
+    ad2s1210 #(
+        .BASE_ADDRESS(UUT_BASE_ADDRESS)
+    ) test(
         .clock(clock),
         .reset(reset),
         .read_angle(read_angle),
@@ -69,18 +76,19 @@ module ad2s1210_tl_test (
         .R_RES({R_RE1, R_RE0}),
         .R_SAMPLE(R_SAMPLE),
         .data_out(resolver_out),
-        .sb(slave_1)
+        .sb(s),
+        .axi_in(uut_axi)
     );
 
-
-    defparam tb_gen.BASE_ADDRESS = BASE_ADDRESS+'h100;
-    enable_generator_2 tb_gen(
+    enable_generator_2 #(
+        .BASE_ADDRESS(ENGEN_BASE_ADDRESS)
+    ) tb_gen(
         .clock(clock),
         .reset(reset),
         .gen_enable_in(0),
         .enable_out_1(read_angle),
         .enable_out_2(read_speed),
-        .sb(slave_2)
+        .axil(en_gen_axi)
     );
 
 endmodule

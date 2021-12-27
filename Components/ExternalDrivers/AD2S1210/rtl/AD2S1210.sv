@@ -29,6 +29,7 @@ module ad2s1210 #(parameter BASE_ADDRESS = 32'h43c00000)(
     output reg [1:0] R_A,
     output reg [1:0] R_RES,
     axi_stream.master data_out,
+    axi_lite.slave axi_in,
     Simplebus.slave sb
 );
     
@@ -36,20 +37,6 @@ module ad2s1210 #(parameter BASE_ADDRESS = 32'h43c00000)(
     wire SPI_ready, SPI_valid;
     wire [4:0] spi_transfer_length;
     wire [31:0] SPI_data;
-
-    defparam xbar.SLAVE_1_LOW = BASE_ADDRESS;
-    defparam xbar.SLAVE_1_HIGH = BASE_ADDRESS+'h2C;
-    defparam xbar.SLAVE_2_LOW = BASE_ADDRESS+'h2C;
-    defparam xbar.SLAVE_2_HIGH = BASE_ADDRESS+'h2C+'h100;
-    
-    Simplebus spi_sb();
-    Simplebus cu_sb();
-    SimplebusInterconnect_M1_S2 xbar(
-        .clock(clock),
-        .master(sb),
-        .slave_1(cu_sb),
-        .slave_2(spi_sb)
-    );
 
 
     defparam CU.BASE_ADDRESS = BASE_ADDRESS;
@@ -68,13 +55,13 @@ module ad2s1210 #(parameter BASE_ADDRESS = 32'h43c00000)(
         .sample(R_SAMPLE),
         .rdc_reset(R_RESET),
         .data_out(data_out),
-        .sb(cu_sb)
+        .sb(sb)
     );   
     
     wire data_valid;
     wire [31:0] unpacked_spi_data [0:0];
     
-    defparam ext_interface.BASE_ADDRESS = BASE_ADDRESS+'h2C;
+    defparam ext_interface.BASE_ADDRESS = BASE_ADDRESS;
     defparam ext_interface.SS_POLARITY_DEFAULT = 1;
     defparam ext_interface.N_CHANNELS = 1;
     SPI ext_interface(
@@ -85,7 +72,7 @@ module ad2s1210 #(parameter BASE_ADDRESS = 32'h43c00000)(
         .SCLK(SCLK),
         .MOSI(MOSI),
         .SS(SS),
-        .simple_bus(spi_sb),
+        .axi_in(axi_in),
         .SPI_write_valid(SPI_valid),
         .SPI_write_data(SPI_data),
         .SPI_write_ready(SPI_ready),

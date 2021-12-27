@@ -17,13 +17,13 @@
             "arguments":[]
         },
         {
-            "name":"zynqApbBd.tcl",
+            "name":"zynqAxiStreamBd.tcl",
             "type": "tcl",
             "arguments":[]
         }
     ],
     "excluded_modules":[
-        "zynq_apb_bd"
+        "PS_AXI_stream"
     ],
     "constraints": [
     ]

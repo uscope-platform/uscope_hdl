@@ -14,17 +14,21 @@
 // limitations under the License.
 `timescale 10 ns / 1 ns
 `include "SimpleBus_BFM.svh"
+`include "axi_lite_BFM.svh"
 `include "interfaces.svh"
 
 module AD2S1210_tb();
       reg clk, rst, start;
 
       Simplebus s();
+      axi_lite test_axi();
 
       wire ss;
       wire mosi;
       reg miso = 0;
       reg spi_mode =0;
+
+      wire sclk;
 
       wire [1:0] RES_A;
       wire [1:0] RES_RE;
@@ -43,13 +47,16 @@ module AD2S1210_tb();
             .R_RE1(RES_RE[1]),
             .R_SAMPLE(RES_SAMPLE),
             .R_RESET(RES_RESET),
+            .axi_in(test_axi),
             .s(s)
       );
 
       simplebus_BFM BFM;
+      axi_lite_BFM axil_bfm;
 
       parameter  BASE_ADDRESS = 32'h43c00000;
-      parameter  SPI_BASE_ADDRESS = BASE_ADDRESS+'h2C;   
+      parameter  SPI_BASE_ADDRESS = BASE_ADDRESS+'h2C;
+
       //clock generation
       initial clk = 0; 
       always #0.5 clk = ~clk; 
@@ -57,25 +64,28 @@ module AD2S1210_tb();
       // reset generation
       initial begin
             BFM = new(s,1);
+            axil_bfm = new(test_axi, 1);
             rst <=1;
             start <= 0;
             #3.5 rst<=0;
             #5 rst <=1;
             #8;
 
-            BFM.write(SPI_BASE_ADDRESS + 'h00 ,31'hE184);
-            BFM.write(SPI_BASE_ADDRESS + 'h04 ,31'h1c);
-            #500 BFM.write(BASE_ADDRESS + 'h28, 'h501c18);
+            #5 BFM.write(BASE_ADDRESS + 'h28, 'h16501c14);
+            #500 axil_bfm.write(BASE_ADDRESS + 'h04 ,31'h1c);
+            #5 axil_bfm.write(BASE_ADDRESS + 'h00 ,31'h3e184);
             //#100 BFM.write(BASE_ADDRESS + 'h24, 'h0);
 
             
-            #10 BFM.write(BASE_ADDRESS + 'h104, 8000);
-            #10 BFM.write(BASE_ADDRESS + 'h108, 300);
-            #10 BFM.write(BASE_ADDRESS + 'h10C, 3500);
-            #10 BFM.write(BASE_ADDRESS + 'h100, 'h1);
+            #10 axil_bfm.write(BASE_ADDRESS + 'h104, 8000);
+            #10 axil_bfm.write(BASE_ADDRESS + 'h108, 300);
+            #10 axil_bfm.write(BASE_ADDRESS + 'h10C, 3500);
+            #10 axil_bfm.write(BASE_ADDRESS + 'h100, 'h1);
             //#100000 BFM.write(BASE_ADDRESS + 'h104, 'h0);
             //#1400 BFM.write(BASE_ADDRESS + 'h24, 'h1);
+
     end
+
 
     always@(posedge sclk)begin
         miso = $urandom;

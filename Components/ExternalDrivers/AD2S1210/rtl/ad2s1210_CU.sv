@@ -127,6 +127,7 @@ module ad2s1210_cu #(parameter BASE_ADDRESS = 32'h43c00000)(
             state <=idle_state;
             act_state_ended <= 0;
             start_fault_clear <= 0;
+            start_configuration <= 0;
             resolution <= 2'b10;
             sb.sb_ready <= 1;
             spi_transfer_length <= 22;
