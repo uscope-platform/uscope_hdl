@@ -18,7 +18,7 @@ module calibration #(parameter DATA_PATH_WIDTH = 16)(
     input wire clock,
     input wire reset,
     input wire pipeline_flush,
-    input wire signed [15:0] calibrator_coefficients [2:0],
+    input wire signed [DATA_PATH_WIDTH-1:0] calibrator_coefficients [2:0],
     input wire gain_enable,
     axi_stream.slave data_in,
     axi_stream.master data_out

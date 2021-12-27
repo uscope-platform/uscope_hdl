@@ -18,7 +18,7 @@ module comparator #(parameter DATA_PATH_WIDTH = 16)(
     input wire clock,
     input wire reset,
     input wire signed [DATA_PATH_WIDTH-1:0] thresholds [0:3],
-    input wire signed [DATA_PATH_WIDTH-1:0] data_in,
+    axi_stream.slave data_in,
     input wire latching_mode,
     input wire clear_latch,
     output reg trip_high,
@@ -33,6 +33,9 @@ module comparator #(parameter DATA_PATH_WIDTH = 16)(
 
     reg latched = 0;
     
+    wire signed[DATA_PATH_WIDTH-1:0] signed_data;
+    assign signed_data = $signed(data_in.data);
+
     always @(posedge clock or negedge reset) begin
         if(~reset)begin
             trip_high <= 0;
@@ -40,29 +43,32 @@ module comparator #(parameter DATA_PATH_WIDTH = 16)(
         end else begin
             if(latching_mode) begin
                 if(clear_latch) latched <= 0; 
-                if(data_in < thresholds[0]) begin
-                    trip_low <= 1;
-                    latched <=1;
-                end else if(data_in > thresholds[1] & ~latched) begin
-                    trip_low <= 0;
+                if(data_in.valid) begin
+                    if(signed_data < thresholds[0]) begin
+                        trip_low <= 1;
+                        latched <=1;
+                    end else if(signed_data > thresholds[1] & ~latched) begin
+                        trip_low <= 0;
+                    end
+                    if(signed_data > thresholds[3]) begin
+                        trip_high <= 1;
+                        latched <=1;
+                    end else if(signed_data < thresholds[2] & ~latched) begin
+                        trip_high <= 0;
+                    end    
                 end
-                if(data_in > thresholds[3]) begin
-                    trip_high <= 1;
-                    latched <=1;
-                end else if(data_in < thresholds[2] & ~latched) begin
-                    trip_high <= 0;
-                end
-
             end else begin
-                if(data_in < thresholds[0]) begin
-                    trip_low <= 1;
-                end else if(data_in > thresholds[1]) begin
-                    trip_low <= 0;
-                end 
-                if(data_in > thresholds[3]) begin
-                    trip_high <=1;
-                end else if(data_in < thresholds[2]) begin
-                    trip_high <=0;
+                if(data_in.valid) begin
+                    if(signed_data < thresholds[0]) begin
+                        trip_low <= 1;
+                    end else if(signed_data > thresholds[1]) begin
+                        trip_low <= 0;
+                    end 
+                    if(signed_data > thresholds[3]) begin
+                        trip_high <=1;
+                    end else if(signed_data < thresholds[2]) begin
+                        trip_high <=0;
+                    end
                 end
             end
         end
