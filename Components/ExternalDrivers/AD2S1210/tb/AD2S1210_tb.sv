@@ -49,15 +49,15 @@ module AD2S1210_tb();
         .R_SAMPLE(RES_SAMPLE),
         .R_RESET(RES_RESET),
         .axi_in(test_axi),
-        .resolver_out(resolver_out),
-        .s(s)
+        .resolver_out(resolver_out)
     );
 
     simplebus_BFM BFM;
     axi_lite_BFM axil_bfm;
 
-    parameter  BASE_ADDRESS = 32'h43c00000;
-    parameter  SPI_BASE_ADDRESS = BASE_ADDRESS+'h2C;
+    localparam CONTROLLER_ADDRESS = 32'h43c00000;
+    localparam SPI_ADDRESS = CONTROLLER_ADDRESS+'h40;
+    localparam TB_ADDRESS = CONTROLLER_ADDRESS+'h100;
 
     //clock generation
     initial clk = 0; 
@@ -74,21 +74,18 @@ module AD2S1210_tb();
         #5 rst <=1;
         #8;
 
-        BFM.write(BASE_ADDRESS + 'h28, 'h16501c14);
-        axil_bfm.write(BASE_ADDRESS + 'h04 ,31'h1c);
-        #5 axil_bfm.write(BASE_ADDRESS + 'h00 ,31'h3e184);
-        BFM.write(BASE_ADDRESS + 'h24, 'h0);
-        #60 BFM.write(BASE_ADDRESS + 'h24, 'h1); 
-        #5 config_done = 1;
-        //#100 BFM.write(BASE_ADDRESS + 'h24, 'h0);
-
-
-        #10 axil_bfm.write(BASE_ADDRESS + 'h104, 8000);
-        #10 axil_bfm.write(BASE_ADDRESS + 'h108, 300);
-        #10 axil_bfm.write(BASE_ADDRESS + 'h10C, 3500);
-        #10 axil_bfm.write(BASE_ADDRESS + 'h100, 'h1);
-        //#100000 BFM.write(BASE_ADDRESS + 'h104, 'h0);
-        //#1400 BFM.write(BASE_ADDRESS + 'h24, 'h1);
+        axil_bfm.write(CONTROLLER_ADDRESS + 'h28, 'h16501c14);
+        #3 axil_bfm.write(SPI_ADDRESS + 'h04 ,31'h1c);
+        #5 axil_bfm.write(SPI_ADDRESS + 'h00 ,31'h3e184);
+        axil_bfm.write(CONTROLLER_ADDRESS + 'h24, 'h0);
+        #60 axil_bfm.write(CONTROLLER_ADDRESS + 'h24, 'h1); 
+        #8800 
+        #10 axil_bfm.write(TB_ADDRESS + 'h4, 8000);
+        
+        #10 axil_bfm.write(TB_ADDRESS + 'h8, 300);
+        #10 axil_bfm.write(TB_ADDRESS + 'hC, 3500);
+        #10 axil_bfm.write(TB_ADDRESS, 'h1);
+        #1900 config_done = 1;
 
     end
 
@@ -124,6 +121,5 @@ module AD2S1210_tb();
     always@(posedge sclk)begin
         miso = $urandom;
     end
-    
 
 endmodule

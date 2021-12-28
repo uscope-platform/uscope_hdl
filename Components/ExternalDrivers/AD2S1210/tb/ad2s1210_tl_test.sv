@@ -28,7 +28,6 @@ module ad2s1210_tl_test (
     output wire R_RE1,
     output wire R_SAMPLE,
     output wire R_RESET,
-    Simplebus s,
     axi_stream.master resolver_out,
     axi_lite.slave axi_in
 );
@@ -77,7 +76,6 @@ module ad2s1210_tl_test (
         .R_RES({R_RE1, R_RE0}),
         .R_SAMPLE(R_SAMPLE),
         .data_out(resolver_out),
-        .sb(s),
         .axi_in(uut_axi)
     );
 

@@ -30,23 +30,13 @@ module ad2s1210_cu #(parameter BASE_ADDRESS = 32'h43c00000)(
     output reg rdc_reset,
     output reg [4:0] spi_transfer_length,
     axi_stream.master data_out,
-    Simplebus.slave sb
+    axi_lite.slave axi_in
 );
-    
-    localparam resolver_dest_angle = 0;
-    localparam resolver_dest_speed = 1;
-    reg read_type;
 
-    reg read_SPI_valid, config_SPI_valid, fc_mode;
-    reg [31:0] read_SPI_data, config_SPI_data;
+    reg fc_mode;
 
     reg read_sample, fault_clear_sample;
 
-    wire[31:0] int_readdata;
-    reg act_state_ended;
-    
-    //FSM state registers
-    reg act_ended=0;
  
     reg [1:0] internal_mode;
 
@@ -56,173 +46,144 @@ module ad2s1210_cu #(parameter BASE_ADDRESS = 32'h43c00000)(
     reg [7:0] sample_read_delay;
     reg [7:0] sample_pulse_length;
 
-    reg [31:0]  latched_adress;
-    reg [31:0] latched_writedata;
+    wire configuration_done, start_configuration;
+    assign start_configuration = trigger_out & ~trigger_type;
 
-    reg configuration_done, start_configuration;
+    wire start_fault_clear, fault_clear_done;
+    assign start_fault_clear = trigger_out & trigger_type;
     
 
-    reg read_in_progress;
-
-    reg start_fault_clear;
-    reg fault_clear_done;
-    
-    reg [15:0] fc_SPI_data;
-    reg fc_SPI_valid;    
-    
-    enum logic [2:0] {
-        idle_state =             3'b000,
-        act_state =              3'b001,
-        do_configuration_state = 3'b010,
-        fault_clear_state =      3'b011
-    } state;
-    
-    
-    RegisterFile Registers(
-        .clk(clock),
-        .reset(reset),
-        .addr_a(sb.sb_address-BASE_ADDRESS),
-        .data_a(sb.sb_write_data),
-        .we_a(sb.sb_write_strobe),
-        .q_a(int_readdata)
-    );
-    
-    assign sb.sb_read_data = sb.sb_read_valid ? int_readdata : 0;
-     
-    assign SPI_data_out = state==do_configuration_state ? config_SPI_data : read_SPI_data | fc_SPI_data;
-    assign SPI_valid = state==do_configuration_state ? config_SPI_valid : read_SPI_valid | fc_SPI_valid;
-    assign mode = (state==do_configuration_state) | fc_mode ? 2'b11 : internal_mode;
+    assign mode = state==configure_state | fc_mode ? 2'b11 : internal_mode;
     assign sample = read_sample & fault_clear_sample;
-   
 
-    //latch bus writes
-    always @(posedge clock) begin
-        if(~reset) begin
-            latched_adress<=0;
-            latched_writedata<=0;
-        end else begin
-            if(sb.sb_write_strobe & state == idle_state) begin
-                latched_adress <= sb.sb_address-BASE_ADDRESS;
-                latched_writedata <= sb.sb_write_data;
-            end else begin
-                latched_adress <= latched_adress;
-                latched_writedata <= latched_writedata;
+
+
+    enum logic [1:0] {
+        run_state =             2'b00,
+        configure_state =      2'b01,
+        fault_clear_state =      2'b11
+    } state = run_state;
+
+
+
+    always_ff @(posedge clock) begin
+        case (state)
+            run_state: begin
+                if(start_configuration)
+                    state <= configure_state;
+                else if(start_fault_clear)
+                    state <= fault_clear_state;
             end
-        end
+            configure_state:begin
+                if(configuration_done)
+                    state <= run_state;
+            end
+            fault_clear_state:begin
+                if(fault_clear_done)
+                    state <= run_state;
+            end
+            default: 
+                state <= run_state;
+        endcase
     end
 
 
-    // Determine the next state
-    always @ (posedge clock) begin : control_state_machine
-        if (~reset) begin
-            state <=idle_state;
-            act_state_ended <= 0;
-            start_fault_clear <= 0;
-            start_configuration <= 0;
-            resolution <= 2'b10;
-            sb.sb_ready <= 1;
-            spi_transfer_length <= 22;
-            rdc_reset <= 0;
-        end else begin
-            sb.sb_read_valid <= 0;
-            case (state)
-                idle_state: //wait for command
-                    if(read_in_progress) begin
-                        if(sb.sb_write_strobe) begin
-                            sb.sb_ready <=0;
-                            state <= act_state;
-                            if(sb.sb_address-BASE_ADDRESS == 32'h24 & sb.sb_write_data==0) begin
-                                state <= do_configuration_state;
-                                start_configuration <= 1;
-                            end else if(sb.sb_address-BASE_ADDRESS == 32'h24 & sb.sb_write_data==1) begin
-                                state <= fault_clear_state;
-                                start_fault_clear <= 1;
-                            end
-                        end else if(sb.sb_read_strobe) begin
-                            sb.sb_read_valid <= 1;
-                        end else begin
-                            state <=idle_state;
-                        end    
-                    end
-                act_state: // Act on shadowed write
-                    if(act_state_ended) begin
-                        state <= idle_state;
-                        sb.sb_ready <=1;
-                    end else begin
-                        state <= act_state;
-                    end
-                do_configuration_state: begin
-                    start_configuration <= 0;
-                    if(configuration_done)begin
-                        state <= idle_state;
-                        sb.sb_ready <=1;
-                    end else begin
-                        state <= do_configuration_state;
-                    end
-                end
-                fault_clear_state: begin
-                    start_fault_clear <= 0;
-                    if(fault_clear_done)begin
-                        state <= idle_state;
-                        sb.sb_ready <= 1;
-                    end else begin
-                        state <= fault_clear_state;
-                    end
-                end
-            endcase
-            
-            case (state)
-                idle_state: begin
-                        act_state_ended <= 0;
-                    end
-                act_state: begin
-                    case (latched_adress)
-                        32'h00: begin
-                            AD2S1210_values[4] <= latched_writedata[7:0];
-                        end
-                        32'h04: begin
-                            AD2S1210_values[5] <= latched_writedata[7:0];
-                        end
-                        32'h08: begin
-                            AD2S1210_values[6] <= latched_writedata[7:0];
-                        end
-                        32'h0C: begin
-                            AD2S1210_values[7] <= latched_writedata[7:0];
-                        end
-                        32'h10: begin
-                            AD2S1210_values[8] <= latched_writedata[7:0];
-                        end
-                        32'h14: begin
-                            AD2S1210_values[9] <= latched_writedata[7:0];
-                        end
-                        32'h18: begin
-                            AD2S1210_values[10] <= latched_writedata[7:0];
-                        end
-                        32'h1c: begin
-                            AD2S1210_values[11] <= latched_writedata[7:0];
-                        end
-                        32'h20: begin
-                            AD2S1210_values[12] <= latched_writedata[7:0];
-                        end
-                        32'h28: begin
-                            resolution <= latched_writedata[3:2];
-                            rdc_reset <= latched_writedata[4];
-                            sample_pulse_length <= latched_writedata[15:8];
-                            sample_read_delay <= latched_writedata[23:16];
-                            spi_transfer_length <= latched_writedata[28:24];
-                        end
-                    endcase
-                    act_state_ended<=1;
-                    end
-            endcase
-        end
+
+    reg clear_fault;
+    reg trigger_out;
+    reg trigger_type;
+
+    reg [7:0] slow_fault_threshold;
+
+    reg [31:0] cu_write_registers [10:0];
+    reg [31:0] cu_read_registers [10:0];
+
+    axil_simple_register_cu #(
+        .N_READ_REGISTERS(11),
+        .N_WRITE_REGISTERS(11),
+        .REGISTERS_WIDTH(32),
+        .N_TRIGGER_REGISTERS(1),
+        .TRIGGER_REGISTERS_IDX('{9}),
+        .INITIAL_OUTPUT_VALUES({32'b0,32'b0,32'b0,32'b0,32'b0,32'b0,32'b0,32'b0,32'b0,32'b0,{3'b0,5'd22,20'b0,2'b10,2'b0}}),
+        .BASE_ADDRESS(BASE_ADDRESS)
+    ) CU (
+        .clock(clock),
+        .reset(reset),
+        .input_registers(cu_read_registers),
+        .output_registers(cu_write_registers),
+        .trigger_out(trigger_out),
+        .axil(axi_in)
+    );
+
+    always_comb begin 
+        AD2S1210_values[4] <= cu_write_registers[0][31:0];
+        AD2S1210_values[5] <= cu_write_registers[1][31:0];
+        AD2S1210_values[6] <= cu_write_registers[2][31:0];
+        AD2S1210_values[7] <= cu_write_registers[3][31:0];
+        AD2S1210_values[8] <= cu_write_registers[4][31:0];
+        AD2S1210_values[9] <= cu_write_registers[5][31:0];
+        AD2S1210_values[10] <= cu_write_registers[6][31:0];
+        AD2S1210_values[11] <= cu_write_registers[7][31:0];
+        AD2S1210_values[12] <= cu_write_registers[8][31:0];
+        
+        trigger_type <= cu_write_registers[9][31:0];
+
+        resolution <= cu_write_registers[10][3:2];
+        rdc_reset <= cu_write_registers[10][4];
+        sample_pulse_length <= cu_write_registers[10][15:8];
+        sample_read_delay <= cu_write_registers[10][23:16];
+        spi_transfer_length <= cu_write_registers[10][28:24];
+        
+        cu_read_registers[0] <= AD2S1210_values[4];
+        cu_read_registers[1] <= AD2S1210_values[5];
+        cu_read_registers[2] <= AD2S1210_values[6];
+        cu_read_registers[3] <= AD2S1210_values[7];
+        cu_read_registers[4] <= AD2S1210_values[8];
+        cu_read_registers[5] <= AD2S1210_values[9];
+        cu_read_registers[6] <= AD2S1210_values[10];
+        cu_read_registers[7] <= AD2S1210_values[11];
+        cu_read_registers[8] <= AD2S1210_values[12];
+        cu_read_registers[9] <= 0;
+        cu_read_registers[10] <= {
+            3'b0,
+            spi_transfer_length,
+            sample_read_delay,
+            sample_pulse_length,
+            3'b0,
+            rdc_reset,
+            resolution,
+            2'b0
+        };
     end
+
+
+
 
 
     axi_stream read_spi();
-    assign read_SPI_data = read_spi.data;
-    assign read_SPI_valid = read_spi.valid;
-    assign read_spi.ready = SPI_ready;
+    axi_stream cfg_spi();
+    axi_stream fc_spi();
+    axi_stream spi_control();
+
+
+    assign SPI_data_out = spi_control.data;
+    assign SPI_valid = spi_control.valid;
+    assign spi_control.ready = SPI_ready;
+
+    axi_stream_combiner_3 #(
+        .INPUT_DATA_WIDTH(32),
+        .OUTPUT_DATA_WIDTH(32),
+        .MSB_DEST_SUPPORT("FALSE")
+    ) spi_stream_combiner (
+        .clock(clock),
+        .reset(reset),
+        .stream_in_1(read_spi),
+        .stream_in_2(cfg_spi),
+        .stream_in_3(fc_spi),
+        .stream_out(spi_control)
+    );
+
+
 
     ad2s1210_reader reader (
         .clock(clock),
@@ -234,16 +195,10 @@ module ad2s1210_cu #(parameter BASE_ADDRESS = 32'h43c00000)(
         .spi_data_in(SPI_data_in),
         .spi_transfer(read_spi),
         .sample(read_sample),
-        .read_in_progress(read_in_progress),
         .mode(internal_mode),
         .data_out(data_out)
     );
-    
 
-    axi_stream cfg_spi();
-    assign config_SPI_data = cfg_spi.data;
-    assign config_SPI_valid = cfg_spi.valid;
-    assign cfg_spi.ready = SPI_ready;
 
     ad2s1210_configurator configurator (
         .clock(clock),
@@ -255,11 +210,6 @@ module ad2s1210_cu #(parameter BASE_ADDRESS = 32'h43c00000)(
         .done(configuration_done)
     );
 
-
-    axi_stream fc_spi();
-    assign fc_SPI_data = fc_spi.data;
-    assign fc_SPI_valid = fc_spi.valid;
-    assign fc_spi.ready = SPI_ready;
 
     ad2s1210_fault_handler fault_handler (
         .clock(clock),

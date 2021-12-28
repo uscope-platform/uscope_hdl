@@ -26,7 +26,6 @@ module ad2s1210_reader (
     axi_stream.master spi_transfer,
     output reg [1:0] mode,
     output reg sample,
-    output wire read_in_progress,
     axi_stream.master data_out
 );
 
@@ -35,8 +34,6 @@ module ad2s1210_reader (
     reg [7:0] reader_counter;
     reg read_type;
 
-    assign read_in_progress = !(reader_state==idle_state);
-     
     enum logic [2:0] {
         idle_state    = 3'b000,
         sample_state  = 3'b001,

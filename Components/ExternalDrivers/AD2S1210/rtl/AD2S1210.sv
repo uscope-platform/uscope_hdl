@@ -29,18 +29,40 @@ module ad2s1210 #(parameter BASE_ADDRESS = 32'h43c00000)(
     output reg [1:0] R_A,
     output reg [1:0] R_RES,
     axi_stream.master data_out,
-    axi_lite.slave axi_in,
-    Simplebus.slave sb
+    axi_lite.slave axi_in
 );
     
-    
+
+    localparam CONTROLLER_ADDRESS = BASE_ADDRESS;
+    localparam SPI_ADDRESS = BASE_ADDRESS+'h40;
+
+
+    axi_lite #(.INTERFACE_NAME("CONTROLLER")) controller_axi();
+    axi_lite #(.INTERFACE_NAME("SPI")) spi_axi();
+
+    axil_crossbar_interface #(
+        .DATA_WIDTH(32),
+        .ADDR_WIDTH(32),
+        .NM(1),
+        .NS(2),
+        .SLAVE_ADDR('{CONTROLLER_ADDRESS, SPI_ADDRESS}),
+        .SLAVE_MASK('{2{32'h040}})
+    ) axi_xbar (
+        .clock(clock),
+        .reset(reset),
+        .slaves('{axi_in}),
+        .masters('{controller_axi, spi_axi})
+    );
+
+
     wire SPI_ready, SPI_valid;
     wire [4:0] spi_transfer_length;
     wire [31:0] SPI_data;
 
 
-    defparam CU.BASE_ADDRESS = BASE_ADDRESS;
-    ad2s1210_cu CU(
+    ad2s1210_cu #(
+        .BASE_ADDRESS(CONTROLLER_ADDRESS)
+    ) CU (
         .clock(clock),
         .reset(reset),
         .read_angle(read_angle),
@@ -55,16 +77,17 @@ module ad2s1210 #(parameter BASE_ADDRESS = 32'h43c00000)(
         .sample(R_SAMPLE),
         .rdc_reset(R_RESET),
         .data_out(data_out),
-        .sb(sb)
+        .axi_in(controller_axi)
     );   
     
     wire data_valid;
     wire [31:0] unpacked_spi_data [0:0];
     
-    defparam ext_interface.BASE_ADDRESS = BASE_ADDRESS;
-    defparam ext_interface.SS_POLARITY_DEFAULT = 1;
-    defparam ext_interface.N_CHANNELS = 1;
-    SPI ext_interface(
+    SPI #(
+        .BASE_ADDRESS(SPI_ADDRESS),
+        .SS_POLARITY_DEFAULT(1),
+        .N_CHANNELS(1)
+    ) ext_interface(
         .clock(clock),
         .reset(reset),
         .external_transfer_length(spi_transfer_length),
@@ -72,7 +95,7 @@ module ad2s1210 #(parameter BASE_ADDRESS = 32'h43c00000)(
         .SCLK(SCLK),
         .MOSI(MOSI),
         .SS(SS),
-        .axi_in(axi_in),
+        .axi_in(spi_axi),
         .SPI_write_valid(SPI_valid),
         .SPI_write_data(SPI_data),
         .SPI_write_ready(SPI_ready),

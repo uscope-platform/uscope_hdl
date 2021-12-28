@@ -47,7 +47,7 @@ module SpiControlUnit #(parameter BASE_ADDRESS = 32'h43c0000, SS_POLARITY_DEFAUL
 
     localparam [31:0] TRIGGER_REGISTERS_IDX [0:0] = '{3};
 
-    localparam [31:0] INITIAL_OUTPUT_VALUES [3:0]= '{
+    localparam [31:0] FIXED_REGISTER_VALUES [3:0]= '{
         0,
         0,
         1,
@@ -55,7 +55,9 @@ module SpiControlUnit #(parameter BASE_ADDRESS = 32'h43c0000, SS_POLARITY_DEFAUL
     };
 
     localparam [31:0] VARIABLE_INITIAL_VALUES [N_CHANNELS-1:0] = '{N_CHANNELS{1'b0}};
-    
+ 
+    parameter [31:0] INITIAL_REGISTER_VALUES [N_REGISTERS-1:0] = {FIXED_REGISTER_VALUES, VARIABLE_INITIAL_VALUES};
+
     assign spi_start_transfer = bus_start_transfer | axis_start_transfer;
 
     reg [31:0] cu_write_registers [N_REGISTERS-1:0];
@@ -71,7 +73,7 @@ module SpiControlUnit #(parameter BASE_ADDRESS = 32'h43c0000, SS_POLARITY_DEFAUL
         .N_WRITE_REGISTERS(N_REGISTERS),
         .REGISTERS_WIDTH(32),
         .N_TRIGGER_REGISTERS(1),
-        .INITIAL_OUTPUT_VALUES({INITIAL_OUTPUT_VALUES, VARIABLE_INITIAL_VALUES}),
+        .INITIAL_OUTPUT_VALUES(INITIAL_REGISTER_VALUES),
         .TRIGGER_REGISTERS_IDX(TRIGGER_REGISTERS_IDX),
         .BASE_ADDRESS(BASE_ADDRESS)
     ) axi_if(
