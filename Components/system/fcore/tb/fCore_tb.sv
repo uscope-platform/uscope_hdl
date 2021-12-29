@@ -16,6 +16,7 @@
 `timescale 10ns / 1ns
 `include "interfaces.svh"
 `include "axi_lite_BFM.svh"
+`include "axis_BFM.svh"
 
 module fCore_tb();
 
@@ -27,26 +28,33 @@ module fCore_tb();
     axi_stream op_a();
     axi_stream op_res();
     AXI axi_programmer();
-    axi_stream axis_dma();
+    axi_stream axis_dma_write();
     axi_lite axil();
 
+    axi_stream dma_read_request();
+    axi_stream dma_read_response();
+
     axi_lite_BFM axil_bfm;
-    
+    axis_BFM read_dma_BFM;
+
     localparam RECIPROCAL_PRESENT = 0;
      
-    defparam uut.FAST_DEBUG = "TRUE";
-    defparam uut.MAX_CHANNELS = 9;
-    defparam uut.INIT_FILE = "/home/fils/git/uscope_hdl/public/Components/system/fcore/tb/test_sat.mem";
     defparam uut.dma_ep.LEGACY_READ = 0;
     defparam uut.executor.RECIPROCAL_PRESENT = RECIPROCAL_PRESENT;
-    fCore uut(
+    fCore #(
+        .FAST_DEBUG("TRUE"),
+        .MAX_CHANNELS(9),
+        .INIT_FILE("/home/fils/git/uscope_hdl/public/Components/system/fcore/tb/test_sat.mem")
+    ) uut(
         .clock(core_clk),
         .reset(rst),
         .run(run),
         .done(done),
         .control_axi_in(axil),
         .axi(axi_programmer),
-        .axis_dma(axis_dma)
+        .axis_dma_write(axis_dma_write),
+        .axis_dma_read_request(dma_read_request),
+        .axis_dma_read_response(dma_read_response)
     );
 
     //clock generation
@@ -66,9 +74,9 @@ module fCore_tb();
     // reset generation
     initial begin
         axil_bfm = new(axil,1);
-        
+        read_dma_BFM = new(dma_read_request, 1);
         rst <=0;
-
+        axis_dma_write.initialize();
         op_a.initialize();
         op_res.initialize();
         op_res.ready <= 1;
@@ -82,6 +90,8 @@ module fCore_tb();
     reg [31:0] expected_results [12:0];
     localparam CORE_DMA_BASE_ADDRESS = 32'h43c00004;
     
+    event run_test_done;
+
     initial begin
         if(RECIPROCAL_PRESENT==1) begin
             expected_results <= {'h428C0000,'h0000000c,'h40a00000,'h3c6d7304,'h40800000,'h40400000,'hc0800000,'h428c0000,'h40400000,'hc0c00000,'hc0800000,'h40800000,'h0};
@@ -93,9 +103,16 @@ module fCore_tb();
             axil_bfm.read(CORE_DMA_BASE_ADDRESS+4*i, reg_readback);
             if(reg_readback!=expected_results[i]) $display("Register %d  Wrong Value detected. Expected %h Got %h",i,expected_results[i],reg_readback);
         end
-
+        ->run_test_done;
     end
 
+    initial begin
+        dma_read_response.ready <= 1;
+        @(run_test_done)
+        #10;
+       read_dma_BFM.write(2);
+       #1;
+    end
   
 
 endmodule

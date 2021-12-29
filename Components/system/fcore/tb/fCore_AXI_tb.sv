@@ -32,6 +32,8 @@ module fCore_AXI_tb();
     axi_lite axi_in();
     AXI axi_programmer();
 
+    axi_stream dma_read_request();
+    axi_stream dma_read_response();
 
     axi_lite_BFM axil_bfm;
      
@@ -42,12 +44,14 @@ module fCore_AXI_tb();
     );
 
     fCore UUT(
-    .clock(core_clk),
-    .reset(rst),
-    .run(run),
-    .control_axi_in(axi_in),
-    .axis_dma(dummy),
-    .axi(axi_programmer)
+        .clock(core_clk),
+        .reset(rst),
+        .run(run),
+        .control_axi_in(axi_in),
+        .axis_dma(dummy),
+        .axi(axi_programmer),
+        .axis_dma_read_request(dma_read_request),
+        .axis_dma_read_response(dma_read_response)
     );
 
     axi_transaction wr_transaction;

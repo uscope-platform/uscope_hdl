@@ -23,7 +23,9 @@ module fCore(
     output wire done,
     axi_lite.slave control_axi_in,
     AXI.slave axi,
-    axi_stream.slave axis_dma
+    axi_stream.slave axis_dma_write,
+    axi_stream.slave axis_dma_read_request,
+    axi_stream.master axis_dma_read_response
 );
 
     parameter FAST_DEBUG = "TRUE";
@@ -209,7 +211,9 @@ module fCore(
         .dma_write_data(dma_write_data),
         .dma_write_valid(dma_write_valid),
         .n_channels(n_channels),
-        .axis_dma(axis_dma)
+        .axis_dma_write(axis_dma_write),
+        .axis_dma_read_request(axis_dma_read_request),
+        .axis_dma_read_response(axis_dma_read_response)
         );
 
     defparam store.DATA_WIDTH = INSTRUCTION_WIDTH;
@@ -224,7 +228,7 @@ module fCore(
         .dma_read_data_w(instruction_w),
         .axi(axi)
     );
-    
+
     defparam registers.REGISTER_WIDTH = DATAPATH_WIDTH;
     defparam registers.FILE_DEPTH = REGISTER_FILE_DEPTH*MAX_CHANNELS;
     defparam registers.REG_PER_CHANNEL = REGISTER_FILE_DEPTH;

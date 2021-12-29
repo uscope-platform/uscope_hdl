@@ -27,7 +27,9 @@ module fCore_dma_endpoint #(parameter BASE_ADDRESS = 32'h43c00000, DATAPATH_WIDT
     output reg [REG_ADDR_WIDTH:0] dma_read_addr,
     input wire [DATAPATH_WIDTH-1:0] dma_read_data,
     output reg [REG_ADDR_WIDTH-1:0] n_channels,
-    axi_stream.slave axis_dma
+    axi_stream.slave axis_dma_write,
+    axi_stream.slave axis_dma_read_request,
+    axi_stream.master axis_dma_read_response
     );
 
     
@@ -47,14 +49,15 @@ module fCore_dma_endpoint #(parameter BASE_ADDRESS = 32'h43c00000, DATAPATH_WIDT
     );
 
     assign write_data.ready = 1;
+    assign axis_dma_write.ready = 0;
 
     always_ff @(posedge clock) begin
         dma_write_valid <= 0;
         dma_write_addr <= 0;
         dma_write_data <= 0;
-        if(axis_dma.valid)begin
-            dma_write_addr <= axis_dma.dest;
-            dma_write_data <= axis_dma.data;
+        if(axis_dma_write.valid)begin
+            dma_write_addr <= axis_dma_write.dest;
+            dma_write_data <= axis_dma_write.data;
             dma_write_valid <= 1;
             n_channels <= 1;
         end else if(write_data.valid)begin
@@ -69,33 +72,78 @@ module fCore_dma_endpoint #(parameter BASE_ADDRESS = 32'h43c00000, DATAPATH_WIDT
         end
     end
 
-    reg read_result_ready;
+    enum reg [2:0] {
+        idle = 0,
+        bus_read = 1,
+        axis_read = 2,
+        wait_read = 3
+    } state;
 
     always_ff @(posedge clock) begin
         if(!reset)begin
             read_addr.ready <= 1;
+            axis_dma_read_request.ready <= 1;
             dma_read_addr <= 0;
-            read_result_ready <= 0;
             read_data.data <= 0;
+            state <= idle;
         end else begin
-            read_data.valid <= 0;
-
-            if(read_addr.valid) begin
-                if(read_addr.data == 0) begin
-                    read_data.data <= n_channels;
-                    read_data.valid <= 1;
-                end else begin
-                    dma_read_addr <= read_addr.data;
-                    read_result_ready <= 1;    
+            case (state)
+                idle: begin
+                    read_data.valid <= 0;
+                    if(axis_dma_read_request.valid)begin
+                        if(read_addr.data != 0) begin
+                            dma_read_addr <= axis_dma_read_request.data;
+                            state <= wait_read;
+                            axis_dma_read_request.ready <= 0;
+                            read_addr.ready <= 0;
+                        end
+                    end else if(read_addr.valid) begin
+                        if(read_addr.data == 0) begin
+                            read_data.data <= n_channels;
+                            read_data.valid <= 1;
+                        end else begin
+                            dma_read_addr <= read_addr.data;
+                            state <= bus_read;
+                            axis_dma_read_request.ready <= 0;
+                            read_addr.ready <= 0;
+                        end
+                    end
                 end
-                
+                wait_read:begin
+                    state <= axis_read;
+                end
+                bus_read: begin
+                    read_addr.ready <= 1;
+                    axis_dma_read_request.ready <= 1;
+                    state <= idle;
+                end
+                axis_read: begin
+                    axis_dma_read_request.ready <= 1;
+                    read_addr.ready <= 1;
+                    state <= idle;
+                end
+                default: state <= idle;
+            endcase
+        end
+    end
+
+    always_comb begin
+        case (state)
+            idle: begin
+                axis_dma_read_response.data <= 0;
+                axis_dma_read_response.valid <= 0;
+                read_data.valid <= 0;
             end
-            if(read_result_ready)begin
+            bus_read: begin
                 read_data.valid <= 1;
                 read_data.data <= dma_read_data;
-                read_result_ready <= 0;
             end
-        end
+            axis_read: begin
+                axis_dma_read_response.data <= dma_read_data;
+                axis_dma_read_response.valid <= 1;
+            end
+            
+        endcase
     end
 
 
