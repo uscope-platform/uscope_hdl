@@ -61,6 +61,8 @@ module fCore_dma_endpoint #(parameter BASE_ADDRESS = 32'h43c00000, DATAPATH_WIDT
             if(sb.sb_write_strobe & state == wait_state) begin
                 latched_address <= sb.sb_address-BASE_ADDRESS;
                 latched_writedata <= sb.sb_write_data;
+            end else if(sb.sb_read_strobe & state == wait_state) begin
+                latched_address <= sb.sb_address-BASE_ADDRESS;
             end else begin
                 latched_address <= latched_address;
                 latched_writedata <= latched_writedata;
