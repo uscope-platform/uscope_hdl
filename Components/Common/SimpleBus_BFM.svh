@@ -60,7 +60,7 @@ class simplebus_BFM;
         this.spb.sb_address <= address;
         this.spb.sb_read_strobe <= 1'b1;
         #(this.clock_period) this.spb.sb_read_strobe <= 1'b0;
-        @(posedge this.spb.sb_ready) read_data = this.spb.sb_read_data;
+        @(posedge this.spb.sb_read_valid) read_data = this.spb.sb_read_data;
     endtask
     
     task reset();
