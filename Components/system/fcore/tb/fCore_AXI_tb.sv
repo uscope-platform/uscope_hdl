@@ -15,7 +15,8 @@
 
 `timescale 10ns / 1ns
 `include "interfaces.svh"
-`include "SimpleBus_BFM.svh"
+`include "axi_lite_BFM.svh"
+
 import axi_vip_pkg::*;
 import vip_bd_axi_vip_0_0_pkg::*;
 
@@ -28,11 +29,11 @@ module fCore_AXI_tb();
     axi_stream op_a();
     axi_stream dummy();
     axi_stream op_res();
-    Simplebus s();
+    axi_lite axi_in();
     AXI axi_programmer();
 
 
-    simplebus_BFM BFM;
+    axi_lite_BFM axil_bfm;
      
     vip_bd_wrapper Programmer(
         .clock(core_clk),
@@ -44,7 +45,7 @@ module fCore_AXI_tb();
     .clock(core_clk),
     .reset(rst),
     .run(run),
-    .sb(s),
+    .control_axi_in(axi_in),
     .axis_dma(dummy),
     .axi(axi_programmer)
     );
@@ -77,9 +78,9 @@ module fCore_AXI_tb();
     reg [31:0] reg_readback;
     // reset generation
     initial begin
-        BFM = new(s,1);
+        axil_bfm = new(axi_in,1);
         
-        $readmemh("/home/fils/git/uscope_hdl/Components/system/fcore/tb/test_program.mem", test_program);
+        $readmemh("/home/fils/git/uscope_hdl/public/Components/system/fcore/tb/test_program.mem", test_program);
         //$readmemh("/home/fils/git/sicdrive-hdl/Applications/SicDriveMaster/tb/sogi.mem", test_program);
 
 
@@ -103,7 +104,7 @@ module fCore_AXI_tb();
         #5 run <=  0;
         #4150;
         for(int i = 0; i<15; i = i+1)begin
-            BFM.read(32'h43c00008+i*4,reg_readback);
+            axil_bfm.read(32'h43c00008+i*4,reg_readback);
             $fwrite(File, "%d\n", reg_readback);
         end
         $fclose(File);
@@ -112,8 +113,8 @@ module fCore_AXI_tb();
 
 
     initial begin
-        #300 BFM.write(32'h43c00000,3);
-        #5 BFM.write(32'h43c0000C,69);
+        #300 axil_bfm.write(32'h43c00000,3);
+        #5 axil_bfm.write(32'h43c0000C,69);
     end
 
 

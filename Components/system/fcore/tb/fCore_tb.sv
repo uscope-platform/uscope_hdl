@@ -15,7 +15,7 @@
 
 `timescale 10ns / 1ns
 `include "interfaces.svh"
-`include "SimpleBus_BFM.svh"
+`include "axi_lite_BFM.svh"
 
 module fCore_tb();
 
@@ -26,17 +26,17 @@ module fCore_tb();
     
     axi_stream op_a();
     axi_stream op_res();
-    Simplebus s();
     AXI axi_programmer();
     axi_stream axis_dma();
+    axi_lite axil();
 
-    simplebus_BFM BFM;
-
+    axi_lite_BFM axil_bfm;
+    
     localparam RECIPROCAL_PRESENT = 0;
      
     defparam uut.FAST_DEBUG = "TRUE";
     defparam uut.MAX_CHANNELS = 9;
-    defparam uut.INIT_FILE = "/home/fils/git/uscope_hdl/Components/system/fcore/tb/test_sat.mem";
+    defparam uut.INIT_FILE = "/home/fils/git/uscope_hdl/public/Components/system/fcore/tb/test_sat.mem";
     defparam uut.dma_ep.LEGACY_READ = 0;
     defparam uut.executor.RECIPROCAL_PRESENT = RECIPROCAL_PRESENT;
     fCore uut(
@@ -44,7 +44,7 @@ module fCore_tb();
         .reset(rst),
         .run(run),
         .done(done),
-        .sb(s),
+        .control_axi_in(axil),
         .axi(axi_programmer),
         .axis_dma(axis_dma)
     );
@@ -65,8 +65,7 @@ module fCore_tb();
     reg [31:0] reg_readback;
     // reset generation
     initial begin
-        BFM = new(s,1);
-         
+        axil_bfm = new(axil,1);
         
         rst <=0;
 
@@ -76,7 +75,7 @@ module fCore_tb();
         run <= 0;
         #10.5;
         #20.5 rst <=1;
-        #35 BFM.write(32'h43c00000,8);
+        #35 axil_bfm.write(32'h43c00000,8);
         #4; run <= 1;
         #5 run <=  0;
     end
@@ -91,7 +90,7 @@ module fCore_tb();
         end
         @(posedge done) $display("femtoCore Processing Done");
         for (integer i = 0; i<13; i++) begin
-            BFM.read(CORE_DMA_BASE_ADDRESS+4*i, reg_readback);
+            axil_bfm.read(CORE_DMA_BASE_ADDRESS+4*i, reg_readback);
             if(reg_readback!=expected_results[i]) $display("Register %d  Wrong Value detected. Expected %h Got %h",i,expected_results[i],reg_readback);
         end
 

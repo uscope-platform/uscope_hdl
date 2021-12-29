@@ -21,7 +21,7 @@ module fCore(
     input wire reset,
     input wire run,
     output wire done,
-    Simplebus.slave sb,
+    axi_lite.slave control_axi_in,
     AXI.slave axi,
     axi_stream.slave axis_dma
 );
@@ -202,7 +202,7 @@ module fCore(
     fCore_dma_endpoint dma_ep(
         .clock(clock),
         .reset(reset),
-        .sb(sb),
+        .axi_in(control_axi_in),
         .dma_read_addr(dma_read_addr),
         .dma_read_data(dma_read_data),
         .dma_write_addr(dma_write_addr),
