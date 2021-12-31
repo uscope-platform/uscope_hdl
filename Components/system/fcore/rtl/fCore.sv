@@ -207,6 +207,7 @@ module fCore(
     //      AUXILIARY BLOCKS     //
     ///////////////////////////////
     
+    axi_stream dma_write();
 
     fCore_dma_endpoint #( 
         .BASE_ADDRESS(DMA_BASE_ADDRESS),
@@ -222,11 +223,12 @@ module fCore(
         .dma_write_addr(dma_write_addr),
         .dma_write_data(dma_write_data),
         .dma_write_valid(dma_write_valid),
+        .reg_dma_write(dma_write),
         .n_channels(n_channels),
         .axis_dma_write(axis_dma_write),
         .axis_dma_read_request(axis_dma_read_request),
         .axis_dma_read_response(axis_dma_read_response)
-        );
+    );
 
     fCore_Istore #(
         .DATA_WIDTH(INSTRUCTION_WIDTH),
@@ -257,9 +259,7 @@ module fCore(
         .read_data_b(operand_data_b),
         .dma_read_addr(dma_read_addr),
         .dma_read_data(dma_read_data),
-        .dma_write_addr(dma_write_addr),
-        .dma_write_data(dma_write_data),
-        .dma_write_valid(dma_write_valid)
+        .dma_write(dma_write)
     );
 
     

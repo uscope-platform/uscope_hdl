@@ -21,9 +21,7 @@ module fCore_dma_endpoint #(parameter BASE_ADDRESS = 32'h43c00000, DATAPATH_WIDT
     input wire clock,
     input wire reset,
     axi_lite.slave axi_in,
-    output reg [REG_ADDR_WIDTH-1:0] dma_write_addr,
-    output reg [DATAPATH_WIDTH-1:0] dma_write_data,
-    output reg dma_write_valid,
+    axi_stream.slave reg_dma_write,
     output reg [REG_ADDR_WIDTH-1:0] dma_read_addr,
     input wire [DATAPATH_WIDTH-1:0] dma_read_data,
     output reg [$clog2(REG_ADDR_WIDTH)-1:0] n_channels,
@@ -52,21 +50,21 @@ module fCore_dma_endpoint #(parameter BASE_ADDRESS = 32'h43c00000, DATAPATH_WIDT
     assign axis_dma_write.ready = 0;
 
     always_ff @(posedge clock) begin
-        dma_write_valid <= 0;
-        dma_write_addr <= 0;
-        dma_write_data <= 0;
+        reg_dma_write.valid <= 0;
+        reg_dma_write.dest <= 0;
+        reg_dma_write.data <= 0;
         if(axis_dma_write.valid)begin
-            dma_write_addr <= axis_dma_write.dest;
-            dma_write_data <= axis_dma_write.data;
-            dma_write_valid <= 1;
+            reg_dma_write.dest <= axis_dma_write.dest;
+            reg_dma_write.data <= axis_dma_write.data;
+            reg_dma_write.valid <= 1;
             n_channels <= 1;
         end else if(write_data.valid)begin
             if(write_data.dest == 0) begin
                 n_channels <= write_data.data;
             end else begin
-                dma_write_addr <= write_data.dest;
-                dma_write_data <= write_data.data;
-                dma_write_valid <= 1;    
+                reg_dma_write.dest <= write_data.dest;
+                reg_dma_write.data <= write_data.data;
+                reg_dma_write.valid <= 1;    
             end
             
         end
