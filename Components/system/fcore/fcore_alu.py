@@ -2,7 +2,7 @@ from jinja2 import Template
 import argparse
 import os
 
-parser = argparse.ArgumentParser(description='Generate Simplebus Interface')
+parser = argparse.ArgumentParser(description='Generate femtocore ALU')
 parser.add_argument('target', metavar='TARGET', type=str, help='Directory where the output will be generated')
 parser.add_argument('--reciprocal', action='store_true', help='Is Reciprocal desired')
 parser.add_argument('--name', type=str, help='Name of the produced block diagram')

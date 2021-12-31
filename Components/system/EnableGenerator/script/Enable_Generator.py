@@ -9,7 +9,7 @@ parser.add_argument('target', metavar='TARGET', type=str,
 parser.add_argument('n_enables', metavar='N_ENABLES', type=int,
                     help='Number of enable signals')
 parser.add_argument('--A', metavar='ADDR', type=str,
-                    help='Simplebus Base address')
+                    help='AXI lite Base address')
 args = parser.parse_args()
 
 n_enables = args.n_enables

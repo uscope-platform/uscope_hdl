@@ -4,7 +4,7 @@
 from jinja2 import Template
 import argparse, os
 
-parser = argparse.ArgumentParser(description='Generate Simplebus Interface')
+parser = argparse.ArgumentParser(description='Generate axi stream combiner')
 parser.add_argument('target', metavar='TARGET', type=str,
                     help='Directory where the output will be generated')
 parser.add_argument('streams', metavar='streams', type=int,

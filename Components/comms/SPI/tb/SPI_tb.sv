@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 `timescale 10 ns / 1 ns
-`include "SimpleBus_BFM.svh"
 `include "axi_lite_BFM.svh"
 
 module SPI_tb();
@@ -78,7 +77,6 @@ module SPI_tb();
         .SPI_write_valid(SPI_write_valid)
     );
 
-    simplebus_BFM BFM;
 
 
 
@@ -97,7 +95,6 @@ module SPI_tb();
     
     initial begin
         //INITIAL SETTINGS AND INSTANTIATIONS OF CLASSES
-        BFM = new(s,1);
         axil_bfm = new(axil,1);
         spi_mode <=spi_mode_master;
         miso <= 0;
@@ -108,24 +105,24 @@ module SPI_tb();
         SPI_write_data <= 0;
 
         //TEST MASTER MODE
-        #10 BFM.write(32'h43C00000,31'h101c4);
-        #5 BFM.write(32'h43C00004,31'h1c);
-        #5 BFM.write(32'h43C00008,31'hCAFE);
-        #5 BFM.write(32'h43C0000C,31'h0);
-        #50 BFM.write(32'h43C0000C,31'h0);
-        #5 BFM.read(32'h43C00010,read_result);
-        #10 BFM.write(32'h43C00000,31'h111c4);
-        #50 BFM.write(32'h43C00014,31'hff);
+        #10 axil_bfm.write(32'h43C00000,31'h101c4);
+        #5 axil_bfm.write(32'h43C00004,31'h1c);
+        #5 axil_bfm.write(32'h43C00008,31'hCAFE);
+        #5 axil_bfm.write(32'h43C0000C,31'h0);
+        #50 axil_bfm.write(32'h43C0000C,31'h0);
+        #5 axil_bfm.read(32'h43C00010,read_result);
+        #10 axil_bfm.write(32'h43C00000,31'h111c4);
+        #50 axil_bfm.write(32'h43C00014,31'hff);
         
         #100 SPI_write_valid <= 1;
         SPI_write_data <= 'hFE;
         #1 SPI_write_valid <= 0;
         #500;
         
-        #5 BFM.reset();
+        #5 axil_bfm.reset();
         //TEST SLAVE MODEse_slave;
-        #5 BFM.write(32'h43C00000,31'h3F3);
-        #5 BFM.write(32'h43C00008,31'hFEDC);
+        #5 axil_bfm.write(32'h43C00000,31'h3F3);
+        #5 axil_bfm.write(32'h43C00008,31'hFEDC);
         #5 ss_slave <=1;
         #4 sclk_en<=1;
         miso <= 1;
@@ -138,10 +135,10 @@ module SPI_tb();
         #10 rst<=0;
         #10 rst <=1;
         
-        #5 BFM.write(32'h43C00000,31'hFF2);
-        #5 BFM.write(32'h43C00004,31'hF);
+        #5 axil_bfm.write(32'h43C00000,31'hFF2);
+        #5 axil_bfm.write(32'h43C00004,31'hF);
         #5 spi_mode <=spi_mode_master;
-        #5 BFM.write(32'h43C00008,31'hFEDC);
+        #5 axil_bfm.write(32'h43C00008,31'hFEDC);
         #5 ext_start <=1;
         #1 ext_start <=0;
 

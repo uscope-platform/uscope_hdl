@@ -13,14 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 `timescale 10 ns / 1 ns
-`include "SimpleBus_BFM.svh"
 `include "axi_lite_BFM.svh"
 `include "interfaces.svh"
 
 module AD2S1210_tb();
     reg clk, rst, start;
 
-    Simplebus s();
     axi_lite test_axi();
     axi_stream resolver_out();
 
@@ -52,7 +50,6 @@ module AD2S1210_tb();
         .resolver_out(resolver_out)
     );
 
-    simplebus_BFM BFM;
     axi_lite_BFM axil_bfm;
 
     localparam CONTROLLER_ADDRESS = 32'h43c00000;
