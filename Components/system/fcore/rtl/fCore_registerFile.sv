@@ -36,6 +36,20 @@ module fCore_registerFile #(parameter REGISTER_WIDTH = 32, FILE_DEPTH = 12, REG_
     );
 
 
+
+
+
+    reg [REGISTER_WIDTH-1:0] ram_a_read_data;
+    reg [$clog2(FILE_DEPTH)-1:0] ram_a_read_addr;
+    reg [REGISTER_WIDTH-1:0] ram_b_read_data;
+    reg [$clog2(FILE_DEPTH)-1:0] ram_b_read_addr;
+
+    axi_stream #(
+        .DATA_WIDTH(REGISTER_WIDTH),
+        .DEST_WIDTH($clog2(FILE_DEPTH))
+    ) ram_write_if();
+
+
     DP_RAM#(
         .DATA_WIDTH(REGISTER_WIDTH),
         .ADDR_WIDTH($clog2(FILE_DEPTH))
@@ -63,12 +77,7 @@ module fCore_registerFile #(parameter REGISTER_WIDTH = 32, FILE_DEPTH = 12, REG_
         .en_b(1'b1)
     );
 
-    axi_stream ram_write_if();
-    reg [REGISTER_WIDTH-1:0] ram_a_read_data;
-    reg [REGISTER_WIDTH-1:0] ram_a_read_addr;
-    reg [REGISTER_WIDTH-1:0] ram_b_read_data;
-    reg [REGISTER_WIDTH-1:0] ram_b_read_addr;
-
+    
     always_comb begin
         if(dma_enable) begin
             ram_write_if.data <= dma_write_data;

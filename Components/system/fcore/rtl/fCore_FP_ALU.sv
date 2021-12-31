@@ -105,7 +105,9 @@ module fCore_FP_ALU #(parameter DATAPATH_WIDTH =32, PIPELINE_DEPTH=5, OPCODE_WID
     endgenerate
     */
 
-    simple_alu_wrapper simple_alu (
+    simple_alu_wrapper #(
+        .REGISTER_ADDR_WIDTH(REGISTER_ADDR_WIDTH)
+    ) simple_alu (
         .clock(clock),
         .reset(reset),
         .operand_a(operand_a),

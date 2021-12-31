@@ -22,7 +22,7 @@ module fCore_tb();
 
     `define DEBUG
 
-    reg core_clk, io_clk, rst, run,programming_start;
+    reg core_clk, io_clk, rst, run;
     wire done;
     
     axi_stream op_a();
@@ -33,6 +33,7 @@ module fCore_tb();
 
     axi_stream dma_read_request();
     axi_stream dma_read_response();
+    axi_stream data_out();
 
     axi_lite_BFM axil_bfm;
     axis_BFM read_dma_BFM;
@@ -57,6 +58,23 @@ module fCore_tb();
         .axis_dma_read_response(dma_read_response)
     );
 
+    reg data_mover_start;
+    
+    axis_data_mover #(
+        .DATA_WIDTH(32),
+        .CHANNEL_NUMBER(3),
+        .SOURCE_ADDR('{1,2,3}),
+        .TARGET_ADDR('{1,2,3})
+    ) mover (
+        .clock(core_clk),
+        .reset(rst),
+        .start(data_mover_start),
+        .data_request(dma_read_request),
+        .data_response(dma_read_response),
+        .data_out(data_out)
+    );
+
+
     //clock generation
     initial core_clk = 0; 
     always #0.5 core_clk = ~core_clk;
@@ -74,7 +92,6 @@ module fCore_tb();
     // reset generation
     initial begin
         axil_bfm = new(axil,1);
-        read_dma_BFM = new(dma_read_request, 1);
         rst <=0;
         axis_dma_write.initialize();
         op_a.initialize();
@@ -87,6 +104,17 @@ module fCore_tb();
         #4; run <= 1;
         #5 run <=  0;
     end
+        
+    //clock generation
+    initial begin
+        data_mover_start <= 0;
+        #1700 data_mover_start <=1;
+        #1 data_mover_start <= 0;
+    end
+
+
+
+
     reg [31:0] expected_results [12:0];
     localparam CORE_DMA_BASE_ADDRESS = 32'h43c00004;
     
@@ -106,13 +134,6 @@ module fCore_tb();
         ->run_test_done;
     end
 
-    initial begin
-        dma_read_response.ready <= 1;
-        @(run_test_done)
-        #10;
-       read_dma_BFM.write(2);
-       #1;
-    end
-  
+
 
 endmodule

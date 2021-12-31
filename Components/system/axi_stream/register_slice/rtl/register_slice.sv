@@ -25,17 +25,19 @@ module register_slice #(parameter DATA_WIDTH = 32, DEST_WIDTH = 32, USER_WIDTH =
     axi_stream.master out
 );
 
-    assign out.valid = valid_reg[N_STAGES-1];
-    assign out.dest = dest_reg[N_STAGES-1];
-    assign out.data = data_reg[N_STAGES-1];
-    assign out.user = user_reg[N_STAGES-1];
-    assign out.tlast = tlast_reg[N_STAGES-1];
 
     reg [31:0] data_reg [N_STAGES-1:0];
     reg [31:0] dest_reg [N_STAGES-1:0];
     reg [31:0] user_reg [N_STAGES-1:0];
     reg [N_STAGES-1:0] tlast_reg;
     reg [N_STAGES-1:0] valid_reg;
+
+    assign out.valid = valid_reg[N_STAGES-1];
+    assign out.dest = dest_reg[N_STAGES-1];
+    assign out.data = data_reg[N_STAGES-1];
+    assign out.user = user_reg[N_STAGES-1];
+    assign out.tlast = tlast_reg[N_STAGES-1];
+
 
     generate
         if(READY_REG == 0)

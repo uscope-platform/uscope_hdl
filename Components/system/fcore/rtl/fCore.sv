@@ -54,7 +54,8 @@ module fCore(
     // Overall register address width
     localparam REG_ADDR_WIDTH = BASE_REG_ADDR_WIDTH+CH_ADDRESS_WIDTH;
     
-
+    // Size of the register file
+    localparam REG_FILE_SIZE = REGISTER_FILE_DEPTH*MAX_CHANNELS;
     ///////////////////////////////
     //        PIPELINE           //
     ///////////////////////////////
@@ -63,10 +64,14 @@ module fCore(
     axi_stream operand_a_dly();
     axi_stream operand_b();
     axi_stream operand_b_dly();
-    axi_stream operation();
-    axi_stream operation_dly();
+    axi_stream #(
+        .DATA_WIDTH(8)
+    ) operation();
+    axi_stream #(
+        .DATA_WIDTH(8)
+    ) operation_dly();
     axi_stream result();
-    wire core_stop, decoder_enable, alu_execute;
+    wire core_stop, decoder_enable;
     wire dma_enable;
     wire [ADDR_WIDTH-1:0] program_counter;
 
@@ -90,9 +95,11 @@ module fCore(
     wire [CH_ADDRESS_WIDTH-1:0] channel_address;
     wire [CH_ADDRESS_WIDTH-1:0] n_channels;
 
-    defparam control_unit.MAX_CHANNELS = MAX_CHANNELS;
-    defparam control_unit.PC_WIDTH = ADDR_WIDTH;
-    fCore_ControlUnit control_unit (
+    
+    fCore_ControlUnit #(
+        .MAX_CHANNELS(MAX_CHANNELS),
+        .PC_WIDTH(ADDR_WIDTH)
+    ) control_unit (
         .clock(clock),
         .run(run),
         .immediate_advance(immediate_advance),
@@ -124,14 +131,15 @@ module fCore(
 
 
 
-    defparam decoder.INSTRUCTION_WIDTH = INSTRUCTION_WIDTH;
-    defparam decoder.DATAPATH_WIDTH = DATAPATH_WIDTH;
-    defparam decoder.PC_WIDTH = ADDR_WIDTH;
-    defparam decoder.OPCODE_WIDTH = OPCODE_WIDTH;
-    defparam decoder.REG_ADDR_WIDTH=BASE_REG_ADDR_WIDTH;
-    defparam decoder.CHANNEL_ADDR_WIDTH=CH_ADDRESS_WIDTH;
-    defparam decoder.MAX_CHANNELS = MAX_CHANNELS; 
-    fCore_decoder decoder (
+    fCore_decoder #(
+        .INSTRUCTION_WIDTH(INSTRUCTION_WIDTH),
+        .DATAPATH_WIDTH(DATAPATH_WIDTH),
+        .PC_WIDTH(ADDR_WIDTH),
+        .OPCODE_WIDTH(OPCODE_WIDTH),
+        .REG_ADDR_WIDTH(BASE_REG_ADDR_WIDTH),
+        .CHANNEL_ADDR_WIDTH(CH_ADDRESS_WIDTH),
+        .MAX_CHANNELS(MAX_CHANNELS)
+    ) decoder (
         .clock(clock),
         .reset(reset),
         .enable(decoder_enable),
@@ -178,11 +186,13 @@ module fCore(
     end
 
 
-    defparam executor.OPCODE_WIDTH = ALU_OPCODE_WIDTH;
-    defparam executor.REG_ADDR_WIDTH = REG_ADDR_WIDTH;
-    defparam executor.DATA_WIDTH = DATAPATH_WIDTH;
-    defparam executor.RECIPROCAL_PRESENT = RECIPROCAL_PRESENT;
-    fCore_exec executor (
+
+    fCore_exec #( 
+        .OPCODE_WIDTH(ALU_OPCODE_WIDTH),
+        .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
+        .DATA_WIDTH(DATAPATH_WIDTH),
+        .RECIPROCAL_PRESENT(RECIPROCAL_PRESENT)
+    ) executor (
         .clock(clock),
         .reset(reset),
         .opcode(exec_opcode),
@@ -196,12 +206,14 @@ module fCore(
     ///////////////////////////////
     //      AUXILIARY BLOCKS     //
     ///////////////////////////////
-    defparam dma_ep.BASE_ADDRESS = DMA_BASE_ADDRESS;
-    defparam dma_ep.DATAPATH_WIDTH = DATAPATH_WIDTH;
-    defparam dma_ep.PULSE_STRETCH_LENGTH = 4;
-    defparam dma_ep.REG_ADDR_WIDTH = REG_ADDR_WIDTH;
+    
 
-    fCore_dma_endpoint dma_ep(
+    fCore_dma_endpoint #( 
+        .BASE_ADDRESS(DMA_BASE_ADDRESS),
+        .DATAPATH_WIDTH(DATAPATH_WIDTH),
+        .PULSE_STRETCH_LENGTH(4),
+        .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
+    )dma_ep(
         .clock(clock),
         .reset(reset),
         .axi_in(control_axi_in),
@@ -216,12 +228,13 @@ module fCore(
         .axis_dma_read_response(axis_dma_read_response)
         );
 
-    defparam store.DATA_WIDTH = INSTRUCTION_WIDTH;
-    defparam store.MEM_DEPTH = INSTRUCTION_STORE_SIZE;
-    defparam store.REGISTERED = "TRUE";
-    defparam store.FAST_DEBUG = FAST_DEBUG;
-    defparam store.INIT_FILE = INIT_FILE;
-    fCore_Istore store(
+    fCore_Istore #(
+        .DATA_WIDTH(INSTRUCTION_WIDTH),
+        .MEM_DEPTH(INSTRUCTION_STORE_SIZE),
+        .REGISTERED("TRUE"),
+        .FAST_DEBUG(FAST_DEBUG),
+        .INIT_FILE(INIT_FILE)
+    ) store(
         .clock(clock),
         .reset(reset),
         .dma_read_addr(program_counter),
@@ -229,10 +242,11 @@ module fCore(
         .axi(axi)
     );
 
-    defparam registers.REGISTER_WIDTH = DATAPATH_WIDTH;
-    defparam registers.FILE_DEPTH = REGISTER_FILE_DEPTH*MAX_CHANNELS;
-    defparam registers.REG_PER_CHANNEL = REGISTER_FILE_DEPTH;
-    fCore_registerFile registers(
+    fCore_registerFile #(
+        .REGISTER_WIDTH(DATAPATH_WIDTH),
+        .FILE_DEPTH(REG_FILE_SIZE),
+        .REG_PER_CHANNEL(REGISTER_FILE_DEPTH)
+    ) registers(
         .clock(clock),
         .reset(reset),
         .write_if(result),

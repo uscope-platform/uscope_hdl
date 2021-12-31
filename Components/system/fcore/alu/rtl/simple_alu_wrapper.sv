@@ -16,7 +16,7 @@
 `timescale 10ns / 1ns
 `include "interfaces.svh"
 
-module simple_alu_wrapper (
+module simple_alu_wrapper #(parameter REGISTER_ADDR_WIDTH = 32) (
     input wire clock,
     input wire reset,
     axi_stream.slave operand_a,
@@ -29,7 +29,25 @@ module simple_alu_wrapper (
     axi_stream.master mul_result
 );
 
+    wire [31:0] cmp_res_tuser;
+    assign cmp_result.user = cmp_res_tuser[REGISTER_ADDR_WIDTH-1:0];
+    
+    wire [7:0] cmp_res_tdata;
+    assign cmp_result.data = {24'b0,cmp_res_tdata};
 
+    wire [31:0] add_res_tuser;
+    assign add_result.user = add_res_tuser[REGISTER_ADDR_WIDTH-1:0];
+
+    wire [31:0] fti_res_tuser;
+    assign fti_result.user = fti_res_tuser[REGISTER_ADDR_WIDTH-1:0];
+    
+    wire [31:0] itf_res_tuser;
+    assign itf_result.user = itf_res_tuser[REGISTER_ADDR_WIDTH-1:0];
+        
+    wire [31:0] mul_res_tuser;
+    assign mul_result.user = mul_res_tuser[REGISTER_ADDR_WIDTH-1:0];
+        
+    
     fcore_simple_alu fp_simple_alu_bd(
         .clock(clock),
         .reset(reset),
@@ -59,19 +77,19 @@ module simple_alu_wrapper (
         .mult_b_tvalid(operand_b.valid),
         // OUTPUTS
         .add_res_tdata(add_result.data),
-        .add_res_tuser(add_result.user),
+        .add_res_tuser(add_res_tuser),
         .add_res_tvalid(add_result.valid),
-        .cmp_res_tdata(cmp_result.data),
-        .cmp_res_tuser(cmp_result.user),
+        .cmp_res_tdata(cmp_res_tdata),
+        .cmp_res_tuser(cmp_res_tuser),
         .cmp_res_tvalid(cmp_result.valid),
         .fti_res_tdata(fti_result.data),
-        .fti_res_tuser(fti_result.user),
+        .fti_res_tuser(fti_res_tuser),
         .fti_res_tvalid(fti_result.valid),
         .itf_res_tdata(itf_result.data),
-        .itf_res_tuser(itf_result.user),
+        .itf_res_tuser(itf_res_tuser),
         .itf_res_tvalid(itf_result.valid),
         .mul_res_tdata(mul_result.data),
-        .mul_res_tuser(mul_result.user),
+        .mul_res_tuser(mul_res_tuser),
         .mul_res_tvalid(mul_result.valid)
     ); 
 

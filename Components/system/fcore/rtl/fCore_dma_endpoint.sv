@@ -24,9 +24,9 @@ module fCore_dma_endpoint #(parameter BASE_ADDRESS = 32'h43c00000, DATAPATH_WIDT
     output reg [REG_ADDR_WIDTH-1:0] dma_write_addr,
     output reg [DATAPATH_WIDTH-1:0] dma_write_data,
     output reg dma_write_valid,
-    output reg [REG_ADDR_WIDTH:0] dma_read_addr,
+    output reg [REG_ADDR_WIDTH-1:0] dma_read_addr,
     input wire [DATAPATH_WIDTH-1:0] dma_read_data,
-    output reg [REG_ADDR_WIDTH-1:0] n_channels,
+    output reg [$clog2(REG_ADDR_WIDTH)-1:0] n_channels,
     axi_stream.slave axis_dma_write,
     axi_stream.slave axis_dma_read_request,
     axi_stream.master axis_dma_read_response
