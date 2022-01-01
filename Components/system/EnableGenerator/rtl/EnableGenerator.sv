@@ -31,8 +31,8 @@ module enable_generator #(parameter BASE_ADDRESS = 0, COUNTER_WIDTH = 32, EXTERN
 
 
 
-    reg [31:0] cu_write_registers [2:0];
-    reg [31:0] cu_read_registers [2:0];
+    logic [31:0] cu_write_registers [2:0];
+    logic [31:0] cu_read_registers [2:0];
 
     localparam ADDITIONAL_BITS = 32 - COUNTER_WIDTH;
 
@@ -49,19 +49,14 @@ module enable_generator #(parameter BASE_ADDRESS = 0, COUNTER_WIDTH = 32, EXTERN
         .axil(axil)
     );
 
+    assign bus_enable = cu_write_registers[0][0];
+    assign period = cu_write_registers[1][COUNTER_WIDTH-1:0];
+    assign enable_threshold_1 = cu_write_registers[2][COUNTER_WIDTH-1:0];
 
-    always_comb begin 
-        bus_enable <= cu_write_registers[0];
-        period <= cu_write_registers[1];
-        enable_threshold_1 <= cu_write_registers[2];
-
-        cu_read_registers[0] <= {31'b0, {bus_enable}};
-        cu_read_registers[1] <= {{ADDITIONAL_BITS{1'b0}},period};
-        cu_read_registers[2] <= {{ADDITIONAL_BITS{1'b0}},enable_threshold_1};
-    end
+    assign cu_read_registers[0][31:0] = {31'b0, {bus_enable}};
+    assign cu_read_registers[1][31:0] = {{ADDITIONAL_BITS{1'b0}},period};
+    assign cu_read_registers[2][31:0] = {{ADDITIONAL_BITS{1'b0}},enable_threshold_1};
     
-    
-
     generate
         if(EXTERNAL_TIMEBASE_ENABLE==1)begin
             assign enable_out = synchronized_tb;

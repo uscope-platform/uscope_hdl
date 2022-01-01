@@ -18,6 +18,7 @@
 module enable_generator_2 #(parameter BASE_ADDRESS = 0, COUNTER_WIDTH = 32)(
     input wire        clock,
     input wire        reset,
+    input wire        ext_timebase,
     input wire        gen_enable_in,
     output wire enable_out_1,
     output wire enable_out_2,
@@ -53,20 +54,21 @@ module enable_generator_2 #(parameter BASE_ADDRESS = 0, COUNTER_WIDTH = 32)(
     );
 
 
-    always_comb begin 
-        bus_enable <= cu_write_registers[0];
-        period <= cu_write_registers[1];
-        enable_threshold_1 <= cu_write_registers[2];
-        enable_threshold_2 <= cu_write_registers[3];
-        cu_read_registers[0] <= {31'b0, {bus_enable}};
-        cu_read_registers[1] <= {{ADDITIONAL_BITS{1'b0}},period};
-        cu_read_registers[2] <= {{ADDITIONAL_BITS{1'b0}},enable_threshold_1};
-        cu_read_registers[3] <= {{ADDITIONAL_BITS{1'b0}},enable_threshold_2};
-    end
+
+    assign bus_enable = cu_write_registers[0][0];
+    assign period = cu_write_registers[1][COUNTER_WIDTH-1:0];
+    assign enable_threshold_1 = cu_write_registers[2][COUNTER_WIDTH-1:0];
+    assign enable_threshold_2 = cu_write_registers[3][COUNTER_WIDTH-1:0];
+
+    assign cu_read_registers[0][31:0] = {31'b0, {bus_enable}};
+    assign cu_read_registers[1][31:0] = {{ADDITIONAL_BITS{1'b0}},period};
+    assign cu_read_registers[2][31:0] = {{ADDITIONAL_BITS{1'b0}},enable_threshold_1};
+    assign cu_read_registers[3][31:0] = {{ADDITIONAL_BITS{1'b0}},enable_threshold_2};
 
     enable_generator_counter counter(
         .clock(clock),
         .reset(reset),
+        .external_timebase(ext_timebase),
         .gen_enable_in(bus_enable | gen_enable_in),
         .period(period),
         .counter_out(count)
