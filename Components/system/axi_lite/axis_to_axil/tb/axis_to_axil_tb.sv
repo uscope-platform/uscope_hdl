@@ -63,9 +63,6 @@ module axis_to_axil_tb();
         slv_agent.set_verbosity(400);
         slv_agent.start_slave();
 
-        slv_agent2 = new("slave 2 vip agent", axis_to_axil_tb.VIP2.vip_bd_i.axi_vip_0.inst.IF);
-        slv_agent2.set_verbosity(400);
-        slv_agent2.start_slave();
         //TESTS
         #30.5 reset <=1'h1;
 
@@ -81,38 +78,16 @@ module axis_to_axil_tb();
         write_in.valid <= 0;
     end
 
-
-
-    axi_lite axi_m2();
-
-    axis_2_axil_vip_bd_axi_vip_0_0_slv_mem_t slv_agent2;
-
-    axis_2_axil_vip_bd_wrapper VIP2(
-        .clock(clk),
-        .reset(reset),
-        .axi(axi_m2)
-    );
-    
-    axi_lite_BFM axil_bfm;
-
-    reg [31:0] wdata;
-    reg [31:0] waddr;
-
     initial begin 
-        axil_bfm = new(axi_m2, 1);
-        slv_agent2 = new("slave 2 vip agent", axis_to_axil_tb.VIP2.vip_bd_i.axi_vip_0.inst.IF);
-        slv_agent2.set_verbosity(400);
-        slv_agent2.start_slave();
-
+        read_req.initialize();
+        read_resp.ready = 1;
         #50.5;
+        read_req.data <= 'h43c00004;
+        read_req.valid <= 1;
+        #1;    
+        read_req.valid <= 0;
+        @(write_in.ready);
 
-        for (integer i = 0; i <101; i = i+1 ) begin
-            wdata = $urandom();
-            waddr = 'h43c00000 + ($urandom()%10)*4;
-            axil_bfm.write(waddr, wdata); 
-            #1;    
-        end
-        write_in.valid <= 0;
     end
 
 endmodule
