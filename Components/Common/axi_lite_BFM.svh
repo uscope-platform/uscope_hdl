@@ -58,15 +58,16 @@ class axi_lite_BFM;
         this.bus.BREADY <= 1;
         // WAIT FOR THE WRITE DATA HANDSHAKE
         wait(this.bus.AWREADY);
-        #1;
+        wait(!this.bus.AWREADY);
         this.bus.AWVALID <= 0;
+        this.bus.WVALID <= 0;
+        #1;
+
         // CHECK THAT THE DATA HANDSHAKE WAS PERFORMED CORRECTLY
 
         this.bus.AWADDR <= 0;
         this.bus.WDATA <= 0;
-        this.bus.WVALID <= 0;
         this.bus.WSTRB <= 0;
-        this.bus.BREADY <= 0;
     endtask
 
     task  read(input logic [31:0] address, output logic [31:0] data);
