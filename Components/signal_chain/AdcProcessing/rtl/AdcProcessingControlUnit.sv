@@ -34,7 +34,7 @@ module AdcProcessingControlUnit #(parameter BASE_ADDRESS = 'h43c00000, STICKY_FA
     output reg [7:0]  decimation_ratio
 );
 
-    reg clear_fault;
+    reg clear_fault, disable_fault;
     reg [7:0] slow_fault_threshold;
 
     reg [31:0] cu_write_registers [5:0];
@@ -82,18 +82,18 @@ module AdcProcessingControlUnit #(parameter BASE_ADDRESS = 'h43c00000, STICKY_FA
     assign cu_read_registers[3] = {comparator_thresholds[7], comparator_thresholds[3]};
     assign cu_read_registers[4] = {calibrator_coefficients[1], calibrator_coefficients[0]};
     assign cu_read_registers[5] = {
-        1'b0,
-        latch_mode,
-        clear_latch,
-        calibrator_coefficients[2],
-        slow_fault_threshold,
-        clear_fault,
-        disable_fault,
+        decimation_ratio    ,
         6'b0,
-        decimation_ratio
+        disable_fault,
+        clear_fault,
+        slow_fault_threshold,
+        calibrator_coefficients[2][2:0],
+        clear_latch,
+        latch_mode,
+        1'b0
     };
     
-    reg disable_fault, arm_fault;
+    reg arm_fault;
 
     reg [7:0] slow_fault_counter;
     

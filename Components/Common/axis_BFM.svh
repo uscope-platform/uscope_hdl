@@ -50,6 +50,13 @@ class axis_BFM;
         #(this.clock_period) this.axis.valid <= 1'b0;
     endtask
 
+    
+    task  read(output logic [31:0] data);
+        this.axis.ready <= 0;
+        wait(this.axis.valid);
+        data = this.axis.data;
+    endtask
+
     task reset();
         this.axis.data <= 32'b0;
         this.axis.valid <= 32'b0;
