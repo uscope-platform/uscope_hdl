@@ -59,18 +59,13 @@ module multiphase_reference_generator #(parameter N_PHASES=6, DATA_PATH_WIDTH=16
     reg [31:0] emulation_phase_advance;
     reg [31:0] emulation_sampling_period;
 
-    always_comb begin 
-        emulate_angle <= cu_write_registers[0];
-        emulation_phase_advance <= cu_write_registers[1];
-        emulation_sampling_period <= cu_write_registers[2];
+    assign emulate_angle = cu_write_registers[0];
+    assign emulation_phase_advance = cu_write_registers[1];
+    assign emulation_sampling_period = cu_write_registers[2];
 
-        cu_read_registers[0] <= {{31{1'b0}}, emulate_angle};
-        cu_read_registers[1][31:0] <= emulation_phase_advance[31:0];
-        cu_read_registers[2] <= emulation_sampling_period;
-
-    end
-
-
+    assign cu_read_registers[0] = {31'b0, emulate_angle};
+    assign cu_read_registers[1] = emulation_phase_advance;
+    assign cu_read_registers[2] = emulation_sampling_period;
     
     enable_generator_counter angle_emulator_tb(
         .clock(clock),

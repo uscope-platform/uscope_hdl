@@ -95,29 +95,27 @@ module PID #(parameter BASE_ADDRESS = 32'h43c00000, parameter INPUT_DATA_WIDTH =
     reg [7:0] kI_den;
     reg [7:0] kD_den;
 
-    always_comb begin 
-        nonblocking_output <= cu_write_registers[0];
-        kP <= cu_write_registers[1];
-        kI <= cu_write_registers[2];
-        kD <= cu_write_registers[3];
-        limit_out_up <= cu_write_registers[4];
-        limit_out_down <= cu_write_registers[5];
-        limit_int_up <= cu_write_registers[6];
-        limit_int_down <= cu_write_registers[7];
-        kP_den <= cu_write_registers[8][7:0];
-        kI_den <= cu_write_registers[8][15:8];
-        kD_den <= cu_write_registers[8][23:16];
+    assign nonblocking_output = cu_write_registers[0];
+    assign kP = cu_write_registers[1];
+    assign kI = cu_write_registers[2];
+    assign kD = cu_write_registers[3];
+    assign limit_out_up = cu_write_registers[4];
+    assign limit_out_down = cu_write_registers[5];
+    assign limit_int_up = cu_write_registers[6];
+    assign limit_int_down = cu_write_registers[7];
+    assign {kD_den, kI_den, kP_den} = cu_write_registers[8];
 
-        cu_read_registers[0] <= {31'b0, {nonblocking_output}};
-        cu_read_registers[1] <= {{ADDITIONAL_BITS{1'b0}},kP};
-        cu_read_registers[2] <= {{ADDITIONAL_BITS{1'b0}},kI};
-        cu_read_registers[3] <= {{ADDITIONAL_BITS{1'b0}},kD};
-        cu_read_registers[4] <= {{ADDITIONAL_BITS{1'b0}},limit_out_up};
-        cu_read_registers[5] <= {{ADDITIONAL_BITS{1'b0}},limit_out_down};
-        cu_read_registers[6] <= {{ADDITIONAL_BITS{1'b0}},limit_int_up};
-        cu_read_registers[7] <= {{ADDITIONAL_BITS{1'b0}},limit_int_down};
-        cu_read_registers[8] <= {8'b0, kD_den, kI_den, kP_den};
-    end
+    assign cu_read_registers[0] = nonblocking_output;
+    assign cu_read_registers[1] = kP;
+    assign cu_read_registers[2] = kI;
+    assign cu_read_registers[3] = kD;
+    assign cu_read_registers[4] = limit_out_up;
+    assign cu_read_registers[5] = limit_out_down;
+    assign cu_read_registers[6] = limit_int_up;
+    assign cu_read_registers[7] = limit_int_down;
+    assign cu_read_registers[8] = {kD_den, kI_den, kP_den};
+
+
     
     defparam pid_int.DATA_WIDTH = OUTPUT_DATA_WIDTH;
     Integrator pid_int(

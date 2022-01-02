@@ -55,16 +55,13 @@ module axis_constant #(parameter BASE_ADDRESS = 'h43c00000, parameter CONSTANT_W
     reg [31:0] constant_high_bytes;
     reg [31:0] constant_dest;
 
-    always_comb begin 
-        constant_low_bytes <= cu_write_registers[0];
-        constant_high_bytes <= cu_write_registers[1];
-        constant_dest <= cu_write_registers[2];
+    assign constant_low_bytes = cu_write_registers[0];
+    assign constant_high_bytes = cu_write_registers[1];
+    assign constant_dest = cu_write_registers[2];
 
-        cu_read_registers[0] <= {{ADDITIONAL_BITS{1'b0}}, constant_low_bytes};
-        cu_read_registers[1] <= {{ADDITIONAL_BITS{1'b0}},constant_high_bytes};
-        cu_read_registers[2] <= {{ADDITIONAL_BITS{1'b0}},constant_dest};
-
-    end
+    assign cu_read_registers[0] = {{ADDITIONAL_BITS{1'b0}}, constant_low_bytes};
+    assign cu_read_registers[1] = {{ADDITIONAL_BITS{1'b0}}, constant_high_bytes};
+    assign cu_read_registers[1] = {{ADDITIONAL_BITS{1'b0}}, constant_dest};
 
     // Determine the next state
     always @ (posedge clock) begin : control_state_machine

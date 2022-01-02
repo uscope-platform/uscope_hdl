@@ -41,7 +41,7 @@ module ad2s1210_cu #(parameter BASE_ADDRESS = 32'h43c00000)(
     reg [1:0] internal_mode;
 
     reg [7:0] AD2S1210_addr[0:14] = '{'h80,'h81,'h82,'h83,'h88,'h89,'h8A,'h8B,'h8C,'h8D,'h8E,'h91,'h92,'hf0,'hff};
-    reg [7:0] AD2S1210_values[0:14] = '{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    reg [7:0] AD2S1210_values[0:14];
 
     reg [7:0] sample_read_delay;
     reg [7:0] sample_pulse_length;
@@ -115,50 +115,46 @@ module ad2s1210_cu #(parameter BASE_ADDRESS = 32'h43c00000)(
         .axil(axi_in)
     );
 
-    always_comb begin 
-        AD2S1210_values[4] <= cu_write_registers[0][31:0];
-        AD2S1210_values[5] <= cu_write_registers[1][31:0];
-        AD2S1210_values[6] <= cu_write_registers[2][31:0];
-        AD2S1210_values[7] <= cu_write_registers[3][31:0];
-        AD2S1210_values[8] <= cu_write_registers[4][31:0];
-        AD2S1210_values[9] <= cu_write_registers[5][31:0];
-        AD2S1210_values[10] <= cu_write_registers[6][31:0];
-        AD2S1210_values[11] <= cu_write_registers[7][31:0];
-        AD2S1210_values[12] <= cu_write_registers[8][31:0];
-        
-        trigger_type <= cu_write_registers[9][31:0];
+    assign AD2S1210_values[0:3] = '{4{32'b0}};
+    assign AD2S1210_values[4] = cu_write_registers[0];
+    assign AD2S1210_values[5] = cu_write_registers[1];
+    assign AD2S1210_values[6] = cu_write_registers[2];
+    assign AD2S1210_values[7] = cu_write_registers[3];
+    assign AD2S1210_values[8] = cu_write_registers[4];
+    assign AD2S1210_values[9] = cu_write_registers[5];
+    assign AD2S1210_values[10] = cu_write_registers[6];
+    assign AD2S1210_values[11] = cu_write_registers[7];
+    assign AD2S1210_values[12] = cu_write_registers[8];
+    assign AD2S1210_values[13:14] = '{2{32'b0}};
 
-        resolution <= cu_write_registers[10][3:2];
-        rdc_reset <= cu_write_registers[10][4];
-        sample_pulse_length <= cu_write_registers[10][15:8];
-        sample_read_delay <= cu_write_registers[10][23:16];
-        spi_transfer_length <= cu_write_registers[10][28:24];
-        
-        cu_read_registers[0] <= AD2S1210_values[4];
-        cu_read_registers[1] <= AD2S1210_values[5];
-        cu_read_registers[2] <= AD2S1210_values[6];
-        cu_read_registers[3] <= AD2S1210_values[7];
-        cu_read_registers[4] <= AD2S1210_values[8];
-        cu_read_registers[5] <= AD2S1210_values[9];
-        cu_read_registers[6] <= AD2S1210_values[10];
-        cu_read_registers[7] <= AD2S1210_values[11];
-        cu_read_registers[8] <= AD2S1210_values[12];
-        cu_read_registers[9] <= 0;
-        cu_read_registers[10] <= {
-            3'b0,
-            spi_transfer_length,
-            sample_read_delay,
-            sample_pulse_length,
-            3'b0,
-            rdc_reset,
-            resolution,
-            2'b0
-        };
-    end
+    assign trigger_type = cu_write_registers[9];
+    
+    assign resolution = cu_write_registers[10][3:2];
+    assign rdc_reset = cu_write_registers[10][4];
+    assign sample_pulse_length = cu_write_registers[10][15:8];
+    assign sample_read_delay = cu_write_registers[10][23:16];
+    assign spi_transfer_length = cu_write_registers[10][28:24];
 
-
-
-
+    assign cu_read_registers[0] = AD2S1210_values[4];
+    assign cu_read_registers[1] = AD2S1210_values[5];
+    assign cu_read_registers[2] = AD2S1210_values[6];
+    assign cu_read_registers[3] = AD2S1210_values[7];
+    assign cu_read_registers[4] = AD2S1210_values[8];
+    assign cu_read_registers[5] = AD2S1210_values[9];
+    assign cu_read_registers[6] = AD2S1210_values[10];
+    assign cu_read_registers[7] = AD2S1210_values[11];
+    assign cu_read_registers[8] = AD2S1210_values[12];
+    assign cu_read_registers[9] = 0;
+    assign cu_read_registers[10] = {
+        3'b0,
+        spi_transfer_length,
+        sample_read_delay,
+        sample_pulse_length,
+        3'b0,
+        rdc_reset,
+        resolution,
+        2'b0
+    };
 
     axi_stream read_spi();
     axi_stream cfg_spi();

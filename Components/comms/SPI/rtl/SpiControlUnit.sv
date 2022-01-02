@@ -83,56 +83,49 @@ module SpiControlUnit #(parameter BASE_ADDRESS = 32'h43c0000, SS_POLARITY_DEFAUL
         .output_registers(cu_write_registers),
         .trigger_out(trigger_transfer),
         .axil(axi_in)
-        );
+    );
 
-    always_comb begin 
+    assign spi_mode = cu_write_registers[0][0];
+    assign divider_setting = cu_write_registers[0][3:1];
+    assign spi_transfer_length = cu_write_registers[0][7:4];
+    assign spi_direction = cu_write_registers[0][9];
+    assign start_generator_enable = cu_write_registers[0][12];
+    assign ss_polarity = cu_write_registers[0][13];
+    assign ss_deassert_delay_enable = cu_write_registers[0][14];
+    assign transfer_length_choice = cu_write_registers[0][15];
+    assign latching_edge = cu_write_registers[0][16];
+    assign clock_polarity = cu_write_registers[0][17];
 
-        spi_mode <= cu_write_registers[0][0];
-        divider_setting <= cu_write_registers[0][3:1];
-        spi_transfer_length <= cu_write_registers[0][7:4];
-        spi_direction <= cu_write_registers[0][9];
-        start_generator_enable <= cu_write_registers[0][12];
-        ss_polarity <= cu_write_registers[0][13];
-        ss_deassert_delay_enable <= cu_write_registers[0][14];
-        transfer_length_choice <= cu_write_registers[0][15];
-        latching_edge <= cu_write_registers[0][16];
-        clock_polarity <= cu_write_registers[0][17];
+    assign spi_delay = cu_write_registers[1];
+    assign period = cu_write_registers[2];
+    // a write to cu_write_registers[3] is used to trigger a spi transfer
 
-        spi_delay <= cu_write_registers[1];
-        period <= cu_write_registers[2];
-        // a write to cu_write_registers[3] is used to trigger a spi transfer
+    assign spi_data_out[0] = axis_start_transfer ? axis_spi_data : cu_write_registers[4];
 
-        if(axis_start_transfer)begin
-            spi_data_out[0] <= axis_spi_data;
-        end else begin
-            for(int i = 0; i <N_CHANNELS; i = i+1)begin
-                spi_data_out[i] <= cu_write_registers[i+4];    
-            end
+    generate
+        for(genvar i = 1; i < N_CHANNELS;  i = i+1)begin
+            assign spi_data_out[i] = cu_write_registers[i+4];   
         end
+    endgenerate
 
+    assign cu_read_registers[0]  = {
+        14'b0, clock_polarity, latching_edge,
+        transfer_length_choice, ss_deassert_delay_enable, ss_polarity,
+        start_generator_enable, 2'b0, spi_direction, 1'b0,
+        spi_transfer_length, divider_setting, spi_mode
+    };
 
-        cu_read_registers[0][0] <= spi_mode;
-        cu_read_registers[0][3:1] <= divider_setting;
-        cu_read_registers[0][7:4] <= spi_transfer_length;
-        cu_read_registers[0][8] <= 0;
-        cu_read_registers[0][9] <= spi_direction;
-        cu_read_registers[0][11:10] <= 0;
-        cu_read_registers[0][12] <= start_generator_enable;
-        cu_read_registers[0][13] <= ss_polarity;
-        cu_read_registers[0][14] <= ss_deassert_delay_enable;
-        cu_read_registers[0][15] <= transfer_length_choice;
-        cu_read_registers[0][16] <= latching_edge;
-        cu_read_registers[0][17] <= clock_polarity;
-        cu_read_registers[0][31:18] <= 0;
+    assign cu_read_registers[1] = spi_delay;
+    assign cu_read_registers[2] = period;
+    assign cu_read_registers[3] = unit_busy;
 
-        cu_read_registers[1] <= spi_delay;
-        cu_read_registers[2] <= period;
-        cu_read_registers[3] <= unit_busy;
-        for(int i = 0; i <N_CHANNELS; i = i+1)begin
-            cu_read_registers[i+4] <= spi_data_in[i];
+    generate
+        for(genvar i = 0; i < N_CHANNELS;  i = i+1)begin
+            assign cu_read_registers[i+4] = spi_data_in[i];   
         end
-        bus_start_transfer <= trigger_transfer;
-    end
+    endgenerate
+
+    assign bus_start_transfer = trigger_transfer;
 
     reg unit_busy = 0;
 

@@ -74,24 +74,22 @@ module uScope #(parameter BASE_ADDRESS = 'h43C00000, N_TRIGGERS = 16)(
     reg capture_ack;
     reg [15:0] trigger_position;
 
-    always_comb begin 
-        tlast_period <= cu_write_registers[0];
-        dma_transfer_size <= cu_write_registers[0]<<2;
-        dma_buffer_base <= cu_write_registers[1];
-        manager_enable <= cu_write_registers[2][0];
-
-        selected_trigger <= cu_write_registers[3];
-        capture_ack <= cu_write_registers[4][0];
-        trigger_position <= cu_write_registers[5];
+    assign tlast_period = cu_write_registers[0];
+    assign dma_transfer_size = cu_write_registers[0]<<2;
+    assign dma_buffer_base = cu_write_registers[1];
+    assign manager_enable = cu_write_registers[2];
+    assign selected_trigger = cu_write_registers[3];
+    assign capture_ack = cu_write_registers[4][0];
+    assign trigger_position = cu_write_registers[5];
 
 
-        cu_read_registers[0] <= tlast_period;
-        cu_read_registers[1] <= dma_buffer_base;
-        cu_read_registers[2] <= {{31{1'b0}},manager_enable};
-        cu_read_registers[3] <= selected_trigger;
-        cu_read_registers[4] <= {{31{1'b0}},capture_ack};
-        cu_read_registers[5] <= {16'b0,trigger_position};
-    end
+    assign cu_read_registers[0] = tlast_period;
+    assign cu_read_registers[1] = dma_buffer_base;
+    assign cu_read_registers[2] = {31'b0, manager_enable};
+    assign cu_read_registers[3] = selected_trigger;
+    assign cu_read_registers[4] = {31'b0, capture_ack};
+    assign cu_read_registers[5] = {16'b0, trigger_position};
+
 
     trigger_hub #(
         .N_TRIGGERS(N_TRIGGERS) 

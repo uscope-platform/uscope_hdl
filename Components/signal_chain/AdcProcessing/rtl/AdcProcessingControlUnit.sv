@@ -56,44 +56,43 @@ module AdcProcessingControlUnit #(parameter BASE_ADDRESS = 'h43c00000, STICKY_FA
         .axil(axi_in)
     );
 
-    always_comb begin 
-        comparator_thresholds[0] <= cu_write_registers[0][15:0];
-        comparator_thresholds[4] <= cu_write_registers[0][31:16];
-        comparator_thresholds[1] <= cu_write_registers[1][15:0];
-        comparator_thresholds[5] <= cu_write_registers[1][31:16];
-        comparator_thresholds[2] <= cu_write_registers[2][15:0];
-        comparator_thresholds[6] <= cu_write_registers[2][31:16];
-        comparator_thresholds[3] <= cu_write_registers[3][15:0];
-        comparator_thresholds[7] <= cu_write_registers[3][31:16];
-        calibrator_coefficients[1] <= cu_write_registers[4][15:0];
-        calibrator_coefficients[0] <= cu_write_registers[4][31:16];
+    assign comparator_thresholds[0] =  cu_write_registers[0][15:0];
+    assign comparator_thresholds[4] =  cu_write_registers[0][31:16];
+    assign comparator_thresholds[1] =  cu_write_registers[1][15:0];
+    assign comparator_thresholds[5] =  cu_write_registers[1][31:16];
+    assign comparator_thresholds[2] =  cu_write_registers[2][15:0];
+    assign comparator_thresholds[6] =  cu_write_registers[2][31:16];
+    assign comparator_thresholds[3] =  cu_write_registers[3][15:0];
+    assign comparator_thresholds[7] =  cu_write_registers[3][31:16];
+    assign calibrator_coefficients[1] =  cu_write_registers[4][15:0];
+    assign calibrator_coefficients[0] =  cu_write_registers[4][31:16];
 
-        latch_mode <= cu_write_registers[5][2:1];
-        clear_latch <= cu_write_registers[5][4:3];
-        calibrator_coefficients[2] <= cu_write_registers[5][7:5];
-        slow_fault_threshold <= cu_write_registers[5][15:8];
-        clear_fault <= cu_write_registers[5][16];
-        disable_fault <= cu_write_registers[5][17];
-        decimation_ratio <= cu_write_registers[5][31:24];
-        
-        cu_read_registers[0] <= {comparator_thresholds[4], comparator_thresholds[0]};
-        cu_read_registers[1] <= {comparator_thresholds[5], comparator_thresholds[1]};
-        cu_read_registers[2] <= {comparator_thresholds[6], comparator_thresholds[2]};
-        cu_read_registers[3] <= {comparator_thresholds[7], comparator_thresholds[3]};
-        cu_read_registers[4] <= {calibrator_coefficients[1], calibrator_coefficients[0]};
-        cu_read_registers[5] <= {
-            decimation_ratio,
-            disable_fault,
-            clear_fault,
-            slow_fault_threshold,
-            calibrator_coefficients[2],
-            clear_latch,
-            latch_mode, 
-            1'b0
-        };
-    end
+    assign latch_mode = cu_write_registers[5][2:1];
+    assign clear_latch = cu_write_registers[5][4:3];
+    assign calibrator_coefficients[2] = cu_write_registers[5][7:5];
+    assign slow_fault_threshold = cu_write_registers[5][15:8];
+    assign clear_fault = cu_write_registers[5][16];
+    assign disable_fault =cu_write_registers[5][17];
+    assign decimation_ratio = cu_write_registers[5][31:24];
 
 
+    assign cu_read_registers[0] = {comparator_thresholds[4], comparator_thresholds[0]};
+    assign cu_read_registers[1] = {comparator_thresholds[5], comparator_thresholds[1]};
+    assign cu_read_registers[2] = {comparator_thresholds[6], comparator_thresholds[2]};
+    assign cu_read_registers[3] = {comparator_thresholds[7], comparator_thresholds[3]};
+    assign cu_read_registers[4] = {calibrator_coefficients[1], calibrator_coefficients[0]};
+    assign cu_read_registers[5] = {
+        1'b0,
+        latch_mode,
+        clear_latch,
+        calibrator_coefficients[2],
+        slow_fault_threshold,
+        clear_fault,
+        disable_fault,
+        6'b0,
+        decimation_ratio
+    };
+    
     reg disable_fault, arm_fault;
 
     reg [7:0] slow_fault_counter;
