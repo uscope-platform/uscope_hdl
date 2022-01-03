@@ -32,29 +32,19 @@ module i2c_test_tl (
 
     wire internal_rst, fast_clock;
 
-    APB a();
-    Simplebus s();
+    axi_lite axi();
 
     Zynq_wrapper PS(
-    .APB(a),
+    .axi_out(axi),
     .Reset(internal_rst),
     .logic_clock(fast_clock)
     );
 
     
-
-    APB_to_Simplebus translator(
-        .PCLK(fast_clock),
-        .PRESETn(internal_rst),
-        .apb(a),
-        .spb(s)
-    );
-    
-    
     I2c UUT(
         .clock(fast_clock),
         .reset(internal_rst),
-        .sb(s),
+        .axi_in(axi),
         .i2c_scl_in(scl_in),
         .i2c_scl_out(scl_out),
         .i2c_sda_in(sda_in),

@@ -24,7 +24,6 @@ module TopLevel (
 	output wire test_start
 );
 
-    Simplebus sb();
 
     wire sda_in, sda_out, i2c_sda_out_en;
     wire scl_in, scl_out, i2c_scl_out_en;
@@ -77,8 +76,10 @@ module TopLevel (
         end
 	end
 
-	defparam clk_source.CLKHF_DIV = "0b00";
-	HSOSC clk_source (
+
+	HSOSC #(
+		.CLKHF_DIV("0b00")
+	) clk_source (
 		.CLKHFEN(1'b1),
 		.CLKHFPU(1'b1),
 		.CLKHF(clk)
@@ -97,14 +98,30 @@ module TopLevel (
         .reset(internal_rst),
         .start(start),
         .slave_address(8'h62),
-        .sb(sb)
+        .config_out(write)
     );
     
-	defparam i2c_interface.FIXED_PERIOD = "TRUE";
-    I2c i2c_interface (
+	axi_lite axi_master();
+	axi_stream write();
+	axi_stream read_dummy_1();
+	axi_stream read_dummy_2();
+
+    axis_to_axil WRITER(
+        .clock(clk),
+        .reset(rst), 
+        .axis_write(write),
+        .axis_read_request(read_dummy_1),
+        .axis_read_response(read_dummy_2),
+        .axi_out(axi_master)
+    );
+    
+
+    I2c #(
+		.FIXED_PERIOD("TRUE")
+	) i2c_interface (
         .clock(fast_clock),
         .reset(internal_rst),
-        .sb(sb),
+        .axi(axi_master),
         .i2c_scl_in(scl_in),
         .i2c_scl_out(scl_out),
 		.i2c_scl_out_en(i2c_scl_out_en),

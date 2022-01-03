@@ -48,7 +48,7 @@ module enable_generator_3 #(
         .N_READ_REGISTERS(5),
         .N_WRITE_REGISTERS(5),
         .REGISTERS_WIDTH(32),
-        .ADDRESS_MASK('ff)
+        .ADDRESS_MASK('hff)
     ) CU (
         .clock(clock),
         .reset(reset),

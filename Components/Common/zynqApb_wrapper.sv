@@ -11,7 +11,7 @@
 `include "interfaces.svh"
 
 module Zynq_wrapper(
-    APB.master APB,
+    axi_lite.master axi_out,
     inout wire DDR_addr,
     inout wire DDR_ba,
     inout wire DDR_cas_n,
@@ -37,18 +37,51 @@ module Zynq_wrapper(
     output wire logic_clock,
     output wire IO_clock
 );
+
+    // DUMMY CONNECTIONS
+    wire [14:0]DDR_addr;
+    wire [2:0]DDR_ba;
+    wire DDR_cas_n;
+    wire DDR_ck_n;
+    wire DDR_ck_p;
+    wire DDR_cke;
+    wire DDR_cs_n;
+    wire [3:0]DDR_dm;
+    wire [31:0]DDR_dq;
+    wire [3:0]DDR_dqs_n;
+    wire [3:0]DDR_dqs_p;
+    wire DDR_odt;
+    wire DDR_ras_n;
+    wire DDR_reset_n;
+    wire DDR_we_n;
+    wire FIXED_IO_ddr_vrn;
+    wire FIXED_IO_ddr_vrp;
+    wire [53:0]FIXED_IO_mio;
+    wire FIXED_IO_ps_clk;
+    wire FIXED_IO_ps_porb;
+    wire FIXED_IO_ps_srstb;
     
-  zynq_apb_bd zynq_apb_bd_i
-       (.APB_M_0_paddr(APB.PADDR),
-        .APB_M_0_penable(APB.PENABLE),
-        .APB_M_0_pprot(APB.PPROT),
-        .APB_M_0_prdata(APB.PRDATA),
-        .APB_M_0_pready(APB.PREADY),
-        .APB_M_0_psel(APB.PSEL),
-        .APB_M_0_pslverr(APB.PSLVERR),
-        .APB_M_0_pstrb(APB.PSTRB),
-        .APB_M_0_pwdata(APB.PWDATA),
-        .APB_M_0_pwrite(APB.PWRITE),
+
+    zynq_apb_bd zynq_apb_bd_i (
+        .M00_AXI_0_araddr(axi_out.ARADDR),
+        .M00_AXI_0_arprot(axi_out.ARPROT),
+        .M00_AXI_0_arready(axi_out.ARREADY),
+        .M00_AXI_0_arvalid(axi_out.ARVALID),
+        .M00_AXI_0_awaddr(axi_out.AWADDR),
+        .M00_AXI_0_awprot(axi_out.AWPROT),
+        .M00_AXI_0_awready(axi_out.AWREADY),
+        .M00_AXI_0_awvalid(axi_out.AWVALID),
+        .M00_AXI_0_bready(axi_out.BREADY),
+        .M00_AXI_0_bresp(axi_out.BRESP),
+        .M00_AXI_0_bvalid(axi_out.BVALID),
+        .M00_AXI_0_rdata(axi_out.RDATA),
+        .M00_AXI_0_rready(axi_out.RREADY),
+        .M00_AXI_0_rresp(axi_out.RRESP),
+        .M00_AXI_0_rvalid(axi_out.RVALID),
+        .M00_AXI_0_wdata(axi_out.WDATA),
+        .M00_AXI_0_wready(axi_out.WREADY),
+        .M00_AXI_0_wstrb(axi_out.WSTRB),
+        .M00_AXI_0_wvalid(axi_out.WVALID),
         .DDR_addr(DDR_addr),
         .DDR_ba(DDR_ba),
         .DDR_cas_n(DDR_cas_n),

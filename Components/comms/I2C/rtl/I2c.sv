@@ -23,7 +23,7 @@ module I2c #(parameter FIXED_PERIOD ="FALSE", FIXED_PERIOD_WIDTH = 1000, SCL_TIM
     input wire i2c_sda_in,
     output wire i2c_sda_out,
     output wire i2c_sda_out_en,
-    Simplebus.slave sb
+    axi_lite.slave axi_in
 );
 
     
@@ -110,7 +110,7 @@ module I2c #(parameter FIXED_PERIOD ="FALSE", FIXED_PERIOD_WIDTH = 1000, SCL_TIM
         .clock(clock),
         .reset(reset),
         .done(done),
-        .sb(sb),
+        .axi_in(axi_in),
         .direction(direction),
         .prescale(period),
         .slave_adress(slave_address),

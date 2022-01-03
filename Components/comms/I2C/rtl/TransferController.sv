@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 `timescale 10 ns / 1 ns
+`include "interfaces.svh"
 
 module TransferController #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, BUS_FREE_DELAY = 300)(
     input wire clock,
@@ -50,7 +51,7 @@ module TransferController #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, 
         end
     end
 
-// Determine the next state
+    // Determine the next state
     always @ (posedge clock) begin : control_state_machine
         if (~reset) begin
             state <=idle_state;

@@ -20,15 +20,18 @@ module si5351_config_tb();
     reg clk, rst, start;
 
 
-    assign sb_ready = 1;
-    assign sb_read_data = 1;
-    Simplebus s();
+    assign out.ready = 1;
+    axi_stream #(
+        .DATA_WIDTH(8),
+        .DEST_WIDTH(8)
+    ) out();
     
     si5351_config UUT(
         .clock(clk),
         .reset(rst),
         .start(start),
-        .sb(s)
+        .slave_address(2),
+        .config_out(out)
     );
     
     

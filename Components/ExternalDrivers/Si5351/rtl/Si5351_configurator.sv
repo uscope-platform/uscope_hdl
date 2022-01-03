@@ -21,7 +21,7 @@ module si5351_config #(parameter BASE_ADDRESS = 0 ,WAIT_COUNT=3, AUTOMATED_WRITE
     input wire start,
     input wire [7:0] slave_address,
     output reg        done,
-    Simplebus.slave sb
+    axi_stream.master config_out
 );
 
 
@@ -138,16 +138,16 @@ module si5351_config #(parameter BASE_ADDRESS = 0 ,WAIT_COUNT=3, AUTOMATED_WRITE
             cfg_address[48] <= 8'ha6;
             cfg_address[49] <= 8'hB7;
             
-            sb.sb_address <= 0;
+  
             idle <= 1;
             state <= 0;
             wait_counter <= WAIT_COUNT;
             cfg_counter <= 0;
             done <= 0;
-            sb.sb_write_data <= 0;
-            sb.sb_write_strobe<=0;
-            sb.sb_read_strobe <= 0;
-            write_in_progress<= 0;
+            config_out.data <= 0;
+            config_out.dest <= 0;
+            config_out.valid <= 0;
+            write_in_progress <= 0;
         end else begin
 
 
@@ -166,7 +166,7 @@ module si5351_config #(parameter BASE_ADDRESS = 0 ,WAIT_COUNT=3, AUTOMATED_WRITE
                         state <= wait_state;
                     end
                 wait_state:
-                    if(sb.sb_ready & wait_counter==0) begin
+                    if(config_out.ready & wait_counter==0) begin
                         state <= write_cfg_state;
                     end else begin
                         state <= wait_state;
@@ -177,18 +177,18 @@ module si5351_config #(parameter BASE_ADDRESS = 0 ,WAIT_COUNT=3, AUTOMATED_WRITE
             case (state)
                 idle_state: begin
                     cfg_counter <= 0;
-                    sb.sb_write_strobe<=0;
+                    config_out.valid <=0;
                 end
                 write_cfg_state: begin
-                    sb.sb_address <= BASE_ADDRESS+AUTOMATED_WRITE_OFFSET;
-                    sb.sb_write_data <= {cfg_data[cfg_counter][7:0],cfg_address[cfg_counter][7:0], slave_address[7:0]};
+                    config_out.dest <= BASE_ADDRESS+AUTOMATED_WRITE_OFFSET;
+                    config_out.data <= {cfg_data[cfg_counter][7:0],cfg_address[cfg_counter][7:0], slave_address[7:0]};
                     cfg_counter <= cfg_counter+1;
-                    sb.sb_write_strobe <= 1;
+                    config_out.valid <= 1;
                     wait_counter <= WAIT_COUNT;
                 end
                 wait_state:begin
                     if(wait_counter > 0) wait_counter <= wait_counter-1;
-                    sb.sb_write_strobe <= 0;
+                    config_out.valid <= 0;
                 end
             endcase
         end
