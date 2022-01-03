@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10 ns / 1 ns
-`include "SimpleBus_BFM.svh"
 `include "interfaces.svh"
 `include "SPI_BFM.svh"
 

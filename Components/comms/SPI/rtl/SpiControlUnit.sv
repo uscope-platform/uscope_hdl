@@ -39,7 +39,6 @@ module SpiControlUnit #(
     output logic ss_deassert_delay_enable,
     output logic latching_edge,
     output logic transfer_length_choice,
-    // SIMPLEBUS
     axi_lite.slave axi_in,
     // AXI STREAM WRITE
     input wire SPI_write_valid,

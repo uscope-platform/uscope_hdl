@@ -30,7 +30,6 @@ module SPI #(
     output logic SCLK,
     output logic [N_CHANNELS-1:0] MOSI,
     output logic SS,
-    // SIMPLEBUS
     axi_lite.slave axi_in,
     input wire SPI_write_valid,
     input wire [31:0] SPI_write_data,

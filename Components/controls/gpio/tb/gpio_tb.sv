@@ -28,7 +28,6 @@ module gpio_tb();
     initial clk = 0; 
     always #0.5 clk = ~clk;
     
-    Simplebus s();
     reg [7:0] gpio_i;
     wire [7:0] gpio_o;
     reg [31:0] sb_read_data_test;
