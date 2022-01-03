@@ -21,7 +21,7 @@ module fCore_dma_endpoint #(parameter BASE_ADDRESS = 32'h43c00000, DATAPATH_WIDT
     input wire clock,
     input wire reset,
     axi_lite.slave axi_in,
-    axi_stream.slave reg_dma_write,
+    axi_stream.master reg_dma_write,
     output reg [REG_ADDR_WIDTH-1:0] dma_read_addr,
     input wire [DATAPATH_WIDTH-1:0] dma_read_data,
     output reg [$clog2(REG_ADDR_WIDTH)-1:0] n_channels,
@@ -50,23 +50,25 @@ module fCore_dma_endpoint #(parameter BASE_ADDRESS = 32'h43c00000, DATAPATH_WIDT
     assign axis_dma_write.ready = 0;
 
     always_ff @(posedge clock) begin
-        reg_dma_write.valid <= 0;
-        reg_dma_write.dest <= 0;
-        reg_dma_write.data <= 0;
         if(axis_dma_write.valid)begin
             reg_dma_write.dest <= axis_dma_write.dest;
             reg_dma_write.data <= axis_dma_write.data;
             reg_dma_write.valid <= 1;
-            n_channels <= 1;
         end else if(write_data.valid)begin
             if(write_data.dest == 0) begin
                 n_channels <= write_data.data;
+                reg_dma_write.valid <= 0;
+                reg_dma_write.dest <= 0;
+                reg_dma_write.data <= 0;
             end else begin
                 reg_dma_write.dest <= write_data.dest;
                 reg_dma_write.data <= write_data.data;
                 reg_dma_write.valid <= 1;    
             end
-            
+        end else begin
+            reg_dma_write.valid <= 0;
+            reg_dma_write.dest <= 0;
+            reg_dma_write.data <= 0;
         end
     end
 
@@ -77,17 +79,25 @@ module fCore_dma_endpoint #(parameter BASE_ADDRESS = 32'h43c00000, DATAPATH_WIDT
         wait_read = 3
     } state;
 
+    reg [31:0] bus_read_data;
+    reg bus_read_valid;
+    reg [31:0] stream_read_data;
+    reg stream_read_valid;
+
+    assign read_data.data = bus_read_data | stream_read_data;
+    assign read_data.valid = bus_read_valid | stream_read_valid;
+
     always_ff @(posedge clock) begin
         if(!reset)begin
             read_addr.ready <= 1;
             axis_dma_read_request.ready <= 1;
             dma_read_addr <= 0;
-            read_data.data <= 0;
+            stream_read_data <= 0;
             state <= idle;
         end else begin
             case (state)
                 idle: begin
-                    read_data.valid <= 0;
+                    stream_read_valid <= 0;
                     if(axis_dma_read_request.valid)begin
                         if(read_addr.data != 0) begin
                             dma_read_addr <= axis_dma_read_request.data;
@@ -97,8 +107,8 @@ module fCore_dma_endpoint #(parameter BASE_ADDRESS = 32'h43c00000, DATAPATH_WIDT
                         end
                     end else if(read_addr.valid) begin
                         if(read_addr.data == 0) begin
-                            read_data.data <= n_channels;
-                            read_data.valid <= 1;
+                            stream_read_data <= n_channels;
+                            stream_read_valid <= 1;
                         end else begin
                             dma_read_addr <= read_addr.data;
                             state <= bus_read;
@@ -130,11 +140,11 @@ module fCore_dma_endpoint #(parameter BASE_ADDRESS = 32'h43c00000, DATAPATH_WIDT
             idle: begin
                 axis_dma_read_response.data <= 0;
                 axis_dma_read_response.valid <= 0;
-                read_data.valid <= 0;
+                bus_read_valid <= 0;
             end
             bus_read: begin
-                read_data.valid <= 1;
-                read_data.data <= dma_read_data;
+                bus_read_valid <= 1;
+                bus_read_data <= dma_read_data;
             end
             axis_read: begin
                 axis_dma_read_response.data <= dma_read_data;

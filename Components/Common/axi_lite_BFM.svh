@@ -32,6 +32,9 @@ class axi_lite_BFM;
             this.bus.ARADDR <= 0;
             this.bus.ARVALID <= 0;
 
+            this.bus.AWPROT <= 0;
+            this.bus.ARPROT <= 0;
+
             this.bus.AWADDR <= 0;
             this.bus.AWVALID <= 0;
 

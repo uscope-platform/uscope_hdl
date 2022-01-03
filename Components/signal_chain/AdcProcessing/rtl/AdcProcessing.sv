@@ -59,8 +59,9 @@ module AdcProcessing #(parameter BASE_ADDRESS = 'h43c00000, DATA_PATH_WIDTH = 16
         .decimation_ratio(decimation_ratio)
     );
 
-   defparam fast_cmp.DATA_PATH_WIDTH = DATA_PATH_WIDTH;
-    comparator fast_cmp(
+    comparator #(
+        .DATA_PATH_WIDTH(DATA_PATH_WIDTH)
+    )fast_cmp(
         .clock(clock),
         .reset(reset),
         .thresholds(comparator_thresholds[0:3]),
@@ -79,10 +80,12 @@ module AdcProcessing #(parameter BASE_ADDRESS = 'h43c00000, DATA_PATH_WIDTH = 16
 
         end else if(DECIMATED==1)begin
             
-            defparam dec.MAX_DECIMATION_RATIO = 16;
-            defparam dec.DATA_WIDTH = DATA_PATH_WIDTH;
-            defparam dec.AVERAGING = ENABLE_AVERAGE;           
-            standard_decimator dec(
+         
+            standard_decimator #(
+                .MAX_DECIMATION_RATIO(16),
+                .DATA_WIDTH(DATA_PATH_WIDTH),
+                .AVERAGING(ENABLE_AVERAGE)
+            ) dec(
                 .clock(clock),
                 .reset(reset),
                 .data_in(data_in),
@@ -91,8 +94,9 @@ module AdcProcessing #(parameter BASE_ADDRESS = 'h43c00000, DATA_PATH_WIDTH = 16
             );
 
         end else begin
-            defparam dec.DATA_PATH_WIDTH = 32;
-            Decimator_wrapper dec(
+            Decimator_wrapper #(
+                .DATA_PATH_WIDTH(32)
+            ) dec(
                 .clock(clock),
                 .data_in_tdata(data_in.data),
                 .data_in_tvalid(data_in.valid),
@@ -105,8 +109,9 @@ module AdcProcessing #(parameter BASE_ADDRESS = 'h43c00000, DATA_PATH_WIDTH = 16
     endgenerate
 
 
-    defparam slow_cmp.DATA_PATH_WIDTH = DATA_PATH_WIDTH;
-    comparator slow_cmp(
+    comparator #(
+        .DATA_PATH_WIDTH(DATA_PATH_WIDTH)
+    ) slow_cmp(
         .clock(clock),
         .reset(reset),
         .thresholds(comparator_thresholds[4:7]),
@@ -118,8 +123,9 @@ module AdcProcessing #(parameter BASE_ADDRESS = 'h43c00000, DATA_PATH_WIDTH = 16
     );
 
 
-    defparam calibrator.DATA_PATH_WIDTH = DATA_PATH_WIDTH;
-    calibration calibrator(
+    calibration #(
+        .DATA_PATH_WIDTH(DATA_PATH_WIDTH)
+    ) calibrator(
         .clock(clock),
         .reset(reset),
         .data_in(cal_in),

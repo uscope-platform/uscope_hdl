@@ -61,10 +61,10 @@ module axis_constant #(parameter BASE_ADDRESS = 'h43c00000, parameter CONSTANT_W
 
     assign cu_read_registers[0] = {{ADDITIONAL_BITS{1'b0}}, constant_low_bytes};
     assign cu_read_registers[1] = {{ADDITIONAL_BITS{1'b0}}, constant_high_bytes};
-    assign cu_read_registers[1] = {{ADDITIONAL_BITS{1'b0}}, constant_dest};
+    assign cu_read_registers[2] = {{ADDITIONAL_BITS{1'b0}}, constant_dest};
 
-    // Determine the next state
-    always @ (posedge clock) begin : control_state_machine
+
+    always_ff @(posedge clock) begin
         if (~reset) begin
             const_out.valid <= 0;
             const_out.data <= 0;

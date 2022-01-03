@@ -29,17 +29,34 @@ module fCore_tb();
     axi_stream op_res();
     AXI axi_programmer();
     axi_stream axis_dma_write();
-    axi_lite axil();
 
     axi_stream dma_read_request();
     axi_stream dma_read_response();
     axi_stream data_out();
 
-    axi_lite_BFM axil_bfm;
     axis_BFM read_dma_BFM;
 
     localparam RECIPROCAL_PRESENT = 0;
      
+    axis_BFM write_BFM;
+    axis_BFM read_req_BFM;
+    axis_BFM read_resp_BFM;
+
+    axi_stream read_req();
+    axi_stream read_resp();
+    axi_stream write();
+    axi_lite axi_master();
+
+    axis_to_axil WRITER(
+        .clock(core_clk),
+        .reset(rst), 
+        .axis_write(write),
+        .axis_read_request(read_req),
+        .axis_read_response(read_resp),
+        .axi_out(axi_master)
+    );
+
+
     defparam uut.dma_ep.LEGACY_READ = 0;
     defparam uut.executor.RECIPROCAL_PRESENT = RECIPROCAL_PRESENT;
     fCore #(
@@ -51,7 +68,7 @@ module fCore_tb();
         .reset(rst),
         .run(run),
         .done(done),
-        .control_axi_in(axil),
+        .control_axi_in(axi_master),
         .axi(axi_programmer),
         .axis_dma_write(axis_dma_write),
         .axis_dma_read_request(dma_read_request),
@@ -91,7 +108,10 @@ module fCore_tb();
     reg [31:0] reg_readback;
     // reset generation
     initial begin
-        axil_bfm = new(axil,1);
+        write_BFM = new(write,1);
+        read_req_BFM = new(read_req, 1);
+        read_resp_BFM = new(read_resp, 1);
+        read_resp.ready = 1;
         rst <=0;
         axis_dma_write.initialize();
         op_a.initialize();
@@ -100,7 +120,7 @@ module fCore_tb();
         run <= 0;
         #10.5;
         #20.5 rst <=1;
-        #35 axil_bfm.write(32'h43c00000,8);
+        #35 write_BFM.write_dest(8,32'h43c00000);
         #4; run <= 1;
         #5 run <=  0;
     end
@@ -108,7 +128,7 @@ module fCore_tb();
     //clock generation
     initial begin
         data_mover_start <= 0;
-        #1700 data_mover_start <=1;
+        #2700 data_mover_start <=1;
         #1 data_mover_start <= 0;
     end
 
@@ -127,9 +147,12 @@ module fCore_tb();
             expected_results <= {'h428C0000,'h0000000c,'h40a00000,'h0,'h40800000,'h40400000,'hc0800000,'h428c0000,'h40400000,'hc0c00000,'hc0800000,'h40800000,'h0};
         end
         @(posedge done) $display("femtoCore Processing Done");
+        #100;
         for (integer i = 0; i<13; i++) begin
-            axil_bfm.read(CORE_DMA_BASE_ADDRESS+4*i, reg_readback);
+            read_req_BFM.write(CORE_DMA_BASE_ADDRESS+4*i);
+            read_resp_BFM.read(reg_readback);
             if(reg_readback!=expected_results[i]) $display("Register %d  Wrong Value detected. Expected %h Got %h",i,expected_results[i],reg_readback);
+            #100;
         end
         ->run_test_done;
     end

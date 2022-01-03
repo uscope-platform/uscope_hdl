@@ -52,7 +52,7 @@ module AdcProcessingControlUnit #(parameter BASE_ADDRESS = 'h43c00000, STICKY_FA
         .reset(reset),
         .input_registers(cu_read_registers),
         .output_registers(cu_write_registers),
-        .trigger_out('{pipeline_flush}),
+        .trigger_out({pipeline_flush}),
         .axil(axi_in)
     );
 

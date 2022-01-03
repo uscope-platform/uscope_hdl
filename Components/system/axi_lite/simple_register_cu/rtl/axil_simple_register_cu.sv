@@ -35,18 +35,18 @@ module axil_simple_register_cu #(
 );
 
 
-    function [REGISTERS_WIDTH-1:0]	apply_strobe;
-        input [REGISTERS_WIDTH-1:0] prior_data;
-        input [REGISTERS_WIDTH-1:0] new_data;
-        input [REGISTERS_WIDTH/8-1:0] strobe;
+    // function [REGISTERS_WIDTH-1:0]	apply_strobe;
+    //     input [REGISTERS_WIDTH-1:0] prior_data;
+    //     input [REGISTERS_WIDTH-1:0] new_data;
+    //     input [REGISTERS_WIDTH/8-1:0] strobe;
 
-        integer	k;
-        for(k=0; k<REGISTERS_WIDTH/8; k=k+1)
-        begin
-            apply_strobe[k*8 +: 8]
-                = strobe[k] ? new_data[k*8 +: 8] : prior_data[k*8 +: 8];
-        end
-    endfunction
+    //     integer	k;
+    //     for(k=0; k<REGISTERS_WIDTH/8; k=k+1)
+    //     begin
+    //         apply_strobe[k*8 +: 8]
+    //             = strobe[k] ? new_data[k*8 +: 8] : prior_data[k*8 +: 8];
+    //     end
+    // endfunction
 
 
 // HANDLE READ DATA CHANNEL 
@@ -173,12 +173,12 @@ end
 
 
 
-always @ (posedge clock) begin
+always_ff @(posedge clock) begin
     if (~reset) begin
         output_registers <= INITIAL_OUTPUT_VALUES;
     end else begin
         if(write_valid & write_ready) begin
-            output_registers[register_write_address] <= apply_strobe(output_registers[register_write_address], write_data, write_strobe);
+            output_registers[register_write_address] <= write_data;
         end
     end
 end
