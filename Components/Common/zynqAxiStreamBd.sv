@@ -18,16 +18,38 @@
 module Zynq_axis_wrapper #(
     parameter FCORE_PRESENT = 0
 ) (
-    APB.master APB,
     output wire IO_clock,
     output wire Logic_Clock,
     output wire [0:0]Reset,
     axi_lite.slave dma_axi,
+    axi_lite.master axi_out,
     AXI.master fcore_axi,
     axi_stream.slave scope,
     output wire dma_done
   );
-    
+
+    // DUMMY CONNECTIONS
+    wire [14:0]DDR_addr;
+    wire [2:0]DDR_ba;
+    wire DDR_cas_n;
+    wire DDR_ck_n;
+    wire DDR_ck_p;
+    wire DDR_cke;
+    wire DDR_cs_n;
+    wire [3:0]DDR_dm;
+    wire [31:0]DDR_dq;
+    wire [3:0]DDR_dqs_n;
+    wire [3:0]DDR_dqs_p;
+    wire DDR_odt;
+    wire DDR_ras_n;
+    wire DDR_reset_n;
+    wire DDR_we_n;
+    wire FIXED_IO_ddr_vrn;
+    wire FIXED_IO_ddr_vrp;
+    wire [53:0]FIXED_IO_mio;
+    wire FIXED_IO_ps_clk;
+    wire FIXED_IO_ps_porb;
+    wire FIXED_IO_ps_srstb;
 
     AXI term();
 
@@ -42,16 +64,25 @@ module Zynq_axis_wrapper #(
 
 
             PS_AXI_stream PS (
-                .APB_M_0_paddr(APB.PADDR),
-                .APB_M_0_penable(APB.PENABLE),
-                .APB_M_0_pprot(APB.PPROT),
-                .APB_M_0_prdata(APB.PRDATA),
-                .APB_M_0_pready(APB.PREADY),
-                .APB_M_0_psel(APB.PSEL),
-                .APB_M_0_pslverr(APB.PSLVERR),
-                .APB_M_0_pstrb(APB.PSTRB),
-                .APB_M_0_pwdata(APB.PWDATA),
-                .APB_M_0_pwrite(APB.PWRITE),
+                .axi_out_araddr(axi_out.ARADDR),
+                .axi_out_arprot(axi_out.ARPROT),
+                .axi_out_arready(axi_out.ARREADY),
+                .axi_out_arvalid(axi_out.ARVALID),
+                .axi_out_awaddr(axi_out.AWADDR),
+                .axi_out_awprot(axi_out.AWPROT),
+                .axi_out_awready(axi_out.AWREADY),
+                .axi_out_awvalid(axi_out.AWVALID),
+                .axi_out_bready(axi_out.BREADY),
+                .axi_out_bresp(axi_out.BRESP),
+                .axi_out_bvalid(axi_out.BVALID),
+                .axi_out_rdata(axi_out.RDATA),
+                .axi_out_rready(axi_out.RREADY),
+                .axi_out_rresp(axi_out.RRESP),
+                .axi_out_rvalid(axi_out.RVALID),
+                .axi_out_wdata(axi_out.WDATA),
+                .axi_out_wready(axi_out.WREADY),
+                .axi_out_wstrb(axi_out.WSTRB),
+                .axi_out_wvalid(axi_out.WVALID),
                 .DDR_addr(DDR_addr),
                 .DDR_ba(DDR_ba),
                 .DDR_cas_n(DDR_cas_n),
@@ -127,16 +158,25 @@ module Zynq_axis_wrapper #(
         end else begin
             
         PS_AXI_stream PS (
-            .APB_M_0_paddr(APB.PADDR),
-            .APB_M_0_penable(APB.PENABLE),
-            .APB_M_0_pprot(APB.PPROT),
-            .APB_M_0_prdata(APB.PRDATA),
-            .APB_M_0_pready(APB.PREADY),
-            .APB_M_0_psel(APB.PSEL),
-            .APB_M_0_pslverr(APB.PSLVERR),
-            .APB_M_0_pstrb(APB.PSTRB),
-            .APB_M_0_pwdata(APB.PWDATA),
-            .APB_M_0_pwrite(APB.PWRITE),
+            .axi_out_araddr(axi_out.ARADDR),
+            .axi_out_arprot(axi_out.ARPROT),
+            .axi_out_arready(axi_out.ARREADY),
+            .axi_out_arvalid(axi_out.ARVALID),
+            .axi_out_awaddr(axi_out.AWADDR),
+            .axi_out_awprot(axi_out.AWPROT),
+            .axi_out_awready(axi_out.AWREADY),
+            .axi_out_awvalid(axi_out.AWVALID),
+            .axi_out_bready(axi_out.BREADY),
+            .axi_out_bresp(axi_out.BRESP),
+            .axi_out_bvalid(axi_out.BVALID),
+            .axi_out_rdata(axi_out.RDATA),
+            .axi_out_rready(axi_out.RREADY),
+            .axi_out_rresp(axi_out.RRESP),
+            .axi_out_rvalid(axi_out.RVALID),
+            .axi_out_wdata(axi_out.WDATA),
+            .axi_out_wready(axi_out.WREADY),
+            .axi_out_wstrb(axi_out.WSTRB),
+            .axi_out_wvalid(axi_out.WVALID),
             .DDR_addr(DDR_addr),
             .DDR_ba(DDR_ba),
             .DDR_cas_n(DDR_cas_n),
@@ -211,7 +251,7 @@ module Zynq_axis_wrapper #(
         );
         end
 
-        
+
     endgenerate
 
 endmodule
