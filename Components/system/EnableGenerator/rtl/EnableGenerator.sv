@@ -15,7 +15,10 @@
 `timescale 10 ns / 1 ns
 `include "interfaces.svh"
 
-module enable_generator #(parameter BASE_ADDRESS = 0, COUNTER_WIDTH = 32, EXTERNAL_TIMEBASE_ENABLE = 0)(
+module enable_generator #(
+    COUNTER_WIDTH = 32,
+    EXTERNAL_TIMEBASE_ENABLE = 0
+)(
     input wire        clock,
     input wire        ext_timebase,
     input wire        reset,
@@ -40,7 +43,7 @@ module enable_generator #(parameter BASE_ADDRESS = 0, COUNTER_WIDTH = 32, EXTERN
         .N_READ_REGISTERS(3),
         .N_WRITE_REGISTERS(3),
         .REGISTERS_WIDTH(32),
-        .BASE_ADDRESS(BASE_ADDRESS)
+        .ADDRESS_MASK('hf)
     ) CU (
         .clock(clock),
         .reset(reset),

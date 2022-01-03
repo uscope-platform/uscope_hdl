@@ -39,7 +39,7 @@ module axil_simple_register_cu_vip_tb();
     axil_simple_register_cu #(
         .N_READ_REGISTERS(3),
         .N_WRITE_REGISTERS(3),
-        .BASE_ADDRESS(32'h4400_0000)
+        .ADDRESS_MASK('h1f)
     ) UUT (
         .clock(clk),
         .reset(reset),

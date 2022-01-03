@@ -15,7 +15,7 @@
 `timescale 10 ns / 1 ns
 `include "interfaces.svh"
 
-module ad2s1210_cu #(parameter BASE_ADDRESS = 32'h43c00000)(
+module ad2s1210_cu (
     input wire clock,
     input wire reset,
     input wire read_angle,
@@ -105,7 +105,7 @@ module ad2s1210_cu #(parameter BASE_ADDRESS = 32'h43c00000)(
         .N_TRIGGER_REGISTERS(1),
         .TRIGGER_REGISTERS_IDX('{9}),
         .INITIAL_OUTPUT_VALUES({32'b0,32'b0,32'b0,32'b0,32'b0,32'b0,32'b0,32'b0,32'b0,32'b0,{3'b0,5'd22,20'b0,2'b10,2'b0}}),
-        .BASE_ADDRESS(BASE_ADDRESS)
+        .ADDRESS_MASK('h3f)
     ) CU (
         .clock(clock),
         .reset(reset),

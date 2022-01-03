@@ -49,7 +49,7 @@ module axil_crossbar_tb();
     axil_simple_register_cu #(
         .N_READ_REGISTERS(3),
         .N_WRITE_REGISTERS(3),
-        .BASE_ADDRESS(0)
+        .ADDRESS_MASK('h1f)
     ) S1 (
         .clock(clk),
         .reset(reset),
@@ -65,7 +65,7 @@ module axil_crossbar_tb();
     axil_simple_register_cu #(
         .N_READ_REGISTERS(3),
         .N_WRITE_REGISTERS(3),
-        .BASE_ADDRESS('h20000000)
+        .ADDRESS_MASK('h1f)
     ) S2 (
         .clock(clk),
         .reset(reset),

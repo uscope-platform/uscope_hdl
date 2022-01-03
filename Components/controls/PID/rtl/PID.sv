@@ -18,7 +18,10 @@
 `timescale 10 ns / 1 ns
 `include "interfaces.svh"
 
-module PID #(parameter BASE_ADDRESS = 32'h43c00000, parameter INPUT_DATA_WIDTH = 12, parameter OUTPUT_DATA_WIDTH = 16)(
+module PID #(
+    parameter INPUT_DATA_WIDTH = 12, 
+    parameter OUTPUT_DATA_WIDTH = 16
+    )(
     input wire clock,
     input wire reset,
 
@@ -73,7 +76,7 @@ module PID #(parameter BASE_ADDRESS = 32'h43c00000, parameter INPUT_DATA_WIDTH =
         .N_READ_REGISTERS(9),
         .N_WRITE_REGISTERS(9),
         .REGISTERS_WIDTH(32),
-        .BASE_ADDRESS(BASE_ADDRESS),
+        .ADDRESS_MASK('h3f),
         .INITIAL_OUTPUT_VALUES(INITIAL_OUTPUT_VALUES)
     ) CU (
         .clock(clock),

@@ -35,9 +35,10 @@ module PID_tb();
     initial clk = 0; 
     always #0.5 clk = ~clk; 
 
-    defparam uut.BASE_ADDRESS = 0;
-    defparam uut.INPUT_DATA_WIDTH = 16;
-    PID uut (
+    
+    PID #(
+        .INPUT_DATA_WIDTH(16)
+    )uut (
         .clock(clk),
         .reset(reset),
         .axil(axil),

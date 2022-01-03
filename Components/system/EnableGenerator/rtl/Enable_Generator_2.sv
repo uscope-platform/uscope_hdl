@@ -15,7 +15,9 @@
 `timescale 10 ns / 1 ns
 `include "interfaces.svh"
 
-module enable_generator_2 #(parameter BASE_ADDRESS = 0, COUNTER_WIDTH = 32)(
+module enable_generator_2 #(
+    COUNTER_WIDTH = 32
+)(
     input wire        clock,
     input wire        reset,
     input wire        ext_timebase,
@@ -44,7 +46,7 @@ module enable_generator_2 #(parameter BASE_ADDRESS = 0, COUNTER_WIDTH = 32)(
         .N_READ_REGISTERS(4),
         .N_WRITE_REGISTERS(4),
         .REGISTERS_WIDTH(32),
-        .BASE_ADDRESS(BASE_ADDRESS)
+        .ADDRESS_MASK('hff)
     ) CU (
         .clock(clock),
         .reset(reset),
@@ -74,8 +76,9 @@ module enable_generator_2 #(parameter BASE_ADDRESS = 0, COUNTER_WIDTH = 32)(
         .counter_out(count)
     );
     
-    defparam comparator_1.COUNTER_WIDTH = COUNTER_WIDTH;
-    enable_comparator comparator_1(
+    enable_comparator #(
+        .COUNTER_WIDTH(COUNTER_WIDTH)
+    ) comparator_1(
         .clock(clock),
         .reset(reset),
         .enable_treshold(enable_threshold_1),
@@ -83,8 +86,9 @@ module enable_generator_2 #(parameter BASE_ADDRESS = 0, COUNTER_WIDTH = 32)(
         .enable_out(enable_out_1)
     );
     
-    defparam comparator_2.COUNTER_WIDTH = COUNTER_WIDTH;
-    enable_comparator comparator_2(
+    enable_comparator #(
+        .COUNTER_WIDTH(COUNTER_WIDTH)
+    ) comparator_2(
         .clock(clock),
         .reset(reset),
         .enable_treshold(enable_threshold_2),

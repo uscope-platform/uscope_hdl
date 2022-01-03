@@ -15,7 +15,10 @@
 `timescale 10 ns / 1 ns
 `include "interfaces.svh"
 
-module AdcProcessingControlUnit #(parameter BASE_ADDRESS = 'h43c00000, STICKY_FAULT = 0, DATA_PATH_WIDTH = 16)(
+module AdcProcessingControlUnit #(
+    STICKY_FAULT = 0,
+    DATA_PATH_WIDTH = 16
+)(
     input wire clock,
     input wire reset,
     input wire data_in_valid,
@@ -44,15 +47,12 @@ module AdcProcessingControlUnit #(parameter BASE_ADDRESS = 'h43c00000, STICKY_FA
         .N_READ_REGISTERS(6),
         .N_WRITE_REGISTERS(6),
         .REGISTERS_WIDTH(32),
-        .N_TRIGGER_REGISTERS(2),
-        .TRIGGER_REGISTERS_IDX('{4,5}),
-        .BASE_ADDRESS(BASE_ADDRESS)
+        .ADDRESS_MASK('h1f)
     ) CU (
         .clock(clock),
         .reset(reset),
         .input_registers(cu_read_registers),
         .output_registers(cu_write_registers),
-        .trigger_out({pipeline_flush}),
         .axil(axi_in)
     );
 
@@ -76,22 +76,7 @@ module AdcProcessingControlUnit #(parameter BASE_ADDRESS = 'h43c00000, STICKY_FA
     assign decimation_ratio = cu_write_registers[5][31:24];
 
 
-    assign cu_read_registers[0] = {comparator_thresholds[4], comparator_thresholds[0]};
-    assign cu_read_registers[1] = {comparator_thresholds[5], comparator_thresholds[1]};
-    assign cu_read_registers[2] = {comparator_thresholds[6], comparator_thresholds[2]};
-    assign cu_read_registers[3] = {comparator_thresholds[7], comparator_thresholds[3]};
-    assign cu_read_registers[4] = {calibrator_coefficients[1], calibrator_coefficients[0]};
-    assign cu_read_registers[5] = {
-        decimation_ratio    ,
-        6'b0,
-        disable_fault,
-        clear_fault,
-        slow_fault_threshold,
-        calibrator_coefficients[2][2:0],
-        clear_latch,
-        latch_mode,
-        1'b0
-    };
+    assign cu_read_registers = cu_write_registers;
     
     reg arm_fault;
 

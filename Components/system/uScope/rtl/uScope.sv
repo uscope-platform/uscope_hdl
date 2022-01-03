@@ -15,7 +15,9 @@
 `timescale 10ns / 1ns
 `include "interfaces.svh"
 
-module uScope #(parameter BASE_ADDRESS = 'h43C00000, N_TRIGGERS = 16)(
+module uScope #(
+    N_TRIGGERS = 16
+)(
     input wire clock,
     input wire reset,
     input wire dma_done,
@@ -59,7 +61,7 @@ module uScope #(parameter BASE_ADDRESS = 'h43C00000, N_TRIGGERS = 16)(
         .REGISTERS_WIDTH(32),
         .N_TRIGGER_REGISTERS(1),
         .TRIGGER_REGISTERS_IDX({3}),
-        .BASE_ADDRESS(BASE_ADDRESS)
+        .ADDRESS_MASK('h1f)
     ) CU (
         .clock(clock),
         .reset(reset),

@@ -16,7 +16,11 @@
 `timescale 10 ns / 1 ns
 `include "interfaces.svh"
 
-module SpiControlUnit #(parameter BASE_ADDRESS = 32'h43c0000, SS_POLARITY_DEFAULT = 0, N_CHANNELS=3,  OUTPUT_WIDTH=32) (
+module SpiControlUnit #(
+    SS_POLARITY_DEFAULT = 0,
+    N_CHANNELS=3,
+    OUTPUT_WIDTH=32
+) (
     input logic clock,
     input logic reset,
     input logic [OUTPUT_WIDTH-1:0] spi_data_in[N_CHANNELS-1:0],
@@ -75,7 +79,7 @@ module SpiControlUnit #(parameter BASE_ADDRESS = 32'h43c0000, SS_POLARITY_DEFAUL
         .N_TRIGGER_REGISTERS(1),
         .INITIAL_OUTPUT_VALUES(INITIAL_REGISTER_VALUES),
         .TRIGGER_REGISTERS_IDX(TRIGGER_REGISTERS_IDX),
-        .BASE_ADDRESS(BASE_ADDRESS)
+        .ADDRESS_MASK('hff)
     ) axi_if(
         .clock(clock),
         .reset(reset),

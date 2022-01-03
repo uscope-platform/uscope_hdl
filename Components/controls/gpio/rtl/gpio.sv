@@ -15,7 +15,11 @@
 `timescale 10 ns / 1 ns
 `include "interfaces.svh"
 
-module gpio #(parameter BASE_ADDRESS = 0,INPUT_WIDTH = 8,OUTPUT_WIDTH = 8)(
+module gpio #(
+    parameter BASE_ADDRESS = 0,
+    INPUT_WIDTH = 8,
+    OUTPUT_WIDTH = 8
+)(
     input wire clock,
     input wire reset,
     input wire [INPUT_WIDTH-1:0] gpio_i,
@@ -29,7 +33,7 @@ module gpio #(parameter BASE_ADDRESS = 0,INPUT_WIDTH = 8,OUTPUT_WIDTH = 8)(
         .N_READ_REGISTERS(2),
         .N_WRITE_REGISTERS(1),
         .REGISTERS_WIDTH(32),
-        .BASE_ADDRESS(BASE_ADDRESS)
+        .ADDRESS_MASK('hf)
     ) CU (
         .clock(clock),
         .reset(reset),

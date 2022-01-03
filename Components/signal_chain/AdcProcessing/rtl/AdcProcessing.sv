@@ -15,7 +15,12 @@
 `timescale 10 ns / 1 ns
 `include "interfaces.svh"
 
-module AdcProcessing #(parameter BASE_ADDRESS = 'h43c00000, DATA_PATH_WIDTH = 16, DECIMATED = 1, ENABLE_AVERAGE = 0, STICKY_FAULT = 0)(
+module AdcProcessing #(
+    parameter DATA_PATH_WIDTH = 16,
+    DECIMATED = 1,
+    ENABLE_AVERAGE = 0,
+    STICKY_FAULT = 0
+)(
     input  wire       clock,
     input  wire       reset,
     axi_stream.slave  data_in,
@@ -40,7 +45,10 @@ module AdcProcessing #(parameter BASE_ADDRESS = 'h43c00000, DATA_PATH_WIDTH = 16
         .DATA_WIDTH(DATA_PATH_WIDTH)
     ) cal_in();
 
-    AdcProcessingControlUnit #(.BASE_ADDRESS(BASE_ADDRESS), .STICKY_FAULT(STICKY_FAULT), .DATA_PATH_WIDTH(DATA_PATH_WIDTH)) AdcCU(
+    AdcProcessingControlUnit #(
+        .STICKY_FAULT(STICKY_FAULT),
+        .DATA_PATH_WIDTH(DATA_PATH_WIDTH)
+    ) AdcCU(
         .clock(clock),
         .reset(reset),
         .axi_in(axi_in),

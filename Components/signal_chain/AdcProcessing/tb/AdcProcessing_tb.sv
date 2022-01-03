@@ -25,7 +25,6 @@ module AdcProcessing_tb();
     reg [31:0] sb_read_out;
     wire processed_fault;
 
-    parameter SB_ADDR = 'h43C00000;
     event configuration_done;
     axi_lite test_axi();
     
@@ -83,14 +82,14 @@ module AdcProcessing_tb();
         //TESTS
         #5.5 reset <=1'h1;
         //Comparators
-        #1 axil_bfm.write(SB_ADDR+8'h00,{trip_low_s, trip_low_f2});
-        #1 axil_bfm.write(SB_ADDR+8'h04,{trip_low_s, trip_low_f1});
-        #1 axil_bfm.write(SB_ADDR+8'h08,{trip_high_s, trip_high_f1});
-        #1 axil_bfm.write(SB_ADDR+8'h0C,{trip_high_s, trip_high_f2});
+        #1 axil_bfm.write(8'h00, {trip_low_s, trip_low_f2});
+        #1 axil_bfm.write(8'h04, {trip_low_s, trip_low_f1});
+        #1 axil_bfm.write(8'h08, {trip_high_s, trip_high_f1});
+        #1 axil_bfm.write(8'h0C, {trip_high_s, trip_high_f2});
         //Calibration
-        #1 axil_bfm.write(SB_ADDR+8'h10,{cal_gain, cal_offset});
+        #1 axil_bfm.write(8'h10, {cal_gain, cal_offset});
         //CU
-        #1 axil_bfm.write(SB_ADDR+8'h14,32'h04010000);
+        #1 axil_bfm.write(8'h14, 32'h04010000);
         #1 ->configuration_done;
     end
 

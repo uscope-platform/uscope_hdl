@@ -15,7 +15,10 @@
 `timescale 10ns / 1ns
 `include "interfaces.svh"
 
-module multiphase_reference_generator #(parameter N_PHASES=6, DATA_PATH_WIDTH=16, BASE_ADDRESS='h43c00000)(
+module multiphase_reference_generator #(
+    parameter N_PHASES=6, 
+    DATA_PATH_WIDTH=16
+)(
     input wire clock,
     input wire reset,
     input wire sync,
@@ -45,7 +48,7 @@ module multiphase_reference_generator #(parameter N_PHASES=6, DATA_PATH_WIDTH=16
         .N_READ_REGISTERS(3),
         .N_WRITE_REGISTERS(3),
         .REGISTERS_WIDTH(32),
-        .BASE_ADDRESS(BASE_ADDRESS)
+        .ADDRESS_MASK('hf)
     ) CU (
         .clock(clock),
         .reset(reset),

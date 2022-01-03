@@ -33,12 +33,10 @@ module gpio_tb();
     wire [7:0] gpio_o;
     reg [31:0] sb_read_data_test;
 
-
-    defparam DUT.BASE_ADDRESS = 0;
-    defparam DUT.INPUT_WIDTH = 8;
-    defparam DUT.OUTPUT_WIDTH = 8;
-
-    gpio DUT(
+    gpio #(
+        .INPUT_WIDTH(8),
+        .OUTPUT_WIDTH(8)
+    ) DUT(
         .clock(clk),
         .reset(rst),
         .gpio_i(gpio_i),

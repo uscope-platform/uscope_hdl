@@ -60,9 +60,7 @@ module ad2s1210 #(parameter BASE_ADDRESS = 32'h43c00000)(
     wire [31:0] SPI_data;
 
 
-    ad2s1210_cu #(
-        .BASE_ADDRESS(CONTROLLER_ADDRESS)
-    ) CU (
+    ad2s1210_cu CU (
         .clock(clock),
         .reset(reset),
         .read_angle(read_angle),
@@ -84,7 +82,6 @@ module ad2s1210 #(parameter BASE_ADDRESS = 32'h43c00000)(
     wire [31:0] unpacked_spi_data [0:0];
     
     SPI #(
-        .BASE_ADDRESS(SPI_ADDRESS),
         .SS_POLARITY_DEFAULT(1),
         .N_CHANNELS(1)
     ) ext_interface(

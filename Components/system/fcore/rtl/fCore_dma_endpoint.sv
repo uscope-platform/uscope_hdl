@@ -17,7 +17,13 @@
 `include "interfaces.svh"
 
 
-module fCore_dma_endpoint #(parameter BASE_ADDRESS = 32'h43c00000, DATAPATH_WIDTH = 20 ,PULSE_STRETCH_LENGTH = 6, REG_ADDR_WIDTH = 8, LEGACY_READ=1)(
+module fCore_dma_endpoint #(
+    parameter BASE_ADDRESS = 32'h43c00000,
+    DATAPATH_WIDTH = 20,
+    PULSE_STRETCH_LENGTH = 6,
+    REG_ADDR_WIDTH = 8, 
+    LEGACY_READ=1
+)(
     input wire clock,
     input wire reset,
     axi_lite.slave axi_in,
@@ -87,6 +93,8 @@ module fCore_dma_endpoint #(parameter BASE_ADDRESS = 32'h43c00000, DATAPATH_WIDT
     assign read_data.data = bus_read_data | stream_read_data;
     assign read_data.valid = bus_read_valid | stream_read_valid;
 
+    reg read_n_channels;
+
     always_ff @(posedge clock) begin
         if(!reset)begin
             read_addr.ready <= 1;
@@ -107,14 +115,12 @@ module fCore_dma_endpoint #(parameter BASE_ADDRESS = 32'h43c00000, DATAPATH_WIDT
                         end
                     end else if(read_addr.valid) begin
                         if(read_addr.data == 0) begin
-                            stream_read_data <= n_channels;
-                            stream_read_valid <= 1;
-                        end else begin
-                            dma_read_addr <= read_addr.data;
-                            state <= bus_read;
-                            axis_dma_read_request.ready <= 0;
-                            read_addr.ready <= 0;
+                            read_n_channels <= 1;
                         end
+                        dma_read_addr <= read_addr.data;
+                        state <= bus_read;
+                        axis_dma_read_request.ready <= 0;
+                        read_addr.ready <= 0;
                     end
                 end
                 wait_read:begin
@@ -122,6 +128,7 @@ module fCore_dma_endpoint #(parameter BASE_ADDRESS = 32'h43c00000, DATAPATH_WIDT
                 end
                 bus_read: begin
                     read_addr.ready <= 1;
+                    read_n_channels <= 0;
                     axis_dma_read_request.ready <= 1;
                     state <= idle;
                 end
@@ -143,8 +150,14 @@ module fCore_dma_endpoint #(parameter BASE_ADDRESS = 32'h43c00000, DATAPATH_WIDT
                 bus_read_valid <= 0;
             end
             bus_read: begin
-                bus_read_valid <= 1;
-                bus_read_data <= dma_read_data;
+                if(read_n_channels) begin
+                    bus_read_valid <= 1;
+                    bus_read_data <= n_channels;
+                end else begin
+                    bus_read_valid <= 1;
+                    bus_read_data <= dma_read_data;
+                end
+
             end
             axis_read: begin
                 axis_dma_read_response.data <= dma_read_data;

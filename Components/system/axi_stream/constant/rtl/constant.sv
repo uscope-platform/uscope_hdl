@@ -18,7 +18,9 @@
 `include "interfaces.svh"
 
 
-module axis_constant #(parameter BASE_ADDRESS = 'h43c00000, parameter CONSTANT_WIDTH = 32)(
+module axis_constant #(
+    parameter CONSTANT_WIDTH = 32
+)(
     input wire        clock,
     input wire        reset,
     input wire        sync,
@@ -38,7 +40,7 @@ module axis_constant #(parameter BASE_ADDRESS = 'h43c00000, parameter CONSTANT_W
         .N_READ_REGISTERS(3),
         .N_WRITE_REGISTERS(3),
         .REGISTERS_WIDTH(32),
-        .BASE_ADDRESS(BASE_ADDRESS),
+        .ADDRESS_MASK('hf),
         .N_TRIGGER_REGISTERS(1),
         .TRIGGER_REGISTERS_IDX({0})
     ) CU (

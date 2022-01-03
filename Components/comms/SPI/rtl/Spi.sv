@@ -16,7 +16,11 @@
 `timescale 10 ns / 1 ns
 `include "interfaces.svh"
 
-module SPI #(parameter BASE_ADDRESS = 32'h43c00000, SS_POLARITY_DEFAULT=0, N_CHANNELS=3, OUTPUT_WIDTH=32)(
+module SPI #(
+    SS_POLARITY_DEFAULT=0,
+    N_CHANNELS=3,
+    OUTPUT_WIDTH=32
+)(
     input logic clock,
     input logic reset,
     input logic [4:0] external_transfer_length,
@@ -99,8 +103,9 @@ module SPI #(parameter BASE_ADDRESS = 32'h43c00000, SS_POLARITY_DEFAULT=0, N_CHA
     generate
         genvar i;
         for (i = 0; i < N_CHANNELS; i=i+1) begin
-            defparam SHR.N_CHANNELS = N_CHANNELS;
-            SpiRegister SHR(
+            SpiRegister #(
+                .N_CHANNELS(N_CHANNELS)
+            ) SHR(
                 .clock(clock),
                 .shift_clock(generated_sclk),
                 .reset(reset),
@@ -118,9 +123,11 @@ module SPI #(parameter BASE_ADDRESS = 32'h43c00000, SS_POLARITY_DEFAULT=0, N_CHA
         end
     endgenerate
     
-    defparam STE.N_CHANNELS = N_CHANNELS;
-    defparam STE.OUTPUT_WIDTH = OUTPUT_WIDTH;
-    TransferEngine STE(
+
+    TransferEngine #(
+        .N_CHANNELS(N_CHANNELS),
+        .OUTPUT_WIDTH(OUTPUT_WIDTH)
+    ) STE(
         .clock(clock),
         .reset(reset),
         .spi_delay(spi_delay),
@@ -140,12 +147,12 @@ module SPI #(parameter BASE_ADDRESS = 32'h43c00000, SS_POLARITY_DEFAULT=0, N_CHA
         .transfer_done(transfer_done),
         .ss_blanking(ss_blanking)
     );
-    
-    defparam SCU.N_CHANNELS = N_CHANNELS;
-    defparam SCU.BASE_ADDRESS = BASE_ADDRESS;
-    defparam SCU.SS_POLARITY_DEFAULT = SS_POLARITY_DEFAULT;
-    defparam SCU.OUTPUT_WIDTH = OUTPUT_WIDTH;
-    SpiControlUnit SCU(
+
+    SpiControlUnit #(
+        .N_CHANNELS(N_CHANNELS),
+        .SS_POLARITY_DEFAULT(SS_POLARITY_DEFAULT),
+        .OUTPUT_WIDTH(OUTPUT_WIDTH)
+    ) SCU(
         .clock(clock),
         .reset(reset),
         .spi_data_in(cu_in),

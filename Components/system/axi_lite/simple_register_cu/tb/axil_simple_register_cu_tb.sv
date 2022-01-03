@@ -33,7 +33,8 @@ module axil_simple_register_cu_tb();
         .N_READ_REGISTERS(3),
         .N_WRITE_REGISTERS(3),
         .N_TRIGGER_REGISTERS(1),
-        .TRIGGER_REGISTERS_IDX({2})
+        .TRIGGER_REGISTERS_IDX({2}),
+        .ADDRESS_MASK('hf)
     ) UUT (
         .clock(clk),
         .reset(reset),
