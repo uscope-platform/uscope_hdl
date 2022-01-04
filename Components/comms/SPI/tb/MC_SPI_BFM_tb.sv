@@ -162,8 +162,8 @@ module MC_spi_bfm_tb();
     
     initial begin : master_1_axi
         @(master_task_start);
-            #10 write_BFM.write_dest(32'h131c2, 32'h43C00000);
-            #5 write_BFM.write_dest(31'h1b, 32'h43C00004);
+            #10 write_BFM.write_dest(32'h131c2, 'h0);
+            #5 write_BFM.write_dest(32'h1b, 'h4);
             
         forever begin
             #5;

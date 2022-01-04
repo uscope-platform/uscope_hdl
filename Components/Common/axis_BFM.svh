@@ -52,7 +52,7 @@ class axis_BFM;
 
     
     task  read(output logic [31:0] data);
-        this.axis.ready <= 0;
+        this.axis.ready <= 1;
         wait(this.axis.valid);
         data = this.axis.data;
     endtask

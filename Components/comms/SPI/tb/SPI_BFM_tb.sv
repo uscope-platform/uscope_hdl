@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 `timescale 10 ns / 1 ns
-`include "SimpleBus_BFM.svh"
+`include "axis_BFM.svh"
 `include "SPI_BFM.svh"
 
 module SPI_bfm_tb();
@@ -26,13 +26,10 @@ module SPI_bfm_tb();
 
     parameter spi_width = 12;
 
-    logic mosi, sclk,sclk_en;
-    logic spi_mode,out_val;
-    wire sclk_in;
+    logic mosi, sclk;
+    logic out_val;
     wire ss;
-    wire ss_in;
     logic sclk_slave;
-    logic ss_slave;
     wire miso;
     logic [31:0] out[0:0];
 
@@ -40,11 +37,6 @@ module SPI_bfm_tb();
     reg SPI_write_valid;
 
     parameter spi_mode_master = 0, spi_mode_slave = 1;
-
-    assign sclk_in = spi_mode ? sclk_slave & sclk_en : 1'bz;
-    assign sclk = !spi_mode ? sclk_in : 1'b0;
-    assign ss_in = spi_mode ? ss_slave : 1'bz;
-    assign ss = !spi_mode ? ss_in : 1'b0;
 
     assign spi_if.SS = ss;
     assign spi_if.SCLK = sclk;
@@ -67,34 +59,53 @@ module SPI_bfm_tb();
         #5 rst <=1;
     end
 
-    Simplebus s();
     SPI_if spi_if();
+
+    axis_BFM write_BFM;
+    axis_BFM read_req_BFM;
+    axis_BFM read_resp_BFM;
+
+    axi_stream read_req();
+    axi_stream read_resp();
+    axi_stream write();
+
+    axi_lite axi_master();
+
+    axis_to_axil WRITER(
+        .clock(clk),
+        .reset(rst), 
+        .axis_write(write),
+        .axis_read_request(read_req),
+        .axis_read_response(read_resp),
+        .axi_out(axi_master)
+    );
     
-    defparam DUT.N_CHANNELS = 1;
-    SPI DUT(
+    SPI #(
+        .N_CHANNELS(1)
+    ) DUT(
         .clock(clk),
         .reset(rst),
         .data_valid(out_val),
         .data_out(out),
         .MISO(miso),
-        .SCLK(sclk_in),
+        .SCLK(sclk),
         .MOSI(mosi),
-        .SS(ss_in),
-        .simple_bus(s),
+        .SS(ss),
+        .axi_in(axi_master),
         .SPI_write_data(SPI_write_data),
         .SPI_write_valid(SPI_write_valid)
     );
 
-    simplebus_BFM BFM;
+
     SPI_BFM spi_bfm;
 
     initial begin
         //INITIAL SETTINGS AND INSTANTIATIONS OF CLASSES
-        BFM = new(s,1);
+        write_BFM = new(write,1);
+        read_req_BFM = new(read_req, 1);
+        read_resp_BFM = new(read_resp, 1);
+        read_resp.ready = 1;
         spi_bfm = new(spi_if,1);
-        ss_slave <= 0;
-        spi_mode <=spi_mode_master;
-        sclk_en <= 0;
         SPI_write_valid <= 0;
         SPI_write_data <= 0;
 
@@ -124,15 +135,15 @@ module SPI_bfm_tb();
 
     initial begin : master
         @(master_task_start);
-            #10 BFM.write(32'h43C00000,31'h131c2);
-            #5 BFM.write(32'h43C00004,31'h1b);
+            #10 write_BFM.write_dest(32'h131c2, 'h0);
+            #10 write_BFM.write_dest(32'h1b, 'h4);
             
         forever begin
-            #5 master_data_s = $urandom;
-            BFM.write(32'h43C00008,master_data_s);
-            //BFM.write(32'h43C00008,31'h000);
-            #5 BFM.write(32'h43C0000C,31'h0);
-            BFM.read(32'h43C00010,slave_data_r);
+            #10 master_data_s = $urandom;
+            write_BFM.write_dest(master_data_s, 'h10);
+            #10 write_BFM.write_dest(31'h0, 'hC);
+            #10 read_req_BFM.write('h10);
+             read_resp_BFM.read(slave_data_r);
             master_data_e <= master_data_s;
             #2->transaction_check;
         end

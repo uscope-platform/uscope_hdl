@@ -20,13 +20,9 @@ module SPI_tb();
     
     logic clk, rst;
 
-    logic mosi, sclk,sclk_en;
+    logic mosi, sclk;
     logic spi_mode,ext_start,out_val;
-    wire sclk_in;
     wire ss;
-    wire ss_in;
-    logic sclk_slave;
-    logic ss_slave;
     logic miso;
 
     logic [31:0] read_result;
@@ -37,18 +33,10 @@ module SPI_tb();
 
     parameter spi_mode_master = 0, spi_mode_slave = 1;
 
-    assign sclk_in = spi_mode ? sclk_slave & sclk_en : 1'bz;
-    assign sclk = !spi_mode ? sclk_in : 1'b0;
-    assign ss_in = spi_mode ? ss_slave : 1'bz;
-    assign ss = !spi_mode ? ss_in : 1'b0;
-
     //clock generation
     initial clk = 1; 
     always #0.5 clk = ~clk; 
     
-
-    initial #0.5 sclk_slave = 1;
-    always #1 sclk_slave = ~sclk_slave; 
 
     
     // reset generation
@@ -83,9 +71,9 @@ module SPI_tb();
         .data_valid(out_val),
         .data_out(out),
         .MISO(miso),
-        .SCLK(sclk_in),
+        .SCLK(sclk),
         .MOSI(mosi),
-        .SS(ss_in),
+        .SS(ss),
         .axi_in(axil),
         .SPI_write_data(SPI_write_data),
         .SPI_write_valid(SPI_write_valid)
@@ -113,22 +101,20 @@ module SPI_tb();
 
         spi_mode <=spi_mode_master;
         miso <= 0;
-        sclk_en <= 0;
-        ss_slave <=0;
         ext_start <=0;
         SPI_write_valid <= 0;
         SPI_write_data <= 0;
 
         //TEST MASTER MODE
-        #10 write_BFM.write_dest(31'h101c4, 32'h43C00000);
-        #5 write_BFM.write_dest(31'h1c, 32'h43C00004);
-        #5 write_BFM.write_dest(31'hCAFE, 32'h43C00008);
-        #5 write_BFM.write_dest(31'h0, 32'h43C0000C);
-        #50 write_BFM.write_dest(31'h0, 32'h43C0000C);
-        #5 read_req_BFM.write(32'h43C00010);
-        #5 read_resp_BFM.read(read_result);
-        #10 write_BFM.write_dest(31'h111c4, 32'h43C00000);
-        #50 write_BFM.write_dest(31'hff, 32'h43C00014);
+        #10 write_BFM.write_dest(31'h101c4, 'h0);
+        #5 write_BFM.write_dest(31'h1c, 'h4);
+        #5 write_BFM.write_dest(31'hCAFE, 'h10);
+        #5 write_BFM.write_dest(31'h0, 'hC);
+        #50 write_BFM.write_dest(31'h0, 'hC);
+        #5 read_req_BFM.write('h10);
+        read_resp_BFM.read(read_result);
+        #10 write_BFM.write_dest(31'h111c4, 'h0);
+        #50 write_BFM.write_dest(31'hff, 'h14);
         
         #100 SPI_write_valid <= 1;
         SPI_write_data <= 'hFE;
@@ -140,10 +126,10 @@ module SPI_tb();
         #10 rst<=0;
         #10 rst <=1;
         
-        #5 write_BFM.write_dest(31'hFF2,32'h43C00000);
-        #5 write_BFM.write_dest(31'hF, 32'h43C00004);
+        #5 write_BFM.write_dest(31'hFF2,'h0);
+        #5 write_BFM.write_dest(31'hF, 'h4);
         #5 spi_mode <=spi_mode_master;
-        #5 write_BFM.write_dest(31'hFEDC, 32'h43C00008);
+        #5 write_BFM.write_dest(31'hFEDC, 'h10);
         #5 ext_start <=1;
         #1 ext_start <=0;
 
