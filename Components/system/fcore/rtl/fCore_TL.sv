@@ -27,38 +27,48 @@ module fCore_TL();
     
     APB apb();
     AXI fcore_axi();
-    Simplebus spb();
-    Simplebus s1();
-    Simplebus s2();
-    axi_stream port_a();
-    axi_stream result();
+    axi_lite dma_axi();
 
-    fCore_PS PS(
-        .APB(apb),
-        .fCore_axi(fcore_axi),
+    
+    axi_stream dummy_scope();
+    axi_lite ctrl_axi();
+
+    Zynq_axis_wrapper PS(
         .Logic_Clock(logic_clock),
-        .Reset(reset)
+        .Reset(reset),
+        .dma_axi(dma_axi),
+        .axi_out(ctrl_axi),
+        .fcore_axi(fcore_axi),
+        .scope(dummy_scope),
     );
 
-    APB_to_Simplebus sb_bridge(
-        .PCLK(logic_clock),
-        .PRESETn(reset),
-        .apb(apb),
-        .spb(spb)
-    );
+    axi_lite #(.INTERFACE_NAME("GPIO")) gpio_axi();
+    axi_lite #(.INTERFACE_NAME("FCORE")) fcore_axi();
 
-    SimplebusInterconnect_M1_S2 xbar(
-        .clock(logic_clock),
-        .master(spb),
-        .slave_1(s1),
-        .slave_2(s2)
+    localparam GPIO_GEN = 32'h43c00000;
+    localparam FCORE_BASE = 32'h43c01000;
+
+    localparam [31:0] AXI_ADDRESSES [2:0] = '{GPIO_GEN, FCORE_BASE};
+
+    axil_crossbar_interface #(
+        .DATA_WIDTH(32),
+        .ADDR_WIDTH(32),
+        .NM(1),
+        .NS(2),
+        .SLAVE_ADDR(AXI_ADDRESSES),
+        .SLAVE_MASK('{2{32'hf000}})
+    ) axi_xbar (
+        .clock(clock),
+        .reset(reset),
+        .slaves('{axi_master}),
+        .masters('{gpio_axi, fcore_axi})
     );
 
     gpio gpio (
         .clock(logic_clock),
         .reset(reset),
         .gpio_o(run),
-        .sb(s1)
+        .axi_in(gpio_axi)
     );
 
     fCore core(
@@ -66,6 +76,7 @@ module fCore_TL();
         .reset(reset),
         .run(run),
         .sb(s2),
+        .control_axi_in(fcore_axi),
         .axi(fcore_axi)
     );
     
