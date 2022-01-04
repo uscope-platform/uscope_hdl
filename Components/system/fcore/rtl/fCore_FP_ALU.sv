@@ -27,44 +27,58 @@ module fCore_FP_ALU #(parameter DATAPATH_WIDTH =32, PIPELINE_DEPTH=5, OPCODE_WID
 );
 
 
-    defparam add_result.USER_WIDTH = REGISTER_ADDR_WIDTH;
-    axi_stream add_result();
     
-    defparam reciprocal_result.USER_WIDTH = REGISTER_ADDR_WIDTH;
-    axi_stream reciprocal_result();
+    axi_stream #(
+        .USER_WIDTH(REGISTER_ADDR_WIDTH)
+    ) add_result();
+    
+    axi_stream #(
+        .USER_WIDTH(REGISTER_ADDR_WIDTH)
+    ) reciprocal_result();
 
-    defparam mul_result.USER_WIDTH = REGISTER_ADDR_WIDTH;
-    axi_stream mul_result();
+    axi_stream #(
+        .USER_WIDTH(REGISTER_ADDR_WIDTH)
+    ) mul_result();
 
-    defparam cmp_result.USER_WIDTH = REGISTER_ADDR_WIDTH;
-    axi_stream cmp_result();
+    axi_stream #(
+        .USER_WIDTH(REGISTER_ADDR_WIDTH)
+    ) cmp_result();
 
-    defparam fti_result.USER_WIDTH = REGISTER_ADDR_WIDTH;
-    axi_stream fti_result();
+    axi_stream #(
+        .USER_WIDTH(REGISTER_ADDR_WIDTH)
+    ) fti_result();
 
-    defparam itf_result.USER_WIDTH = REGISTER_ADDR_WIDTH;
-    axi_stream itf_result();
+    axi_stream #(
+        .USER_WIDTH(REGISTER_ADDR_WIDTH)
+    ) itf_result();
 
-    defparam logic_result.USER_WIDTH = REGISTER_ADDR_WIDTH;
-    axi_stream logic_result();
+    axi_stream #(
+        .USER_WIDTH(REGISTER_ADDR_WIDTH)
+    ) logic_result();
  
-    defparam early_logic_result.USER_WIDTH = REGISTER_ADDR_WIDTH;
-    axi_stream early_logic_result();
+    axi_stream #(
+        .USER_WIDTH(REGISTER_ADDR_WIDTH)
+    ) early_logic_result();
 
-    defparam saturation_result.USER_WIDTH = REGISTER_ADDR_WIDTH;
-    axi_stream saturation_result();
+    axi_stream #(
+        .USER_WIDTH(REGISTER_ADDR_WIDTH)
+    ) saturation_result();
 
-    defparam early_saturation_result.USER_WIDTH = REGISTER_ADDR_WIDTH;
-    axi_stream early_saturation_result();
+    axi_stream #(
+        .USER_WIDTH(REGISTER_ADDR_WIDTH)
+    ) early_saturation_result();
 
-    defparam ldr_operand_a.USER_WIDTH = REGISTER_ADDR_WIDTH;
-    axi_stream ldr_operand_a();
+    axi_stream #(
+        .USER_WIDTH(REGISTER_ADDR_WIDTH)
+    ) ldr_operand_a();
 
-    defparam ldc_adj_a.USER_WIDTH = REGISTER_ADDR_WIDTH;
-    axi_stream ldc_adj_a();
+    axi_stream #(
+        .USER_WIDTH(REGISTER_ADDR_WIDTH)
+    ) ldc_adj_a();
 
-    defparam ldc_operand_a.USER_WIDTH = REGISTER_ADDR_WIDTH;
-    axi_stream ldc_operand_a();
+    axi_stream #(
+        .USER_WIDTH(REGISTER_ADDR_WIDTH)
+    ) ldc_operand_a();
     /*   THERE IS A BUG IN VIVADO WHERE THIS CONDITIONAL CRASHES SYNTHESIS (2020.2 and 2021.1)
          UNTIL IT IS SOLVED THE CORRECT ALU MUST BE COPY PASTED BELOW
     generate 

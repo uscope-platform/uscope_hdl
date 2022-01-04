@@ -82,9 +82,9 @@ module Counter #(parameter COUNTER_WIDTH = 16)(
         end
     end
 
-    defparam core.COUNTER_WIDTH = COUNTER_WIDTH;
-    
-    counter_core core(
+    counter_core #(
+        .COUNTER_WIDTH(COUNTER_WIDTH)
+    ) core (
         .clockIn(clock),
         .timebase(timebase),
         .reset(reset & ~sync ),

@@ -34,10 +34,12 @@ module ad2s1210_tl (
     wire clock, reset, start_read, dma_done;
     wire read_angle, read_speed;
 
-    defparam ch_1.DATA_WIDTH = 16;
-    axi_stream ch_1();
-    defparam ch_2.DATA_WIDTH = 16;
-    axi_stream ch_2();
+    axi_stream #(
+        .DATA_WIDTH(16)
+    ) ch_1();
+    axi_stream #(
+        .DATA_WIDTH(16)
+    ) ch_2();
     axi_stream ch_3();
     axi_stream ch_4();
     axi_stream ch_5();

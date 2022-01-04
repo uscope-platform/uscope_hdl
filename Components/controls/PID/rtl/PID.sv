@@ -120,8 +120,9 @@ module PID #(
 
 
     
-    defparam pid_int.DATA_WIDTH = OUTPUT_DATA_WIDTH;
-    Integrator pid_int(
+    Integrator #(
+        .DATA_WIDTH(OUTPUT_DATA_WIDTH)
+    ) pid_int(
         .clock(clock),
         .reset(reset),
         // PID

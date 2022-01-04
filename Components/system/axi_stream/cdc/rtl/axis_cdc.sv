@@ -82,14 +82,14 @@ module axis_cdc #(parameter CDC_STYLE = "FF", N_STAGES = 3, DATA_WIDTH = 32, USE
 
 
 
-        defparam op_cdc_data.DEST_EXT_HSK = 0;
-        defparam op_cdc_data.DEST_SYNC_FF = 2;
-        defparam op_cdc_data.INIT_SYNC_FF = 1;
-        defparam op_cdc_data.SIM_ASSERT_CHK = 1;
-        defparam op_cdc_data.SRC_SYNC_FF = 2;
-        defparam op_cdc_data.WIDTH = 32;
-
-        xpm_cdc_handshake op_cdc_data (
+        xpm_cdc_handshake #(
+            .DEST_EXT_HSK(0),
+            .DEST_SYNC_FF(2),
+            .INIT_SYNC_FF(1),
+            .SIM_ASSERT_CHK(1),
+            .SRC_SYNC_FF(2),
+            .WIDTH(32)
+        ) op_cdc_data (
             .dest_out(out.data),
             .dest_req(out.valid),
             .src_rcv(cdc_ready_b),
@@ -99,15 +99,15 @@ module axis_cdc #(parameter CDC_STYLE = "FF", N_STAGES = 3, DATA_WIDTH = 32, USE
             .src_send(cdc_valid_b)
         );
     
-    
-        defparam op_cdc_dest.DEST_EXT_HSK = 0;
-        defparam op_cdc_dest.DEST_SYNC_FF = 2;
-        defparam op_cdc_dest.INIT_SYNC_FF = 1;
-        defparam op_cdc_dest.SIM_ASSERT_CHK = 1;
-        defparam op_cdc_dest.SRC_SYNC_FF = 2;
-        defparam op_cdc_dest.WIDTH = 32;
 
-        xpm_cdc_handshake op_cdc_dest (
+        xpm_cdc_handshake #(
+            .DEST_EXT_HSK(0),
+            .DEST_SYNC_FF(2),
+            .INIT_SYNC_FF(1),
+            .SIM_ASSERT_CHK(1),
+            .SRC_SYNC_FF(2),
+            .WIDTH(32)
+        ) op_cdc_dest (
             .dest_out(out.dest),
             .dest_clk(clock_out),
             .src_clk(clock_in),
@@ -116,6 +116,7 @@ module axis_cdc #(parameter CDC_STYLE = "FF", N_STAGES = 3, DATA_WIDTH = 32, USE
         );
 
     end
+    
     endgenerate
 
 endmodule

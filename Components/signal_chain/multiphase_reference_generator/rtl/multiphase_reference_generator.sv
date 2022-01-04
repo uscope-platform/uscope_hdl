@@ -37,8 +37,9 @@ module multiphase_reference_generator #(
 
     assign angle_emulation = emulate_angle;
 
-    defparam emulated_phase.DATA_WIDTH = 16;
-    axi_stream emulated_phase();
+    axi_stream #(
+        .DATA_WIDTH(16)
+    ) emulated_phase();
     
     reg [31:0] cu_write_registers [2:0];
     reg [31:0] cu_read_registers [2:0];
@@ -116,13 +117,17 @@ module multiphase_reference_generator #(
     assign angle_out.data = generator_inner_phase.data;
     assign angle_out.valid = generator_inner_phase.valid;
 
-    defparam sin.DATA_WIDTH = DATA_PATH_WIDTH;
-    axi_stream sin();
-    defparam cos.DATA_WIDTH = DATA_PATH_WIDTH;
-    axi_stream cos();
+    axi_stream #(
+        .DATA_WIDTH(DATA_PATH_WIDTH)
+    ) sin();
+    axi_stream #(
+        .DATA_WIDTH(DATA_PATH_WIDTH)
+    ) cos();
 
-    defparam quadrature_generator.N_PHASES = N_PHASES;
-    multiphase_sinusoid_generator quadrature_generator(
+    
+    multiphase_sinusoid_generator #(
+        .N_PHASES(N_PHASES)
+    ) quadrature_generator(
         .clock(clock),
         .reset(reset),
         .phase(generator_inner_phase),

@@ -26,12 +26,12 @@ module phase_reconstructor_tb();
     axi_stream out();
 
     axis_BFM BFM;
-    
-    defparam UUT.N_PHASES = 6;
-    defparam UUT.MISSING_PHASE = 6;
-    defparam UUT.DATA_PATH_WIDTH = 16;
- 
-    phase_reconstructor UUT (
+
+    phase_reconstructor #(
+        .N_PHASES(6),
+        .MISSING_PHASE(6),
+        .DATA_PATH_WIDTH(16)
+    ) UUT (
         .clock(clk),
         .reset(reset),
         .phases_in(in),

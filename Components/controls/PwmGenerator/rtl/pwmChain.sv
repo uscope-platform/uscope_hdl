@@ -63,10 +63,11 @@ module pwmChain #(parameter N_CHAINS=2, N_CHANNELS=3, BASE_ADDRESS=32'h43c00004,
         end
     end
 
-    defparam ControlUnit.BASE_ADDRESS = BASE_ADDRESS;
-    defparam ControlUnit.N_CHANNELS = 3;
-    defparam ControlUnit.COUNTER_WIDTH = COUNTER_WIDTH;
-    ChainControlUnit ControlUnit(
+    ChainControlUnit #(
+        .BASE_ADDRESS(BASE_ADDRESS),
+        .N_CHANNELS(3),
+        .COUNTER_WIDTH(COUNTER_WIDTH)
+    ) ControlUnit(
         .clock(clock),
         .reset(reset),
         .counter_running(~counter_stopped),
@@ -99,8 +100,10 @@ module pwmChain #(parameter N_CHAINS=2, N_CHANNELS=3, BASE_ADDRESS=32'h43c00004,
         .delayedEnable(counterEnable)
     );
 
-    defparam counter.COUNTER_WIDTH = COUNTER_WIDTH;
-    Counter counter(
+
+    Counter #(
+        .COUNTER_WIDTH(COUNTER_WIDTH)
+    ) counter(
         .clock(clock),
         .reset(reset),
         .sync(sync),
@@ -113,8 +116,10 @@ module pwmChain #(parameter N_CHAINS=2, N_CHANNELS=3, BASE_ADDRESS=32'h43c00004,
         .reload_compare(reload_compare)
     );
 
-    defparam compare.COUNTER_WIDTH = COUNTER_WIDTH;
-    CompareUnit compare(
+    
+    CompareUnit #(
+        .COUNTER_WIDTH(COUNTER_WIDTH)
+    ) compare(
         .clock(clock),
         .reset(reset),
         .counter_stopped(counter_stopped),

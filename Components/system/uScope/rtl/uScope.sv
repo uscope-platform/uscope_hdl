@@ -37,12 +37,17 @@ module uScope #(
 
     localparam CHANNEL_BUFFER_SIZE = 1024; 
 
-    defparam combined.DATA_WIDTH = 32;
-    axi_stream combined();
-    defparam combined_inhibited.DATA_WIDTH = 32;
-    axi_stream combined_inhibited();
-    defparam combined_tlast.DATA_WIDTH = 32;
-    axi_stream combined_tlast();
+    axi_stream #(
+        .DATA_WIDTH(32)
+    ) combined();
+    
+    axi_stream #(
+        .DATA_WIDTH(32)
+    ) combined_inhibited();
+    
+    axi_stream #(
+        .DATA_WIDTH(32)
+    ) combined_tlast();
    
     reg manager_enable;
     wire capture_inhibit;
@@ -109,9 +114,10 @@ module uScope #(
     );
 
 
-    defparam combiner.MSB_DEST_SUPPORT = "TRUE";
-    defparam combiner.OUTPUT_DATA_WIDTH = 32;
-    scope_combiner combiner(
+    scope_combiner #(
+        .MSB_DEST_SUPPORT( "TRUE"),
+        .OUTPUT_DATA_WIDTH(32)
+    ) combiner(
         .clock(clock),
         .reset(reset),
         .stream_in_1(in_1),
@@ -153,8 +159,9 @@ module uScope #(
         dma_start <= combined_tlast.tlast;
     end
     
-    defparam manager.DMA_BASE_ADDRESS = 'h40400000;
-    DMA_manager manager (
+    DMA_manager #(
+        .DMA_BASE_ADDRESS('h40400000)
+    ) manager (
 		.clock(clock),
 		.reset(reset),
         .enable(manager_enable),
@@ -165,9 +172,10 @@ module uScope #(
         .axi(dma_axi)
 	);
 
-    defparam scope_fifo.INPUT_DATA_WIDTH = 32;
-    defparam scope_fifo.FIFO_DEPTH = 8192;
-    axis_fifo_xpm scope_fifo(
+    axis_fifo_xpm #(
+        .INPUT_DATA_WIDTH(32),
+        .FIFO_DEPTH(8192)
+    ) scope_fifo(
         .clock(clock),
         .reset(reset),
         .in(combined_tlast),

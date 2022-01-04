@@ -105,10 +105,10 @@ module PwmGenerator #(parameter BASE_ADDRESS = 32'h43c00000, COUNTER_WIDTH=16, I
     );
     
     
-
-    defparam pwm_cu.BASE_ADDRESS = BASE_ADDRESS;
-    defparam pwm_cu.INITIAL_STOPPED_STATE = INITIAL_STOPPED_STATE;
-    PwmControlUnit pwm_cu(
+    PwmControlUnit #(
+        .BASE_ADDRESS(BASE_ADDRESS),
+        .INITIAL_STOPPED_STATE(INITIAL_STOPPED_STATE)
+    ) pwm_cu(
         .clock(clock),
         .reset(reset),
         .counter_status(counter_status),
@@ -130,9 +130,10 @@ module PwmGenerator #(parameter BASE_ADDRESS = 32'h43c00000, COUNTER_WIDTH=16, I
         .dividerSetting(dividerSetting)
     );
 
-    defparam chain_1.BASE_ADDRESS = CHAIN_1_ADDRESS;
-    defparam chain_1.COUNTER_WIDTH = COUNTER_WIDTH;
-    pwmChain chain_1(
+    pwmChain #(
+        .BASE_ADDRESS(CHAIN_1_ADDRESS),
+        .COUNTER_WIDTH(COUNTER_WIDTH)
+    ) chain_1(
         .clock(clock),
         .reset(reset),
         .sync(sync),
@@ -145,9 +146,11 @@ module PwmGenerator #(parameter BASE_ADDRESS = 32'h43c00000, COUNTER_WIDTH=16, I
         .sb(sb_slave_2)
     );
 
-    defparam chain_2.BASE_ADDRESS = CHAIN_2_ADDRESS;
-    defparam chain_2.COUNTER_WIDTH = COUNTER_WIDTH;
-    pwmChain chain_2(
+    
+    pwmChain #(
+        .BASE_ADDRESS(CHAIN_2_ADDRESS),
+        .COUNTER_WIDTH(COUNTER_WIDTH)
+    ) chain_2(
         .clock(clock),
         .reset(reset),
         .sync(sync),

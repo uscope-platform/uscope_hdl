@@ -27,12 +27,13 @@ module register_slice_tb();
     initial clk = 0; 
     always #0.5 clk = ~clk; 
     
-    defparam UUT.DATA_WIDTH = 32;
-    defparam UUT.DEST_WIDTH = 32;
-    defparam UUT.USER_WIDTH = 32;
-    defparam UUT.N_STAGES = 3;
-    defparam UUT.READY_REG = 0;
-    register_slice UUT(
+    register_slice #(
+        .DATA_WIDTH(32),
+        .DEST_WIDTH(32),
+        .USER_WIDTH(32),
+        .N_STAGES(3),
+        .READY_REG(0)
+    ) UUT(
         .clock(clk),
         .reset(reset),
         .in(input_stream),

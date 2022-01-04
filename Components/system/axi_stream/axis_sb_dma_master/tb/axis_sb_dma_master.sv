@@ -24,12 +24,13 @@ module axis_sb_dma_master_tb();
     Simplebus sb();
     axi_stream stream();
 
-    defparam UUT.BASE_ADDRESS = 'h43c00000;
-    defparam UUT.CHANNEL_OFFSET = 'h20;
-    defparam UUT.DESTINATION_OFFSET = 'h4;
-    defparam UUT.CHANNEL_NUMBER = 3;
-    defparam UUT.CHANNEL_SEQUENCE = {3,2,1};
-    axis_sb_dma_master UUT(
+    axis_sb_dma_master #(
+        .BASE_ADDRESS('h43c00000),
+        .CHANNEL_OFFSET('h20),
+        .DESTINATION_OFFSET('h4),
+        .CHANNEL_NUMBER(3),
+        .CHANNEL_SEQUENCE({3,2,1})
+    ) UUT(
         .clock(clk),
         .reset(reset),
         .stream(stream),

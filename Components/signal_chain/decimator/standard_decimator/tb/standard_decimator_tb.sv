@@ -19,10 +19,12 @@
 
 module standard_decimator_tb();
 
-    defparam data_in.DATA_WIDTH = 16;
-    axi_stream data_in();
-    defparam data_out.DATA_WIDTH = 16;
-    axi_stream data_out();
+    axi_stream #(
+        .DATA_WIDTH(16)
+    ) data_in();
+    axi_stream #(
+        .DATA_WIDTH(16)
+    ) data_out();
     reg clk, reset;
 
     //clock generation

@@ -33,9 +33,9 @@ wire [15:0] counter;
 
 reg  [15:0] latched_delay;
 
-defparam phase_shifter.COUNTER_WIDTH = COUNTER_WIDTH;
-
-timebase_shifter_core phase_shifter (
+timebase_shifter_core #(
+    .COUNTER_WIDTH(COUNTER_WIDTH)
+) phase_shifter (
     .clockIn(clock),
     .reset(reset),
     .enable(countInProgress),

@@ -26,7 +26,7 @@ module fCore_TL();
     wire logic_clock, core_clock, reset, run;
     
     APB apb();
-    AXI fcore_axi();
+    AXI fcore_axi(); 
     axi_lite dma_axi();
 
     

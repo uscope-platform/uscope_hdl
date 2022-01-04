@@ -32,8 +32,9 @@ module multiphase_sinusoid_generator_tb();
     axi_lite_BFM axil_bfm;
 
     axi_stream phase();
-    defparam currents.DATA_WIDTH = 16;
-    axi_stream currents();
+    axi_stream #(
+        .DATA_WIDTH(16)
+    ) currents();
     axi_stream angle_out();
     reg clk, reset;
 

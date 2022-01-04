@@ -80,10 +80,11 @@ module I2c #(parameter FIXED_PERIOD ="FALSE", FIXED_PERIOD_WIDTH = 1000, SCL_TIM
 
 	generate
 		if (FIXED_PERIOD =="FALSE") begin
-			defparam tb_core.COUNTER_WIDTH = 16;
-            defparam tb_core.CLOCK_MODE = "TRUE";
-            //%%enable_generator_core%%
-			enable_generator_core tb_core(
+			
+            enable_generator_core #(
+                .COUNTER_WIDTH(16),
+                .CLOCK_MODE("TRUE")
+            ) tb_core(
 				.clock(clock),
 				.reset(reset),
 				.gen_enable_in(timebase_enable),
@@ -91,10 +92,10 @@ module I2c #(parameter FIXED_PERIOD ="FALSE", FIXED_PERIOD_WIDTH = 1000, SCL_TIM
 				.enable_out(timebase)
 			);
 		end else begin
-			defparam tb_core.COUNTER_WIDTH = 16;
-            defparam tb_core.CLOCK_MODE = "TRUE";
-			//%%enable_generator_core%%
-			enable_generator_core tb_core(
+			enable_generator_core #(
+                .COUNTER_WIDTH(16),
+                .CLOCK_MODE("TRUE")
+            ) tb_core(
 				.clock(clock),
 				.reset(reset),
 				.gen_enable_in(timebase_enable),
@@ -105,8 +106,9 @@ module I2c #(parameter FIXED_PERIOD ="FALSE", FIXED_PERIOD_WIDTH = 1000, SCL_TIM
 	endgenerate
 
 
-    defparam control_unit.BASE_ADDRESS = 0;
-    I2CControlUnit control_unit(
+    I2CControlUnit #(
+        .BASE_ADDRESS(0)
+    ) control_unit(
         .clock(clock),
         .reset(reset),
         .done(done),

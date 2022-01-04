@@ -30,16 +30,11 @@ module multiphase_sinusoid_generator #(parameter N_PHASES=6, BASE_ADDRESS='h43c0
     reg [5:0] lut_enable;
     reg start_output_fsm;
     
-    axi_stream theta [N_PHASES]();
+    axi_stream #(
+        .DATA_WIDTH(16)
+    ) theta [N_PHASES]();
     axi_stream sin [N_PHASES]();
     axi_stream cos [N_PHASES]();
-
-    defparam theta[0].DATA_WIDTH = 16;
-    defparam theta[1].DATA_WIDTH = 16;
-    defparam theta[2].DATA_WIDTH = 16;
-    defparam theta[3].DATA_WIDTH = 16;
-    defparam theta[4].DATA_WIDTH = 16;
-    defparam theta[5].DATA_WIDTH = 16;
     
     generate
         genvar i;

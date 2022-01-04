@@ -83,9 +83,10 @@ module enable_generator #(
         end
     end
     
-    defparam counter.COUNTER_WIDTH = COUNTER_WIDTH;
-    defparam counter.EXTERNAL_TIMEBASE_ENABLE = EXTERNAL_TIMEBASE_ENABLE;
-    enable_generator_counter counter(
+    enable_generator_counter #(
+        .COUNTER_WIDTH(COUNTER_WIDTH),
+        .EXTERNAL_TIMEBASE_ENABLE(EXTERNAL_TIMEBASE_ENABLE)
+    ) counter(
         .clock(clock),
         .reset(reset),
         .external_timebase(ext_timebase),
@@ -94,9 +95,10 @@ module enable_generator #(
         .counter_out(count)
     );
 
-    defparam comparator_1.COUNTER_WIDTH = COUNTER_WIDTH;
-    defparam comparator_1.CLOCK_MODE = "FALSE";
-    enable_comparator comparator_1(
+    enable_comparator #(
+        .COUNTER_WIDTH(COUNTER_WIDTH),
+        .CLOCK_MODE("FALSE")
+    ) comparator_1(
         .clock(clock),
         .reset(reset),
         .enable_treshold(enable_threshold_1),

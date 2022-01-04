@@ -20,8 +20,9 @@ module EnableGen_core_tb();
     logic gen_en;
     wire en_out;
 
-    defparam uut.CLOCK_MODE = "TRUE";
-    enable_generator_core uut(
+    enable_generator_core #(
+        .CLOCK_MODE("TRUE")
+    ) uut(
         .clock(clk),
         .reset(rst),
         .gen_enable_in(gen_en),

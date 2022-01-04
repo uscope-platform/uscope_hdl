@@ -23,8 +23,9 @@ module ALU_tb();
     axi_stream op_b();
     axi_stream op_res();
 
-    defparam UUT.BUFFERED_OUTPUT = "TRUE";
-    ALU UUT(
+    ALU #(
+        .BUFFERED_OUTPUT("TRUE")
+    ) UUT(
         .clock(clk),
         .reset(rst),
         .operand_a(op_a),

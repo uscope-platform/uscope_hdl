@@ -28,8 +28,10 @@ module axis_limiter_tb();
     initial clk = 0; 
     always #0.5 clk = ~clk; 
     
-    defparam UUT.BASE_ADDRESS = 'h43c00000;
-    axis_limiter UUT (
+    
+    axis_limiter #(
+        .BASE_ADDRESS('h43c00000)
+    ) UUT (
         .clock(clk),
         .reset(reset),
         .in(input_stream),

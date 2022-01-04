@@ -87,8 +87,10 @@ module MC_spi_bfm_tb();
         .axi_out(axil)
     );
     
-    defparam DUT.N_CHANNELS = 3;
-    SPI DUT(
+    
+    SPI #(
+        .N_CHANNELS(3)
+    )DUT(
         .clock(clk),
         .reset(rst),
         .data_valid(out_val),

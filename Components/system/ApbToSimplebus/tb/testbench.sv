@@ -40,19 +40,22 @@ module apb_to_sb_tb();
         .spb(spb)
     );
     
-    defparam spi.BASE_ADDRESS = 32'h43c00100;
-    SPI spi(
+
+    SPI #(
+        .BASE_ADDRESS(32'h43c00100)
+    ) spi(
         .clock(clk),
         .reset(rst),
         .MISO(0),
         .simple_bus(s2)
     );
-    
-    defparam xbar.SLAVE_1_LOW = 32'h43c00000;
-    defparam xbar.SLAVE_1_HIGH = 32'h43c000fc;
-    defparam xbar.SLAVE_2_LOW = 32'h43c00100;
-    defparam xbar.SLAVE_2_HIGH = 32'h43c001fc;
-    SimplebusInterconnect_M1_S3 xbar(
+
+    SimplebusInterconnect_M1_S3 #(
+        .SLAVE_1_LOW('h43c00000),
+        .SLAVE_1_HIGH('h43c000fc),
+        .SLAVE_2_LOW('h43c00100),
+        .SLAVE_2_HIGH('h43c001fc)
+    ) xbar(
         .clock(clk),
         .master(spb),
         .slave_1(s1),

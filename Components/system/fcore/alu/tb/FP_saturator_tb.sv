@@ -47,9 +47,10 @@ module FP_saturator_tb();
     wire [31:0] op_b;
     wire [31:0] op_b2;
 
-    defparam UUT.DATA_WIDTH = 32;
-    defparam UUT.REG_ADDR_WIDTH = 4;
-    FP_saturator  UUT(
+    FP_saturator #(
+        .DATA_WIDTH(32),
+        .REG_ADDR_WIDTH(4)
+    ) UUT(
         .clock(clk),
         .reset(reset),
         .operand_a(op_a),
@@ -59,9 +60,10 @@ module FP_saturator_tb();
     );
 
 
-    defparam UUT2.DATA_WIDTH = 32;
-    defparam UUT2.REG_ADDR_WIDTH = 4;
-    FP_saturator  UUT2(
+    FP_saturator #(
+        .DATA_WIDTH(32),
+        .REG_ADDR_WIDTH(4)
+    ) UUT2(
         .clock(clk),
         .reset(reset),
         .operand_a(result.data),

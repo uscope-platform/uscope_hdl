@@ -38,8 +38,9 @@ reg load_counter;
 reg [2:0] state;
 parameter IDLE_STATE = 0, FIRST_DEADTIME_STATE = 1, FIRST_OUT = 2, SECOND_DEADTIME_STATE = 3;
 
-defparam deadTime_a.COUNTER_WIDTH = COUNTER_WIDTH;
-timebase_shifter_core deadTime_a(
+timebase_shifter_core #(
+    .COUNTER_WIDTH(COUNTER_WIDTH)
+) deadTime_a(
     .clockIn(clock),
     .reset(reset),
     .enable(counter_enable),
