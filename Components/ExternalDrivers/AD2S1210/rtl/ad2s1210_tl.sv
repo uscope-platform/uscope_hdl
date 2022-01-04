@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 `timescale 10 ns / 1 ns
-
+`include "interfaces.svh"
 
 module ad2s1210_tl (
     input wire R_SDO_RES,
@@ -33,11 +33,7 @@ module ad2s1210_tl (
     assign R_WR = SS;
     wire clock, reset, start_read, dma_done;
     wire read_angle, read_speed;
-    Simplebus s();
-    Simplebus slave_1();
-    Simplebus slave_2();
-    Simplebus slave_3();
-    
+
     defparam ch_1.DATA_WIDTH = 16;
     axi_stream ch_1();
     defparam ch_2.DATA_WIDTH = 16;
@@ -49,14 +45,14 @@ module ad2s1210_tl (
     axi_stream ch_7();
     axi_stream ch_8();
 
-    APB apb();
     AXI fcore_dummy();
     axi_lite dma_mgr();
     axi_stream out();
     axi_stream resolver_out();
+    axi_lite axi_master();
 
     Zynq_axis_wrapper PS(
-        .APB(apb),
+        .axi_out(axi_master),
         .Logic_Clock(clock),
         .Reset(reset),
         .dma_axi(dma_mgr),
@@ -66,28 +62,33 @@ module ad2s1210_tl (
     );
 
     
-    APB_to_Simplebus bridge(
-        .PCLK(clock),
-        .PRESETn(reset),
-        .apb(apb),
-        .spb(s)
-    );
 
-    parameter BASE_ADDRESS = 'h43c00000;
 
-    defparam xbar.SLAVE_1_LOW = BASE_ADDRESS;
-    defparam xbar.SLAVE_1_HIGH = BASE_ADDRESS+'h100;
-    defparam xbar.SLAVE_2_LOW = BASE_ADDRESS+'h100;
-    defparam xbar.SLAVE_2_HIGH = BASE_ADDRESS+'h200;
-    defparam xbar.SLAVE_3_LOW = BASE_ADDRESS+'h300;
-    defparam xbar.SLAVE_3_HIGH = BASE_ADDRESS+'h400;
-    
-    SimplebusInterconnect_M1_S3 xbar(
+    axi_lite #(.INTERFACE_NAME("AD2S1210")) ad2s1012_axi();
+    axi_lite #(.INTERFACE_NAME("ENABLE GEN")) enable_gen_axi();
+    axi_lite #(.INTERFACE_NAME("FCORE")) uscope_axi();
+
+    localparam AD2S1210_BASE = 32'h43c00000;
+    localparam ENABLE_GEN = 32'h43c01000;
+    localparam USCOPE_BASE = 32'h43c02000;
+
+
+
+    localparam [31:0] AXI_ADDRESSES [2:0] = '{AD2S1210_BASE, ENABLE_GEN, USCOPE_BASE};
+
+
+    axil_crossbar_interface #(
+        .DATA_WIDTH(32),
+        .ADDR_WIDTH(32),
+        .NM(1),
+        .NS(3),
+        .SLAVE_ADDR(AXI_ADDRESSES),
+        .SLAVE_MASK('{3{32'hf000}})
+    ) axi_xbar (
         .clock(clock),
-        .master(s),
-        .slave_1(slave_1),
-        .slave_2(slave_2),
-        .slave_3(slave_3)
+        .reset(reset),
+        .slaves('{axi_master}),
+        .masters('{ad2s1012_axi, enable_gen_axi, uscope_axi})
     );
 
     wire [23:0] res_data;
@@ -122,7 +123,7 @@ module ad2s1210_tl (
         end
     end
 
-    defparam scope.BASE_ADDRESS = BASE_ADDRESS+'h300;
+
     uScope scope (
         .clock(clock),
         .reset(reset),
@@ -137,7 +138,7 @@ module ad2s1210_tl (
         .in_8(ch_8),
         .dma_axi(dma_mgr),
         .out(out),
-        .sb(slave_3)
+        .axi_in(uscope_axi)
     );
 
     assign res_data = resolver_out.data;
@@ -145,7 +146,7 @@ module ad2s1210_tl (
     assign res_fault = resolver_out.user;
     assign res_valid = resolver_out.valid;
     
-    defparam test.BASE_ADDRESS = BASE_ADDRESS;
+
     ad2s1210 test(
         .clock(clock),
         .reset(reset),
@@ -160,18 +161,16 @@ module ad2s1210_tl (
         .R_SAMPLE(R_SAMPLE),
         .R_RESET(R_RESET),
         .data_out(resolver_out),
-        .sb(slave_1)
+        .axi_in(ad2s1012_axi)
     );
 
-
-    defparam tb_gen.BASE_ADDRESS = BASE_ADDRESS+'h100;
     enable_generator_2 tb_gen(
         .clock(clock),
         .reset(reset),
         .gen_enable_in(0),
         .enable_out_1(read_angle),
         .enable_out_2(read_speed),
-        .sb(slave_2)
+        .axil(enable_gen_axi)
     );
 
 endmodule

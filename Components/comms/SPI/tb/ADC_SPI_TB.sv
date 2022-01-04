@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 `timescale 10 ns / 1 ns
-`include "SimpleBus_BFM.svh"
-
+`include "interfaces.svh"
+`include "axis_BFM.svh"
 module ADC_SPI_tb();
     
     logic clk, rst;
@@ -55,7 +55,26 @@ module ADC_SPI_tb();
         #5 rst <=1;
     end
 
-    Simplebus s();
+
+    axis_BFM write_BFM;
+    axis_BFM read_req_BFM;
+    axis_BFM read_resp_BFM;
+
+    axi_stream read_req();
+    axi_stream read_resp();
+    axi_stream write();
+
+    axi_lite axi_master();
+
+    axis_to_axil WRITER(
+        .clock(clk),
+        .reset(rst), 
+        .axis_write(write),
+        .axis_read_request(read_req),
+        .axis_read_response(read_resp),
+        .axi_out(axi_master)
+    );
+
 
     wire cnv_start;
 
@@ -67,27 +86,24 @@ module ADC_SPI_tb();
         .enable_out(cnv_start)
     );
 
-
-
-
     SPI DUT(
         .clock(clk),
         .reset(rst),
         .SPI_write_valid(cnv_start),
-        .data_valid(out_val),
-        .data_out(out),
         .MISO(miso),
         .SCLK(sclk_in),
         .MOSI(mosi),
         .SS(ss_in),
-        .simple_bus(s)
+        .axi_in(axi_master)
     );
 
-    simplebus_BFM BFM;
     
     initial begin
         //INITIAL SETTINGS AND INSTANTIATIONS OF CLASSES
-        BFM = new(s,1);
+        write_BFM = new(write,1);
+        read_req_BFM = new(read_req, 1);
+        read_resp_BFM = new(read_resp, 1);
+
         spi_mode <=spi_mode_master;
         miso <= 0;
         sclk_en <= 0;
@@ -96,8 +112,9 @@ module ADC_SPI_tb();
 
         //Text external conversion start
         
-        #50 BFM.write(32'h43C00000,31'h1DC2);
-        #5 BFM.write(32'h43C00004,31'h1B);
+        #50 write_BFM.write_dest(32'h1DC2, 'h0);
+        #5 write_BFM.write_dest(32'h1B, 'h4);
+
         #5 spi_mode <=spi_mode_master;
 
         forever begin

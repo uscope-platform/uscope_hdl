@@ -14,6 +14,7 @@
 // limitations under the License.
 `timescale 10 ns / 1 ns
 `include "axi_lite_BFM.svh"
+`include "axis_BFM.svh"
 
 module SPI_tb();
     
@@ -58,9 +59,23 @@ module SPI_tb();
     end
 
     axi_lite axil();
-    axi_lite_BFM axil_bfm;
+    
+    axis_BFM write_BFM;
+    axis_BFM read_req_BFM;
+    axis_BFM read_resp_BFM;
 
-    Simplebus s();
+    axi_stream read_req();
+    axi_stream read_resp();
+    axi_stream write();
+
+    axis_to_axil WRITER(
+        .clock(clk),
+        .reset(rst), 
+        .axis_write(write),
+        .axis_read_request(read_req),
+        .axis_read_response(read_resp),
+        .axi_out(axil)
+    );
 
     SPI DUT(
         .clock(clk),
@@ -71,31 +86,31 @@ module SPI_tb();
         .SCLK(sclk_in),
         .MOSI(mosi),
         .SS(ss_in),
-        .simple_bus(s),
         .axi_in(axil),
         .SPI_write_data(SPI_write_data),
         .SPI_write_valid(SPI_write_valid)
     );
 
 
-
-
     initial begin
         
         //TEST MASTER MODE
-        #10 axil_bfm.write(32'h43C00000,31'h101c4);
-        #5 axil_bfm.write(32'h43C00004,31'h1c);
-        #5 axil_bfm.write(32'h43C00008,31'h0);
-        #5 axil_bfm.write(32'h43C0000C,31'hCAFE);
-        #50 axil_bfm.write(32'h43C0000C,31'h0);
-        #10 axil_bfm.write(32'h43C00000,31'h111c4);
-        #50 axil_bfm.write(32'h43C00014,31'hff);
+        #10 write_BFM.write_dest(32'h101c4, 32'h43C00000);
+        #5 write_BFM.write_dest(32'h1c, 32'h43C00004);
+        #5 write_BFM.write_dest(32'h0, 32'h43C00008);
+        #5 write_BFM.write_dest(32'hCAFE, 32'h43C0000C);
+        #50 write_BFM.write_dest(32'h0, 32'h43C0000C);
+        #10 write_BFM.write_dest(32'h111c4, 32'h43C00000);
+        #50 write_BFM.write_dest(32'hff, 32'h43C00014);
     
     end
     
     initial begin
         //INITIAL SETTINGS AND INSTANTIATIONS OF CLASSES
-        axil_bfm = new(axil,1);
+        write_BFM = new(write,1);
+        read_req_BFM = new(read_req, 1);
+        read_resp_BFM = new(read_resp, 1);
+
         spi_mode <=spi_mode_master;
         miso <= 0;
         sclk_en <= 0;
@@ -105,40 +120,30 @@ module SPI_tb();
         SPI_write_data <= 0;
 
         //TEST MASTER MODE
-        #10 axil_bfm.write(32'h43C00000,31'h101c4);
-        #5 axil_bfm.write(32'h43C00004,31'h1c);
-        #5 axil_bfm.write(32'h43C00008,31'hCAFE);
-        #5 axil_bfm.write(32'h43C0000C,31'h0);
-        #50 axil_bfm.write(32'h43C0000C,31'h0);
-        #5 axil_bfm.read(32'h43C00010,read_result);
-        #10 axil_bfm.write(32'h43C00000,31'h111c4);
-        #50 axil_bfm.write(32'h43C00014,31'hff);
+        #10 write_BFM.write_dest(31'h101c4, 32'h43C00000);
+        #5 write_BFM.write_dest(31'h1c, 32'h43C00004);
+        #5 write_BFM.write_dest(31'hCAFE, 32'h43C00008);
+        #5 write_BFM.write_dest(31'h0, 32'h43C0000C);
+        #50 write_BFM.write_dest(31'h0, 32'h43C0000C);
+        #5 read_req_BFM.write(32'h43C00010);
+        #5 read_resp_BFM.read(read_result);
+        #10 write_BFM.write_dest(31'h111c4, 32'h43C00000);
+        #50 write_BFM.write_dest(31'hff, 32'h43C00014);
         
         #100 SPI_write_valid <= 1;
         SPI_write_data <= 'hFE;
         #1 SPI_write_valid <= 0;
         #500;
         
-        #5 axil_bfm.reset();
-        //TEST SLAVE MODEse_slave;
-        #5 axil_bfm.write(32'h43C00000,31'h3F3);
-        #5 axil_bfm.write(32'h43C00008,31'hFEDC);
-        #5 ss_slave <=1;
-        #4 sclk_en<=1;
-        miso <= 1;
-        #3 miso <=0;
-        #7 miso <=1;
-        #26 sclk_en <=0;
-        ss_slave <=0;
         //Text external conversion start
 
         #10 rst<=0;
         #10 rst <=1;
         
-        #5 axil_bfm.write(32'h43C00000,31'hFF2);
-        #5 axil_bfm.write(32'h43C00004,31'hF);
+        #5 write_BFM.write_dest(31'hFF2,32'h43C00000);
+        #5 write_BFM.write_dest(31'hF, 32'h43C00004);
         #5 spi_mode <=spi_mode_master;
-        #5 axil_bfm.write(32'h43C00008,31'hFEDC);
+        #5 write_BFM.write_dest(31'hFEDC, 32'h43C00008);
         #5 ext_start <=1;
         #1 ext_start <=0;
 

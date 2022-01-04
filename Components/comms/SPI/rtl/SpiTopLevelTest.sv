@@ -14,6 +14,7 @@
 // limitations under the License.
 
 `timescale 10 ns / 1 ns
+`include "interfaces.svh"
 
 module SpiTopLevelTest (
     input logic MISO,
@@ -23,8 +24,7 @@ module SpiTopLevelTest (
 );
 
     wire clk, rst;
-    APB apb();
-    Simplebus s();
+    axi_lite axi();
 
     SPI IFACE(
         .clock(clk),
@@ -33,20 +33,15 @@ module SpiTopLevelTest (
         .SCLK(SCLK),
         .MOSI(MOSI),
         .SS(SS),
-        .simple_bus(s)
-        );
+        .axi_in(axi)
+    );
 
     Zynq_wrapper Zynq(
-        .APB(apb),
+        .axi_out(axi),
         .logic_clock(clk),
-        .Reset(rst));
+        .Reset(rst)
+    );
         
-    APB_to_Simplebus bridge(
-        .PCLK(clk),
-        .PRESETn(rst),
-        .apb(apb),
-        .spb(s));
-
 
 
 endmodule

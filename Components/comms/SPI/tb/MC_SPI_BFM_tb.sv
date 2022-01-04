@@ -13,8 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 `timescale 10 ns / 1 ns
+`include "interfaces.svh"
 `include "SPI_BFM.svh"
-`include "axi_lite_BFM.svh"
+`include "axis_BFM.svh"
 
 module MC_spi_bfm_tb();
     
@@ -68,8 +69,23 @@ module MC_spi_bfm_tb();
     end
 
     axi_lite axil();
-    axi_lite_BFM axil_bfm;
 
+    axis_BFM write_BFM;
+    axis_BFM read_req_BFM;
+    axis_BFM read_resp_BFM;
+
+    axi_stream read_req();
+    axi_stream read_resp();
+    axi_stream write();
+
+    axis_to_axil WRITER(
+        .clock(clk),
+        .reset(rst), 
+        .axis_write(write),
+        .axis_read_request(read_req),
+        .axis_read_response(read_resp),
+        .axi_out(axil)
+    );
     
     defparam DUT.N_CHANNELS = 3;
     SPI DUT(
@@ -93,7 +109,9 @@ module MC_spi_bfm_tb();
 
     initial begin
         //INITIAL SETTINGS AND INSTANTIATIONS OF CLASSES
-        axil_bfm = new(axil, 1);
+        write_BFM = new(write,1);
+        read_req_BFM = new(read_req, 1);
+        read_resp_BFM = new(read_resp, 1);
         spi_bfm_1 = new(spi_if_1,1);
         spi_bfm_2 = new(spi_if_2,1);
         spi_bfm_3 = new(spi_if_3,1);
@@ -144,8 +162,8 @@ module MC_spi_bfm_tb();
     
     initial begin : master_1_axi
         @(master_task_start);
-            #10 axil_bfm.write(32'h43C00000,31'h131c2);
-            #5 axil_bfm.write(32'h43C00004,31'h1b);
+            #10 write_BFM.write_dest(32'h131c2, 32'h43C00000);
+            #5 write_BFM.write_dest(31'h1b, 32'h43C00004);
             
         forever begin
             #5;
@@ -153,10 +171,10 @@ module MC_spi_bfm_tb();
             master_data_s2 = $urandom();
             master_data_s3 = $urandom();
 
-            axil_bfm.write(32'h43C00010,master_data_s1);
-            axil_bfm.write(32'h43C00014,master_data_s2);
-            axil_bfm.write(32'h43C00018,master_data_s3);
-            #5 axil_bfm.write(32'h43C0000C,31'h0);
+            write_BFM.write_dest(master_data_s1, 32'h43C00010);
+            write_BFM.write_dest(master_data_s2, 32'h43C00014);
+            write_BFM.write_dest(master_data_s3, 32'h43C00018);
+            #5 write_BFM.write_dest(31'h0, 32'h43C0000C);
             #120;
             #3;
         end
