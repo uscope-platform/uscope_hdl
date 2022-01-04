@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 `timescale 10 ns / 1 ns
-//`include "interfaces.svh"
+`include "interfaces.svh"
 
 module pwmChain #(parameter N_CHAINS=2, N_CHANNELS=3, BASE_ADDRESS=32'h43c00004, COUNTER_WIDTH=16)(
     input wire clock,

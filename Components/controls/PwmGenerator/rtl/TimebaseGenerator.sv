@@ -12,8 +12,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 `timescale 10 ns / 1 ns
+`include "interfaces.svh"
 
 module TimebaseGenerator (
     input wire       clockIn,
