@@ -18,7 +18,7 @@
 module TransformAccellerationUnit #(parameter BASE_ADDRESS = 'h43c00000)(
     input wire clock,
     input wire reset,
-    Simplebus.slave   spb,
+    axi_lite.slave   axi_in,
     input  wire [15:0] theta,
     input  wire [53:0] clarke_in,
     input  wire [35:0] park_in,
@@ -45,7 +45,7 @@ module TransformAccellerationUnit #(parameter BASE_ADDRESS = 'h43c00000)(
     TauControlUnit #(.BASE_ADDRESS(BASE_ADDRESS)) cu(
         .clock(clock),
         .reset(reset),
-        .spb(spb),
+        .axi_in(axi_in),
         .disable_direct_chain_mode(direct_chain_disable),
         .disable_inverse_chain_mode(inverse_chain_disable),
         .soft_reset(soft_reset)

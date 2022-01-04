@@ -16,8 +16,6 @@
 
 module TAU_tb();
 
-
-
     reg  clk, reset, read, write;
     reg [7:0] address;
     wire [31:0] readdata;
