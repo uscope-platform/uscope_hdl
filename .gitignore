@@ -41,12 +41,10 @@ Components/system/prioritised_fifo/prioritised_fifo/
 Components/system/axi_stream/prioritised_fifo/prioritised_fifo/
 Components/system/axi_stream/combiner/Axi_stream_combiner/
 Components/system/axi_stream/limiter/limiter/
-Components/system/axi_stream/axis_sb_dma_master/simplebus_dma_master/
 Components/system/fcore/fCore/
 Components/system/fcore/ALU/ALU/
 Components/system/fcore/istore/fCore_Istore/
 Components/system/SimplebusConfigurator/SbConfig/
-Components/system/Simplebus/sb_axis_dma_master/sb_axis_dma_master/
 Components/system/axi_stream/sync_repeater/axis_sync_repeater/
 Components/system/fcore/alu/FP_saturator/
 Components/system/axi_stream/register_slice/register_slice/
