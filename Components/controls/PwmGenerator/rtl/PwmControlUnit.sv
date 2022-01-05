@@ -29,8 +29,13 @@ module PwmControlUnit #(parameter BASE_ADDRESS = 'h43c00000, INITIAL_STOPPED_STA
     output reg        sync,
     output reg        stop_request,
     output reg [11:0] counter_stopped_state,
-    Simplebus.slave sb
+    Simplebus.slave sb,
+    axi_lite.slave axi_in
 );
+
+
+
+
 
     wire[31:0]int_readdata;
    

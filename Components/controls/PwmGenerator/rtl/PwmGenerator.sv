@@ -23,18 +23,9 @@ module PwmGenerator #(parameter BASE_ADDRESS = 32'h43c00000, COUNTER_WIDTH=16, I
     input wire fault,
     output wire timebase,
     output reg [11:0] pwm_out,
+    axi_lite.slave axi_in,
     Simplebus.slave sb
 );
-
-    parameter CHAIN_1_ADDRESS = BASE_ADDRESS + 8'h4;
-    parameter CHAIN_2_ADDRESS = CHAIN_1_ADDRESS + 8'h3c;
-    parameter BOUNDARY = CHAIN_2_ADDRESS + 8'h40;
-
-    // internal interfaces
-
-    Simplebus sb_slave_1();
-    Simplebus sb_slave_2();
-    Simplebus sb_slave_3();
 
     //Common signals
     wire internal_timebase,timebase_enable,sync;
@@ -75,8 +66,6 @@ module PwmGenerator #(parameter BASE_ADDRESS = 32'h43c00000, COUNTER_WIDTH=16, I
     end
 
 
-
-
     always@(posedge clock)begin
         if(~reset)begin
             selected_timebase<=internal_timebase;
@@ -89,20 +78,30 @@ module PwmGenerator #(parameter BASE_ADDRESS = 32'h43c00000, COUNTER_WIDTH=16, I
         end
     end
 
-    SimplebusInterconnect_M1_S3 #(
-        .SLAVE_1_LOW(BASE_ADDRESS),
-        .SLAVE_1_HIGH(CHAIN_1_ADDRESS),
-        .SLAVE_2_LOW(CHAIN_1_ADDRESS),
-        .SLAVE_2_HIGH(CHAIN_2_ADDRESS),
-        .SLAVE_3_LOW(CHAIN_2_ADDRESS),
-        .SLAVE_3_HIGH(BOUNDARY)
-    ) xbar(
+
+
+    localparam GEN_CONTROLLER_ADDRESS_AXI = BASE_ADDRESS;
+    localparam CHAIN_1_ADDRESS_AXI = BASE_ADDRESS+'h100;
+    localparam CHAIN_2_ADDRESS_AXI = BASE_ADDRESS+'h200;
+
+    axi_lite #(.INTERFACE_NAME("CONTROLLER")) controller_axi();
+    axi_lite #(.INTERFACE_NAME("CHAIN 1")) chain_1_axi();
+    axi_lite #(.INTERFACE_NAME("CHAIN 2")) chain_2_axi();
+
+    axil_crossbar_interface #(
+        .DATA_WIDTH(32),
+        .ADDR_WIDTH(32),
+        .NM(1),
+        .NS(3),
+        .SLAVE_ADDR('{GEN_CONTROLLER_ADDRESS_AXI, CHAIN_1_ADDRESS_AXI, CHAIN_2_ADDRESS_AXI}),
+        .SLAVE_MASK('{3{32'hf00}})
+    ) axi_xbar (
         .clock(clock),
-        .master(sb),
-        .slave_1(sb_slave_1),
-        .slave_2(sb_slave_2),
-        .slave_3(sb_slave_3)
+        .reset(reset),
+        .slaves('{axi_in}),
+        .masters('{controller_axi, chain_1_axi, chain_2_axi})
     );
+
     
     
     PwmControlUnit #(
@@ -119,7 +118,8 @@ module PwmGenerator #(parameter BASE_ADDRESS = 32'h43c00000, COUNTER_WIDTH=16, I
         .sync(sync),
         .stop_request(stop_request),
         .counter_stopped_state(counter_stopped_state),
-        .sb(sb_slave_1)
+        .sb(sb),
+        .axi_in(controller_axi)
     );
 
     TimebaseGenerator timebase_generator(
@@ -131,7 +131,6 @@ module PwmGenerator #(parameter BASE_ADDRESS = 32'h43c00000, COUNTER_WIDTH=16, I
     );
 
     pwmChain #(
-        .BASE_ADDRESS(CHAIN_1_ADDRESS),
         .COUNTER_WIDTH(COUNTER_WIDTH)
     ) chain_1(
         .clock(clock),
@@ -143,12 +142,11 @@ module PwmGenerator #(parameter BASE_ADDRESS = 32'h43c00000, COUNTER_WIDTH=16, I
         .counter_status(counter_status[0]),
         .out_a(internal_pwm_out[2:0]),
         .out_b(internal_pwm_out[5:3]),
-        .sb(sb_slave_2)
+        .axi_in(chain_1_axi)
     );
 
     
     pwmChain #(
-        .BASE_ADDRESS(CHAIN_2_ADDRESS),
         .COUNTER_WIDTH(COUNTER_WIDTH)
     ) chain_2(
         .clock(clock),
@@ -160,7 +158,7 @@ module PwmGenerator #(parameter BASE_ADDRESS = 32'h43c00000, COUNTER_WIDTH=16, I
         .counter_status(counter_status[1]),
         .out_a(internal_pwm_out[8:6]),
         .out_b(internal_pwm_out[11:9]),
-        .sb(sb_slave_3)
+        .axi_in(chain_2_axi)
     );
 
 

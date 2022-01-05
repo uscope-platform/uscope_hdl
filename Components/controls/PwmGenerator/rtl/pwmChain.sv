@@ -15,7 +15,11 @@
 `timescale 10 ns / 1 ns
 `include "interfaces.svh"
 
-module pwmChain #(parameter N_CHAINS=2, N_CHANNELS=3, BASE_ADDRESS=32'h43c00004, COUNTER_WIDTH=16)(
+module pwmChain #(
+    parameter N_CHAINS=2,
+    N_CHANNELS=3,
+    COUNTER_WIDTH=16
+)(
     input wire clock,
     input wire reset,
     input wire timebase,
@@ -25,7 +29,7 @@ module pwmChain #(parameter N_CHAINS=2, N_CHANNELS=3, BASE_ADDRESS=32'h43c00004,
     output wire counter_status,
     output wire [N_CHANNELS-1:0] out_a,
     output wire [N_CHANNELS-1:0] out_b,
-    Simplebus.slave sb
+    axi_lite.slave axi_in
     );
 
     wire counterEnable;
@@ -38,7 +42,6 @@ module pwmChain #(parameter N_CHAINS=2, N_CHANNELS=3, BASE_ADDRESS=32'h43c00004,
     wire reload_compare;
 
 
-    wire enable_in;
     wire [2:0] counter_mode;
     wire [COUNTER_WIDTH-1:0] compare_tresholds [N_CHANNELS*2-1:0];
     wire [COUNTER_WIDTH-1:0] counter_start_data;
@@ -63,14 +66,12 @@ module pwmChain #(parameter N_CHAINS=2, N_CHANNELS=3, BASE_ADDRESS=32'h43c00004,
     end
 
     ChainControlUnit #(
-        .BASE_ADDRESS(BASE_ADDRESS),
         .N_CHANNELS(N_CHANNELS),
         .COUNTER_WIDTH(COUNTER_WIDTH)
     ) ControlUnit(
         .clock(clock),
         .reset(reset),
         .counter_running(~counter_stopped),
-        .counter_run(enable_in),
         .timebase_shift(timebase_shift),
         .counter_mode(counter_mode),
         .counter_start_data(counter_start_data),
@@ -79,14 +80,14 @@ module pwmChain #(parameter N_CHAINS=2, N_CHANNELS=3, BASE_ADDRESS=32'h43c00004,
         .output_enable(output_enable),
         .deadtime(deadtime),
         .deadtime_enable(deadtime_enable),
-        .sb(sb)
+        .axi_in(axi_in)
     );
 
 
  CounterEnableDelay timebase_shifter(
         .clock(clock),
         .reset(reset),
-        .enable((enable_in | external_counter_run) & ~stop_request),
+        .enable(external_counter_run & ~stop_request),
         .delay(timebase_shift),
         .delayedEnable(counterEnable)
     );

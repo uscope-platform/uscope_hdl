@@ -14,6 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 `include "SimpleBus_BFM.svh"
+`include "axis_BFM.svh"
+`include "interfaces.svh"
 
 
 module pwm_tl_exp();
@@ -62,15 +64,39 @@ module pwm_tl_exp();
 
     parameter duty = 9000;
     
+
+    axi_lite axil();
+
+    axis_BFM write_BFM;
+    axis_BFM read_req_BFM;
+    axis_BFM read_resp_BFM;
+
+    axi_stream read_req();
+    axi_stream read_resp();
+    axi_stream write();
+
+    axis_to_axil WRITER(
+        .clock(clk),
+        .reset(reset), 
+        .axis_write(write),
+        .axis_read_request(read_req),
+        .axis_read_response(read_resp),
+        .axi_out(axil)
+    );
+    
     PwmGenerator UUT (
         .clock(clk),
         .reset(reset),
         .ext_timebase(ext_tb),
         .pwm_out(pwm),
         .fault(0),
-        .sb(s)
+        .sb(s),
+        .axi_in(axil)
     );
 
+    localparam BASE_AXI = SB_TIMEBASE_ADDR;
+    localparam CHAIN_1_AXI = BASE_AXI+'h100;
+    localparam CHAIN_2_AXI = BASE_AXI+'h200;
 
     simplebus_BFM BFM;
     
@@ -81,6 +107,10 @@ module pwm_tl_exp();
     initial begin
 
         BFM = new(s,2.5);
+        write_BFM = new(write,2.5);
+        read_req_BFM = new(read_req, 2.5);
+        read_resp_BFM = new(read_resp, 2.5);
+
         //Initial status
         reset <=1'h1;
         #1 reset <=1'h0;
@@ -88,18 +118,21 @@ module pwm_tl_exp();
         #5.5 reset <=1'h1;
 
         BFM.write(SB_TIMEBASE_ADDR+'h0,'h1100);
-        BFM.write(SB_TIMEBASE_ADDR+'h28,'h0);
-        BFM.write(SB_TIMEBASE_ADDR+'h3C,'h1);
-        BFM.write(SB_TIMEBASE_ADDR+'h34,'h3f);
-        BFM.write(SB_TIMEBASE_ADDR+'h2c,'h13f7);
-        BFM.write(SB_TIMEBASE_ADDR+'h8,'h4d8);
-        BFM.write(SB_TIMEBASE_ADDR+'hc,'h524);
-        BFM.write(SB_TIMEBASE_ADDR+'h14,'hf05);
-        BFM.write(SB_TIMEBASE_ADDR+'h18,'heeb);
+
+        #3 write_BFM.write_dest('h0 ,CHAIN_1_AXI+'h34);
+        #3 write_BFM.write_dest('h1 ,CHAIN_1_AXI+'h38);
+        #3 write_BFM.write_dest('h3f ,CHAIN_1_AXI+'h30);
+        #3 write_BFM.write_dest('h13f7 ,CHAIN_1_AXI+'h28);
+        #3 write_BFM.write_dest('h4d8 ,CHAIN_1_AXI+'h4);
+        #3 write_BFM.write_dest('h524 ,CHAIN_1_AXI+'h8);
+        #3 write_BFM.write_dest('hf05 ,CHAIN_1_AXI+'h10);
+        #3 write_BFM.write_dest('heeb ,CHAIN_1_AXI+'h14);
+
         BFM.write(SB_TIMEBASE_ADDR+'h0,'h1128);
         #50000;
-        BFM.write(SB_TIMEBASE_ADDR+'h8,'h2d8);
-        BFM.write(SB_TIMEBASE_ADDR+'hc,'h724);
+
+        #3 write_BFM.write_dest('h2d8 ,CHAIN_1_AXI+'h4);
+        #3 write_BFM.write_dest('h724 ,CHAIN_1_AXI+'h8);
     end
 
 endmodule
