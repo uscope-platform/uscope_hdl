@@ -16,7 +16,11 @@
 `timescale 10ns / 1ns
 `include "interfaces.svh"
 
-module ChainControlUnit #(parameter BASE_ADDRESS = 0, N_CHANNELS = 3, COUNTER_WIDTH=16)(
+module ChainControlUnit #(
+    parameter BASE_ADDRESS = 0,
+    N_CHANNELS = 3,
+    COUNTER_WIDTH=16
+)(
     input wire clock,
     input wire reset,
     input wire counter_running,
@@ -25,9 +29,7 @@ module ChainControlUnit #(parameter BASE_ADDRESS = 0, N_CHANNELS = 3, COUNTER_WI
     output reg [2:0] counter_mode,
     output reg [COUNTER_WIDTH-1:0] counter_start_data,
     output reg [COUNTER_WIDTH-1:0] counter_stop_data,
-    output reg compare_write_strobe,
-    output reg [2:0] compare_address,
-    output reg [COUNTER_WIDTH-1:0] compare_data_in,
+    output reg [COUNTER_WIDTH-1:0] comparator_tresholds [N_CHANNELS*2-1:0],
     output reg [1:0] output_enable_0,
 	output reg [1:0] output_enable_1,
 	output reg [1:0] output_enable_2,
@@ -80,9 +82,6 @@ module ChainControlUnit #(parameter BASE_ADDRESS = 0, N_CHANNELS = 3, COUNTER_WI
             counter_run <= 0;
             timebase_shift <= 0;
             counter_mode <= 0;
-            compare_write_strobe <= 0;
-            compare_address <= 0;
-            compare_data_in <= 0;
             output_enable_0 <= 0;
             output_enable_1 <= 0;
             output_enable_2 <= 0;
@@ -95,6 +94,11 @@ module ChainControlUnit #(parameter BASE_ADDRESS = 0, N_CHANNELS = 3, COUNTER_WI
             counter_start_data <= 0;
             counter_stop_data <= 0;
             dc_mode_bottom_value <= 0;
+
+            for(integer i = 0; i<6; i=i+1) begin
+                comparator_tresholds[i] <= {COUNTER_WIDTH{1'b1}}*(i%2);
+            end
+            
             dc_mode_top_value <= {COUNTER_WIDTH{1'b1}};
             sb.sb_ready <= 1;
         end else begin
@@ -119,53 +123,40 @@ module ChainControlUnit #(parameter BASE_ADDRESS = 0, N_CHANNELS = 3, COUNTER_WI
             //State disable_pwm_state
             case (state)
                 idle_state: begin
-                        compare_write_strobe <= 0;
                         act_state_ended <= 0;
                     end
                 act_state: begin
                     case (latched_adress)
                         //COMPARE LOW
                         BASE_ADDRESS+32'h00: begin
-                            compare_write_strobe <=1;
-                            compare_address <= 0;
-                            compare_data_in <= latched_writedata[COUNTER_WIDTH-1:0];
+                            comparator_tresholds[0] <= latched_writedata[COUNTER_WIDTH-1:0];
                         end
                         BASE_ADDRESS+32'h04: begin
-                            compare_write_strobe <=1;
-                            compare_address <= 1;
-                            compare_data_in <= latched_writedata[COUNTER_WIDTH-1:0];
+                            comparator_tresholds[1] <= latched_writedata[COUNTER_WIDTH-1:0];
                         end
                         BASE_ADDRESS+32'h08: begin
-                            compare_write_strobe <=1;
-                            compare_address <= 2;
-                            compare_data_in <= latched_writedata[COUNTER_WIDTH-1:0];
+                            comparator_tresholds[2] <= latched_writedata[COUNTER_WIDTH-1:0];
                         end
                         //COMPARE HIGH
                         BASE_ADDRESS+32'h0C: begin
-                            compare_write_strobe <=1;
-                            compare_address <= 3;
                             if(~dc_mode) begin
-                                compare_data_in <= latched_writedata[COUNTER_WIDTH-1:0];
+                                comparator_tresholds[3] <= latched_writedata[COUNTER_WIDTH-1:0];
                             end else begin
-                                compare_data_in <= dc_mode_top_value-latched_writedata[COUNTER_WIDTH-1:0];
+                                comparator_tresholds[3] <= latched_writedata[COUNTER_WIDTH-1:0];
                             end
                         end
                         BASE_ADDRESS+32'h10: begin
-                            compare_write_strobe <=1;
-                            compare_address <= 4;
                             if(~dc_mode) begin
-                                compare_data_in <= latched_writedata[COUNTER_WIDTH-1:0];
+                                comparator_tresholds[4] <= latched_writedata[COUNTER_WIDTH-1:0];
                             end else begin
-                                compare_data_in <= dc_mode_top_value-latched_writedata[COUNTER_WIDTH-1:0];
+                                comparator_tresholds[4] <= latched_writedata[COUNTER_WIDTH-1:0];
                             end
                         end
                         BASE_ADDRESS+32'h14: begin
-                            compare_write_strobe <=1;
-                            compare_address <= 5;
                             if(~dc_mode) begin
-                                compare_data_in <= latched_writedata[COUNTER_WIDTH-1:0];
+                                comparator_tresholds[5] <= latched_writedata[COUNTER_WIDTH-1:0];
                             end else begin
-                                compare_data_in <= dc_mode_top_value-latched_writedata[COUNTER_WIDTH-1:0];
+                                comparator_tresholds[5] <= latched_writedata[COUNTER_WIDTH-1:0];
                             end
                         end
                         //DEADTIME
@@ -184,9 +175,9 @@ module ChainControlUnit #(parameter BASE_ADDRESS = 0, N_CHANNELS = 3, COUNTER_WI
                                 if(~dc_mode) begin
                                     counter_start_data <= latched_writedata[COUNTER_WIDTH-1:0];
                                 end else begin
-                                    compare_write_strobe <=1;
-                                    compare_address <= 6;
-                                    compare_data_in <= latched_writedata[COUNTER_WIDTH-1:0];
+                                    comparator_tresholds[0] <= latched_writedata[COUNTER_WIDTH-1:0];
+                                    comparator_tresholds[1] <= latched_writedata[COUNTER_WIDTH-1:0];
+                                    comparator_tresholds[2] <= latched_writedata[COUNTER_WIDTH-1:0];
                                     dc_mode_bottom_value <= latched_writedata[31:0];
                                     counter_start_data <=  latched_writedata[31:0];
                                 end
@@ -197,9 +188,9 @@ module ChainControlUnit #(parameter BASE_ADDRESS = 0, N_CHANNELS = 3, COUNTER_WI
                                 if(~dc_mode) begin
                                     counter_stop_data <= latched_writedata[COUNTER_WIDTH-1:0];
                                 end else begin
-                                    compare_write_strobe <=1;
-                                    compare_address <= 7;
-                                    compare_data_in <= latched_writedata[COUNTER_WIDTH-1:0];
+                                    comparator_tresholds[3] <= latched_writedata[COUNTER_WIDTH-1:0];
+                                    comparator_tresholds[4] <= latched_writedata[COUNTER_WIDTH-1:0];
+                                    comparator_tresholds[5] <= latched_writedata[COUNTER_WIDTH-1:0];
                                     dc_mode_top_value <= latched_writedata[31:0];
                                     counter_stop_data <= latched_writedata[31:0];
                                 end
@@ -232,13 +223,6 @@ module ChainControlUnit #(parameter BASE_ADDRESS = 0, N_CHANNELS = 3, COUNTER_WI
                                     dc_mode <= 0;
                                 end
                             end
-                        end
-                        //DUTY CYCLE MODE BOTTOM VALUE
-                        BASE_ADDRESS+32'h3C: begin
-
-                        end
-                        //DUTY CYCLE MODE TOP VALUE
-                        BASE_ADDRESS+32'h40: begin
                         end
                     endcase
                     act_state_ended<=1;

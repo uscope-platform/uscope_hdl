@@ -38,10 +38,9 @@ module pwmChain #(parameter N_CHAINS=2, N_CHANNELS=3, BASE_ADDRESS=32'h43c00004,
     wire reload_compare;
 
 
-    wire enable_in, compare_write_strobe;
+    wire enable_in;
     wire [2:0] counter_mode;
-    wire [2:0] compare_address;
-    wire [COUNTER_WIDTH-1:0] compare_data_in;
+    wire [COUNTER_WIDTH-1:0] compare_tresholds [N_CHANNELS*2-1:0];
     wire [COUNTER_WIDTH-1:0] counter_start_data;
     wire [COUNTER_WIDTH-1:0] counter_stop_data;
     wire [15:0] timebase_shift;
@@ -65,7 +64,7 @@ module pwmChain #(parameter N_CHAINS=2, N_CHANNELS=3, BASE_ADDRESS=32'h43c00004,
 
     ChainControlUnit #(
         .BASE_ADDRESS(BASE_ADDRESS),
-        .N_CHANNELS(3),
+        .N_CHANNELS(N_CHANNELS),
         .COUNTER_WIDTH(COUNTER_WIDTH)
     ) ControlUnit(
         .clock(clock),
@@ -76,9 +75,7 @@ module pwmChain #(parameter N_CHAINS=2, N_CHANNELS=3, BASE_ADDRESS=32'h43c00004,
         .counter_mode(counter_mode),
         .counter_start_data(counter_start_data),
         .counter_stop_data(counter_stop_data),
-        .compare_write_strobe(compare_write_strobe),
-        .compare_address(compare_address),
-        .compare_data_in(compare_data_in),
+        .comparator_tresholds(compare_tresholds),
         .output_enable_0(output_enable[0]),
 		.output_enable_1(output_enable[1]),
 		.output_enable_2(output_enable[2]),
@@ -124,9 +121,7 @@ module pwmChain #(parameter N_CHAINS=2, N_CHANNELS=3, BASE_ADDRESS=32'h43c00004,
         .reset(reset),
         .counter_stopped(counter_stopped),
         .counterValue(counter_out),
-        .we(compare_write_strobe),
-        .adress(compare_address),
-        .dataIn(compare_data_in),
+        .comparator_tresholds(compare_tresholds),
         .reload_compare(reload_compare),
         .matchHigh(compare_match_high),
         .matchLow(compare_match_low)

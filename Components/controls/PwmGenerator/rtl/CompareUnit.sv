@@ -15,76 +15,36 @@
 `timescale 10 ns / 1 ns
 `include "interfaces.svh"
 
-module CompareUnit  #(parameter COUNTER_WIDTH = 16)(
+module CompareUnit  #(
+    parameter COUNTER_WIDTH = 16,
+    N_CHANNELS = 3
+)(
     input wire         clock,
     input wire         reset,
     input wire  [COUNTER_WIDTH-1:0] counterValue,
     input wire         counter_stopped,
-    input wire         we,
-    input wire  [2:0]  adress,
-    input wire  [COUNTER_WIDTH-1:0] dataIn,
+    input wire [COUNTER_WIDTH-1:0] comparator_tresholds [N_CHANNELS*2-1:0],
     input wire         reload_compare,
     output reg [2:0] matchHigh,
     output reg [2:0] matchLow
 );
 
 
-    reg [COUNTER_WIDTH-1:0] shadow_registers [5:0];
     reg [COUNTER_WIDTH-1:0] working_registers [5:0];
 
-	integer i;
-
-always @(posedge clock) begin : shadow_update_logic
-    if(~reset)begin
-            for(i = 0; i<6; i=i+1) begin
-                shadow_registers[i] <= {COUNTER_WIDTH{1'b1}}*(i%2);
-                working_registers[i] <= {COUNTER_WIDTH{1'b1}}*(i%2);
-            end
-    end else begin
+    always @(posedge clock) begin : shadow_update_logic
         if(counter_stopped) begin
-            if(we && adress<6) begin 
-                working_registers[adress] <= dataIn;
-                shadow_registers[adress] <= dataIn;
-            end else if(we && adress==6) begin
-                working_registers[0] <= dataIn;
-                working_registers[1] <= dataIn;
-                working_registers[2] <= dataIn;
-                shadow_registers[0] <= dataIn;
-                shadow_registers[1] <= dataIn;
-                shadow_registers[2] <= dataIn;
-            end else if(we && adress==7) begin
-                working_registers[3] <= dataIn;
-                working_registers[4] <= dataIn;
-                working_registers[5] <= dataIn;
-                shadow_registers[3] <= dataIn;
-                shadow_registers[4] <= dataIn;
-                shadow_registers[5] <= dataIn;
+            for(integer i = 0; i < 2*N_CHANNELS; i = i+1) begin
+                working_registers[i][COUNTER_WIDTH-1:0] <= comparator_tresholds[i][COUNTER_WIDTH-1:0];
             end
         end else begin
-            if(we && adress<6) begin 
-                shadow_registers[adress] <= dataIn;
-            end else if(we && adress==6) begin
-                shadow_registers[0] <= dataIn;
-                shadow_registers[1] <= dataIn;
-                shadow_registers[2] <= dataIn;
-            end else if(we && adress==7) begin
-                shadow_registers[3] <= dataIn;
-                shadow_registers[4] <= dataIn;
-                shadow_registers[5] <= dataIn;
-            end
             if(reload_compare) begin 
-                working_registers[0][COUNTER_WIDTH-1:0] <= shadow_registers[0][COUNTER_WIDTH-1:0];
-                working_registers[1][COUNTER_WIDTH-1:0] <= shadow_registers[1][COUNTER_WIDTH-1:0];
-                working_registers[2][COUNTER_WIDTH-1:0] <= shadow_registers[2][COUNTER_WIDTH-1:0];
-                working_registers[3][COUNTER_WIDTH-1:0] <= shadow_registers[3][COUNTER_WIDTH-1:0];
-                working_registers[4][COUNTER_WIDTH-1:0] <= shadow_registers[4][COUNTER_WIDTH-1:0];
-                working_registers[5][COUNTER_WIDTH-1:0] <= shadow_registers[5][COUNTER_WIDTH-1:0];
+                for(integer i = 0; i < 2*N_CHANNELS; i = i+1) begin
+                    working_registers[i][COUNTER_WIDTH-1:0] <= comparator_tresholds[i][COUNTER_WIDTH-1:0];
+                end
             end
         end
     end
-end
-
-
 
 
     always @(posedge clock) begin : compare_logic_proper

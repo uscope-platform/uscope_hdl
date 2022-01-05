@@ -67,6 +67,7 @@ module pwm_tl_exp();
         .reset(reset),
         .ext_timebase(ext_tb),
         .pwm_out(pwm),
+        .fault(0),
         .sb(s)
     );
 
@@ -86,56 +87,19 @@ module pwm_tl_exp();
         //TESTS
         #5.5 reset <=1'h1;
 
-        //Compare low 1
-        BFM.write(SB_CHAIN_1_ADDR,0);
-        BFM.write(SB_CHAIN_1_ADDR+8'h04,duty-100);
-        BFM.write(SB_CHAIN_1_ADDR+8'h08,duty);
-        //Compare high 1
-        BFM.write(SB_CHAIN_1_ADDR+8'h0C,32'hffffff);
-        BFM.write(SB_CHAIN_1_ADDR+8'h10,10001);
-        BFM.write(SB_CHAIN_1_ADDR+8'h14,10001);
-        //Deadtime
-        BFM.write(SB_CHAIN_1_ADDR+8'h18,32'h0);
-        BFM.write(SB_CHAIN_1_ADDR+8'h1c,32'h0);
-        BFM.write(SB_CHAIN_1_ADDR+8'h20,32'h0);
-        //Counter limits
-        BFM.write(SB_CHAIN_1_ADDR+8'h24,32'h0);
-        BFM.write(SB_CHAIN_1_ADDR+8'h28,10000);
-        //Phase Shift
-        BFM.write(SB_CHAIN_1_ADDR+8'h2c,32'h0);
-        //Output Enables
-        BFM.write(SB_CHAIN_1_ADDR+8'h30,32'h3F);
-        // Counter control 1
-        BFM.write(SB_CHAIN_1_ADDR+8'h38,32'h2);
-        
-        
-                //Compare low 1
-        BFM.write(SB_CHAIN_2_ADDR,0);
-        BFM.write(SB_CHAIN_2_ADDR+8'h04,0);
-        BFM.write(SB_CHAIN_2_ADDR+8'h08,0);
-        //Compare high 1
-        BFM.write(SB_CHAIN_2_ADDR+8'h0C,32'hffffff);
-        BFM.write(SB_CHAIN_2_ADDR+8'h10,32'hffffff);
-        BFM.write(SB_CHAIN_2_ADDR+8'h14,32'hffffff);
-        //Deadtime
-        BFM.write(SB_CHAIN_2_ADDR+8'h18,32'h0);
-        BFM.write(SB_CHAIN_2_ADDR+8'h1c,32'h0);
-        BFM.write(SB_CHAIN_2_ADDR+8'h20,32'h0);
-        //Counter limit
-        BFM.write(SB_CHAIN_2_ADDR+8'h24,32'h0);
-        BFM.write(SB_CHAIN_2_ADDR+8'h28,10000);
-        //Phase Shift
-        BFM.write(SB_CHAIN_2_ADDR+8'h2c,32'h0);
-        //Output Enables
-        BFM.write(SB_CHAIN_2_ADDR+8'h30,32'h3F);
-        // Counter control 1
-        BFM.write(SB_CHAIN_2_ADDR+8'h38,32'h2);
-        // Timebase settings
-        
-        
-        // Timebase settings
-        BFM.write(SB_TIMEBASE_ADDR,32'h2428);
-
+        BFM.write(SB_TIMEBASE_ADDR+'h0,'h1100);
+        BFM.write(SB_TIMEBASE_ADDR+'h28,'h0);
+        BFM.write(SB_TIMEBASE_ADDR+'h3C,'h1);
+        BFM.write(SB_TIMEBASE_ADDR+'h34,'h3f);
+        BFM.write(SB_TIMEBASE_ADDR+'h2c,'h13f7);
+        BFM.write(SB_TIMEBASE_ADDR+'h8,'h4d8);
+        BFM.write(SB_TIMEBASE_ADDR+'hc,'h524);
+        BFM.write(SB_TIMEBASE_ADDR+'h14,'hf05);
+        BFM.write(SB_TIMEBASE_ADDR+'h18,'heeb);
+        BFM.write(SB_TIMEBASE_ADDR+'h0,'h1128);
+        #50000;
+        BFM.write(SB_TIMEBASE_ADDR+'h8,'h2d8);
+        BFM.write(SB_TIMEBASE_ADDR+'hc,'h724);
     end
 
 endmodule

@@ -52,6 +52,7 @@ module PwmGenerator_tb();
         .reset(reset),
         .ext_timebase(ext_tb),
         .pwm_out(pwm),
+        .fault(0),
         .sb(s)
     );
 
@@ -84,8 +85,8 @@ module PwmGenerator_tb();
         BFM.write(SB_CHAIN_1_ADDR+8'h1c,32'h7);
         BFM.write(SB_CHAIN_1_ADDR+8'h20,32'h7);
         //Counter limits
-        BFM.write(SB_CHAIN_1_ADDR+8'h24,32'h1);
-        BFM.write(SB_CHAIN_1_ADDR+8'h28,32'h30);
+        BFM.write(SB_CHAIN_1_ADDR+8'h24,32'h0);
+        BFM.write(SB_CHAIN_1_ADDR+8'h28,32'h90);
         //Phase Shift
         BFM.write(SB_CHAIN_1_ADDR+8'h2c,32'h0);
         //Output Enables
