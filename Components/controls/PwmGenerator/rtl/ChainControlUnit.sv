@@ -30,15 +30,9 @@ module ChainControlUnit #(
     output reg [COUNTER_WIDTH-1:0] counter_start_data,
     output reg [COUNTER_WIDTH-1:0] counter_stop_data,
     output reg [COUNTER_WIDTH-1:0] comparator_tresholds [N_CHANNELS*2-1:0],
-    output reg [1:0] output_enable_0,
-	output reg [1:0] output_enable_1,
-	output reg [1:0] output_enable_2,
-    output reg [15:0] deadtime_0,
-	output reg [15:0] deadtime_1,
-	output reg [15:0] deadtime_2,
-    output reg deadtime_enable_0,
-	output reg deadtime_enable_1,
-	output reg deadtime_enable_2,
+    output reg [1:0] output_enable [N_CHANNELS-1:0],
+    output reg [15:0] deadtime [N_CHANNELS-1:0],
+    output reg deadtime_enable [N_CHANNELS-1:0],
     Simplebus.slave sb
 );
 
@@ -82,15 +76,11 @@ module ChainControlUnit #(
             counter_run <= 0;
             timebase_shift <= 0;
             counter_mode <= 0;
-            output_enable_0 <= 0;
-            output_enable_1 <= 0;
-            output_enable_2 <= 0;
-            deadtime_0 <= 0;
-            deadtime_1 <= 0;
-            deadtime_2 <= 0;
-            deadtime_enable_0 <= 0;
-            deadtime_enable_1 <= 0;
-            deadtime_enable_2 <= 0;
+            for(integer i=0; i<N_CHANNELS; i=i+1) begin
+                output_enable[i] <= 0;    
+                deadtime[i] <= 0;
+                deadtime_enable[i] <= 0;
+            end
             counter_start_data <= 0;
             counter_stop_data <= 0;
             dc_mode_bottom_value <= 0;
@@ -161,13 +151,13 @@ module ChainControlUnit #(
                         end
                         //DEADTIME
                         BASE_ADDRESS+32'h18: begin
-                            if(~counter_running) deadtime_0 <= latched_writedata[15:0];
+                            if(~counter_running) deadtime[0] <= latched_writedata[15:0];
                         end
                         BASE_ADDRESS+32'h1C: begin
-                            if(~counter_running) deadtime_1 <= latched_writedata[15:0];
+                            if(~counter_running) deadtime[1] <= latched_writedata[15:0];
                         end
                         BASE_ADDRESS+32'h20: begin
-                            if(~counter_running) deadtime_2 <= latched_writedata[15:0];
+                            if(~counter_running) deadtime[2] <= latched_writedata[15:0];
                         end
                         //COUNTER LIMITS
                         BASE_ADDRESS+32'h24: begin
@@ -202,15 +192,15 @@ module ChainControlUnit #(
                         end
                         //OUTPUT ENABLE
                         BASE_ADDRESS+32'h30: begin
-                            output_enable_0 <= latched_writedata[1:0];
-                            output_enable_1 <= latched_writedata[3:2];
-                            output_enable_2 <= latched_writedata[5:4];
+                            output_enable[0] <= latched_writedata[1:0];
+                            output_enable[1] <= latched_writedata[3:2];
+                            output_enable[2] <= latched_writedata[5:4];
                         end
                         //DEADTIME_ENABLE
                         BASE_ADDRESS+32'h34: begin
-                            deadtime_enable_0 <= latched_writedata[0];
-                            deadtime_enable_1 <= latched_writedata[1];
-                            deadtime_enable_2 <= latched_writedata[2];
+                            deadtime_enable[0] <= latched_writedata[0];
+                            deadtime_enable[1] <= latched_writedata[1];
+                            deadtime_enable[2] <= latched_writedata[2];
                         end
                         //COUNTER CONTROLS
                         BASE_ADDRESS+32'h38: begin

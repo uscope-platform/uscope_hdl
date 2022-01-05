@@ -46,7 +46,7 @@ module pwmChain #(parameter N_CHAINS=2, N_CHANNELS=3, BASE_ADDRESS=32'h43c00004,
     wire [15:0] timebase_shift;
     wire [1:0] output_enable [N_CHANNELS-1:0];
     wire [15:0] deadtime [N_CHANNELS-1:0];
-    wire deadtime_enable[N_CHANNELS-1:0];
+    wire deadtime_enable [N_CHANNELS-1:0];
     reg  counter_stopped;
 
     assign counter_status = ~counter_stopped;
@@ -76,15 +76,9 @@ module pwmChain #(parameter N_CHAINS=2, N_CHANNELS=3, BASE_ADDRESS=32'h43c00004,
         .counter_start_data(counter_start_data),
         .counter_stop_data(counter_stop_data),
         .comparator_tresholds(compare_tresholds),
-        .output_enable_0(output_enable[0]),
-		.output_enable_1(output_enable[1]),
-		.output_enable_2(output_enable[2]),
-        .deadtime_0(deadtime[0]),
-        .deadtime_1(deadtime[1]),
-		.deadtime_2(deadtime[2]),
-        .deadtime_enable_0(deadtime_enable[0]),
-		.deadtime_enable_1(deadtime_enable[1]),
-		.deadtime_enable_2(deadtime_enable[2]),
+        .output_enable(output_enable),
+        .deadtime(deadtime),
+        .deadtime_enable(deadtime_enable),
         .sb(sb)
     );
 
