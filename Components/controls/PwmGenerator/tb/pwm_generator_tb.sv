@@ -14,7 +14,7 @@
 // limitations under the License.
 
 `timescale 10ns / 1ns
-`include "SimpleBus_BFM.svh"
+`include "axis_BFM.svh"
 `include "interfaces.svh"
 
 module pwm_generator_tb();
@@ -24,21 +24,40 @@ module pwm_generator_tb();
     wire [11:0] pwm;
     
     parameter SB_TIMEBASE_ADDR = 'h43C00000;
-    parameter SB_CHAIN_1_ADDR = 'h43C00004;
-    parameter SB_CHAIN_2_ADDR = 'h43C00040;
+    parameter SB_CHAIN_1_ADDR  = 'h43C00100;
+    parameter SB_CHAIN_2_ADDR  = 'h43C00200;
 
-    Simplebus s();
 
+    axi_lite axil();
+
+    axis_BFM write_BFM;
+    axis_BFM read_req_BFM;
+    axis_BFM read_resp_BFM;
+
+    axi_stream read_req();
+    axi_stream read_resp();
+    axi_stream write();
+
+    axis_to_axil WRITER(
+        .clock(clk),
+        .reset(reset), 
+        .axis_write(write),
+        .axis_read_request(read_req),
+        .axis_read_response(read_resp),
+        .axi_out(axil)
+    );
+    
     PwmGenerator UUT (
         .clock(clk),
         .reset(reset),
         .ext_timebase(ext_tb),
-        .sb(s),
+        .axi_in(axil),
+        .fault(0),
         .pwm_out(pwm) 
     );
 
-    simplebus_BFM BFM;
-    
+    always #3 ext_tb = ~ext_tb; 
+
     //clock generation
     initial clk = 0; 
     always #0.5 clk = ~clk; 
@@ -55,9 +74,19 @@ module pwm_generator_tb();
     integer deadtime_setting = 'h8;
     integer phase_shift_setting = 'h100;
 
+
+    reg output_test_complete = 0;
+    reg online_duty_test_complete = 0;
+    reg deadtime_test_complete = 0;
+    reg phase_shift_test_complete = 0;
+    reg sync_test_complete = 0;
+
     initial begin
 
-        BFM = new(s,1);
+        write_BFM = new(write,2.5);
+        read_req_BFM = new(read_req, 2.5);
+        read_resp_BFM = new(read_resp, 2.5);
+
         //Initial status
         reset <=1'h1;
         #1 reset <=1'h0;
@@ -66,24 +95,29 @@ module pwm_generator_tb();
 
         #4 start_output_test();
         output_test_check(period_result,duty_result);
-
+        output_test_complete = 1;
+        
         #100 compare_low <= 'h5;
         compare_high <= 'h22;
 
         #1 start_online_duty_change_test();
         online_duty_change_test_check(duty_result);
-
+        online_duty_test_complete = 1;
         
         //Test dead time insertion
         #100 start_deadtime_test();
         deadtime_test_check(deadtime_result);
+        deadtime_test_complete = 1;
 
         #100 start_phase_shift_test();
         phase_shift_test_check(phase_shift_result);
+        phase_shift_test_complete = 1;
 
         #100 start_sync_test();
         sync_test_check();
-
+        sync_test_complete = 1;
+        #300 $display("SIMULATION COMPLETED SUCCESSFULLY");
+        $finish();
     end
 
     task output_test_check(output realtime period, integer duty);
@@ -162,92 +196,92 @@ module pwm_generator_tb();
     endtask
 
     task sync_test_check();
-        integer expected_phase_shift;
-        realtime first_edge = 0, second_edge =0;
-        real phase_shift;
+        integer expected_duration;
+        realtime start_time = 0, second_edge =0;
+        real duration;
         
+        start_time = $realtime;
         @(posedge pwm[0]);
-            first_edge = $realtime;
-        @(posedge pwm[6]);
-            second_edge = $realtime;
+            second_edge = $realtime;     
         
-        expected_phase_shift = 0;
-        phase_shift  = (second_edge-first_edge);
-        assert (expected_phase_shift == phase_shift) else begin
-            $fatal(2,"FAILED carrier phase shift test: the expected phase shift was %e the measured one was %e ", expected_phase_shift, phase_shift);
+        expected_duration = 71;
+        duration  = (second_edge-start_time);
+        assert (expected_duration == duration) else begin
+            $fatal(2,"FAILED sync test: the expected remaining duration of the current period was %e the measured one was %e ", expected_duration, duration);
         end
     endtask
 
 
     task start_output_test();
+        #1 write_BFM.write_dest(32'h111100, SB_TIMEBASE_ADDR);
         //Compare low 1
-        BFM.write(SB_CHAIN_1_ADDR+8'h00,compare_low);
-        BFM.write(SB_CHAIN_1_ADDR+8'h04,compare_low);
-        BFM.write(SB_CHAIN_1_ADDR+8'h08,compare_low);
+        #1 write_BFM.write_dest(compare_low, SB_CHAIN_1_ADDR+8'h00);
+        #1 write_BFM.write_dest(compare_low, SB_CHAIN_1_ADDR+8'h04);
+        #1 write_BFM.write_dest(compare_low, SB_CHAIN_1_ADDR+8'h08);
         //Compare high 1
-        BFM.write(SB_CHAIN_1_ADDR+8'h0C,compare_high);
-        BFM.write(SB_CHAIN_1_ADDR+8'h10,compare_high);
-        BFM.write(SB_CHAIN_1_ADDR+8'h14,compare_high);
+        #1 write_BFM.write_dest(compare_high, SB_CHAIN_1_ADDR+8'h0c);
+        #1 write_BFM.write_dest(compare_high, SB_CHAIN_1_ADDR+8'h10);
+        #1 write_BFM.write_dest(compare_high, SB_CHAIN_1_ADDR+8'h14);
         //Deadtime
-        BFM.write(SB_CHAIN_1_ADDR+8'h18,deadtime_setting);
-        BFM.write(SB_CHAIN_1_ADDR+8'h1c,deadtime_setting);
-        BFM.write(SB_CHAIN_1_ADDR+8'h20,deadtime_setting);
+        #1 write_BFM.write_dest(deadtime_setting, SB_CHAIN_1_ADDR+8'h18);
+        #1 write_BFM.write_dest(deadtime_setting, SB_CHAIN_1_ADDR+8'h1c);
+        #1 write_BFM.write_dest(deadtime_setting, SB_CHAIN_1_ADDR+8'h20);
         //Counter limits
-        BFM.write(SB_CHAIN_1_ADDR+8'h24,counter_low);
-        BFM.write(SB_CHAIN_1_ADDR+8'h28,counter_high);
+        #1 write_BFM.write_dest(counter_low, SB_CHAIN_1_ADDR+8'h24);
+        #1 write_BFM.write_dest(counter_high, SB_CHAIN_1_ADDR+8'h28);
         //Phase Shift
-        BFM.write(SB_CHAIN_1_ADDR+8'h2c,32'h0);
+        #1 write_BFM.write_dest(32'h0, SB_CHAIN_1_ADDR+8'h2c);
         //Output Enables
-        BFM.write(SB_CHAIN_1_ADDR+8'h30,32'h3F);
+        #1 write_BFM.write_dest(32'h3F, SB_CHAIN_1_ADDR+8'h30);
 
-        //Compare low 1
-        BFM.write(SB_CHAIN_2_ADDR+8'h00,compare_low);
-        BFM.write(SB_CHAIN_2_ADDR+8'h04,compare_low);
-        BFM.write(SB_CHAIN_2_ADDR+8'h08,compare_low);
-        //Compare high 1
-        BFM.write(SB_CHAIN_2_ADDR+8'h0C,compare_high);
-        BFM.write(SB_CHAIN_2_ADDR+8'h10,compare_high);
-        BFM.write(SB_CHAIN_2_ADDR+8'h14,compare_high);
-        //Deadtime 2
-        BFM.write(SB_CHAIN_2_ADDR+8'h18,deadtime_setting);
-        BFM.write(SB_CHAIN_2_ADDR+8'h1c,deadtime_setting);
-        BFM.write(SB_CHAIN_2_ADDR+8'h20,deadtime_setting);
-        //Counter limits 2  
-        BFM.write(SB_CHAIN_2_ADDR+8'h24,counter_low);
-        BFM.write(SB_CHAIN_2_ADDR+8'h28,counter_high);
-        //Phase Shift 2
-        BFM.write(SB_CHAIN_2_ADDR+8'h2c,32'h10);
-        //Output Enables 2
-        BFM.write(SB_CHAIN_2_ADDR+8'h30,32'h3F);
+          //Compare low 2
+        #1 write_BFM.write_dest(compare_low, SB_CHAIN_2_ADDR+8'h00);
+        #1 write_BFM.write_dest(compare_low, SB_CHAIN_2_ADDR+8'h04);
+        #1 write_BFM.write_dest(compare_low, SB_CHAIN_2_ADDR+8'h08);
+        //Compare high 2
+        #1 write_BFM.write_dest(compare_high, SB_CHAIN_2_ADDR+8'h0c);
+        #1 write_BFM.write_dest(compare_high, SB_CHAIN_2_ADDR+8'h10);
+        #1 write_BFM.write_dest(compare_high, SB_CHAIN_2_ADDR+8'h14);
+        //Deadtime
+        #1 write_BFM.write_dest(deadtime_setting, SB_CHAIN_2_ADDR+8'h18);
+        #1 write_BFM.write_dest(deadtime_setting, SB_CHAIN_2_ADDR+8'h1c);
+        #1 write_BFM.write_dest(deadtime_setting, SB_CHAIN_2_ADDR+8'h20);
+        //Counter limits
+        #1 write_BFM.write_dest(counter_low, SB_CHAIN_2_ADDR+8'h24);
+        #1 write_BFM.write_dest(counter_high, SB_CHAIN_2_ADDR+8'h28);
+        //Phase Shift
+        #1 write_BFM.write_dest(32'h0, SB_CHAIN_2_ADDR+8'h2c);
+        //Output Enables
+        #1 write_BFM.write_dest(32'h3F, SB_CHAIN_2_ADDR+8'h30);
+
         // Counter control 1
-        BFM.write(SB_CHAIN_1_ADDR+8'h38,32'h0);
+        #1 write_BFM.write_dest(32'h0, SB_CHAIN_1_ADDR+8'h38);
         // Counter control 2
-        BFM.write(SB_CHAIN_2_ADDR+8'h38,32'h0);
-        BFM.write(SB_CHAIN_1_ADDR+8'h34,32'h0);
+        #1 write_BFM.write_dest(32'h0, SB_CHAIN_2_ADDR+8'h38);
         // Timebase settings
-        BFM.write(SB_TIMEBASE_ADDR,32'h28);
+        #1 write_BFM.write_dest(32'h111128, SB_TIMEBASE_ADDR);
     endtask
 
     task start_online_duty_change_test();
-        BFM.write(SB_CHAIN_1_ADDR+8'h00,compare_low);
-        BFM.write(SB_CHAIN_1_ADDR+8'h04,compare_low);
-        BFM.write(SB_CHAIN_1_ADDR+8'h08,compare_low);
-        BFM.write(SB_CHAIN_1_ADDR+8'h0c,compare_high);
-        BFM.write(SB_CHAIN_1_ADDR+8'h10,compare_high);
-        BFM.write(SB_CHAIN_1_ADDR+8'h14,compare_high);
-        BFM.write(SB_CHAIN_2_ADDR+8'h00,compare_low);
-        BFM.write(SB_CHAIN_2_ADDR+8'h04,compare_low);
-        BFM.write(SB_CHAIN_2_ADDR+8'h08,compare_low);
-        BFM.write(SB_CHAIN_2_ADDR+8'h0c,compare_high);
-        BFM.write(SB_CHAIN_2_ADDR+8'h10,compare_high);
-        BFM.write(SB_CHAIN_2_ADDR+8'h14,compare_high);
+        #1 write_BFM.write_dest(compare_low, SB_CHAIN_1_ADDR+8'h00);
+        #1 write_BFM.write_dest(compare_low, SB_CHAIN_1_ADDR+8'h04);
+        #1 write_BFM.write_dest(compare_low, SB_CHAIN_1_ADDR+8'h08);
+        #1 write_BFM.write_dest(compare_high, SB_CHAIN_1_ADDR+8'h0c);
+        #1 write_BFM.write_dest(compare_high, SB_CHAIN_1_ADDR+8'h10);
+        #1 write_BFM.write_dest(compare_high, SB_CHAIN_1_ADDR+8'h14);
+        #1 write_BFM.write_dest(compare_low, SB_CHAIN_2_ADDR+8'h00);
+        #1 write_BFM.write_dest(compare_low, SB_CHAIN_2_ADDR+8'h04);
+        #1 write_BFM.write_dest(compare_low, SB_CHAIN_2_ADDR+8'h08);
+        #1 write_BFM.write_dest(compare_high, SB_CHAIN_2_ADDR+8'h0c);
+        #1 write_BFM.write_dest(compare_high, SB_CHAIN_2_ADDR+8'h10);
+        #1 write_BFM.write_dest(compare_high, SB_CHAIN_2_ADDR+8'h14);
     endtask
 
     task start_deadtime_test();
-        BFM.write(SB_TIMEBASE_ADDR,32'h8);
-        #10 BFM.write(SB_CHAIN_1_ADDR+8'h34,32'h3F);
-        BFM.write(SB_CHAIN_2_ADDR+8'h34,32'h3F);
-        BFM.write(SB_TIMEBASE_ADDR,32'h28);
+        #1 write_BFM.write_dest(32'h111108, SB_TIMEBASE_ADDR);
+        #10 write_BFM.write_dest(32'h3F, SB_CHAIN_1_ADDR+8'h34);
+        #1 write_BFM.write_dest(32'h3F, SB_CHAIN_2_ADDR+8'h34);
+        #1 write_BFM.write_dest(32'h111128, SB_TIMEBASE_ADDR);
     endtask
 
     task start_phase_shift_test();
@@ -255,56 +289,55 @@ module pwm_generator_tb();
         #3 reset <=1'h1;
 
         //Compare low 1
-        BFM.write(SB_CHAIN_1_ADDR+8'h00,compare_low);
-        BFM.write(SB_CHAIN_1_ADDR+8'h04,compare_low);
-        BFM.write(SB_CHAIN_1_ADDR+8'h08,compare_low);
+        write_BFM.write_dest(compare_low, SB_CHAIN_1_ADDR+8'h00);
+        write_BFM.write_dest(compare_low, SB_CHAIN_1_ADDR+8'h04);
+        write_BFM.write_dest(compare_low, SB_CHAIN_1_ADDR+8'h08);
         //Compare high 1
-        BFM.write(SB_CHAIN_1_ADDR+8'h0C,compare_high);
-        BFM.write(SB_CHAIN_1_ADDR+8'h10,compare_high);
-        BFM.write(SB_CHAIN_1_ADDR+8'h14,compare_high);
+        write_BFM.write_dest(compare_high, SB_CHAIN_1_ADDR+8'h0C);
+        write_BFM.write_dest(compare_high, SB_CHAIN_1_ADDR+8'h10);
+        write_BFM.write_dest(compare_high, SB_CHAIN_1_ADDR+8'h14);
         //Deadtime
-        BFM.write(SB_CHAIN_1_ADDR+8'h18,deadtime_setting);
-        BFM.write(SB_CHAIN_1_ADDR+8'h1c,deadtime_setting);
-        BFM.write(SB_CHAIN_1_ADDR+8'h20,deadtime_setting);
+        write_BFM.write_dest(deadtime_setting, SB_CHAIN_1_ADDR+8'h18);
+        write_BFM.write_dest(deadtime_setting, SB_CHAIN_1_ADDR+8'h1c);
+        write_BFM.write_dest(deadtime_setting, SB_CHAIN_1_ADDR+8'h20);
         //Counter limits
-        BFM.write(SB_CHAIN_1_ADDR+8'h24,counter_low);
-        BFM.write(SB_CHAIN_1_ADDR+8'h28,counter_high);
+        write_BFM.write_dest(counter_low, SB_CHAIN_1_ADDR+8'h24);
+        write_BFM.write_dest(counter_high, SB_CHAIN_1_ADDR+8'h28);
         //Phase Shift
-        BFM.write(SB_CHAIN_1_ADDR+8'h2c,32'h0);
+        write_BFM.write_dest(32'h0, SB_CHAIN_1_ADDR+8'h2c);
         //Output Enables
-        BFM.write(SB_CHAIN_1_ADDR+8'h30,32'h3F);
+        write_BFM.write_dest(32'h3F, SB_CHAIN_1_ADDR+8'h30);
 
         //Compare low 1
-        BFM.write(SB_CHAIN_2_ADDR+8'h00,compare_low);
-        BFM.write(SB_CHAIN_2_ADDR+8'h04,compare_low);
-        BFM.write(SB_CHAIN_2_ADDR+8'h08,compare_low);
+        write_BFM.write_dest(compare_low, SB_CHAIN_2_ADDR+8'h00);
+        write_BFM.write_dest(compare_low, SB_CHAIN_2_ADDR+8'h04);
+        write_BFM.write_dest(compare_low, SB_CHAIN_2_ADDR+8'h08);
         //Compare high 1
-        BFM.write(SB_CHAIN_2_ADDR+8'h0C,compare_high);
-        BFM.write(SB_CHAIN_2_ADDR+8'h10,compare_high);
-        BFM.write(SB_CHAIN_2_ADDR+8'h14,compare_high);
+        write_BFM.write_dest(compare_high, SB_CHAIN_2_ADDR+8'h0C);
+        write_BFM.write_dest(compare_high, SB_CHAIN_2_ADDR+8'h10);
+        write_BFM.write_dest(compare_high, SB_CHAIN_2_ADDR+8'h14);
         //Deadtime 2
-        BFM.write(SB_CHAIN_2_ADDR+8'h18,deadtime_setting);
-        BFM.write(SB_CHAIN_2_ADDR+8'h1c,deadtime_setting);
-        BFM.write(SB_CHAIN_2_ADDR+8'h20,deadtime_setting);
+        write_BFM.write_dest(deadtime_setting, SB_CHAIN_2_ADDR+8'h18);
+        write_BFM.write_dest(deadtime_setting, SB_CHAIN_2_ADDR+8'h1c);
+        write_BFM.write_dest(deadtime_setting, SB_CHAIN_2_ADDR+8'h20);
         //Counter limits 2  
-        BFM.write(SB_CHAIN_2_ADDR+8'h24,counter_low);
-        BFM.write(SB_CHAIN_2_ADDR+8'h28,counter_high);
+        write_BFM.write_dest(counter_low, SB_CHAIN_2_ADDR+8'h24);
+        write_BFM.write_dest(counter_high, SB_CHAIN_2_ADDR+8'h28);
         //Phase Shift 2
-        #100 BFM.write(SB_CHAIN_2_ADDR+8'h2c,phase_shift_setting);
+        #100 write_BFM.write_dest(phase_shift_setting, SB_CHAIN_2_ADDR+8'h2c);
         //Output Enables 2
-        BFM.write(SB_CHAIN_2_ADDR+8'h30,32'h3F);
+        write_BFM.write_dest(32'h3F, SB_CHAIN_2_ADDR+8'h30);
         // Counter control 1
-        BFM.write(SB_CHAIN_1_ADDR+8'h38,32'h0);
+        write_BFM.write_dest(32'h0, SB_CHAIN_1_ADDR+8'h38);
         // Counter control 2
-        BFM.write(SB_CHAIN_2_ADDR+8'h38,32'h0);
-        BFM.write(SB_TIMEBASE_ADDR,32'h28);
-        // Timebase settings
-        BFM.write(SB_TIMEBASE_ADDR,32'h28);
+        write_BFM.write_dest(32'h0, SB_CHAIN_2_ADDR+8'h38);
+        write_BFM.write_dest(32'h111128, SB_TIMEBASE_ADDR);
 
     endtask
 
     task start_sync_test();
-        BFM.write(SB_TIMEBASE_ADDR,32'h40);
+        write_BFM.write_dest(32'h111168, SB_TIMEBASE_ADDR);
+        #2 write_BFM.write_dest(32'h111128, SB_TIMEBASE_ADDR);
     endtask
 
     

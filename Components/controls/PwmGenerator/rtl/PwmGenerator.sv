@@ -23,14 +23,13 @@ module PwmGenerator #(parameter BASE_ADDRESS = 32'h43c00000, COUNTER_WIDTH=16, I
     input wire fault,
     output wire timebase,
     output reg [11:0] pwm_out,
-    axi_lite.slave axi_in,
-    Simplebus.slave sb
+    axi_lite.slave axi_in
 );
 
     //Common signals
     wire internal_timebase,timebase_enable,sync;
     wire [2:0] dividerSetting;
-    wire counter_run, stop_request;
+    wire counter_run;
     reg selected_timebase;
     wire ext_timebase_enable;
     wire [1:0] counter_status;
@@ -105,7 +104,6 @@ module PwmGenerator #(parameter BASE_ADDRESS = 32'h43c00000, COUNTER_WIDTH=16, I
     
     
     PwmControlUnit #(
-        .BASE_ADDRESS(BASE_ADDRESS),
         .INITIAL_STOPPED_STATE(INITIAL_STOPPED_STATE)
     ) pwm_cu(
         .clock(clock),
@@ -116,9 +114,7 @@ module PwmGenerator #(parameter BASE_ADDRESS = 32'h43c00000, COUNTER_WIDTH=16, I
         .timebase_external_enable(ext_timebase_enable),
         .counter_run(counter_run),
         .sync(sync),
-        .stop_request(stop_request),
         .counter_stopped_state(counter_stopped_state),
-        .sb(sb),
         .axi_in(controller_axi)
     );
 
