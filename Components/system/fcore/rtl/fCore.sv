@@ -86,9 +86,6 @@ module fCore(
     wire [REG_ADDR_WIDTH-1:0] dma_read_addr;
     wire [DATAPATH_WIDTH-1:0] dma_read_data;
 
-    wire [REG_ADDR_WIDTH-1:0] dma_write_addr;
-    wire [DATAPATH_WIDTH-1:0] dma_write_data;
-    wire dma_write_valid;
 
     wire immediate_advance;
     wire [CH_ADDRESS_WIDTH-1:0] channel_address_cu;

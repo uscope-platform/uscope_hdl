@@ -53,13 +53,18 @@ module fCore_dma_endpoint #(
     );
 
     assign write_data.ready = 1;
-    assign axis_dma_write.ready = 0;
+    assign axis_dma_write.ready = 1;
 
     always_ff @(posedge clock) begin
         if(axis_dma_write.valid)begin
-            reg_dma_write.dest <= axis_dma_write.dest;
-            reg_dma_write.data <= axis_dma_write.data;
-            reg_dma_write.valid <= 1;
+            if(axis_dma_write.dest == 0) begin
+                n_channels <= axis_dma_write.data;
+            end else begin
+                reg_dma_write.dest <= axis_dma_write.dest;
+                reg_dma_write.data <= axis_dma_write.data;
+                reg_dma_write.valid <= 1;   
+            end
+            
         end else if(write_data.valid)begin
             if(write_data.dest == 0) begin
                 n_channels <= write_data.data;
@@ -100,14 +105,16 @@ module fCore_dma_endpoint #(
             read_addr.ready <= 1;
             axis_dma_read_request.ready <= 1;
             dma_read_addr <= 0;
+            bus_read_data <= 0;
             stream_read_data <= 0;
+            read_n_channels <= 0;
             state <= idle;
         end else begin
             case (state)
                 idle: begin
                     stream_read_valid <= 0;
                     if(axis_dma_read_request.valid)begin
-                        if(read_addr.data != 0) begin
+                        if(axis_dma_read_request.data != 0) begin
                             dma_read_addr <= axis_dma_read_request.data;
                             state <= wait_read;
                             axis_dma_read_request.ready <= 0;

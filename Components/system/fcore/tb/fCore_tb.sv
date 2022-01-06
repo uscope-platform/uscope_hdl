@@ -37,7 +37,8 @@ module fCore_tb();
     axis_BFM read_dma_BFM;
 
     localparam RECIPROCAL_PRESENT = 0;
-     
+    
+    axis_BFM axis_dma_write_BFM;
     axis_BFM write_BFM;
     axis_BFM read_req_BFM;
     axis_BFM read_resp_BFM;
@@ -109,6 +110,7 @@ module fCore_tb();
     // reset generation
     initial begin
         write_BFM = new(write,1);
+        axis_dma_write_BFM = new(axis_dma_write,1);
         read_req_BFM = new(read_req, 1);
         read_resp_BFM = new(read_resp, 1);
         read_resp.ready = 1;
@@ -124,22 +126,13 @@ module fCore_tb();
         #4; run <= 1;
         #5 run <=  0;
     end
-        
-    //clock generation
-    initial begin
-        data_mover_start <= 0;
-        #2700 data_mover_start <=1;
-        #1 data_mover_start <= 0;
-    end
 
-
-
-
+    
     reg [31:0] expected_results [12:0];
     localparam CORE_DMA_BASE_ADDRESS = 32'h43c00004;
     
     event run_test_done;
-
+    event bus_read_test_done;
     initial begin
         if(RECIPROCAL_PRESENT==1) begin
             expected_results <= {'h428C0000,'h0000000c,'h40a00000,'h3c6d7304,'h40800000,'h40400000,'hc0800000,'h428c0000,'h40400000,'hc0c00000,'hc0800000,'h40800000,'h0};
@@ -147,16 +140,49 @@ module fCore_tb();
             expected_results <= {'h428C0000,'h0000000c,'h40a00000,'h0,'h40800000,'h40400000,'hc0800000,'h428c0000,'h40400000,'hc0c00000,'hc0800000,'h40800000,'h0};
         end
         @(posedge done) $display("femtoCore Processing Done");
+        ->run_test_done;
         #100;
         for (integer i = 0; i<13; i++) begin
             read_req_BFM.write(CORE_DMA_BASE_ADDRESS+4*i);
             read_resp_BFM.read(reg_readback);
-            if(reg_readback!=expected_results[i]) $display("Register %d  Wrong Value detected. Expected %h Got %h",i,expected_results[i],reg_readback);
+            if(reg_readback!=expected_results[i]) $display("BUS READ ERROR Register %d  Wrong Value detected. Expected %h Got %h",i,expected_results[i],reg_readback);
             #100;
         end
-        ->run_test_done;
+        ->bus_read_test_done;
     end
 
+
+
+    event axis_dma_test_done;
+
+    initial begin
+
+        data_mover_start <= 0;
+        @(bus_read_test_done);
+
+        axis_dma_write_BFM.write_dest('hCAFE, 'h2);
+        expected_results[2] = 'hCAFE;
+        #20 data_mover_start <=1;
+        #1 data_mover_start <= 0;
+        
+        for(integer  i = 0; i<3; i = i+1) begin
+            @(data_out.valid)
+            assert (data_out.data == expected_results[data_out.dest]) 
+            else begin
+                $display("AXI STREAM DMA ERROR Wrong Value detected on register %d . Expected %h Got %h",data_out.dest,expected_results[i],data_out.data);
+                $finish();
+            end
+        end
+        ->axis_dma_test_done;
+    end
+
+    initial begin
+        @(run_test_done) $display("TEST SUCCESSFUL 1/3: FEMTOCORE RUN");
+        @(bus_read_test_done) $display("TEST SUCCESSFUL 2/3: BUS REGISTER_READ");
+        @(axis_dma_test_done) $display("TEST SUCCESSFUL 3/3: AXI STREAM DMA");
+        $display("TEST SUITE COMPLEATED SUCESSFULLY");
+        $finish();
+    end
 
 
 endmodule
