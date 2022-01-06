@@ -35,7 +35,6 @@ module AdcProcessing #(
     wire [1:0] trip_high;
     wire [1:0] trip_low;
     wire [7:0] decimation_ratio;
-    wire pipeline_flush;
 
 
     wire signed [DATA_PATH_WIDTH-1:0] cal_coefficients [2:0];
@@ -62,7 +61,6 @@ module AdcProcessing #(
         // CALIBRATION
         .calibrator_coefficients(cal_coefficients),
         .gain_enable(gain_enable),
-        .pipeline_flush(pipeline_flush),
         .fault(fault),
         .decimation_ratio(decimation_ratio)
     );
@@ -137,7 +135,6 @@ module AdcProcessing #(
         .clock(clock),
         .reset(reset),
         .data_in(cal_in),
-        .pipeline_flush(pipeline_flush),
         .calibrator_coefficients(cal_coefficients),
         .gain_enable(gain_enable),
         .data_out(data_out)

@@ -57,14 +57,11 @@ module fCore_dma_endpoint #(
 
     always_ff @(posedge clock) begin
         if(axis_dma_write.valid)begin
-            if(axis_dma_write.dest == 0) begin
-                n_channels <= axis_dma_write.data;
-            end else begin
+            if(axis_dma_write.dest != 0) begin
                 reg_dma_write.dest <= axis_dma_write.dest;
                 reg_dma_write.data <= axis_dma_write.data;
                 reg_dma_write.valid <= 1;   
             end
-            
         end else if(write_data.valid)begin
             if(write_data.dest == 0) begin
                 n_channels <= write_data.data;

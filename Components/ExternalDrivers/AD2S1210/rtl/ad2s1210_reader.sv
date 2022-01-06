@@ -57,8 +57,10 @@ module ad2s1210_reader (
         end else begin
             case(reader_state)
                     idle_state: begin
-                        read_type <= transfer_type;
-                        reader_state <= sample_state;
+                        if(start)begin
+                            read_type <= transfer_type;
+                            reader_state <= sample_state;    
+                        end
                     end
                     sample_state: begin
                         if(reader_counter == sample_length-1)begin

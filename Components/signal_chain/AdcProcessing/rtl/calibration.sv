@@ -40,7 +40,7 @@ module calibration #(parameter DATA_PATH_WIDTH = 16)(
     );
 
     always @(posedge clock)begin
-        if(~reset | pipeline_flush) begin
+        if(~reset) begin
             gain_corrected_data <= 0;
             truncated_gain_corrected_data <= 0;
             data_out.data <= 0;

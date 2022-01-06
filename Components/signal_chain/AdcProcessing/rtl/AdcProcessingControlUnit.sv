@@ -32,7 +32,6 @@ module AdcProcessingControlUnit #(
     // CALIBRATION
     output reg signed [DATA_PATH_WIDTH-1:0] calibrator_coefficients [2:0],
     output reg        gain_enable,
-    output reg        pipeline_flush,
     output reg        fault,
     output reg [7:0]  decimation_ratio
 );
