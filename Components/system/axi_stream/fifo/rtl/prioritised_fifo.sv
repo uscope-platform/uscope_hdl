@@ -14,25 +14,19 @@
 // limitations under the License.
 
 `timescale 10ns / 1ns
-//`include "interfaces.svh"
+`include "interfaces.svh"
 
 
 
-module prioritised_fifo #(parameter INPUT_DATA_WIDTH = 32, parameter FIFO_DEPTH = 16)(
+module prioritised_fifo #(
+    parameter INPUT_DATA_WIDTH = 32, 
+    parameter FIFO_DEPTH = 16
+)(
     input wire clock,
     input wire reset,
-    input wire [INPUT_DATA_WIDTH-1:0]data_in_lp,
-    input wire data_in_lp_valid,
-    input wire data_in_lp_tlast,
-    output reg data_in_lp_ready,
-    input wire [INPUT_DATA_WIDTH-1:0]data_in_hp,
-    input wire data_in_hp_valid,
-    input wire data_in_hp_tlast,
-    output reg data_in_hp_ready,
-    output reg [INPUT_DATA_WIDTH-1:0]data_out,
-    output reg data_out_valid,
-    output reg data_out_tlast,
-    input wire data_out_ready
+    axi_stream.slave in_lp,
+    axi_stream.slave in_hp,
+    axi_stream.master out
 );
 
 
@@ -92,29 +86,29 @@ module prioritised_fifo #(parameter INPUT_DATA_WIDTH = 32, parameter FIFO_DEPTH 
             hp_memory_in <=0;
             hp_we <=0;
             lp_we <=0;
-            data_out <= 0;
-            data_out_valid <=0;
+            out.data <= 0;
+            out.valid <=0;
         end else begin
-            if(data_out_valid) data_out_valid <= 0;
-            if(data_out_tlast) data_out_tlast <= 0;
-            else if(data_out_ready)begin
+            if(out.valid) out.valid <= 0;
+            if(out.tlast) out.tlast <= 0;
+            else if(out.ready)begin
                 if(hp_fill_level != 0)begin
                     hp_mem_addr_r <= hp_mem_addr_r+1;
-                    data_out <= hp_memory_out;
-                    data_out_tlast <= hp_last_out;
-                    data_out_valid <=1;
+                    out.data <= hp_memory_out;
+                    out.tlast <= hp_last_out;
+                    out.valid <=1;
                     hp_fill_level<= hp_fill_level-1;
                 end else if(lp_fill_level != 0) begin
                     lp_mem_addr_r <= lp_mem_addr_r+1;
-                    data_out <= lp_memory_out;
-                    data_out_tlast <= lp_last_out;
-                    data_out_valid <=1;
+                    out.data <= lp_memory_out;
+                    out.tlast <= lp_last_out;
+                    out.valid <=1;
                     lp_fill_level<= lp_fill_level-1;
                 end
             end
-            if(data_in_hp_valid)begin
-                hp_memory_in <= data_in_hp;
-                hp_last_in <= data_in_hp_tlast;
+            if(in_hp.valid)begin
+                hp_memory_in <= in_hp.data;
+                hp_last_in <= in_hp.tlast;
                 hp_we <= 1;
                 hp_fill_level<= hp_fill_level+1;
             end
@@ -124,9 +118,9 @@ module prioritised_fifo #(parameter INPUT_DATA_WIDTH = 32, parameter FIFO_DEPTH 
                 hp_mem_addr_w <= hp_mem_addr_w+1;
             end
 
-            if(data_in_lp_valid)begin
-                lp_memory_in <= data_in_lp;
-                lp_last_in <= data_in_lp_tlast;
+            if(in_lp.valid)begin
+                lp_memory_in <= in_lp.data;
+                lp_last_in <= in_lp.tlast;
                 lp_we <= 1;
                 lp_fill_level<= lp_fill_level+1;
             end
@@ -140,11 +134,11 @@ module prioritised_fifo #(parameter INPUT_DATA_WIDTH = 32, parameter FIFO_DEPTH 
 
 
     always@(*)begin
-        if(hp_fill_level==FIFO_DEPTH) data_in_hp_ready <=0;
-        else data_in_hp_ready <=1;
+        if(hp_fill_level==FIFO_DEPTH) in_hp.ready <=0;
+        else in_hp.ready <=1;
         
-        if(lp_fill_level==FIFO_DEPTH) data_in_lp_ready <=0;
-        else data_in_lp_ready <=1;
+        if(lp_fill_level==FIFO_DEPTH) in_lp.ready <=0;
+        else in_lp.ready <=1;
     end
 
 

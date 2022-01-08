@@ -21,12 +21,10 @@ module prioritised_fifo_tb();
 
     reg  clk, reset;
 
-    reg dout_ready;
-    wire dout_valid;
-    wire [31:0] dout_data;
 
     axi_stream lp_stream();
     axi_stream hp_stream();
+    axi_stream out_stream();
 
     //clock generation
     initial clk = 0; 
@@ -35,15 +33,9 @@ module prioritised_fifo_tb();
     prioritised_fifo UUT(
         .clock(clk),
         .reset(reset),
-        .data_in_lp(lp_stream.data),
-        .data_in_lp_valid(lp_stream.valid),
-        .data_in_lp_ready(lp_stream.ready),
-        .data_in_hp(hp_stream.data),
-        .data_in_hp_valid(hp_stream.valid),
-        .data_in_hp_ready(hp_stream.ready),
-        .data_out(dout_data),
-        .data_out_valid(dout_valid),
-        .data_out_ready(dout_ready)
+        .in_lp(lp_stream),
+        .in_hp(hp_stream),
+        .out(out_stream)
     );
 
 
@@ -54,7 +46,7 @@ module prioritised_fifo_tb();
         lp_BFM = new(lp_stream,1);
         hp_BFM = new(hp_stream,1);
         reset <=1'h1;
-        dout_ready <=0;
+        out_stream.ready <=0;
         #1 reset <=1'h0;
         //TESTS
         #5.5 reset <=1'h1;
@@ -63,16 +55,16 @@ module prioritised_fifo_tb();
             #10 hp_BFM.write($urandom);
             #10 lp_BFM.write($urandom);
         end 
-        #10 dout_ready <=1;
-        #150 dout_ready <=0;
+        #10 out_stream.ready <=1;
+        #150 out_stream.ready <=0;
         
         for(integer i = 0; i<16; i++)begin
             #10 hp_BFM.write($urandom);
             #10 lp_BFM.write($urandom);
         end
         
-        dout_ready <=1;
-        #150 dout_ready <=0;
+        out_stream.ready <=1;
+        #150 out_stream.ready <=0;
         #1 reset <=1'h0;
         #5.5 reset <=1'h1;
 
@@ -80,10 +72,10 @@ module prioritised_fifo_tb();
             #10 lp_BFM.write($urandom);
         end 
         #10 hp_BFM.write($urandom);
-        #10 dout_ready <=1;
+        #10 out_stream.ready <=1;
         #10 hp_BFM.write($urandom);
         #10 hp_BFM.write($urandom);
-        #150 dout_ready <=0;        
+        #150 out_stream.ready <=0;        
     end
 
 
