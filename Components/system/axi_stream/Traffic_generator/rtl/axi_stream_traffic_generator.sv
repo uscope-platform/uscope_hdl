@@ -12,16 +12,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 `timescale 10 ns / 1 ns
+`include "interfaces.svh"
 
 module axi_stream_traffic_generator (
     input wire clock,
     input wire reset,
     input wire enable,
-    input wire traffic_ready,
-    output reg [39:0] traffic_data,
-    output reg traffic_valid
+    axi_stream.master data_out
 );
 
 
@@ -36,21 +34,21 @@ end
 always@(posedge clock) begin
     if(~reset) begin
         address <= 0;
-        traffic_valid <= 0;
-        traffic_data <= 0;
+        data_out.valid <= 0;
+        data_out.data <= 0;
     end else begin
         if(enable)begin
-            if(traffic_valid)begin
-                traffic_valid <=0;
+            if(data_out.valid)begin
+                data_out.valid <=0;
             end else begin
-                if(traffic_ready) begin
-                    traffic_data <= ram[address];
+                if(data_out.ready) begin
+                    data_out.data <= ram[address];
                     address <= address+1;
-                    traffic_valid <=1;
+                    data_out.valid <=1;
                 end
             end
         end else begin
-            traffic_valid <= 0;
+            data_out.valid <= 0;
         end
     end
 end
