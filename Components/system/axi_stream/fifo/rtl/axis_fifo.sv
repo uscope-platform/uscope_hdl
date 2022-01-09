@@ -29,7 +29,7 @@ reg [$clog2(FIFO_DEPTH)-1:0] hp_mem_addr_r;
 
 reg [$clog2(FIFO_DEPTH):0] fill_level;
 
-reg [DATA_WIDTH:0] fifo_memory[FIFO_DEPTH-1:0];
+reg [DATA_WIDTH-1:0] fifo_memory[FIFO_DEPTH-1:0];
 reg [DEST_WIDTH-1:0] dest_memory[FIFO_DEPTH-1:0];
 reg [USER_WIDTH-1:0] user_memory[FIFO_DEPTH-1:0];
 integer i;
