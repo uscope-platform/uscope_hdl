@@ -27,7 +27,7 @@ module axis_cdc #(parameter CDC_STYLE = "FF", N_STAGES = 3, DATA_WIDTH = 32, USE
     reg [DATA_WIDTH-1:0] data_meta[N_STAGES-1:0];
     reg [USER_WIDTH-1:0] user_meta[N_STAGES-1:0];
     reg [DEST_WIDTH-1:0] dest_meta[N_STAGES-1:0];
-    reg [3:0] valid_meta, ready_meta;
+    reg [N_STAGES-1:0] valid_meta, ready_meta;
 
     assign out.data = data_meta[N_STAGES-1];
     assign out.user = user_meta[N_STAGES-1];
@@ -37,22 +37,22 @@ module axis_cdc #(parameter CDC_STYLE = "FF", N_STAGES = 3, DATA_WIDTH = 32, USE
     if(CDC_STYLE == "FF")begin
         always @(posedge clock_out) begin
             for(integer i = 0; i< N_STAGES; i = i+1)begin
-                data_meta[i+1] = data_meta[i];
+                data_meta[i+1] <= data_meta[i];
             end
             data_meta[0] <= in.data;
 
             for(integer i = 0; i< N_STAGES; i = i+1)begin
-                user_meta[i+1] = user_meta[i];
+                user_meta[i+1] <= user_meta[i];
             end
             user_meta[0] <= in.user;
 
             for(integer i = 0; i< N_STAGES; i = i+1)begin
-                dest_meta[i+1] = dest_meta[i];
+                dest_meta[i+1] <= dest_meta[i];
             end
             dest_meta[0] <= in.dest;
 
             for(integer i = 0; i< N_STAGES; i = i+1)begin
-                valid_meta[i+1] = valid_meta[i];
+                valid_meta[i+1] <= valid_meta[i];
             end
             valid_meta[0] <= in.valid;
 
@@ -88,7 +88,7 @@ module axis_cdc #(parameter CDC_STYLE = "FF", N_STAGES = 3, DATA_WIDTH = 32, USE
             .INIT_SYNC_FF(1),
             .SIM_ASSERT_CHK(1),
             .SRC_SYNC_FF(2),
-            .WIDTH(32)
+            .WIDTH(DATA_WIDTH)
         ) op_cdc_data (
             .dest_out(out.data),
             .dest_req(out.valid),
@@ -106,7 +106,7 @@ module axis_cdc #(parameter CDC_STYLE = "FF", N_STAGES = 3, DATA_WIDTH = 32, USE
             .INIT_SYNC_FF(1),
             .SIM_ASSERT_CHK(1),
             .SRC_SYNC_FF(2),
-            .WIDTH(32)
+            .WIDTH(DATA_WIDTH)
         ) op_cdc_dest (
             .dest_out(out.dest),
             .dest_clk(clock_out),

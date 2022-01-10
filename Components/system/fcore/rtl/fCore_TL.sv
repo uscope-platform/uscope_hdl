@@ -39,7 +39,7 @@ module fCore_TL();
         .dma_axi(dma_axi),
         .axi_out(ctrl_axi),
         .fcore_axi(fcore_axi),
-        .scope(dummy_scope),
+        .scope(dummy_scope)
     );
 
     axi_lite #(.INTERFACE_NAME("GPIO")) gpio_axi();

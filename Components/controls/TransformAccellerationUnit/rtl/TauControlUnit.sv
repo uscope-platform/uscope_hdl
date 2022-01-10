@@ -33,7 +33,7 @@ module TauControlUnit #(parameter BASE_ADDRESS = 'h43c00000)(
         .N_READ_REGISTERS(9),
         .N_WRITE_REGISTERS(9),
         .REGISTERS_WIDTH(32),
-        .ADDRESS_MASK('hf),
+        .ADDRESS_MASK('hf)
     ) CU (
         .clock(clock),
         .reset(reset),

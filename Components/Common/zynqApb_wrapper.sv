@@ -62,7 +62,7 @@ module Zynq_wrapper(
     wire FIXED_IO_ps_srstb;
     
 
-    zynq_apb_bd zynq_apb_bd_i (
+    zynq_axi_lite_bd zynq_axi_lite_bd_i (
         .M00_AXI_0_araddr(axi_out.ARADDR),
         .M00_AXI_0_arprot(axi_out.ARPROT),
         .M00_AXI_0_arready(axi_out.ARREADY),
