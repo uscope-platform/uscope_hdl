@@ -15,49 +15,6 @@
 `ifndef INTERFACES_SV
 `define INTERFACES_SV
 
-interface Simplebus;
-    logic [31:0] sb_address;
-    logic        sb_read_strobe;
-    logic        sb_read_valid;
-    logic [31:0] sb_read_data;
-    logic        sb_write_strobe;
-    logic [31:0] sb_write_data;
-    logic        sb_ready;
-
-    task reset ();
-        sb_address <= 0;
-        sb_write_data <= 0;
-        sb_write_strobe <= 0;
-        sb_read_strobe <= 0;
-    endtask
-
-    task proxy_write (input logic [31:0] p_addr, input logic [31:0] addr, input logic [31:0] data, real clk_per);
-        //WRITE ADDR
-        wait(sb_ready);
-        sb_address <= p_addr;
-        sb_write_data <= data;
-        sb_write_strobe <= 1'b1;
-        wait(sb_ready);
-        #clk_per sb_write_strobe <= 1'b0;
-        sb_write_data <=0;
-        @(posedge sb_ready);
-        //WRITE DATA
-        wait(sb_ready);
-        sb_address <= p_addr+4;
-        sb_write_data <= addr;
-        sb_write_strobe <= 1'b1;
-        wait(sb_ready);
-        #clk_per sb_write_strobe <= 1'b0;
-        sb_write_data <=0;
-        @(posedge sb_ready);
-    endtask
-
-
-    modport master(input sb_read_data, sb_read_valid, sb_ready, output sb_address, sb_read_strobe, sb_write_strobe, sb_write_data);
-    modport slave(input sb_address, sb_read_strobe, sb_write_strobe, sb_write_data, output sb_read_data, sb_read_valid, sb_ready);
-endinterface
-
-
 interface axi_lite #(DATA_WIDTH = 32, ADDR_WIDTH = 32, INTERFACE_NAME = "IF");
     logic [ADDR_WIDTH-1:0] ARADDR;
     logic [2:0] ARPROT;
