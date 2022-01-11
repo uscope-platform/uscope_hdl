@@ -30,10 +30,8 @@ Every new contributor should place his details in the CREDITS file the license n
 ## Modules breakdown
 
 * **ADC INTERFACE:** This module implements a versatile ADC interface that can perform filtering, linearization on incoming samples, with pre and post filtering fault tripping possibility
-* **APB TO SIMPLEBUS:** Converts ARM AMBA APB bus interface to the simpler SIMPLEBUS memory mapped interface.
 * **PWM GENERATOR:** Highly flexible PWM generator with two phase shiftable 32 bit timers each one feeding 6 gatable pwm channels with automatic dead-time insertion.
 * **SPI:** Fully fledged SPI peripheral.
-* **SIMPLEBUS INTERCONNECT:** This interconnect enables the seamless connection of multiple slaves to a single node without conflicts, and static partitioning of the bus based on addressing, lowering overall power consumption.
 *  **TRANSFORM ACCELLERATION UNIT:** This module implements Clarke and park transforms. sine and cosine functions are based on a 512 word l6 bit look up table. A 0.17° overall resolution is obtained by storing only a quarter of the sinusoid period in the LUT and using trigonometric identities to reconstruct the whole period
 
 

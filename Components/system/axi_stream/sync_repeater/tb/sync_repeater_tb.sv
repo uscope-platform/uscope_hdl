@@ -15,7 +15,6 @@
 
 `timescale 10ns / 1ns
 `include "interfaces.svh"
-`include "SimpleBus_BFM.svh"
 `include "axis_BFM.svh"
 							
 module axis_sync_repeater_tb();

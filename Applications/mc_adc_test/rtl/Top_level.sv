@@ -41,45 +41,47 @@ module MC_scope_test_top(
     axi_stream ch_5();
     axi_stream ch_6();
 
-    Simplebus s();
-    Simplebus s1();
-    Simplebus s2();
-    APB apb();
+    axi_lite control_axi();
     AXI fcore();
     axi_lite dma_axi();
     axi_stream uscope();
     wire clock, reset, slow_clock, dma_done;
-    
-    Zynq_axis_wrapper PS(
-        .APB(apb),
-        .Reset(reset),
+
+
+    Zynq_axis_wrapper #(
+        .FCORE_PRESENT(0)
+    ) TEST(        
         .Logic_Clock(clock),
         .IO_clock(slow_clock),
+        .Reset(reset),
+        .axi_out(control_axi),
         .dma_axi(dma_axi),
         .fcore_axi(fcore),
         .scope(uscope),
         .dma_done(dma_done)
     );
 
-    APB_to_Simplebus bridge(
-        .PCLK(clock),
-        .PRESETn(reset),
-        .apb(apb),
-        .spb(s)
-    );
 
-    defparam xbar.SLAVE_1_LOW = 32'h43C00000;
-    defparam xbar.SLAVE_1_HIGH = 32'h43C000fc;
-    defparam xbar.SLAVE_2_LOW =  32'h43C000fc;
-    defparam xbar.SLAVE_2_HIGH =  32'h43C00700;
+    localparam SCOPE_BASE = 32'h43C00000;
+    localparam GPIO_BASE  = 32'h43C01000;
 
-    SimplebusInterconnect_M1_S2 xbar (
+    axi_lite #(.INTERFACE_NAME("PWM")) scope_axi();
+    axi_lite #(.INTERFACE_NAME("ALIGNER")) gpio_axi();
+
+
+    axil_crossbar_interface #(
+        .DATA_WIDTH(32),
+        .ADDR_WIDTH(32),
+        .NM(1),
+        .NS(2),
+        .SLAVE_ADDR('{SCOPE_BASE, GPIO_BASE}),
+        .SLAVE_MASK('{2{32'h0f000}})
+    ) axi_xbar (
         .clock(clock),
-        .master(s),
-        .slave_1(s1),
-        .slave_2(s2) 
+        .reset(reset),
+        .slaves('{control_axi}),
+        .masters('{scope_axi, gpio_axi})
     );
-
 
 
     wire ss, sclk;
@@ -90,8 +92,9 @@ module MC_scope_test_top(
     assign A_SCLK_0508 = sclk;
     assign A_SCLK_0104 = sclk;
 
-    defparam test.BASE_ADDRESS = 32'h43C00100;
-    mc_scope_tl test(
+    mc_scope_tl #(
+        .BASE_ADDRESS(SCOPE_BASE)
+    ) test(
         .clock(clock),
         .reset(reset),
         .enable(data_gen_en),
@@ -101,19 +104,18 @@ module MC_scope_test_top(
         .MISO(miso),
         .SS(ss),
         .SCLK(sclk),
-        .sb(s2)
+        .axi_in(scope_axi)
     );
 
 
-
-    defparam setpoint_gpio.BASE_ADDRESS = 'h43c00000;
-    defparam setpoint_gpio.INPUT_WIDTH = 0;
-    defparam setpoint_gpio.OUTPUT_WIDTH = 1;
-    gpio setpoint_gpio(
+    gpio #(
+        .INPUT_WIDTH(0),
+        .OUTPUT_WIDTH(1)
+    ) setpoint_gpio(
         .clock(clock),
         .reset(reset),
         .gpio_o(data_gen_en),
-        .sb(s1)
+        .axi_in(gpio_axi)
     );
 
 endmodule

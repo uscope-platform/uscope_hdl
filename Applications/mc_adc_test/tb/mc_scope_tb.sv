@@ -13,11 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 `timescale 10 ns / 1 ns
-`include "SimpleBus_BFM.svh"
 `include "interfaces.svh"
+`include "axis_BFM.svh"
 `include "SPI_BFM.svh"
-//import axi_vip_pkg::*;
-//import VIP_axi_vip_0_0_pkg::*;
 
 module mc_scope_tb();
     
@@ -67,9 +65,24 @@ module mc_scope_tb();
     assign miso[4] =  adc_5.MISO;
     assign miso[5] =  adc_6.MISO;
 
-    Simplebus s();
-    simplebus_BFM sb_BFM; 
-    
+
+    axis_BFM write_BFM;
+    axis_BFM read_req_BFM;
+    axis_BFM read_resp_BFM;
+
+    axi_stream read_req();
+    axi_stream read_resp();
+    axi_stream write();
+
+    axis_to_axil WRITER(
+        .clock(clk),
+        .reset(reset), 
+        .axis_write(write),
+        .axis_read_request(read_req),
+        .axis_read_response(read_resp),
+        .axi_out(axi_master)
+    );
+
     defparam UUT.BASE_ADDRESS = 32'h43C00100;
     mc_scope_tl UUT(
         .clock(clk),
@@ -81,30 +94,19 @@ module mc_scope_tb();
         .SS(ss),
         .SCLK(sclk),
         .out(uscope),
-        .sb(s)
+        .axi_in(axi_master)
     );
 
-    //dma_vip_wrapper VIP( 
-    //    .clock(clk),
-    //    .reset(rst),
-    //    .dma_done(dma_done),
-    //    .axi(dma_axi),
-    //    .stream(uscope)
-    //);
-
-
-
-
-    //VIP_axi_vip_0_0_slv_mem_t slv_agent;
 
     //clock generation
     initial clk = 0; 
     always #0.5 clk = ~clk; 
     // reset generation
     initial begin
-        sb_BFM = new(s,1);
-        //slv_agent = new("slave agent", mc_scope_tb.VIP.VIP_i.axi_vip_0.inst.IF);
-        //slv_agent.start_slave();
+        write_BFM = new(write,1);
+        read_req_BFM = new(read_req, 1);
+        read_resp_BFM = new(read_resp, 1);
+
         spi_BFM_1 = new(adc_1,1);
         spi_BFM_2 = new(adc_2,1);
         spi_BFM_3 = new(adc_3,1);
@@ -119,8 +121,8 @@ module mc_scope_tb();
         ->start_spi_transfers;
         #5;
 
-        sb_BFM.write('h43c00304, 'h1b);
-        sb_BFM.write('h43c00300, 'h101e2);
+        write_BFM.write_dest('h1b, 'h43c00304);
+        write_BFM.write_dest('h101e2, 'h43c00300);
         #3 enable=1;
        
 

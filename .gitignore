@@ -44,7 +44,6 @@ Components/system/axi_stream/limiter/limiter/
 Components/system/fcore/fCore/
 Components/system/fcore/ALU/ALU/
 Components/system/fcore/istore/fCore_Istore/
-Components/system/SimplebusConfigurator/SbConfig/
 Components/system/axi_stream/sync_repeater/axis_sync_repeater/
 Components/system/fcore/alu/FP_saturator/
 Components/system/axi_stream/register_slice/register_slice/
@@ -52,10 +51,7 @@ Components/system/axi_stream/register_slice/register_slice/
 Components/ExternalDrivers/AD2S1210/AD2S1210/
 
 Applications/sicDriveCell/SicDriveCell/
-Applications/SimplebusPwmModulator/SimplebusPwmModulator/
-Applications/SimplebusPwmModulator/SimplebusPwnModulator/
-Applications/SimplebusPwmModulator/counter_reveal/
-Applications/SimplebusPwmModulator/counter/
+
 Applications/AdcTest/AdcTest/
 Applications/CurrentLoop/CurrentLoop/
 Applications/CurrentLoopMaster/CurrentLoopMaster/

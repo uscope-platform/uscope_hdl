@@ -25,7 +25,7 @@ module mc_scope_tl #(parameter BASE_ADDRESS = 'h43c00000)(
     output wire SCLK,
     axi_lite dma_axi,
     axi_stream.master out,
-    Simplebus.slave sb
+    axi_lite.slave axi_in
 );
 
     localparam N_CHANNELS = 6;
@@ -60,20 +60,25 @@ module mc_scope_tl #(parameter BASE_ADDRESS = 'h43c00000)(
     wire [31:0] counter;
 
 
+    localparam SCOPE_BASE = 32'h43C01000;
+    localparam ADC_BASE   = 32'h43C01100;
 
-    Simplebus sb_scope();
-    Simplebus sb_adc();
-    Simplebus sb_dummy[N_CHANNELS]();
+    axi_lite #(.INTERFACE_NAME("SCOPE")) scope_axi();
+    axi_lite #(.INTERFACE_NAME("ADC")) adc_axi();
 
-    defparam xbar.SLAVE_1_LOW = 'h43c00100;
-    defparam xbar.SLAVE_1_HIGH = 'h43c00200;
-    defparam xbar.SLAVE_2_LOW = 'h43c00300;
-    defparam xbar.SLAVE_2_HIGH = 'h43c00400;
-    SimplebusInterconnect_M1_S2 xbar (
+
+    axil_crossbar_interface #(
+        .DATA_WIDTH(32),
+        .ADDR_WIDTH(32),
+        .NM(1),
+        .NS(2),
+        .SLAVE_ADDR('{SCOPE_BASE, ADC_BASE}),
+        .SLAVE_MASK('{2{32'h0f000}})
+    ) axi_xbar (
         .clock(clock),
-        .master(sb),
-        .slave_1(sb_scope),
-        .slave_2(sb_adc)
+        .reset(reset),
+        .slaves('{axi_in}),
+        .masters('{scope_axi, adc_axi})
     );
 
     generate 
@@ -122,8 +127,7 @@ module mc_scope_tl #(parameter BASE_ADDRESS = 'h43c00000)(
                 .miso(MISO),
                 .enable_adc(counter==32),
                 .adc_samples(samples),
-                .adc_if_sb(sb_adc),
-                .adc_post_sb(sb_dummy)
+                .axi_in(adc_axi)
             );
         end
     endgenerate
@@ -173,7 +177,6 @@ module mc_scope_tl #(parameter BASE_ADDRESS = 'h43c00000)(
         
     end
     
-    Simplebus dummy();
     defparam scope.BASE_ADDRESS = 'h43c00100;
     uScope scope (
         .clock(clock),
@@ -189,8 +192,7 @@ module mc_scope_tl #(parameter BASE_ADDRESS = 'h43c00000)(
         .in_8(ch_8),
         .dma_axi(dma_axi),
         .out(out),
-        .th_sb(dummy),
-        .sb(sb_scope)
+        .axi_in(scope_axi)
     );
 
 endmodule
