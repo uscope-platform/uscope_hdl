@@ -99,13 +99,15 @@ module axis_to_axil (
         end
     end
 
-    assign axis_read_request.ready = reader_state == reader_idle;
 
     enum reg [2:0] {
         reader_idle = 0,
         reader_send_address = 1,
         reader_wait_data = 2
     } reader_state;
+
+    assign axis_read_request.ready = reader_state == reader_idle;
+
 
     reg[31:0] latched_read_address;
     reg[31:0] latched_read_data;

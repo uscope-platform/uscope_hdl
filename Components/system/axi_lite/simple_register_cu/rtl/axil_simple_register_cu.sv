@@ -53,6 +53,8 @@ module axil_simple_register_cu #(
 
 logic read_ready;
 logic [31:0] read_data;
+logic [31:0] read_address;
+logic read_address_valid;
 
 initial axil.RVALID = 0;
 
@@ -73,10 +75,6 @@ assign	axil.RRESP = 2'b00;
 
 
 // HANDLE READ ADDRESS CHANNEL
-
-logic [31:0] read_address;
-logic read_address_valid;
-
 
 axil_skid_buffer #(
     .REGISTER_OUTPUT(REGISTERED_BUFFERS),

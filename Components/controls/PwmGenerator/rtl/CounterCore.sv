@@ -27,9 +27,11 @@ module counter_core #(parameter COUNTER_WIDTH = 16)(
         output wire [COUNTER_WIDTH-1:0] count_out
     );
 
+    reg [COUNTER_WIDTH-1:0] count = {COUNTER_WIDTH{1'b0}};
+
     assign count_out = count;
 
-    reg [COUNTER_WIDTH-1:0] count = {COUNTER_WIDTH{1'b0}};
+    
  
     always @(posedge clockIn) begin 
         if (~reset)
