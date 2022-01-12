@@ -209,7 +209,6 @@ module fCore(
     fCore_dma_endpoint #( 
         .BASE_ADDRESS(DMA_BASE_ADDRESS),
         .DATAPATH_WIDTH(DATAPATH_WIDTH),
-        .PULSE_STRETCH_LENGTH(4),
         .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
     )dma_ep(
         .clock(clock),

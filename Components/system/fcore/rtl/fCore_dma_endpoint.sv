@@ -100,7 +100,6 @@ module fCore_dma_endpoint #(
             read_addr.ready <= 1;
             axis_dma_read_request.ready <= 1;
             dma_read_addr <= 0;
-            bus_read_data <= 0;
             stream_read_data <= 0;
             read_n_channels <= 0;
             state <= idle;
@@ -150,8 +149,11 @@ module fCore_dma_endpoint #(
                 axis_dma_read_response.data <= 0;
                 axis_dma_read_response.valid <= 0;
                 bus_read_valid <= 0;
+                bus_read_data <= 0;
             end
             bus_read: begin
+                axis_dma_read_response.data <= 0;
+                axis_dma_read_response.valid <= 0;
                 if(read_n_channels) begin
                     bus_read_valid <= 1;
                     bus_read_data <= n_channels;
@@ -164,6 +166,14 @@ module fCore_dma_endpoint #(
             axis_read: begin
                 axis_dma_read_response.data <= dma_read_data;
                 axis_dma_read_response.valid <= 1;
+                bus_read_data <= 0;
+                bus_read_valid <= 0;
+            end
+            default: begin
+                axis_dma_read_response.data <= 0;
+                axis_dma_read_response.valid <= 0;
+                bus_read_data <= 0;
+                bus_read_valid <= 0;
             end
             
         endcase
