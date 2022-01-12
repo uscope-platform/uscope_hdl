@@ -52,6 +52,7 @@ module axis_constant #(
         .axil(axil)
     );
 
+    reg wait_sync;
 
     reg [31:0] constant_low_bytes;
     reg [31:0] constant_high_bytes;
@@ -71,6 +72,7 @@ module axis_constant #(
             const_out.valid <= 0;
             const_out.data <= 0;
             const_out.dest <= 0;
+            wait_sync <= 0;
         end else begin
             const_out.valid <= 0;
             if(trigger_axis_write)begin
@@ -78,10 +80,17 @@ module axis_constant #(
                     const_out.data <= {constant_high_bytes, constant_low_bytes};
                     const_out.dest <= constant_dest;
                     const_out.valid <= 1;
-                end    
+                end else begin
+                    wait_sync = 1;
+                end   
+            end else if(wait_sync) begin
+                if(const_out.ready & sync) begin
+                    const_out.data <= {constant_high_bytes, constant_low_bytes};
+                    const_out.dest <= constant_dest;
+                    const_out.valid <= 1;
+                    wait_sync <= 0;
+                end              
             end
-            
-
         end
     end
 
