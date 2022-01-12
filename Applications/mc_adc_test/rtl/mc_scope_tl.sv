@@ -116,10 +116,12 @@ module mc_scope_tl #(parameter BASE_ADDRESS = 'h43c00000)(
             assign ch_5_valid = samples[4].valid;
             assign ch_6_valid = samples[5].valid;
 
-            defparam ADC.SPI_ADDRESS = 'h43c00300;
-            defparam ADC.DECIMATE = 0;
-            defparam ADC.ADC_DATA_WIDTH = 14;
-            SicDriveMasterAdc ADC(
+        
+            SicDriveMasterAdc #(
+                .SPI_ADDRESS('h43c00300),
+                .DECIMATE(0),
+                .ADC_DATA_WIDTH(14)
+            ) ADC(
                 .clock(clock),
                 .reset(reset),
                 .ss(SS),
@@ -177,8 +179,9 @@ module mc_scope_tl #(parameter BASE_ADDRESS = 'h43c00000)(
         
     end
     
-    defparam scope.BASE_ADDRESS = 'h43c00100;
-    uScope scope (
+    uScope #(
+        .BASE_ADDRESS('h43c00100)
+    ) scope (
         .clock(clock),
         .reset(reset),
         .dma_done(dma_done),

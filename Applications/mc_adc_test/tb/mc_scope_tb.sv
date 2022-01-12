@@ -83,8 +83,9 @@ module mc_scope_tb();
         .axi_out(axi_master)
     );
 
-    defparam UUT.BASE_ADDRESS = 32'h43C00100;
-    mc_scope_tl UUT(
+    mc_scope_tl #(
+        .BASE_ADDRESS(32'h43C00100)
+    ) UUT(
         .clock(clk),
         .reset(rst),
         .enable(enable),

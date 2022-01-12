@@ -20,9 +20,7 @@
 module fCore_dma_endpoint #(
     parameter BASE_ADDRESS = 32'h43c00000,
     DATAPATH_WIDTH = 20,
-    PULSE_STRETCH_LENGTH = 6,
-    REG_ADDR_WIDTH = 8, 
-    LEGACY_READ=1
+    REG_ADDR_WIDTH = 8,
 )(
     input wire clock,
     input wire reset,

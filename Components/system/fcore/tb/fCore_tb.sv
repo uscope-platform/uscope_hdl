@@ -58,7 +58,7 @@ module fCore_tb();
     );
 
 
-    defparam uut.dma_ep.LEGACY_READ = 0;
+    
     defparam uut.executor.RECIPROCAL_PRESENT = RECIPROCAL_PRESENT;
     fCore #(
         .FAST_DEBUG("TRUE"),
