@@ -20,9 +20,7 @@ module ad2s1210_cu (
     input wire reset,
     input wire read_angle,
     input wire read_speed,
-    input wire SPI_ready,
-    output wire SPI_valid,
-    output wire [31:0] SPI_data_out,
+    axi_stream.master external_spi_transfer,
     input wire [31:0] SPI_data_in,
     output reg [1:0] mode,
     output reg [1:0] resolution,
@@ -159,12 +157,7 @@ module ad2s1210_cu (
     axi_stream read_spi();
     axi_stream cfg_spi();
     axi_stream fc_spi();
-    axi_stream spi_control();
 
-
-    assign SPI_data_out = spi_control.data;
-    assign SPI_valid = spi_control.valid;
-    assign spi_control.ready = SPI_ready;
 
     axi_stream_combiner_3 #(
         .INPUT_DATA_WIDTH(32),
@@ -176,7 +169,7 @@ module ad2s1210_cu (
         .stream_in_1(read_spi),
         .stream_in_2(cfg_spi),
         .stream_in_3(fc_spi),
-        .stream_out(spi_control)
+        .stream_out(external_spi_transfer)
     );
 
 

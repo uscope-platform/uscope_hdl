@@ -21,8 +21,6 @@ module EnableGen_tb();
     logic gen_en;
     wire en_out;
 
-    parameter spi_mode_master = 0, spi_mode_slave = 1;
-
     //clock generation
     initial clk = 1; 
     always #0.5 clk = ~clk; 

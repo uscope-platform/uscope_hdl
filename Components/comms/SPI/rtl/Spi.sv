@@ -31,9 +31,7 @@ module SPI #(
     output logic [N_CHANNELS-1:0] MOSI,
     output logic SS,
     axi_lite.slave axi_in,
-    input wire SPI_write_valid,
-    input wire [31:0] SPI_write_data,
-    output reg SPI_write_ready
+    axi_stream.slave external_spi_transfer
 );
 
 
@@ -171,9 +169,7 @@ module SPI #(
         .start_generator_enable(start_generator_enable),
         .transfer_length_choice(transfer_length_choice),
         .axi_in(axi_in),
-        .SPI_write_valid(SPI_write_valid),
-        .SPI_write_data(SPI_write_data),
-        .SPI_write_ready(SPI_write_ready)
+        .external_spi_transfer(external_spi_transfer)
     );
 
 

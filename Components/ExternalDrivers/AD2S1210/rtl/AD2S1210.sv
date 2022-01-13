@@ -55,19 +55,16 @@ module ad2s1210 #(parameter BASE_ADDRESS = 32'h43c00000)(
     );
 
 
-    wire SPI_ready, SPI_valid;
     wire [4:0] spi_transfer_length;
-    wire [31:0] SPI_data;
 
+    axi_stream spi_transfer();
 
     ad2s1210_cu CU (
         .clock(clock),
         .reset(reset),
         .read_angle(read_angle),
         .read_speed(read_speed),
-        .SPI_ready(SPI_ready),
-        .SPI_valid(SPI_valid),
-        .SPI_data_out(SPI_data),
+        .external_spi_transfer(spi_transfer),
         .SPI_data_in(unpacked_spi_data[0]),
         .spi_transfer_length(spi_transfer_length),
         .mode(R_A),
@@ -93,9 +90,7 @@ module ad2s1210 #(parameter BASE_ADDRESS = 32'h43c00000)(
         .MOSI(MOSI),
         .SS(SS),
         .axi_in(spi_axi),
-        .SPI_write_valid(SPI_valid),
-        .SPI_write_data(SPI_data),
-        .SPI_write_ready(SPI_ready),
+        .external_spi_transfer(spi_transfer),
         .data_valid(data_valid),
         .data_out(unpacked_spi_data)
     );

@@ -40,10 +40,7 @@ module SpiControlUnit #(
     output logic latching_edge,
     output logic transfer_length_choice,
     axi_lite.slave axi_in,
-    // AXI STREAM WRITE
-    input wire SPI_write_valid,
-    input wire [31:0] SPI_write_data,
-    output reg SPI_write_ready
+    axi_stream.slave external_spi_transfer
 );
 
     localparam  N_REGISTERS = 4 + N_CHANNELS;
@@ -136,22 +133,22 @@ module SpiControlUnit #(
     always_ff @(posedge clock) begin
         if(!reset)begin
             unit_busy <= 0;
-            SPI_write_ready <= 1;
+            external_spi_transfer.ready <= 1;
         end else begin
             axis_start_transfer <= 0;
-            if(SPI_write_valid) begin
-                axis_spi_data  <= SPI_write_data[31:0];
+            if(external_spi_transfer.valid) begin
+                axis_spi_data  <= external_spi_transfer.data[31:0];
                 axis_start_transfer <=1;
                 unit_busy <= 1;
-                SPI_write_ready <= 0;
+                external_spi_transfer.ready <= 0;
             end
 
             if(spi_start_transfer) begin
                 unit_busy <= 1;
-                SPI_write_ready <= 0;
+                external_spi_transfer.ready <= 0;
             end else if(transfer_done) begin
                 unit_busy <= 0;
-                SPI_write_ready <= 1;
+                external_spi_transfer.ready <= 1;
             end
         end
         
