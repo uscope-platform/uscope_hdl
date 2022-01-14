@@ -36,7 +36,7 @@ module trigonometricUnit (
     reg [15:0] table_cos_out = 0;
 
     initial begin : INIT
-        $readmemh("sineTable.dat", SinTable);
+        $readmemh("tau_sineTable.dat", SinTable);
     end
 
     // sin(x) =  LUT(x)       for [0 pi/2]

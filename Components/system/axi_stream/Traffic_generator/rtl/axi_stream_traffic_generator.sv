@@ -28,7 +28,7 @@ reg [39:0] ram [1023:0];
 reg [9:0] address;
 
 initial begin
-    $readmemh("data.dat",ram);
+    $readmemh("tgen_data.dat",ram);
 end
 
 always@(posedge clock) begin

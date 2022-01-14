@@ -41,7 +41,7 @@ module SinCosLUT (
     reg [1:0] quadrant;
     
     initial begin : INIT
-        $readmemh("sineTable.dat", SinTable);
+        $readmemh("sineTable_lut.dat", SinTable);
     end
 
 
