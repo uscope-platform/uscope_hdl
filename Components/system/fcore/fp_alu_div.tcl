@@ -109,6 +109,11 @@ set_property CONFIG.TUSER_WIDTH 0 $mult_b
 
 
 
+set rec_a [ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:axis_rtl:1.0 rec_a ]
+set_property -dict $DefaultInputPortProps $rec_a
+
+set rec_res [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:axis_rtl:1.0 rec_res ]
+
 
 
 set clock [ create_bd_port -dir I -type clk clock ]
@@ -117,7 +122,7 @@ set clock [ create_bd_port -dir I -type clk clock ]
 
 
 set_property -dict [ list \
-CONFIG.ASSOCIATED_BUSIF {adder_op:itf_res:fti_res:cmp_res:mul_res:add_res:adder_a:adder_b:mult_a:mult_b:itf_a:fti_b:comp_a:comp_b} \
+CONFIG.ASSOCIATED_BUSIF {adder_op:itf_res:fti_res:cmp_res:mul_res:add_res:adder_a:adder_b:mult_a:mult_b:itf_a:fti_b:comp_a:comp_b:rec_res:rec_a} \
 CONFIG.ASSOCIATED_RESET {reset} \
 ] $clock
 
@@ -183,15 +188,76 @@ CONFIG.Operation_Type {Multiply} \
 
 
 
+# Create instance: FP_reciprocal, and set properties
+set FP_reciprocal [ create_bd_cell -type ip -vlnv xilinx.com:ip:floating_point:7.1 FP_reciprocal ]
+set_property -dict [ list \
+CONFIG.A_TUSER_Width {32} \
+CONFIG.C_Latency {8} \
+CONFIG.C_Mult_Usage {Full_Usage} \
+CONFIG.Flow_Control {NonBlocking} \
+CONFIG.Has_ARESETn {true} \
+CONFIG.Has_A_TUSER {true} \
+CONFIG.Has_RESULT_TREADY {false} \
+CONFIG.Maximum_Latency {false} \
+CONFIG.Operation_Type {Reciprocal} \
+] $FP_reciprocal
+
+
+
 
 set axis_cmp_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_register_slice:1.1 axis_cmp_0 ]
 set_property -dict [ list CONFIG.REG_CONFIG {1} CONFIG.TUSER_WIDTH {32} ] $axis_cmp_0
 
+set axis_add_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_register_slice:1.1 axis_add_0 ]
+set_property -dict [ list CONFIG.REG_CONFIG {1} CONFIG.TUSER_WIDTH {32} ] $axis_add_0
+
+set axis_mul_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_register_slice:1.1 axis_mul_0 ]
+set_property -dict [ list CONFIG.REG_CONFIG {1} CONFIG.TUSER_WIDTH {32} ] $axis_mul_0
+
+set axis_fti_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_register_slice:1.1 axis_fti_0 ]
+set_property -dict [ list CONFIG.REG_CONFIG {1} CONFIG.TUSER_WIDTH {32} ] $axis_fti_0
+
+set axis_itf_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_register_slice:1.1 axis_itf_0 ]
+set_property -dict [ list CONFIG.REG_CONFIG {1} CONFIG.TUSER_WIDTH {32} ] $axis_itf_0
+
 set axis_cmp_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_register_slice:1.1 axis_cmp_1 ]
 set_property -dict [ list CONFIG.REG_CONFIG {1} CONFIG.TUSER_WIDTH {32} ] $axis_cmp_1
 
+set axis_add_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_register_slice:1.1 axis_add_1 ]
+set_property -dict [ list CONFIG.REG_CONFIG {1} CONFIG.TUSER_WIDTH {32} ] $axis_add_1
+
+set axis_mul_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_register_slice:1.1 axis_mul_1 ]
+set_property -dict [ list CONFIG.REG_CONFIG {1} CONFIG.TUSER_WIDTH {32} ] $axis_mul_1
+
+set axis_fti_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_register_slice:1.1 axis_fti_1 ]
+set_property -dict [ list CONFIG.REG_CONFIG {1} CONFIG.TUSER_WIDTH {32} ] $axis_fti_1
+
+set axis_itf_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_register_slice:1.1 axis_itf_1 ]
+set_property -dict [ list CONFIG.REG_CONFIG {1} CONFIG.TUSER_WIDTH {32} ] $axis_itf_1
+
 set axis_cmp_2 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_register_slice:1.1 axis_cmp_2 ]
 set_property -dict [ list CONFIG.REG_CONFIG {1} CONFIG.TUSER_WIDTH {32} ] $axis_cmp_2
+
+set axis_add_2 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_register_slice:1.1 axis_add_2 ]
+set_property -dict [ list CONFIG.REG_CONFIG {1} CONFIG.TUSER_WIDTH {32} ] $axis_add_2
+
+set axis_mul_2 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_register_slice:1.1 axis_mul_2 ]
+set_property -dict [ list CONFIG.REG_CONFIG {1} CONFIG.TUSER_WIDTH {32} ] $axis_mul_2
+
+set axis_fti_2 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_register_slice:1.1 axis_fti_2 ]
+set_property -dict [ list CONFIG.REG_CONFIG {1} CONFIG.TUSER_WIDTH {32} ] $axis_fti_2
+
+set axis_itf_2 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_register_slice:1.1 axis_itf_2 ]
+set_property -dict [ list CONFIG.REG_CONFIG {1} CONFIG.TUSER_WIDTH {32} ] $axis_itf_2
+
+set axis_cmp_3 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_register_slice:1.1 axis_cmp_3 ]
+set_property -dict [ list CONFIG.REG_CONFIG {1} CONFIG.TUSER_WIDTH {32} ] $axis_cmp_3
+
+set axis_cmp_4 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_register_slice:1.1 axis_cmp_4 ]
+set_property -dict [ list CONFIG.REG_CONFIG {1} CONFIG.TUSER_WIDTH {32} ] $axis_cmp_4
+
+set axis_cmp_5 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_register_slice:1.1 axis_cmp_5 ]
+set_property -dict [ list CONFIG.REG_CONFIG {1} CONFIG.TUSER_WIDTH {32} ] $axis_cmp_5
 
 
 # Create instance: fixed_to_float, and set properties
@@ -231,31 +297,46 @@ connect_bd_intf_net -intf_net adder_b [get_bd_intf_ports adder_b] [get_bd_intf_p
 connect_bd_intf_net -intf_net adder_op [get_bd_intf_ports adder_op] [get_bd_intf_pins FP_adder/S_AXIS_OPERATION]
 
 
-connect_bd_intf_net -intf_net adder_result_c [get_bd_intf_pins FP_adder/M_AXIS_RESULT] [get_bd_intf_pins add_res]
+connect_bd_intf_net -intf_net adder_result_c [get_bd_intf_pins FP_adder/M_AXIS_RESULT] [get_bd_intf_pins axis_add_0/S_AXIS]
+connect_bd_intf_net -intf_net adder_del_0_c [get_bd_intf_pins axis_add_0/M_AXIS] [get_bd_intf_pins axis_add_1/S_AXIS]
+connect_bd_intf_net -intf_net adder_del_1_c [get_bd_intf_pins axis_add_1/M_AXIS] [get_bd_intf_pins axis_add_2/S_AXIS]
+connect_bd_intf_net -intf_net adder_del_2_c [get_bd_intf_ports add_res] [get_bd_intf_pins axis_add_2/M_AXIS]
 
 
 
 
-connect_bd_intf_net -intf_net multiplier_result_c [get_bd_intf_pins FP_multiplier/M_AXIS_RESULT] [get_bd_intf_pins mul_res]
+connect_bd_intf_net -intf_net multiplier_result_c [get_bd_intf_pins FP_multiplier/M_AXIS_RESULT] [get_bd_intf_pins axis_mul_0/S_AXIS]
+connect_bd_intf_net -intf_net multiplier_del_0_c [get_bd_intf_pins axis_mul_0/M_AXIS] [get_bd_intf_pins axis_mul_1/S_AXIS]
+connect_bd_intf_net -intf_net multiplier_del_1_c [get_bd_intf_pins axis_mul_1/M_AXIS] [get_bd_intf_pins axis_mul_2/S_AXIS]
+connect_bd_intf_net -intf_net multiplier_del_2_c [get_bd_intf_ports mul_res] [get_bd_intf_pins axis_mul_2/M_AXIS]
 
 
 connect_bd_intf_net -intf_net itf_a [get_bd_intf_ports itf_a] [get_bd_intf_pins fixed_to_float/S_AXIS_A]
 
 
-connect_bd_intf_net -intf_net itf_result_c [get_bd_intf_pins fixed_to_float/M_AXIS_RESULT] [get_bd_intf_pins itf_res]
+connect_bd_intf_net -intf_net itf_result_c [get_bd_intf_pins fixed_to_float/M_AXIS_RESULT] [get_bd_intf_pins axis_itf_0/S_AXIS]
+connect_bd_intf_net -intf_net itf_del_0_c [get_bd_intf_pins axis_itf_0/M_AXIS] [get_bd_intf_pins axis_itf_1/S_AXIS]
+connect_bd_intf_net -intf_net itf_del_1_c [get_bd_intf_pins axis_itf_1/M_AXIS] [get_bd_intf_pins axis_itf_2/S_AXIS]
+connect_bd_intf_net -intf_net itf_del_2_c [get_bd_intf_ports itf_res] [get_bd_intf_pins axis_itf_2/M_AXIS]
 
 
 
 connect_bd_intf_net -intf_net fti_b [get_bd_intf_ports fti_b] [get_bd_intf_pins float_to_fixed/S_AXIS_A]
 
 
-connect_bd_intf_net -intf_net fti_result_c [get_bd_intf_pins float_to_fixed/M_AXIS_RESULT] [get_bd_intf_pins fti_res]
+connect_bd_intf_net -intf_net fti_result_c [get_bd_intf_pins float_to_fixed/M_AXIS_RESULT] [get_bd_intf_pins axis_fti_0/S_AXIS]
+connect_bd_intf_net -intf_net fti_del_0_c [get_bd_intf_pins axis_fti_0/M_AXIS] [get_bd_intf_pins axis_fti_1/S_AXIS]
+connect_bd_intf_net -intf_net fti_del_1_c [get_bd_intf_pins axis_fti_1/M_AXIS] [get_bd_intf_pins axis_fti_2/S_AXIS]
+connect_bd_intf_net -intf_net fti_del_2_c [get_bd_intf_ports fti_res] [get_bd_intf_pins axis_fti_2/M_AXIS]
 
 
 
 connect_bd_intf_net -intf_net mult_a [get_bd_intf_ports mult_a] [get_bd_intf_pins FP_multiplier/S_AXIS_A]
 connect_bd_intf_net -intf_net mult_b [get_bd_intf_ports mult_b] [get_bd_intf_pins FP_multiplier/S_AXIS_B]
 
+
+connect_bd_intf_net -intf_net rec_a [get_bd_intf_ports rec_a] [get_bd_intf_pins FP_reciprocal/S_AXIS_A]
+connect_bd_intf_net -intf_net rec_result_c [get_bd_intf_ports rec_res] [get_bd_intf_pins FP_reciprocal/M_AXIS_RESULT]    
 
 
 
@@ -268,7 +349,10 @@ connect_bd_intf_net -intf_net cmp_del_0_c [get_bd_intf_pins axis_cmp_0/M_AXIS] [
 connect_bd_intf_net -intf_net cmp_del_1_c [get_bd_intf_pins axis_cmp_1/M_AXIS] [get_bd_intf_pins axis_cmp_2/S_AXIS]
 
 
-connect_bd_intf_net -intf_net cmp_del_2_c [get_bd_intf_pins axis_cmp_2/M_AXIS] [get_bd_intf_pins cmp_res]
+connect_bd_intf_net -intf_net cmp_del_2_c [get_bd_intf_pins axis_cmp_2/M_AXIS] [get_bd_intf_pins axis_cmp_3/S_AXIS]
+connect_bd_intf_net -intf_net cmp_del_3_c [get_bd_intf_pins axis_cmp_3/M_AXIS] [get_bd_intf_pins axis_cmp_4/S_AXIS]
+connect_bd_intf_net -intf_net cmp_del_4_c [get_bd_intf_pins axis_cmp_4/M_AXIS] [get_bd_intf_pins axis_cmp_5/S_AXIS]
+connect_bd_intf_net -intf_net cmp_del_5_c [get_bd_intf_pins axis_cmp_5/M_AXIS] [get_bd_intf_pins cmp_res]    
 
 
 
@@ -280,20 +364,83 @@ connect_bd_net -net aclk_0_1 [get_bd_ports clock] [get_bd_pins FP_adder/aclk] [g
 
 connect_bd_net -net ARESETN_0_1 [get_bd_ports reset] [get_bd_pins axis_cmp_0/aresetn]
 
+connect_bd_net -net ARESETN_0_1 [get_bd_ports reset] [get_bd_pins axis_add_0/aresetn]
+
+connect_bd_net -net ARESETN_0_1 [get_bd_ports reset] [get_bd_pins axis_mul_0/aresetn]
+
+connect_bd_net -net ARESETN_0_1 [get_bd_ports reset] [get_bd_pins axis_fti_0/aresetn]
+
+connect_bd_net -net ARESETN_0_1 [get_bd_ports reset] [get_bd_pins axis_itf_0/aresetn]
+
 connect_bd_net -net ARESETN_0_1 [get_bd_ports reset] [get_bd_pins axis_cmp_1/aresetn]
 
+connect_bd_net -net ARESETN_0_1 [get_bd_ports reset] [get_bd_pins axis_add_1/aresetn]
+
+connect_bd_net -net ARESETN_0_1 [get_bd_ports reset] [get_bd_pins axis_mul_1/aresetn]
+
+connect_bd_net -net ARESETN_0_1 [get_bd_ports reset] [get_bd_pins axis_fti_1/aresetn]
+
+connect_bd_net -net ARESETN_0_1 [get_bd_ports reset] [get_bd_pins axis_itf_1/aresetn]
+
 connect_bd_net -net ARESETN_0_1 [get_bd_ports reset] [get_bd_pins axis_cmp_2/aresetn]
+
+connect_bd_net -net ARESETN_0_1 [get_bd_ports reset] [get_bd_pins axis_add_2/aresetn]
+
+connect_bd_net -net ARESETN_0_1 [get_bd_ports reset] [get_bd_pins axis_mul_2/aresetn]
+
+connect_bd_net -net ARESETN_0_1 [get_bd_ports reset] [get_bd_pins axis_fti_2/aresetn]
+
+connect_bd_net -net ARESETN_0_1 [get_bd_ports reset] [get_bd_pins axis_itf_2/aresetn]
+
+connect_bd_net -net ARESETN_0_1 [get_bd_ports reset] [get_bd_pins axis_cmp_3/aresetn]
+
+connect_bd_net -net ARESETN_0_1 [get_bd_ports reset] [get_bd_pins axis_cmp_4/aresetn]
+
+connect_bd_net -net ARESETN_0_1 [get_bd_ports reset] [get_bd_pins axis_cmp_5/aresetn]
 
 
 
 connect_bd_net -net aclk_0_1 [get_bd_ports clock] [get_bd_pins axis_cmp_0/aclk]
 
+connect_bd_net -net aclk_0_1 [get_bd_ports clock] [get_bd_pins axis_add_0/aclk]
+
+connect_bd_net -net aclk_0_1 [get_bd_ports clock] [get_bd_pins axis_mul_0/aclk]
+
+connect_bd_net -net aclk_0_1 [get_bd_ports clock] [get_bd_pins axis_fti_0/aclk]
+
+connect_bd_net -net aclk_0_1 [get_bd_ports clock] [get_bd_pins axis_itf_0/aclk]
+
 connect_bd_net -net aclk_0_1 [get_bd_ports clock] [get_bd_pins axis_cmp_1/aclk]
+
+connect_bd_net -net aclk_0_1 [get_bd_ports clock] [get_bd_pins axis_add_1/aclk]
+
+connect_bd_net -net aclk_0_1 [get_bd_ports clock] [get_bd_pins axis_mul_1/aclk]
+
+connect_bd_net -net aclk_0_1 [get_bd_ports clock] [get_bd_pins axis_fti_1/aclk]
+
+connect_bd_net -net aclk_0_1 [get_bd_ports clock] [get_bd_pins axis_itf_1/aclk]
 
 connect_bd_net -net aclk_0_1 [get_bd_ports clock] [get_bd_pins axis_cmp_2/aclk]
 
+connect_bd_net -net aclk_0_1 [get_bd_ports clock] [get_bd_pins axis_add_2/aclk]
+
+connect_bd_net -net aclk_0_1 [get_bd_ports clock] [get_bd_pins axis_mul_2/aclk]
+
+connect_bd_net -net aclk_0_1 [get_bd_ports clock] [get_bd_pins axis_fti_2/aclk]
+
+connect_bd_net -net aclk_0_1 [get_bd_ports clock] [get_bd_pins axis_itf_2/aclk]
+
+connect_bd_net -net aclk_0_1 [get_bd_ports clock] [get_bd_pins axis_cmp_3/aclk]
+
+connect_bd_net -net aclk_0_1 [get_bd_ports clock] [get_bd_pins axis_cmp_4/aclk]
+
+connect_bd_net -net aclk_0_1 [get_bd_ports clock] [get_bd_pins axis_cmp_5/aclk]
 
 
+
+
+connect_bd_net -net aclk_0_1 [get_bd_ports clock] [get_bd_pins FP_reciprocal/aclk] 
+connect_bd_net -net ARESETN_0_1 [get_bd_ports reset] [get_bd_pins FP_reciprocal/aresetn] 
 
 
  

@@ -90,3 +90,40 @@ module TransformAccellerationUnit #(parameter BASE_ADDRESS = 'h43c00000)(
 
 
 endmodule
+
+
+
+    /**
+       {
+        "name": "TauControlUnit",
+        "type": "peripheral",
+        "registers":[
+            {
+                "name": "ctrl",
+                "offset": "0x0",
+                "description": "Control register",
+                "direction": "RW",
+                "fields": [
+                    {
+                        "name":"direct_chain_disable",
+                        "description": "Disable chaining of the transforms on the direct path",
+                        "start_position": 0,
+                        "length": 1
+                    },
+                    {
+                        "name":"tb_en",
+                        "description": "Disable chaining of the transforms on the inverse path",
+                        "start_position": 1,
+                        "length": 1
+                    },
+                    {
+                        "name":"reset",
+                        "description": "Soft reser register",
+                        "start_position": 2,
+                        "length": 1
+                    }
+                ]
+            }
+        ]
+       }  
+    **/

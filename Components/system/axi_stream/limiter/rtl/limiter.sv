@@ -78,3 +78,24 @@ module axis_limiter #(parameter BASE_ADDRESS = 'h43c00000)(
     end
 
 endmodule
+
+    /**
+       {
+        "name": "axis_constant",
+        "type": "peripheral",
+        "registers":[
+            {
+                "name": "lim_up",
+                "offset": "0x0",
+                "description": "Highest allowable value on the stream",
+                "direction": "RW"
+            },
+            {
+                "name": "high",
+                "offset": "0x4",
+                "description": "Lowest allowable value on the stream",
+                "direction": "RW"
+            }
+        ]
+    }  
+    **/

@@ -44,3 +44,24 @@ module gpio #(
 
 
 endmodule
+   
+    /**
+       {
+        "name": "gpio",
+        "type": "peripheral",
+        "registers":[
+            {
+                "name": "out",
+                "offset": "0x0",
+                "description": "Output Register",
+                "direction": "RW"        
+            },
+            {
+                "name": "in",
+                "offset": "0x4",
+                "description": "Input Register",
+                "direction": "R"
+            }
+        ]
+       }  
+    **/

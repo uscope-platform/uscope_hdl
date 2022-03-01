@@ -199,3 +199,31 @@ module multiphase_reference_generator #(
 
 
 endmodule
+
+
+ /**
+       {
+        "name": "multiphase_reference_generator",
+        "type": "peripheral",
+        "registers":[
+            {
+                "name": "freerunning_mode",
+                "offset": "0x0",
+                "description": "Run the multiphase reference generator in free-running mode",
+                "direction": "RW"
+            },
+            {
+                "name": "ph_adv",
+                "offset": "0x4",
+                "description": "Phase advance for direct digital synthesis",
+                "direction": "RW"
+            },
+            {
+                "name": "per",
+                "offset": "0x8",
+                "description": "Sampling period for direct digital synthesis",
+                "direction": "RW"
+            }
+        ]
+    }  
+    **/

@@ -183,3 +183,19 @@ module fCore_dma_endpoint #(
 
 endmodule
  
+
+
+    /**
+       {
+        "name": "fCore_dma_endpoint",
+        "type": "peripheral",
+        "registers":[
+            {
+                "name": "n_channel",
+                "offset": "0x0",
+                "description": "Number active channels for the active program",
+                "direction": "RW"
+            }
+        ]
+    }  
+    **/

@@ -185,3 +185,48 @@ module uScope #(
 
 
 endmodule
+
+    /**
+       {
+        "name": "uScope",
+        "type": "peripheral",
+        "registers":[
+            {
+                "name": "buffer_size",
+                "offset": "0x0",
+                "description": "Size of the scope buffer in words",
+                "direction": "RW"
+            },
+            {
+                "name": "buffer_addr",
+                "offset": "0x4",
+                "description": "Address of the first word in memory of the data buffer",
+                "direction": "RW"
+            },
+            {
+                "name": "enable",
+                "offset": "0x8",
+                "description": "Writing 1 to this register enables the scope",
+                "direction": "RW"  
+            },
+            {
+                "name": "selected_trigger",
+                "offset": "0xC",
+                "description": "Writing an address to this register triggers the related signal",
+                "direction": "RW"  
+            },
+            {
+                "name": "capture_ack",
+                "offset": "0x10",
+                "description": "Acknowledge the last captured trigger",
+                "direction": "RW"  
+            },
+            {
+                "name": "trigger_position",
+                "offset": "0x14",
+                "description": "Position of the trigger in the capture window",
+                "direction": "RW"  
+            }
+        ]
+    }  
+    **/

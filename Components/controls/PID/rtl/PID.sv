@@ -202,3 +202,86 @@ module PID #(
 
 
 endmodule
+
+    /**
+       {
+        "name": "PID",
+        "type": "peripheral",
+        "registers":[
+            {
+                "name": "control",
+                "offset": "0x0",
+                "description": "Control register",
+                "direction": "RW"        
+            },
+            {
+                "name": "kp",
+                "offset": "0x4",
+                "description": "Proportional action gain",
+                "direction": "RW"
+            },
+            {
+                "name": "ki",
+                "offset": "0x8",
+                "description": "Integral action gain",
+                "direction": "RW"
+            },
+            {
+                "name": "kd",
+                "offset": "0xc",
+                "description": "Derivative action gain",
+                "direction": "RW"
+            },
+            {
+                "name": "limit_out_p",
+                "offset": "0x10",
+                "description": "Upper output saturation limit",
+                "direction": "RW"
+            },
+            {
+                "name": "limit_out_n",
+                "offset": "0x14",
+                "description": "Lower output saturation limit",
+                "direction": "RW"
+            },
+            {
+                "name": "limit_int_p",
+                "offset": "0x18",
+                "description": "Upper integrator saturation limit",
+                "direction": "RW"
+            },
+            {
+                "name": "limit_int_n",
+                "offset": "0x1c",
+                "description": "Lower integrator saturation limit",
+                "direction": "RW"
+            },
+            {
+                "name": "gain_scaling",
+                "offset": "0x20",
+                "description": "Gain scaling factor",
+                "direction": "RW",
+                "fields": [
+                    {
+                        "name":"kp_den",
+                        "description": "Proportional action scaling factor",
+                        "start_position": 0,
+                        "length": 8
+                    },
+                    {
+                        "name":"ki_den",
+                        "description": "Integral action scaling factor",
+                        "start_position": 8,
+                        "length": 8
+                    },
+                    {
+                        "name":"kd_den",
+                        "description": "derivative action scaling factor",
+                        "start_position": 16,
+                        "length": 8
+                    }
+                ]
+            }
+        ]
+       }  
+    **/

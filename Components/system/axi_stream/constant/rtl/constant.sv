@@ -97,3 +97,32 @@ module axis_constant #(
 
 
 endmodule
+
+
+    /**
+       {
+        "name": "axis_constant",
+        "type": "peripheral",
+        "registers":[
+            {
+                "name": "low",
+                "offset": "0x0",
+                "description": "Least significant bytes of the constant",
+                "direction": "RW"
+            },
+            {
+                "name": "high",
+                "offset": "0x4",
+                "description": "Most significant bytes of the constant",
+                "direction": "RW"
+            },
+            {
+                "name": "dest",
+                "offset": "0x8",
+                "description": "Value of the AXI stream dest signal associated with the constant",
+                "direction": "RW"
+                
+            }
+        ]
+    }  
+    **/

@@ -141,3 +141,157 @@ module AdcProcessing #(
     );
 
 endmodule
+
+
+ /**
+       {
+        "name": "AdcProcessing",
+        "type": "peripheral",
+        "registers":[
+            {
+                "name": "cmp_low_f",
+                "offset": "0x0",
+                "description": "Low comparator threshold (falling when in normal mode)",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"fast",
+                        "description": "Fast comparator treshold",
+                        "start_position": 0,
+                        "length": 16
+                    },
+                    {
+                        "name":"slow",
+                        "description": "Slow comparator threshold",
+                        "start_position": 16,
+                        "length": 16
+                    }
+                ]
+            },
+            {
+                "name": "cmp_low_r",
+                "offset": "0x4",
+                "description": "Low and rising comparator threshold in normal mode",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"fast",
+                        "description": "Fast comparator treshold",
+                        "start_position": 0,
+                        "length": 16
+                    },
+                    {
+                        "name":"slow",
+                        "description": "Slow comparator threshold",
+                        "start_position": 16,
+                        "length": 16
+                    }
+                ]
+            },
+            {
+                "name": "cmp_high_f",
+                "offset": "0x8",
+                "description": "high and falling comparator threshold in normal mode",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"fast",
+                        "description": "Fast comparator treshold",
+                        "start_position": 0,
+                        "length": 16
+                    },
+                    {
+                        "name":"slow",
+                        "description": "Slow comparator threshold",
+                        "start_position": 16,
+                        "length": 16
+                    }
+                ]
+            },
+            {
+                "name": "cmp_h_r",
+                "offset": "0xc",
+                "description": "High comparator threshold (rising in normal mode)",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"fast",
+                        "description": "Fast comparator treshold",
+                        "start_position": 0,
+                        "length": 16
+                    },
+                    {
+                        "name":"slow",
+                        "description": "Slow comparator threshold",
+                        "start_position": 16,
+                        "length": 16
+                    }
+                ]
+            },
+            {
+                "name": "cal_coeff",
+                "offset": "0x10",
+                "description": "Calibration coefficients",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"offset",
+                        "description": "Fast comparator treshold",
+                        "start_position": 16,
+                        "length": 16
+                    }
+                ]
+            },
+            {
+                "name": "control",
+                "offset": "0x14",
+                "description": "ADC post processing module control register",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"latch_mode",
+                        "description": "Toggles comparators between normal and latching mode",
+                        "start_position": 1,
+                        "length": 2
+                    },
+                    {
+                        "name":"clear_latch",
+                        "description": "Clear comparators latch when in latching mode",
+                        "start_position": 3,
+                        "length": 2
+                    },
+                    {
+                        "name":"cal_shift",
+                        "description": "Ammount of bits the data will be shifted right by (gain)",
+                        "start_position": 5,
+                        "length": 3
+                    },
+                    {
+                        "name":"fault_delay",
+                        "description": "Amount of clock cycles a slow comparator must be active before triggering a fault",
+                        "start_position": 8,
+                        "length": 8
+                    },
+                    {
+                        "name":"clear_fault",
+                        "description": "Clear sticky fault satus",
+                        "start_position": 16,
+                        "length": 1
+                    },
+                    {
+                        "name":"fault_disable",
+                        "description": "Disable fault generation",
+                        "start_position": 17,
+                        "length": 1
+                    },
+                    {
+                        "name":"decimation",
+                        "description": "Decimation ratio between input and output data",
+                        "start_position": 24,
+                        "length": 8
+                    }
+                ]
+            }
+        ]
+    }  
+    **/
