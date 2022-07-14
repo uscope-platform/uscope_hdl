@@ -22,6 +22,11 @@
             "arguments":[]
         },
         {
+            "name":"Decimator.tcl",
+            "type": "tcl",
+            "arguments":[]
+        },
+        {
             "name":"dma_axi_vip.tcl",
             "type": "tcl",
             "arguments":[]
@@ -34,6 +39,7 @@
     ],
     "excluded_modules":[
        "PS_AXI_stream",
+       "Decimator",
        "Data_source",
        "VIP"
     ],

@@ -104,3 +104,151 @@ module ChainControlUnit #(
 
 
 endmodule
+
+
+    /**
+       {
+        "name": "ChainControlUnit",
+        "type": "peripheral",
+        "registers":[
+            {
+                "name": "tresh_AL",
+                "offset": "0x4",
+                "description": "Comparator 0 treshold low",
+                "direction": "RW"
+            },
+            {
+                "name": "tresh_Bl",
+                "offset": "0x8",
+                "description": "Comparator B treshold low",
+                "direction": "RW"
+            },
+            {
+                "name": "tresh_CL",
+                "offset": "0xC",
+                "description": "Comparator C treshold low",
+                "direction": "RW"
+            },
+            {
+                "name": "tresh_AH",
+                "offset": "0x10",
+                "description": "Comparator A treshold high",
+                "direction": "RW"
+            },
+            {
+                "name": "tresh_BH",
+                "offset": "0x14",
+                "description": "Comparator B treshold high",
+                "direction": "RW"
+            },
+            {
+                "name": "tresh_CH",
+                "offset": "0x18",
+                "description": "Comparator C treshold high",
+                "direction": "RW"
+            },
+            {
+                "name": "deadtime_A",
+                "offset": "0x1c",
+                "description": "Length of deadtime automatically inserted in pair A (if enabled)",
+                "direction": "RW"
+            },
+            {
+                "name": "deadtime_B",
+                "offset": "0x20",
+                "description": "Length of deadtime automatically inserted in pair B (if enabled)",
+                "direction": "RW"
+            },
+            {
+                "name": "deadtime_C",
+                "offset": "0x24",
+                "description": "Length of deadtime automatically inserted in pair C (if enabled)",
+                "direction": "RW"
+            },
+            {
+                "name": "counter_start",
+                "offset": "0x28",
+                "description": "Start Value for the PWM generator",
+                "direction": "RW"
+            },
+            {
+                "name": "counter_stop",
+                "offset": "0x2c",
+                "description": "Stop Value for the PWM generator counter",
+                "direction": "RW"
+            },
+            {
+                "name": "tb_shift",
+                "offset": "0x30",
+                "description": "Delay to be applied to the counter enable signal (to apply shift between the counters)",
+                "direction": "RW"
+            },
+            {
+                "name": "out_en",
+                "offset": "0x34",
+                "description": "Output enable register",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"out_a",
+                        "description": "enable output pair A of chain 0",
+                        "start_position": 0,
+                        "length": 2
+                    },
+                    {
+                        "name":"out_b",
+                        "description": "enable output pair B of chain 0",
+                        "start_position": 2,
+                        "length": 2
+                    },
+                    {
+                        "name":"out_c",
+                        "description": "enable output pair C of chain 0",
+                        "start_position": 4,
+                        "length": 2
+                    }
+                ]
+            },
+            {
+                "name": "dt_en",
+                "offset": "0x38",
+                "description": "Deadtime insertion enable register",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"pair_a",
+                        "description": "Enable deadtime insertion pair A of chain 0",
+                        "start_position": 0,
+                        "length": 1
+                    },
+                    {
+                        "name":"pair_b",
+                        "description": "Enable deadtime insertion pair B of chain 0",
+                        "start_position": 1,
+                        "length": 1
+                    },
+                    {
+                        "name":"pair_c",
+                        "description": "Enable deadtime insertion pair C of chain 0",
+                        "start_position": 2,
+                        "length": 1
+                    }
+                ]
+            },
+            {
+                "name": "ctrl",
+                "offset": "0x3C",
+                "description": "Chain 0 control register",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"mode",
+                        "description": "Chain 0 counter mode",
+                        "start_position": 0,
+                        "length": 3
+                    }
+                ]
+            }
+        ]
+       }  
+    **/

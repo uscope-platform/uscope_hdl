@@ -93,3 +93,58 @@ module PwmControlUnit #(
     end 
 
 endmodule
+
+
+
+    /**
+       {
+        "name": "PwmControlUnit",
+        "type": "peripheral",
+        "registers":[
+            {
+                "name": "ctrl",
+                "offset": "0x0",
+                "description": "Pwm modulator global Control register",
+                "direction": "RW",
+                "fields": [
+                    {
+                        "name":"tb_div",
+                        "description": "Timebase frequency divisor",
+                        "start_position": 0,
+                        "length": 3
+                    },
+                    {
+                        "name":"tb_en",
+                        "description": "Timebase enable",
+                        "start_position": 3,
+                        "length": 1
+                    },
+                    {
+                        "name":"tb_ext_en",
+                        "description": "Enable External timebase",
+                        "start_position": 4,
+                        "length": 1
+                    },
+                    {
+                        "name":"counter_run",
+                        "description": "Start all counters in the PWM generator module",
+                        "start_position": 5,
+                        "length": 1
+                    },
+                    {
+                        "name":"sync",
+                        "description": "Instantly reload all counters (use to syncronize multiple independent PWM generators)",
+                        "start_position": 6,
+                        "length": 1
+                    },
+                    {
+                        "name":"stop_state",
+                        "description": "Default state of the pwm outputs when the counter is not running",
+                        "start_position": 7,
+                        "length": 12
+                    }
+                ]
+            }
+        ]
+       }  
+    **/

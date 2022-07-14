@@ -216,3 +216,111 @@ module ad2s1210_cu (
 
 
 endmodule
+
+
+/**
+       {
+        "name": "ad2s1210_cu",
+        "type": "peripheral",
+        "registers":[
+            {
+                "name": "rdc_los_thres",
+                "offset": "0x0",
+                "description": "Value of AD2S1210 Loss of signal threshold register",
+                "direction": "RW"        
+            },
+            {
+                "name": "rdc_dos_or_thres",
+                "offset": "0x4",
+                "description": "Value of AD2S1210 Degradation of signal overrange threshold register",
+                "direction": "RW"
+            },
+            {
+                "name": "rdc_dos_mism_thres",
+                "offset": "0x8",
+                "description": "Value of AD2S1210 Degradation of signal mismatch threshold register",
+                "direction": "RW"
+            },
+            {
+                "name": "rdc_dos_reset_minmax",
+                "offset": "0xc",
+                "description": "Value of AD2S1210 Degradation of signal minimum and maximum reset threshold register",
+                "direction": "RW"
+            },
+            {
+                "name": "rdc_lot_high",
+                "offset": "0x10",
+                "description": "Value of AD2S1210 Loss of tracking high threshold register",
+                "direction": "RW"
+            },
+            {
+                "name": "rdc_lot_low",
+                "offset": "0x14",
+                "description": "Value of AD2S1210 Loss of tracking low threshold register",
+                "direction": "RW"
+            },
+            {
+                "name": "rdc_exc_freq",
+                "offset": "0x18",
+                "description": "Value of AD2S1210 excitation frequency register",
+                "direction": "RW"
+            },
+            {
+                "name": "rdc_control",
+                "offset": "0x1c",
+                "description": "Value of AD2S1210 control register",
+                "direction": "RW"
+            },
+            {
+                "name": "rdc_reset",
+                "offset": "0x20",
+                "description": "Value of AD2S1210 soft reset register",
+                "direction": "RW"
+            },
+            {
+                "name": "trigger",
+                "offset": "0x24",
+                "description": "Writing 0 to this register will configure the RDC while writing 1 will clear pending",
+                "direction": "W"
+            },
+            {
+                "name": "control",
+                "offset": "0x28",
+                "description": "AD2S1210 Driver control register",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"resolution",
+                        "description": "Resolver to digital resolution setting",
+                        "start_position": 2,
+                        "length": 2
+                    },
+                    {
+                        "name":"rdc_reset",
+                        "description": "Value of the AD2S1210 RESET pin",
+                        "start_position": 4,
+                        "length": 1
+                    },
+                    {
+                        "name":"sample_pulse_length",
+                        "description": "length of the sample pulse",
+                        "start_position": 8,
+                        "length": 8
+                    },
+                    {
+                        "name":"sample_read_delay",
+                        "description": "delay between the sample pulse and the data readback phase",
+                        "start_position": 16,
+                        "length": 8
+                    },
+                    {
+                        "name":"spi_transfer_length",
+                        "description": "lenght of the SPI transfer",
+                        "start_position": 24,
+                        "length": 5
+                    }
+                ]     
+            }
+        ]
+    }  
+    **/
