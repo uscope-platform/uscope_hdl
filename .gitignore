@@ -97,3 +97,7 @@ Components/system/axi_stream/data_mover/AXI_stream_datamover/
 Components/system/axi_lite/axis_to_axil/axis_to_axil/
 
 Components/ExternalDrivers/Si5351/Si5351Configurator/
+
+Applications/simple_axi_bram/simple_axi_bram/
+
+Components/system/sorter/sorter/
