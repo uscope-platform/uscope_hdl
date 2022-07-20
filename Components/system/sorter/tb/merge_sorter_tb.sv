@@ -49,9 +49,8 @@ module merge_sorter_tb ();
         #3 reset = 1;
 
         forever begin
-           #1 in_bfm.write($random());
+            in_bfm.write($random());
         end
-    
     end
 
     initial begin
