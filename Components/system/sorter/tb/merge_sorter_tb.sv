@@ -22,10 +22,10 @@ module merge_sorter_tb ();
     reg clock, reset, start;
     reg [31:0] data_length = 30;
 
-    axi_stream sorter_in();
+    axi_stream #(.DATA_WIDTH(16)) sorter_in();
     axi_stream sorter_out();
 
-    axis_BFM in_bfm;
+    axis_BFM#(16, 32, 32) in_bfm;
     
     merge_sorter #(
         .DATA_WIDTH(16),
@@ -49,7 +49,7 @@ module merge_sorter_tb ();
         #3 reset = 1;
 
         forever begin
-            #2 in_bfm.write($random());
+           #1 in_bfm.write($random());
         end
     
     end
