@@ -17,7 +17,7 @@
 `include "interfaces.svh"
 
 module batcher_sorter_4 #(
-    parameter DATA_WIDTH = 32;
+    parameter DATA_WIDTH = 32
 )(
     input wire clock,
     input wire reset,
@@ -45,8 +45,6 @@ sort_comparator #(
     .data_in(data_in[3:2]),
     .data_out(stage_1[3:2])
 );
-
-
 
 
 sort_comparator #(

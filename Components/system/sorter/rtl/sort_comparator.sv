@@ -17,7 +17,7 @@
 `include "interfaces.svh"
 
 module sort_comparator #(
-    parameter DATA_WIDTH = 32;
+    parameter DATA_WIDTH = 32
 )(
     input wire clock,
     input wire reset,

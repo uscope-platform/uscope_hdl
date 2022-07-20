@@ -17,17 +17,30 @@
 `include "interfaces.svh"
 
 module batcher_sorter_8 #(
-    parameter DATA_WIDTH = 32;
+    parameter DATA_WIDTH = 32
 )(
     input wire clock,
     input wire reset,
     input wire [DATA_WIDTH-1:0] data_in [7:0],
-    output reg [DATA_WIDTH-1:0] data_out [7:0]
+    input wire data_in_valid,
+    output reg [DATA_WIDTH-1:0] data_out [7:0],
+    output reg data_out_valid
 );
 
 wire [DATA_WIDTH-1:0] stage_1 [7:0];
 wire [DATA_WIDTH-1:0] stage_2 [7:0];
 logic [DATA_WIDTH-1:0] stage_3 [7:0];
+
+reg [4:0] valid_delay;
+
+always_ff @(posedge clock) begin
+    valid_delay[0] <= data_in_valid;
+    valid_delay[1] <= valid_delay[0];
+    valid_delay[2] <= valid_delay[1];
+    valid_delay[3] <= valid_delay[2];
+    valid_delay[4] <= valid_delay[3];
+    data_out_valid <= valid_delay[4];
+end
 
 //////////////////////////////////////////////////////////
 /////                       stage 1                  /////

@@ -19,13 +19,13 @@
 `define AXIS_BFM_SV
 
 
-class axis_BFM;
+class axis_BFM #(parameter DATA_WIDTH = 32, USER_WIDTH = 32, DEST_WIDTH = 32);
 
-    virtual axi_stream.master axis;
+    virtual axi_stream #(DATA_WIDTH, USER_WIDTH, DEST_WIDTH) axis;
     integer clock_period;
 
 
-    function new (virtual axi_stream.master stream, integer period);
+    function new (virtual axi_stream stream, integer period);
         begin
             this.axis = stream;
             this.axis.data <= 32'b0;
