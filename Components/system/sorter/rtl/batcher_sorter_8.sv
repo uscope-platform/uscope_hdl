@@ -21,8 +21,10 @@ module batcher_sorter_8 #(
 )(
     input wire clock,
     input wire reset,
+    input wire [3:0] chunk_size_in,
     input wire [DATA_WIDTH-1:0] data_in [7:0],
     input wire data_in_valid,
+    output reg [3:0] chunk_size_out,
     output reg [DATA_WIDTH-1:0] data_out [7:0],
     output reg data_out_valid
 );
@@ -30,6 +32,17 @@ module batcher_sorter_8 #(
 wire [DATA_WIDTH-1:0] stage_1 [7:0];
 wire [DATA_WIDTH-1:0] stage_2 [7:0];
 logic [DATA_WIDTH-1:0] stage_3 [7:0];
+
+reg [3:0 ]chunk_delay [4:0];
+
+always_ff @(posedge clock) begin
+    chunk_delay[0] <= chunk_size_in;
+    chunk_delay[1] <= chunk_delay[0];
+    chunk_delay[2] <= chunk_delay[1];
+    chunk_delay[3] <= chunk_delay[2];
+    chunk_delay[4] <= chunk_delay[3];
+    chunk_size_out <= chunk_delay[4];
+end
 
 reg [4:0] valid_delay;
 

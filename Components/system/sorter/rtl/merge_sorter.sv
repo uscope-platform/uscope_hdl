@@ -24,98 +24,68 @@ module merge_sorter #(
     input wire reset,
     input wire start,
     input wire [15:0] data_length,
-    output wire done,
+    output reg done,
     axi_stream.slave input_data,
     axi_stream.master output_data
 );
 
 
-    reg [DATA_WIDTH-1:0] transfer_buffer [7:0];
-    reg [3:0] current_chunk_size = 8;
-    wire sorter_out_valid;
-    reg enable_batcher_sort;
+    reg [2:0] chunk_counter = 0;
+    reg enable_batcher_sort = 0;
         
+    axi_stream #(.DATA_WIDTH(DATA_WIDTH)) batcher_out();
+
+    
     batcher_sorter_8_serial #(
        .DATA_WIDTH(DATA_WIDTH)
     )in_sorter(
         .clock(clock),
         .reset(reset),
         .data_in(input_data),
-        .chunk_size(current_chunk_size),
-        .data_out(transfer_buffer),
-        .data_out_valid(sorter_out_valid),
-        .data_out_ready(enable_batcher_sort)
+        .data_out(batcher_out)
     );
 
-    reg [$clog2(MAX_SORT_LENGTH)-1:0] input_data_counter = 0;
-
-    always_ff @(posedge clock) begin
-        if(state == sorter_idle) begin
-             enable_batcher_sort <= 1;
-        end
-        if(input_data_counter == shadow_data_length-2) begin
-            enable_batcher_sort <= 0;
-        end
-        if(input_data.valid)begin
-            input_data_counter <= input_data_counter + 1;
-        end
-    end
-
-
-
-    reg [15:0] shadow_data_length;
     reg [$clog2(MAX_SORT_LENGTH/8-1):0] n_complete_chunks  = 0;
     reg [2:0] last_chunk_size = 0;
+
+    assign input_data.dest = chunk_counter==n_complete_chunks ? last_chunk_size : 8;
+    assign input_data.user = chunk_counter;
+    assign batcher_out.ready = enable_batcher_sort;
+
+
+    reg [2:0] input_data_counter = 0;
     
+    always_ff @(posedge clock) begin
+        done <= 0;
+        enable_batcher_sort <= 1;
+        if(start)begin
+            n_complete_chunks <= data_length/8;
+            last_chunk_size <= data_length%8;
+        end
 
-    reg [$clog2(MAX_SORT_LENGTH/8-1):0] chunk_counter  = 0;
+        if(input_data.valid)begin
+            if(chunk_counter == n_complete_chunks)begin
+                if(input_data_counter == last_chunk_size-1) begin
+                    input_data_counter <= 0;
+                    enable_batcher_sort<= 0;
+                    chunk_counter <= chunk_counter + 1;
+                end else begin
+                    input_data_counter <= input_data_counter + 1;
+                end
+            end else begin 
+                if(input_data_counter == 7) begin
+                    input_data_counter <= 0;
+                    chunk_counter <= chunk_counter + 1;
+                end else begin
+                    input_data_counter <= input_data_counter + 1;
+                end
+            end
+        end
 
-
-    reg [$clog2(MAX_SORT_LENGTH)-1:0] mem_a_addr_w;
-    reg [DATA_WIDTH-1:0] mem_a_data_w;
+     
+    end
 
     reg start_merging= 0;
-
-    enum logic [1:0] { 
-        sorter_idle = 0,
-        sorter_batching = 1,
-        sorter_merging = 2
-    } state = sorter_idle;
-
-    always_ff @(posedge clock) begin
-        if(~reset) begin
-        end else begin
-            case (state)
-                sorter_idle:begin
-                    if(start) begin
-                        shadow_data_length <= data_length;
-                        n_complete_chunks <= data_length/8;
-                        last_chunk_size <= data_length%8;
-                        state <= sorter_batching;
-                    end
-                end
-                sorter_batching:begin
-                    if(sorter_out_valid)begin
-                        chunk_counter <= chunk_counter+1;
-                    end
-                    if(chunk_counter == n_complete_chunks-1) begin
-                        if(sorter_out_valid)begin
-                            state <= sorter_merging;
-                        end
-                        current_chunk_size <= last_chunk_size;
-                    end else begin
-                        current_chunk_size <= 8;
-                    end
-                end
-                sorter_merging:begin
-                    
-                end 
-            endcase
-
-
-
-        end
-    end
 
     merging_unit #(
         .DATA_WIDTH(DATA_WIDTH),
@@ -124,9 +94,8 @@ module merge_sorter #(
     )merger (
         .clock(clock),
         .reset(reset),
-        .start_merging(),
-        .input_data(mem_a_data_w),
-        .input_addr(mem_a_addr_w)
+        .start_merging(start_merging),
+        .data_in(batcher_out)
     );
 
 

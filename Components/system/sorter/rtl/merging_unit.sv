@@ -24,8 +24,7 @@ module merging_unit #(
 )(
     input wire clock,
     input wire reset,
-    input wire [DATA_WIDTH-1:0] input_data,
-    input wire [$clog2(MAX_SORT_LENGTH)-1:0] input_addr,
+    axi_stream.slave data_in,
     input wire start_merging
 );
 
@@ -34,8 +33,6 @@ module merging_unit #(
     wire [$clog2(MAX_SORT_LENGTH)-1:0] mem_a_addr_w;
     wire [DATA_WIDTH-1:0] mem_a_data_w;
 
-    assign mem_a_addr_w = select_input_mem ? 0 : input_addr;
-    assign mem_a_data_w = select_input_mem ? 0 : input_data;
 
 
     reg [$clog2(MAX_SORT_LENGTH)-1:0] mem_a_addr_r;
