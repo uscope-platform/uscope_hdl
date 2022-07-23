@@ -103,7 +103,6 @@ module batcher_sorter_8_serial #(
                 if(data_out_valid & transfer_chunk_size != 8) begin
                     if(transfer_chunk_size == 7) begin
                         transfer_state <= fsm_transfer_final_chunk;
-                        transfer_index <= 8-transfer_chunk_size;
                     end else begin
                         transfer_state <= fsm_wait_final_chunk;
                     end

@@ -20,7 +20,7 @@
 module merge_sorter_tb ();
 
     reg clock, reset, start;
-    reg [31:0] data_length = 24;
+    reg [31:0] data_length = 28;
 
     axi_stream #(.DATA_WIDTH(16)) sorter_in();
     axi_stream sorter_out();

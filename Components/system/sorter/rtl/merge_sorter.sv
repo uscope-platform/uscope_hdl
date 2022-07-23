@@ -81,11 +81,26 @@ module merge_sorter #(
                 end
             end
         end
-
-     
     end
 
-    reg start_merging= 0;
+
+    reg batched_counter_working = 0;
+    reg [$clog2(MAX_SORT_LENGTH-1):0] batched_counter  = 0;
+    always_ff @(posedge clock) begin
+        batcher_out.tlast <= 0;
+        if(start) begin
+            batched_counter_working <= 1;
+            batched_counter <= 0;
+        end
+        if(batcher_out.valid & batched_counter_working) begin
+            batched_counter <= batched_counter + 1;
+            if(batched_counter == (n_complete_chunks*8 + last_chunk_size)-2) begin
+                batcher_out.tlast <= 1;
+                batched_counter_working <= 0;
+            end
+
+        end
+    end
 
     merging_unit #(
         .DATA_WIDTH(DATA_WIDTH),
@@ -94,8 +109,10 @@ module merge_sorter #(
     )merger (
         .clock(clock),
         .reset(reset),
-        .start_merging(start_merging),
-        .data_in(batcher_out)
+        .n_chunks_in(n_complete_chunks),
+        .last_chunk_size(last_chunk_size),
+        .data_in(batcher_out),
+        .data_out(output_data)
     );
 
 
