@@ -20,7 +20,12 @@
 module merge_sorter_tb ();
 
     reg clock, reset, start;
-    reg [31:0] data_length = 28;
+    parameter max_data_length = 32;
+    integer current_data_length = 24;
+    event test_start;
+
+    reg [15:0] data_in[max_data_length-1:0];
+    reg [15:0] data_out[];
 
     axi_stream #(.DATA_WIDTH(16)) sorter_in();
     axi_stream sorter_out();
@@ -34,31 +39,92 @@ module merge_sorter_tb ();
         .clock(clock),
         .reset(reset),
         .start(start),
-        .data_length(data_length),
+        .data_length(current_data_length),
         .input_data(sorter_in),
         .output_data(sorter_out)
     );
 
+    task generate_test_data(input integer n, output reg [15:0] data[max_data_length-1:0]);
+        for (integer y = 0; y<max_data_length ; y +=1 ) begin
+            if(y<n) begin
+                data[y] = $random();
+            end else begin
+                data[y] = 0;
+            end
+        end
+    endtask
+
+    task read_sorted_results(output reg [15:0] data_out[]);
+        sorter_out.ready = 1;
+
+        data_out = new [current_data_length];
+
+        for(int k = 0; k < max_data_length; k = k + 1) begin
+            data_out[k] = 0;
+        end
+        @(posedge sorter_out.valid)
+        for(int x = 0; x < current_data_length; x = x + 1) begin
+            @(negedge clock);
+            data_out[x] = sorter_out.data;
+            @(posedge clock);
+        end
+    endtask
+
+    task check_result(input reg [15:0] data_in[max_data_length-1:0], input reg [15:0] data_out[]);
+        reg [15:0] data_expected[];
+
+        data_expected = new [current_data_length];
+        for(int i = 0; i < current_data_length; i = i + 1) begin
+            data_expected[i] = data_in[i];
+        end
+        data_expected.sort();
+        output_Data_sorting_check:
+            assert (data_expected == data_out)
+            else
+                $fatal("%m The output data stream was not sorted correctly");
+    endtask
+
+
+
     initial clock = 0;
     always #0.5 clock = ~clock;
 
+
     initial begin
-        reset = 1;
-        in_bfm = new(sorter_in, 1);
-        #10.5 reset = 0;
-        #3 reset = 1;
-
-
-        for(int i = 0; i < data_length; i = i + 1) begin
-            in_bfm.write($random());
+        for(int j = 0; j < max_data_length; j = j + 1) begin
+            data_in[j] = 0;
         end
     end
 
+
+
     initial begin
-        start = 0;
-        #13.5 start = 1;
-        #1 start = 0;
+        reset = 0;
+        in_bfm = new(sorter_in, 1);
+        #20.5 reset = 0;
+        #20 reset = 1;
+
+        ->test_start;
+        forever begin
+            generate_test_data(current_data_length, data_in);
+            for(int i = 0; i < current_data_length; i = i + 1) begin
+                if(i == 0) begin
+                    start = 1;
+                end else begin
+                    start = 0;
+                end
+                in_bfm.write(data_in[i]);
+            end
+
+            read_sorted_results(data_out);
+
+            #1 check_result(data_in, data_out);
+            # 35;
+        end
     end
+
+
+
 
 
 endmodule

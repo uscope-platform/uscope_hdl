@@ -60,6 +60,7 @@ module merge_sorter #(
         enable_batcher_sort <= 1;
         if(start)begin
             n_complete_chunks <= data_length/8;
+            chunk_counter <= 0;
             last_chunk_size <= data_length%8;
         end
 

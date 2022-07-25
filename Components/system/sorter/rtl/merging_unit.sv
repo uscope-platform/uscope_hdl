@@ -235,8 +235,8 @@ module merging_unit #(
     end
 
     always_comb begin 
-        if(fsm_merger == fsm_read_last_chunk)begin
-            data_out.data <= mf3_data;
+        if(fsm_merger == fsm_write_last_chunk ||fsm_merger == fsm_writeback &  ( chunks_to_merge == 0 & last_chunk_size == 0 & writeback_enable))begin
+            data_out.data <= mem_1_data_a_w;
             data_out.valid <= 1;
         end else begin
             data_out.valid <= 0;
