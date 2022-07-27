@@ -4,7 +4,9 @@
         "target_part":"xc7z020clg400",
 	    "synth_modules":[],
         "synth_tl": "sorter",
-        "sim_modules":[],
+        "sim_modules":[
+            "batcher_sorter_serial_stimulus"
+        ],
         "sim_tl":"sorter_tb",
         "include_paths":[
             "Components/Common"

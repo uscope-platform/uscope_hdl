@@ -17,11 +17,20 @@
 `include "interfaces.svh"
 `include "axis_BFM.svh"
 
+
+parameter max_data_length = 256;
+
+class stimulus;
+    rand bit[15:0] length;
+    rand bit[15:0] data [max_data_length-1:0];
+    constraint length_bounds {length>16 && length<256;}
+endclass
+
+
 module merge_sorter_tb ();
 
     reg clock, reset, start;
-    parameter max_data_length = 32;
-    integer current_data_length = 24;
+    integer data_length = 0;
     event test_start;
 
     reg [15:0] data_in[max_data_length-1:0];
@@ -30,16 +39,18 @@ module merge_sorter_tb ();
     axi_stream #(.DATA_WIDTH(16)) sorter_in();
     axi_stream sorter_out();
 
+    
+
     axis_BFM#(16, 32, 32) in_bfm;
     
     merge_sorter #(
         .DATA_WIDTH(16),
-        .MAX_SORT_LENGTH(32)
+        .MAX_SORT_LENGTH(256)
     )UUT(
         .clock(clock),
         .reset(reset),
         .start(start),
-        .data_length(current_data_length),
+        .data_length(data_length),
         .input_data(sorter_in),
         .output_data(sorter_out)
     );
@@ -54,31 +65,32 @@ module merge_sorter_tb ();
         end
     endtask
 
-    task read_sorted_results(output reg [15:0] data_out[]);
+    task read_sorted_results(input int length, output reg [15:0] data_out[]);
         sorter_out.ready = 1;
 
-        data_out = new [current_data_length];
+        data_out = new[length];
 
         for(int k = 0; k < max_data_length; k = k + 1) begin
             data_out[k] = 0;
         end
+        
         @(posedge sorter_out.valid)
-        for(int x = 0; x < current_data_length; x = x + 1) begin
+        for(int x = 0; x < length; x = x + 1) begin
             @(negedge clock);
             data_out[x] = sorter_out.data;
             @(posedge clock);
         end
     endtask
 
-    task check_result(input reg [15:0] data_in[max_data_length-1:0], input reg [15:0] data_out[]);
+    task check_result(input int length, input reg [15:0] data_in[max_data_length-1:0], input reg [15:0] data_out[]);
         reg [15:0] data_expected[];
 
-        data_expected = new [current_data_length];
-        for(int i = 0; i < current_data_length; i = i + 1) begin
+        data_expected = new [length];
+        for(int i = 0; i < length; i = i + 1) begin
             data_expected[i] = data_in[i];
         end
         data_expected.sort();
-        output_Data_sorting_check:
+        output_data_sorting_check:
             assert (data_expected == data_out)
             else
                 $fatal("%m The output data stream was not sorted correctly");
@@ -100,14 +112,19 @@ module merge_sorter_tb ();
 
     initial begin
         reset = 0;
+        start = 0;
         in_bfm = new(sorter_in, 1);
         #20.5 reset = 0;
         #20 reset = 1;
 
         ->test_start;
         forever begin
-            generate_test_data(current_data_length, data_in);
-            for(int i = 0; i < current_data_length; i = i + 1) begin
+            stimulus stim = new ();
+            stim.randomize();
+            data_length = stim.length;
+            data_in = stim.data;
+
+            for(int i = 0; i < data_length; i = i + 1) begin
                 if(i == 0) begin
                     start = 1;
                 end else begin
@@ -116,10 +133,10 @@ module merge_sorter_tb ();
                 in_bfm.write(data_in[i]);
             end
 
-            read_sorted_results(data_out);
+            read_sorted_results(data_length, data_out);
 
-            #1 check_result(data_in, data_out);
-            # 35;
+            #1 check_result(data_length, data_in, data_out);
+            #200;
         end
     end
 

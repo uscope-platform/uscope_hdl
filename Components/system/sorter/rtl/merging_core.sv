@@ -17,46 +17,111 @@
 `include "interfaces.svh"
 
 module merging_core #(
-    parameter DATA_WIDTH=32
+    parameter DATA_WIDTH=32,
+    parameter MAX_SORT_LENGTH=32
 )(
     input wire clock,
     input wire reset,
+    input wire [$clog2(MAX_SORT_LENGTH)-1:0] chunk_a_size,
+    input wire [$clog2(MAX_SORT_LENGTH)-1:0] chunk_b_size,
     axi_stream.slave stream_in_a,
     axi_stream.slave stream_in_b,
-    axi_stream.master merged_stream
+    axi_stream.master merged_stream,
+    output reg merge_done
 );
 
     reg merge_in_progress = 0;
 
+    reg [$clog2(MAX_SORT_LENGTH)-1:0] chunk_a_counter = 0;
+    reg [$clog2(MAX_SORT_LENGTH)-1:0] chunk_b_counter = 0;
+
+    enum logic [2:0] {
+        fsm_idle = 0,
+        //fsm_start_merge = 1,
+        fsm_merging_ab = 2,
+        fsm_merging_a = 3,
+        fsm_merging_b = 4
+    } core_fsm = fsm_idle;
+
+
     always_ff @(posedge clock) begin
-        merged_stream.valid <= 0; 
-        merged_stream.data <= 0;
-        if(stream_in_a.valid & stream_in_b.valid)begin
-            merge_in_progress <= 1;
+        case(core_fsm)
+        fsm_idle:begin
+            merge_done <= 0;
+            chunk_a_counter <= 0;
+            chunk_b_counter <= 0;
+            if(stream_in_a.valid & stream_in_b.valid) begin
+                core_fsm <= fsm_merging_ab;
+            end
         end
-        if(merge_in_progress)begin
+        fsm_merging_ab:begin
+            
             if(stream_in_a.data > stream_in_b.data) begin
-                if(stream_in_b.valid)
-                    merged_stream.data <= stream_in_b.data;
-                else
-                    merged_stream.data <= stream_in_a.data;
+                chunk_b_counter += 1;
             end else begin
-                if(stream_in_a.valid)
-                    merged_stream.data <= stream_in_a.data;
-                else
-                    merged_stream.data <= stream_in_b.data;
+                chunk_a_counter += 1;
+            end 
+
+            if(chunk_a_counter == chunk_a_size)begin
+                core_fsm <= fsm_merging_b;
             end
-            if(~(stream_in_a.valid | stream_in_b.valid)) begin
-                merge_in_progress <= 0;
+            if(chunk_b_counter ==  chunk_b_size)begin
+                core_fsm <= fsm_merging_a;
             end
-            merged_stream.valid <= stream_in_a.valid | stream_in_b.valid;
         end
+        fsm_merging_a:begin
+                merged_stream.data <= stream_in_a.data;
+                chunk_a_counter += 1;
+            if(chunk_a_counter ==  chunk_a_size)begin
+                core_fsm <= fsm_idle;
+                merge_done <= 1;
+            end
+        end
+        fsm_merging_b:begin
+            merged_stream.data <= stream_in_b.data;
+            chunk_b_counter += 1;
+            if(chunk_b_counter ==  chunk_b_size)begin
+                core_fsm <= fsm_idle;
+                merge_done <= 1;
+            end
+        end
+        endcase
     end
 
 
-    assign stream_in_a.ready = merge_in_progress & (stream_in_a.data < stream_in_b.data) | ~stream_in_b.valid;
-    assign stream_in_b.ready = merge_in_progress & (stream_in_a.data > stream_in_b.data) | ~stream_in_a.valid;
+    always_comb begin
+        case(core_fsm)
+        fsm_idle:begin
+            stream_in_a.ready <= 0;
+            stream_in_b.ready <= 0;
+            merged_stream.valid <= 0; 
+            merged_stream.data <= 0;
+        end
+        fsm_merging_ab:begin
+             if(stream_in_a.data > stream_in_b.data) begin
+                merged_stream.data <= stream_in_b.data;
+            end else begin
+                merged_stream.data <= stream_in_a.data;
+            end 
+            stream_in_a.ready <= stream_in_a.data <= stream_in_b.data;
+            stream_in_b.ready <= stream_in_a.data > stream_in_b.data;
 
+            merged_stream.valid <= 1; 
+        end
+        fsm_merging_a:begin
+            merged_stream.data <= stream_in_a.data;
+            stream_in_a.ready <= 1;
+            stream_in_b.ready <= 0;
+            merged_stream.valid <= 1; 
+        end
+        fsm_merging_b:begin
+            merged_stream.data <= stream_in_b.data;
+            stream_in_b.ready <= 1;
+            stream_in_a.ready <= 0;
+            merged_stream.valid <= 1;   
+        end
+        endcase
+    end
 
 
 endmodule

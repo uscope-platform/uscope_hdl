@@ -48,7 +48,7 @@ module merging_unit #(
     wire [$clog2(MAX_SORT_LENGTH)-1:0] mem_1_addr_b;
     reg [DATA_WIDTH-1:0] mem_1_data_b_r;
 
-    reg writeback_enable = 0;
+    reg writeback_enable;
 
     assign mem_1_addr_a = data_in.valid ? buffer_fill : mf1_addr | mf3_addr;
     assign mem_1_addr_b = mf2_addr;
@@ -80,10 +80,10 @@ module merging_unit #(
     reg[15:0] mf1_chunk_base = 0;
 
     reg merge_read_start = 0;
-    
+    reg mf1_done, mf2_done;
     merger_input_fifo #(
-        .DATA_WIDTH(32),
-        .MAX_SORT_LENGTH(32)
+        .DATA_WIDTH(DATA_WIDTH),
+        .MAX_SORT_LENGTH(MAX_SORT_LENGTH)
     )mf1(
         .clock(clock),
         .reset(reset),
@@ -92,7 +92,8 @@ module merging_unit #(
         .chunk_base_address(mf1_chunk_base),
         .read_data(mem_1_data_a_r),
         .output_data(chunk_a_stream),
-        .read_addr(mf1_addr)
+        .read_addr(mf1_addr),
+        .done(mf1_done)
     );
 
     reg[15:0] mf2_size;
@@ -100,8 +101,8 @@ module merging_unit #(
     reg[15:0] mf2_chunk_base = 0;
 
     merger_input_fifo #(
-        .DATA_WIDTH(32),
-        .MAX_SORT_LENGTH(32)
+        .DATA_WIDTH(DATA_WIDTH),
+        .MAX_SORT_LENGTH(MAX_SORT_LENGTH)
     )mf2(
         .clock(clock),
         .reset(reset),
@@ -110,25 +111,40 @@ module merging_unit #(
         .chunk_base_address(mf2_chunk_base),
         .read_data(mem_1_data_b_r),
         .output_data(chunk_b_stream),
-        .read_addr(mf2_addr)
+        .read_addr(mf2_addr),
+        .done(mf2_done)
     );
-
+    wire merge_done;
     axi_stream #(.DATA_WIDTH(DATA_WIDTH)) merged_stream();  
     merging_core #(
-        .DATA_WIDTH(DATA_WIDTH)
+        .DATA_WIDTH(DATA_WIDTH),
+        .MAX_SORT_LENGTH(MAX_SORT_LENGTH)
      ) merge_core (
         .clock(clock),
         .reset(reset),
+        .chunk_a_size(mf1_size),
+        .chunk_b_size(mf2_size),
         .stream_in_a(chunk_a_stream),
         .stream_in_b(chunk_b_stream),
-        .merged_stream(merged_stream)
+        .merged_stream(merged_stream),
+        .merge_done(merge_done)
     );
 
     reg mf3_start, writeback_done;
     reg[15:0] result_chunk_size;
     wire [15:0] mf3_addr;
     wire [15:0] mf3_data;
+    reg selected_stream;
 
+    axi_stream #(.DATA_WIDTH(DATA_WIDTH)) writeback_stream();  
+    axi_stream_selector_2 out_selector(
+        .clock(clock),
+        .reset(reset),
+        .address(selected_stream),
+        .stream_in(merged_stream),
+        .stream_out_1(writeback_stream), 
+        .stream_out_2(data_out)
+    );
 
     merger_output_fifo #(
         .DATA_WIDTH(DATA_WIDTH),
@@ -138,7 +154,7 @@ module merging_unit #(
         .reset(reset),
         .start(mf3_start),
         .chunk_size(result_chunk_size),
-        .input_data(merged_stream),
+        .input_data(writeback_stream),
         .write_data(mf3_data),
         .write_addr(mf3_addr),
         .write_enable(writeback_enable),
@@ -147,23 +163,23 @@ module merging_unit #(
 
     reg[15:0] chunks_to_merge  = 0;
 
+    reg latched_mf1_done = 0;
+    reg latched_mf2_done = 0;
+
     enum logic [2:0] {
         fsm_idle = 0,
         fsm_reading = 1,
         fsm_merging = 2,
-        fsm_writeback = 3,
-        fsm_read_last_chunk = 4,
-        fsm_merge_last_chunk = 5,
-        fsm_write_last_chunk = 6
+        fsm_writeback = 3
     } fsm_merger = fsm_idle;
 
     always_ff @(posedge clock)begin
+
         case(fsm_merger)
         fsm_idle:begin
             merge_read_start <= 0;
             mf3_start <= 0;
             if(data_in.tlast)begin
-                chunks_to_merge <= n_chunks_in-2;
                 fsm_merger <= fsm_reading;
                 mf1_chunk_base <= 0;
                 mf1_size <= BASE_CHUNK_SIZE;
@@ -171,6 +187,12 @@ module merging_unit #(
                 result_chunk_size <= 2*BASE_CHUNK_SIZE;
                 mf2_size <= BASE_CHUNK_SIZE;
                 merge_read_start <= 1;
+
+                if(last_chunk_size == 0)begin
+                    chunks_to_merge <= n_chunks_in-2;
+                end else begin
+                    chunks_to_merge <= n_chunks_in-2+1;
+                end
             end
         end
         fsm_reading:begin
@@ -180,66 +202,40 @@ module merging_unit #(
             end
         end
         fsm_merging:begin
-            if(~merged_stream.valid)begin
-                fsm_merger <= fsm_writeback;
-                mf3_start <= 1;
+            if(merge_done)begin
+                if(chunks_to_merge == 0) begin
+                    fsm_merger <= fsm_idle;
+                end else begin
+                    mf3_start <= 1;
+                    fsm_merger <= fsm_writeback;
+                end
             end
         end
         fsm_writeback:begin
             mf3_start <= 0;
             if(writeback_done)begin
-                if(chunks_to_merge == 0)begin
-                    if(last_chunk_size != 0)begin
-                        fsm_merger <= fsm_read_last_chunk;
-                        mf1_size <= result_chunk_size;
-                        mf2_chunk_base <= result_chunk_size;
-                        mf2_size <= last_chunk_size;
-                        merge_read_start <= 1;
-                        result_chunk_size <= result_chunk_size+last_chunk_size;
-
-                    end else begin
-                        fsm_merger <= fsm_idle;
-                    end
-                end else begin
+                    chunks_to_merge <= chunks_to_merge-1;
+                    fsm_merger <= fsm_reading;
                     mf1_size <= result_chunk_size;
                     mf2_chunk_base <= result_chunk_size;
-                    chunks_to_merge <= chunks_to_merge-1;
                     merge_read_start <= 1;
+                if(chunks_to_merge == 1 & last_chunk_size != 0)begin
+                    mf2_size <= last_chunk_size;
+                    result_chunk_size <= result_chunk_size+last_chunk_size;
+                end else begin
                     result_chunk_size <= result_chunk_size+BASE_CHUNK_SIZE;
-                    fsm_merger <= fsm_reading;
                 end
             end
 
-        end
-        fsm_read_last_chunk: begin
-            merge_read_start<= 0;
-            if(merged_stream.valid)begin
-                fsm_merger <= fsm_merge_last_chunk;
-            end
-        end
-
-        fsm_merge_last_chunk:begin
-            if(~merged_stream.valid)begin
-                fsm_merger <= fsm_write_last_chunk;
-                mf3_start <= 1;
-            end
-        end
-        
-        fsm_write_last_chunk: begin
-            if(writeback_done)begin
-                fsm_merger <= fsm_idle;
-            end
-            mf3_start <= 0;
         end
         endcase
     end
 
     always_comb begin 
-        if(fsm_merger == fsm_write_last_chunk ||fsm_merger == fsm_writeback &  ( chunks_to_merge == 0 & last_chunk_size == 0 & writeback_enable))begin
-            data_out.data <= mem_1_data_a_w;
-            data_out.valid <= 1;
+        if(merged_stream.valid & chunks_to_merge == 0)begin
+            selected_stream <= 1;
         end else begin
-            data_out.valid <= 0;
+            selected_stream <= 0;
         end
     end
 

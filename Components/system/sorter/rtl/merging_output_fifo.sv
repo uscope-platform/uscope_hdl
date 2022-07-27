@@ -35,8 +35,8 @@ module merger_output_fifo #(
 
     axis_fifo_xpm #(
         .INPUT_DATA_WIDTH(DATA_WIDTH), 
-        .FIFO_DEPTH(128)
-    ) merger_fifo_a (
+        .FIFO_DEPTH(MAX_SORT_LENGTH)
+    ) buffer_fifo (
         .clock(clock),
         .reset(reset),
         .in(input_data),

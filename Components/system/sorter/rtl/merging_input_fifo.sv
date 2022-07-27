@@ -27,15 +27,16 @@ module merger_input_fifo #(
     input wire [15:0] chunk_base_address,
     input wire [15:0] read_data,
     axi_stream.master output_data,
-    output reg [15:0] read_addr
+    output reg [15:0] read_addr,
+    output reg done
 );
 
     axi_stream #(.DATA_WIDTH(DATA_WIDTH)) fifo_input();
 
     axis_fifo_xpm #(
         .INPUT_DATA_WIDTH(32), 
-        .FIFO_DEPTH(128)
-    ) merger_fifo_a (
+        .FIFO_DEPTH(MAX_SORT_LENGTH)
+    ) buffer_fifo (
         .clock(clock),
         .reset(reset),
         .in(fifo_input),
@@ -57,6 +58,7 @@ module merger_input_fifo #(
         fsm_idle:begin
             fifo_input.valid <= 0;
             read_addr <= 0;
+            done <= 0;
             if(start) begin
                 state <= fsm_wait_latency;
                 read_addr <= chunk_base_address;
@@ -68,6 +70,9 @@ module merger_input_fifo #(
             read_addr <= read_addr + 1;
         end
         fsm_read_data:begin
+            if(working_size == 1)begin
+                state <= fsm_idle;
+            end
             fifo_input.data <= read_data;
             fifo_input.valid <= 1;
             if(read_addr == (chunk_base_address + working_size-1)) begin
@@ -77,6 +82,7 @@ module merger_input_fifo #(
         end
         fsm_read_last: begin
             fifo_input.data <= read_data;
+            done <= 1;
             state <= fsm_idle;
         end
         endcase

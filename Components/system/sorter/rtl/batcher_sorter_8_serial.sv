@@ -17,10 +17,12 @@
 `include "interfaces.svh"
 
 module batcher_sorter_8_serial #(
-    parameter DATA_WIDTH = 32
+    parameter DATA_WIDTH = 32,
+    parameter MAX_SORT_LENGTH=32
 )(
     input wire clock,
     input wire reset,
+    input wire [$clog2(MAX_SORT_LENGTH)-1:0] chunk_size,
     axi_stream.slave data_in,
     axi_stream.slave data_out
 );
@@ -34,7 +36,7 @@ module batcher_sorter_8_serial #(
     
     reg sorter_start = 0;
 
-    reg [3:0] sorter_p_dest;
+    reg [$clog2(MAX_SORT_LENGTH)-1:0] working_size;
 
     always_ff @(posedge clock)begin
         sorter_start <= 0;
@@ -46,10 +48,10 @@ module batcher_sorter_8_serial #(
                     input_buffer[i] <= 0;
                 end
             end
-            if(input_buffer_index == data_in.dest-1)begin
+            if(input_buffer_index == chunk_size-1)begin
                 input_buffer_index <= 0;
                 sorter_start <= 1;
-                sorter_p_dest <= input_data.dest;
+                working_size <= chunk_size;
             end else begin
                 input_buffer_index <= input_buffer_index + 1;
             end
@@ -59,7 +61,7 @@ module batcher_sorter_8_serial #(
     wire data_out_valid;
     wire [DATA_WIDTH-1:0] parallel_data_out [7:0];
 
-    reg [3:0] transfer_chunk_size = 0;
+    reg [3:0] transfer_chunk_size;
 
     batcher_sorter_8 #(
         .DATA_WIDTH(DATA_WIDTH)
@@ -67,7 +69,7 @@ module batcher_sorter_8_serial #(
         .clock(clock),
         .reset(reset),
         .data_in(input_buffer),
-        .chunk_size_in(sorter_p_dest),
+        .chunk_size_in(working_size),
         .data_in_valid(sorter_start),
         .data_out(parallel_data_out),
         .chunk_size_out(transfer_chunk_size),
@@ -103,10 +105,10 @@ module batcher_sorter_8_serial #(
                 if(data_out_valid & transfer_chunk_size != 8) begin
                     if(transfer_chunk_size == 7) begin
                         transfer_state <= fsm_transfer_final_chunk;
+                        transfer_index <= 8-transfer_chunk_size;
                     end else begin
                         transfer_state <= fsm_wait_final_chunk;
                     end
-
                     final_chunk_buffer <= parallel_data_out;
                 end else if(transfer_index == 7)begin
                     transfer_index <= 1;
@@ -130,6 +132,5 @@ module batcher_sorter_8_serial #(
             end
         endcase
     end
-
 
 endmodule

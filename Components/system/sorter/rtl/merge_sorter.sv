@@ -30,7 +30,7 @@ module merge_sorter #(
 );
 
 
-    reg [2:0] chunk_counter = 0;
+    reg [$clog2(MAX_SORT_LENGTH/8-1):0] chunk_counter = 0;
     reg enable_batcher_sort = 0;
         
     axi_stream #(.DATA_WIDTH(DATA_WIDTH)) batcher_out();
@@ -41,6 +41,7 @@ module merge_sorter #(
     )in_sorter(
         .clock(clock),
         .reset(reset),
+        .chunk_size(selected_chunk_size),
         .data_in(input_data),
         .data_out(batcher_out)
     );
@@ -48,8 +49,9 @@ module merge_sorter #(
     reg [$clog2(MAX_SORT_LENGTH/8-1):0] n_complete_chunks  = 0;
     reg [2:0] last_chunk_size = 0;
 
-    assign input_data.dest = chunk_counter==n_complete_chunks ? last_chunk_size : 8;
-    assign input_data.user = chunk_counter;
+    wire [$clog2(MAX_SORT_LENGTH/8-1):0] selected_chunk_size;
+    assign selected_chunk_size = chunk_counter==n_complete_chunks &last_chunk_size != 0 ? last_chunk_size : 8;
+
     assign batcher_out.ready = enable_batcher_sort;
 
 
@@ -85,19 +87,22 @@ module merge_sorter #(
     end
 
 
-    reg batched_counter_working = 0;
-    reg [$clog2(MAX_SORT_LENGTH-1):0] batched_counter  = 0;
+    reg batches_counter_working = 0;
+    reg [$clog2(MAX_SORT_LENGTH-1):0] batches_counter  = 0;
     always_ff @(posedge clock) begin
+        if(~batches_counter_working)begin
+            batches_counter <= 0;
+        end
         batcher_out.tlast <= 0;
         if(start) begin
-            batched_counter_working <= 1;
-            batched_counter <= 0;
+            batches_counter_working <= 1;
+            batches_counter <= 0;
         end
-        if(batcher_out.valid & batched_counter_working) begin
-            batched_counter <= batched_counter + 1;
-            if(batched_counter == (n_complete_chunks*8 + last_chunk_size)-2) begin
+        if(batcher_out.valid & batches_counter_working) begin
+            batches_counter <= batches_counter + 1;
+            if(batches_counter == (n_complete_chunks*8 + last_chunk_size)-2) begin
                 batcher_out.tlast <= 1;
-                batched_counter_working <= 0;
+                batches_counter_working <= 0;
             end
 
         end
