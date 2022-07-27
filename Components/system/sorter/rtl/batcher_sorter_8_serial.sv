@@ -21,10 +21,9 @@ module batcher_sorter_8_serial #(
     parameter MAX_SORT_LENGTH=32
 )(
     input wire clock,
-    input wire reset,
     input wire [$clog2(MAX_SORT_LENGTH)-1:0] chunk_size,
     axi_stream.slave data_in,
-    axi_stream.slave data_out
+    axi_stream.master data_out
 );
 
 
@@ -67,7 +66,6 @@ module batcher_sorter_8_serial #(
         .DATA_WIDTH(DATA_WIDTH)
     ) parallel_sorter (
         .clock(clock),
-        .reset(reset),
         .data_in(input_buffer),
         .chunk_size_in(working_size),
         .data_in_valid(sorter_start),

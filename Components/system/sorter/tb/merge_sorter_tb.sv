@@ -29,6 +29,9 @@ endclass
 
 module merge_sorter_tb ();
 
+    timeunit 10ns;
+    timeprecision 100ps;
+
     reg clock, reset, start;
     integer data_length = 0;
     event test_start;

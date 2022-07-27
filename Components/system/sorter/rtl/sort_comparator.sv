@@ -20,23 +20,17 @@ module sort_comparator #(
     parameter DATA_WIDTH = 32
 )(
     input wire clock,
-    input wire reset,
     input wire [DATA_WIDTH-1:0] data_in [1:0],
     output reg [DATA_WIDTH-1:0] data_out [1:0]
 );
 
 always_ff @(posedge clock) begin
-    if (~reset) begin
-        data_out[0] <= 0;
-        data_out[1] <= 0;
+    if(data_in[0]>data_in[1]) begin
+        data_out[0] <= data_in[1];
+        data_out[1] <= data_in[0];
     end else begin
-        if(data_in[0]>data_in[1]) begin
-          data_out[0] <= data_in[1];
-          data_out[1] <= data_in[0];
-        end else begin
-          data_out[0] <= data_in[0];
-          data_out[1] <= data_in[1];
-        end
+        data_out[0] <= data_in[0];
+        data_out[1] <= data_in[1];
     end
 end
 

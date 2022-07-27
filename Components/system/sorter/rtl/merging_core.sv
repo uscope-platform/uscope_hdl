@@ -21,7 +21,6 @@ module merging_core #(
     parameter MAX_SORT_LENGTH=32
 )(
     input wire clock,
-    input wire reset,
     input wire [$clog2(MAX_SORT_LENGTH)-1:0] chunk_a_size,
     input wire [$clog2(MAX_SORT_LENGTH)-1:0] chunk_b_size,
     axi_stream.slave stream_in_a,
@@ -70,7 +69,6 @@ module merging_core #(
             end
         end
         fsm_merging_a:begin
-                merged_stream.data <= stream_in_a.data;
                 chunk_a_counter += 1;
             if(chunk_a_counter ==  chunk_a_size)begin
                 core_fsm <= fsm_idle;
@@ -78,7 +76,6 @@ module merging_core #(
             end
         end
         fsm_merging_b:begin
-            merged_stream.data <= stream_in_b.data;
             chunk_b_counter += 1;
             if(chunk_b_counter ==  chunk_b_size)begin
                 core_fsm <= fsm_idle;

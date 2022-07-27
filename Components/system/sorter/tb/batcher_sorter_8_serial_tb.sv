@@ -47,7 +47,6 @@ module batcher_sorter_8_serial_tb ();
         .DATA_WIDTH(16)
     )UUT(
         .clock(clock),
-        .reset(reset),
         .chunk_size(chunk_size),
         .data_in(sorter_in),
         .data_out(sorter_out)

@@ -35,12 +35,12 @@ module merge_sorter #(
         
     axi_stream #(.DATA_WIDTH(DATA_WIDTH)) batcher_out();
 
+    wire [$clog2(MAX_SORT_LENGTH/8-1):0] selected_chunk_size;
     
     batcher_sorter_8_serial #(
        .DATA_WIDTH(DATA_WIDTH)
     )in_sorter(
         .clock(clock),
-        .reset(reset),
         .chunk_size(selected_chunk_size),
         .data_in(input_data),
         .data_out(batcher_out)
@@ -49,7 +49,7 @@ module merge_sorter #(
     reg [$clog2(MAX_SORT_LENGTH/8-1):0] n_complete_chunks  = 0;
     reg [2:0] last_chunk_size = 0;
 
-    wire [$clog2(MAX_SORT_LENGTH/8-1):0] selected_chunk_size;
+
     assign selected_chunk_size = chunk_counter==n_complete_chunks &last_chunk_size != 0 ? last_chunk_size : 8;
 
     assign batcher_out.ready = enable_batcher_sort;

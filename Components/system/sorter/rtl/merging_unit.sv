@@ -50,6 +50,12 @@ module merging_unit #(
 
     reg writeback_enable;
 
+    wire [15:0] mf1_addr;
+    wire [15:0] mf3_addr;
+    wire [15:0] mf3_data;
+    reg [15:0] mf2_addr;
+
+    
     assign mem_1_addr_a = data_in.valid ? buffer_fill : mf1_addr | mf3_addr;
     assign mem_1_addr_b = mf2_addr;
     assign mem_1_data_a_w = data_in.valid ? data_in.data : mf3_data; 
@@ -76,7 +82,6 @@ module merging_unit #(
     axi_stream #(.DATA_WIDTH(DATA_WIDTH)) chunk_b_stream();
 
     reg[15:0] mf1_size;
-    wire [15:0] mf1_addr;
     reg[15:0] mf1_chunk_base = 0;
 
     reg merge_read_start = 0;
@@ -97,7 +102,6 @@ module merging_unit #(
     );
 
     reg[15:0] mf2_size;
-    reg[15:0] mf2_addr;
     reg[15:0] mf2_chunk_base = 0;
 
     merger_input_fifo #(
@@ -121,7 +125,6 @@ module merging_unit #(
         .MAX_SORT_LENGTH(MAX_SORT_LENGTH)
      ) merge_core (
         .clock(clock),
-        .reset(reset),
         .chunk_a_size(mf1_size),
         .chunk_b_size(mf2_size),
         .stream_in_a(chunk_a_stream),
@@ -132,14 +135,11 @@ module merging_unit #(
 
     reg mf3_start, writeback_done;
     reg[15:0] result_chunk_size;
-    wire [15:0] mf3_addr;
-    wire [15:0] mf3_data;
     reg selected_stream;
 
     axi_stream #(.DATA_WIDTH(DATA_WIDTH)) writeback_stream();  
     axi_stream_selector_2 out_selector(
         .clock(clock),
-        .reset(reset),
         .address(selected_stream),
         .stream_in(merged_stream),
         .stream_out_1(writeback_stream), 

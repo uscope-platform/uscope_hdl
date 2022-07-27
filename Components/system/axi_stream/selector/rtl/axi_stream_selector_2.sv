@@ -18,7 +18,6 @@
 
 module axi_stream_selector_2 #(parameter DATA_WIDTH = 16)(
     input wire clock,
-    input wire reset,
     input wire [0:0] address,
     axi_stream.slave stream_in,
     axi_stream.master stream_out_1, 
