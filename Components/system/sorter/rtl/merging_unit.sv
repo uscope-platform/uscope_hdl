@@ -81,6 +81,9 @@ module merging_unit #(
     axi_stream #(.DATA_WIDTH(DATA_WIDTH)) chunk_a_stream();
     axi_stream #(.DATA_WIDTH(DATA_WIDTH)) chunk_b_stream();
 
+    axi_stream #(.DATA_WIDTH(DATA_WIDTH)) chunk_a_stream_reg(); 
+    axi_stream #(.DATA_WIDTH(DATA_WIDTH)) chunk_b_stream_reg();
+
     reg[15:0] mf1_size;
     reg[15:0] mf1_chunk_base = 0;
 
@@ -118,8 +121,31 @@ module merging_unit #(
         .read_addr(mf2_addr),
         .done(mf2_done)
     );
+
+    axis_skid_buffer #(
+        .REGISTER_OUTPUT(1),
+        .DATA_WIDTH(DATA_WIDTH)
+    ) sk_buf_a (
+        .clock(clock),
+        .reset(reset),
+        .axis_in(chunk_a_stream),
+        .axis_out(chunk_a_stream_reg)
+    );
+
+
+    axis_skid_buffer #(
+        .REGISTER_OUTPUT(1),
+        .DATA_WIDTH(DATA_WIDTH)
+    ) sk_buf_b (
+        .clock(clock),
+        .reset(reset),
+        .axis_in(chunk_b_stream),
+        .axis_out(chunk_b_stream_reg)
+    );
+
     wire merge_done;
     axi_stream #(.DATA_WIDTH(DATA_WIDTH)) merged_stream();  
+    axi_stream #(.DATA_WIDTH(DATA_WIDTH)) merged_stream_reg();  
     merging_core #(
         .DATA_WIDTH(DATA_WIDTH),
         .MAX_SORT_LENGTH(MAX_SORT_LENGTH)
@@ -127,8 +153,8 @@ module merging_unit #(
         .clock(clock),
         .chunk_a_size(mf1_size),
         .chunk_b_size(mf2_size),
-        .stream_in_a(chunk_a_stream),
-        .stream_in_b(chunk_b_stream),
+        .stream_in_a(chunk_a_stream_reg),
+        .stream_in_b(chunk_b_stream_reg),
         .merged_stream(merged_stream),
         .merge_done(merge_done)
     );
@@ -137,11 +163,24 @@ module merging_unit #(
     reg[15:0] result_chunk_size;
     reg selected_stream;
 
+
+
+    axis_skid_buffer #(
+        .REGISTER_OUTPUT(1),
+        .DATA_WIDTH(DATA_WIDTH)
+    ) sk_buf_r (
+        .clock(clock),
+        .reset(reset),
+        .axis_in(merged_stream),
+        .axis_out(merged_stream_reg)
+    );
+
+
     axi_stream #(.DATA_WIDTH(DATA_WIDTH)) writeback_stream();  
     axi_stream_selector_2 out_selector(
         .clock(clock),
         .address(selected_stream),
-        .stream_in(merged_stream),
+        .stream_in(merged_stream_reg),
         .stream_out_1(writeback_stream), 
         .stream_out_2(data_out)
     );
@@ -166,6 +205,7 @@ module merging_unit #(
     reg latched_mf1_done = 0;
     reg latched_mf2_done = 0;
 
+    reg merge_done_del;
     enum logic [2:0] {
         fsm_idle = 0,
         fsm_reading = 1,
@@ -174,7 +214,7 @@ module merging_unit #(
     } fsm_merger = fsm_idle;
 
     always_ff @(posedge clock)begin
-
+        merge_done_del<= merge_done;
         case(fsm_merger)
         fsm_idle:begin
             merge_read_start <= 0;
@@ -197,12 +237,12 @@ module merging_unit #(
         end
         fsm_reading:begin
             merge_read_start<= 0;
-            if(merged_stream.valid)begin
+            if(merged_stream_reg.valid)begin
                 fsm_merger <= fsm_merging;
             end
         end
         fsm_merging:begin
-            if(merge_done)begin
+            if(merge_done_del)begin
                 if(chunks_to_merge == 0) begin
                     fsm_merger <= fsm_idle;
                 end else begin
@@ -232,7 +272,7 @@ module merging_unit #(
     end
 
     always_comb begin 
-        if(merged_stream.valid & chunks_to_merge == 0)begin
+        if(merged_stream_reg.valid & chunks_to_merge == 0)begin
             selected_stream <= 1;
         end else begin
             selected_stream <= 0;

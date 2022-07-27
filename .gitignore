@@ -101,3 +101,5 @@ Components/ExternalDrivers/Si5351/Si5351Configurator/
 Applications/simple_axi_bram/simple_axi_bram/
 
 Components/system/sorter/sorter/
+
+Components/system/axi_stream/skid_buffer/axis skid_buffer/

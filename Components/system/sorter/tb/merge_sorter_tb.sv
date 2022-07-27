@@ -102,7 +102,7 @@ module merge_sorter_tb ();
 
 
     initial clock = 0;
-    always #0.5 clock = ~clock;
+    always #0.25 clock = ~clock;
 
 
     initial begin
@@ -116,8 +116,8 @@ module merge_sorter_tb ();
     initial begin
         reset = 0;
         start = 0;
-        in_bfm = new(sorter_in, 1);
-        #20.5 reset = 0;
+        in_bfm = new(sorter_in, 0.5);
+        #20.25 reset = 0;
         #20 reset = 1;
 
         ->test_start;

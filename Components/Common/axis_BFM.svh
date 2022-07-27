@@ -22,10 +22,10 @@
 class axis_BFM #(int DATA_WIDTH = 32,int USER_WIDTH = 32, int DEST_WIDTH = 32);
 
     virtual axi_stream #(DATA_WIDTH, USER_WIDTH, DEST_WIDTH) axis;
-    integer clock_period;
+    real clock_period;
 
 
-    function new (virtual axi_stream #(DATA_WIDTH, USER_WIDTH, DEST_WIDTH)  stream, integer period);
+    function new (virtual axi_stream #(DATA_WIDTH, USER_WIDTH, DEST_WIDTH)  stream, real period);
         begin
             this.axis = stream;
             this.axis.data <= 32'b0;

@@ -32,7 +32,7 @@ double std_dev(std::vector<double> const& v){
 int main()
 {
 
-    int n_sort = 59;
+    int n_sort = 222;
     // First create an instance of an engine.
     random_device rnd_device;
     // Specify the engine and distribution.
@@ -84,7 +84,7 @@ int main()
     std::cout << "-------------------------------------------------------------------------" << std::endl;
 
     double cpu_freq = 4.183e9; // 4.183 GHz
-    double fpga_clock = 100e6; // 100 MHz
+    double fpga_clock = 200e6; // 100 MHz
 
     double sort_cycles = cpu_freq*avg_sort*1e-6;
     double stable_sort_cycles = cpu_freq*avg_stable_sort*1e-6;

@@ -95,14 +95,13 @@ module merging_core #(
             merged_stream.data <= 0;
         end
         fsm_merging_ab:begin
-             if(stream_in_a.data > stream_in_b.data) begin
+            if(stream_in_a.data > stream_in_b.data) begin
                 merged_stream.data <= stream_in_b.data;
             end else begin
                 merged_stream.data <= stream_in_a.data;
             end 
             stream_in_a.ready <= stream_in_a.data <= stream_in_b.data;
             stream_in_b.ready <= stream_in_a.data > stream_in_b.data;
-
             merged_stream.valid <= 1; 
         end
         fsm_merging_a:begin
