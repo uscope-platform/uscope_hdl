@@ -52,8 +52,6 @@ module merge_sorter #(
 
     assign selected_chunk_size = chunk_counter==n_complete_chunks &last_chunk_size != 0 ? last_chunk_size : 8;
 
-    assign batcher_out.ready = enable_batcher_sort;
-
 
     reg [2:0] input_data_counter = 0;
     

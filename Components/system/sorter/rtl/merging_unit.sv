@@ -57,7 +57,9 @@ module merging_unit #(
     );
 
 
-    axi_stream_selector_2 bypass_selector(
+    axi_stream_selector_2 #(
+        .REGISTERED(0)
+    ) bypass_selector(
         .clock(clock),
         .address(select_merge_bypass),
         .stream_in(registered_input),
@@ -81,7 +83,9 @@ module merging_unit #(
     );
 
 
-    axi_stream_selector_2 result_selector(
+    axi_stream_selector_2 #(
+        .REGISTERED(0)
+    ) result_selector(
         .clock(clock),
         .address(output_selector),
         .stream_in(merge_result),
