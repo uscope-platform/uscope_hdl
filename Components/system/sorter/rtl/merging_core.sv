@@ -23,6 +23,7 @@ module merging_core #(
     input wire clock,
     input wire [$clog2(MAX_SORT_LENGTH)-1:0] chunk_a_size,
     input wire [$clog2(MAX_SORT_LENGTH)-1:0] chunk_b_size,
+    input wire start,
     axi_stream.slave stream_in_a,
     axi_stream.slave stream_in_b,
     axi_stream.master merged_stream,
@@ -49,7 +50,7 @@ module merging_core #(
             merge_done <= 0;
             chunk_a_counter <= 0;
             chunk_b_counter <= 0;
-            if(stream_in_a.valid & stream_in_b.valid) begin
+            if(start) begin
                 core_fsm <= fsm_merging_ab;
             end
         end

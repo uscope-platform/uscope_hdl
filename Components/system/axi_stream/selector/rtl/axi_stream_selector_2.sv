@@ -16,7 +16,7 @@
 `timescale 10ns / 1ns
 `include "interfaces.svh"
 
-module axi_stream_selector_2 #(parameter DATA_WIDTH = 16)(
+module axi_stream_selector_2 #(parameter DATA_WIDTH = 16, REGISTERED = 1)(
     input wire clock,
     input wire [0:0] address,
     axi_stream.slave stream_in,
@@ -25,34 +25,60 @@ module axi_stream_selector_2 #(parameter DATA_WIDTH = 16)(
 
 );
 
-    always_ff@(posedge clock) begin
-        stream_out_1.valid <= 0;
-        stream_out_2.valid <= 0;
+    generate
 
-        case (address)
-        0:begin
-                stream_out_1.data <= stream_in.data;
-                stream_out_1.dest<= stream_in.dest;
-                stream_out_1.valid <= stream_in.valid;
-                stream_out_1.user <= stream_in.user;
-                stream_out_1.tlast <= stream_in.tlast;
+        if(REGISTERED) begin
+            always_ff@(posedge clock) begin
+                stream_out_1.valid <= 0;
+                stream_out_2.valid <= 0;
+
+                case (address)
+                0:begin
+                        stream_out_1.data <= stream_in.data;
+                        stream_out_1.dest<= stream_in.dest;
+                        stream_out_1.valid <= stream_in.valid;
+                        stream_out_1.user <= stream_in.user;
+                        stream_out_1.tlast <= stream_in.tlast;
+                end
+                1:begin
+                        stream_out_2.data <= stream_in.data;
+                        stream_out_2.dest<= stream_in.dest;
+                        stream_out_2.valid <= stream_in.valid;
+                        stream_out_2.user <= stream_in.user;
+                        stream_out_2.tlast <= stream_in.tlast;
+                end
+                endcase 
+            end
         end
-        1:begin
-                stream_out_2.data <= stream_in.data;
-                stream_out_2.dest<= stream_in.dest;
-                stream_out_2.valid <= stream_in.valid;
-                stream_out_2.user <= stream_in.user;
-                stream_out_2.tlast <= stream_in.tlast;
+
+        always_comb begin
+            case (address)
+            0: stream_in.ready <= stream_out_1.ready;
+            1: stream_in.ready <= stream_out_2.ready;
+            default: stream_in.ready <= 0;
+            endcase 
+            if(~REGISTERED) begin
+                case (address)
+                0:begin
+                        stream_out_1.data <= stream_in.data;
+                        stream_out_1.dest<= stream_in.dest;
+                        stream_out_1.valid <= stream_in.valid;
+                        stream_out_1.user <= stream_in.user;
+                        stream_out_1.tlast <= stream_in.tlast;
+                end
+                1:begin
+                        stream_out_2.data <= stream_in.data;
+                        stream_out_2.dest<= stream_in.dest;
+                        stream_out_2.valid <= stream_in.valid;
+                        stream_out_2.user <= stream_in.user;
+                        stream_out_2.tlast <= stream_in.tlast;
+                end
+                endcase 
+            end
         end
-        endcase 
-    end
-  
-    always_comb begin
-        case (address)
-        0: stream_in.ready <= stream_out_1.ready;
-        1: stream_in.ready <= stream_out_2.ready;
-        default: stream_in.ready <= 0;
-        endcase 
-    end
     
+        
+    endgenerate
+
+   
 endmodule

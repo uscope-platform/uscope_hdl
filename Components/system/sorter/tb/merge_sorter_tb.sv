@@ -20,6 +20,8 @@
 
 parameter max_data_length = 256;
 
+parameter clock_period = 0.5;
+
 class stimulus;
     rand bit[15:0] length;
     rand bit[15:0] data [max_data_length-1:0];
@@ -102,7 +104,7 @@ module merge_sorter_tb ();
 
 
     initial clock = 0;
-    always #0.25 clock = ~clock;
+    always #clock_period clock = ~clock;
 
 
     initial begin
@@ -116,8 +118,10 @@ module merge_sorter_tb ();
     initial begin
         reset = 0;
         start = 0;
-        in_bfm = new(sorter_in, 0.5);
-        #20.25 reset = 0;
+        sorter_out.ready = 1;
+        in_bfm = new(sorter_in, 2*clock_period);
+        #20 reset = 0;
+        #clock_period;
         #20 reset = 1;
 
         ->test_start;
