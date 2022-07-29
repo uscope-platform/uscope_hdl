@@ -18,6 +18,8 @@
 
 module merge_sorter #(
     parameter DATA_WIDTH=32,
+    parameter DEST_WIDTH=32,
+    parameter USER_WIDTH=32,
     parameter MAX_SORT_LENGTH=32
 )(
     input wire clock,
@@ -33,12 +35,14 @@ module merge_sorter #(
     reg [$clog2(MAX_SORT_LENGTH/8-1):0] chunk_counter = 0;
     reg enable_batcher_sort = 0;
         
-    axi_stream #(.DATA_WIDTH(DATA_WIDTH)) batcher_out();
+    axi_stream #(.DATA_WIDTH(DATA_WIDTH), .DEST_WIDTH(DEST_WIDTH), .USER_WIDTH(USER_WIDTH)) batcher_out();
 
     wire [$clog2(MAX_SORT_LENGTH/8-1):0] selected_chunk_size;
     
     batcher_sorter_8_serial #(
-       .DATA_WIDTH(DATA_WIDTH)
+       .DATA_WIDTH(DATA_WIDTH),
+       .DEST_WIDTH(DEST_WIDTH),
+       .USER_WIDTH(USER_WIDTH)
     )in_sorter(
         .clock(clock),
         .chunk_size(selected_chunk_size),
@@ -108,6 +112,8 @@ module merge_sorter #(
 
     merging_unit #(
         .DATA_WIDTH(DATA_WIDTH),
+        .DEST_WIDTH(DEST_WIDTH),
+        .USER_WIDTH(USER_WIDTH),
         .MAX_SORT_LENGTH(MAX_SORT_LENGTH),
         .BASE_CHUNK_SIZE(8)
     )merger (

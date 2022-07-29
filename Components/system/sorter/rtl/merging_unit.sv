@@ -19,6 +19,8 @@
 
 module merging_unit #(
     parameter DATA_WIDTH=32,
+    parameter DEST_WIDTH=32,
+    parameter USER_WIDTH=32,
     parameter MAX_SORT_LENGTH=32,
     parameter BASE_CHUNK_SIZE=8
 )(
@@ -30,13 +32,13 @@ module merging_unit #(
     axi_stream.master data_out
 );
 
-    axi_stream #(.DATA_WIDTH(DATA_WIDTH)) registered_input();
-    axi_stream #(.DATA_WIDTH(DATA_WIDTH)) bypass_load();
-    axi_stream #(.DATA_WIDTH(DATA_WIDTH)) stream_to_merge();
-    axi_stream #(.DATA_WIDTH(DATA_WIDTH)) merge_result();
-    axi_stream #(.DATA_WIDTH(DATA_WIDTH)) result_fifo_in();
-    axi_stream #(.DATA_WIDTH(DATA_WIDTH)) post_out_result();
-    axi_stream #(.DATA_WIDTH(DATA_WIDTH)) merger_feedback();
+    axi_stream #(.DATA_WIDTH(DATA_WIDTH), .DEST_WIDTH(DEST_WIDTH), .USER_WIDTH(USER_WIDTH)) registered_input();
+    axi_stream #(.DATA_WIDTH(DATA_WIDTH), .DEST_WIDTH(DEST_WIDTH), .USER_WIDTH(USER_WIDTH)) bypass_load();
+    axi_stream #(.DATA_WIDTH(DATA_WIDTH), .DEST_WIDTH(DEST_WIDTH), .USER_WIDTH(USER_WIDTH)) stream_to_merge();
+    axi_stream #(.DATA_WIDTH(DATA_WIDTH), .DEST_WIDTH(DEST_WIDTH), .USER_WIDTH(USER_WIDTH)) merge_result();
+    axi_stream #(.DATA_WIDTH(DATA_WIDTH), .DEST_WIDTH(DEST_WIDTH), .USER_WIDTH(USER_WIDTH)) result_fifo_in();
+    axi_stream #(.DATA_WIDTH(DATA_WIDTH), .DEST_WIDTH(DEST_WIDTH), .USER_WIDTH(USER_WIDTH)) post_out_result();
+    axi_stream #(.DATA_WIDTH(DATA_WIDTH), .DEST_WIDTH(DEST_WIDTH), .USER_WIDTH(USER_WIDTH)) merger_feedback();
 
     reg select_merge_bypass, output_selector, core_start;
     wire merge_done;
@@ -47,7 +49,9 @@ module merging_unit #(
 
 
     axis_fifo_xpm #(
-        .INPUT_DATA_WIDTH(32), 
+        .DATA_WIDTH(DATA_WIDTH),
+        .DEST_WIDTH(DEST_WIDTH),
+        .USER_WIDTH(USER_WIDTH),
         .FIFO_DEPTH(MAX_SORT_LENGTH)
     ) input_fifo (
         .clock(clock),
@@ -70,6 +74,8 @@ module merging_unit #(
 
     merging_core #(
         .DATA_WIDTH(DATA_WIDTH),
+        .DEST_WIDTH(DEST_WIDTH),
+        .USER_WIDTH(USER_WIDTH),
         .MAX_SORT_LENGTH(MAX_SORT_LENGTH)
      ) merge_core (
         .clock(clock),
@@ -108,7 +114,9 @@ module merging_unit #(
 
 
     axis_fifo_xpm #(
-        .INPUT_DATA_WIDTH(32), 
+        .DATA_WIDTH(DATA_WIDTH),
+        .DEST_WIDTH(DEST_WIDTH),
+        .USER_WIDTH(USER_WIDTH),
         .FIFO_DEPTH(MAX_SORT_LENGTH)
     ) result_fifo (
         .clock(clock),

@@ -18,6 +18,8 @@
 
 module merging_core #(
     parameter DATA_WIDTH=32,
+    parameter DEST_WIDTH=32,
+    parameter USER_WIDTH=32,
     parameter MAX_SORT_LENGTH=32
 )(
     input wire clock,
@@ -94,12 +96,18 @@ module merging_core #(
             stream_in_b.ready <= 0;
             merged_stream.valid <= 0; 
             merged_stream.data <= 0;
+            merged_stream.dest <= 0;
+            merged_stream.user <= 0;
         end
         fsm_merging_ab:begin
             if(stream_in_a.data > stream_in_b.data) begin
                 merged_stream.data <= stream_in_b.data;
+                merged_stream.dest <= stream_in_b.dest;
+                merged_stream.user <= stream_in_b.user;
             end else begin
                 merged_stream.data <= stream_in_a.data;
+                merged_stream.dest <= stream_in_a.dest;
+                merged_stream.user <= stream_in_a.user;
             end 
             stream_in_a.ready <= stream_in_a.data <= stream_in_b.data;
             stream_in_b.ready <= stream_in_a.data > stream_in_b.data;
@@ -107,12 +115,16 @@ module merging_core #(
         end
         fsm_merging_a:begin
             merged_stream.data <= stream_in_a.data;
+            merged_stream.dest <= stream_in_a.dest;
+            merged_stream.user <= stream_in_a.user;
             stream_in_a.ready <= 1;
             stream_in_b.ready <= 0;
             merged_stream.valid <= 1; 
         end
         fsm_merging_b:begin
             merged_stream.data <= stream_in_b.data;
+            merged_stream.dest <= stream_in_b.dest;
+            merged_stream.user <= stream_in_b.user;
             stream_in_b.ready <= 1;
             stream_in_a.ready <= 0;
             merged_stream.valid <= 1;   

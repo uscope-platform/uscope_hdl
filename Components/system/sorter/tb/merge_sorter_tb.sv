@@ -22,10 +22,10 @@ parameter max_data_length = 256;
 
 parameter clock_period = 0.5;
 
-class stimulus;
-    rand bit[15:0] length;
-    rand bit[15:0] data [max_data_length-1:0];
-    constraint length_bounds {length>16 && length<256;}
+class axis_item;
+    rand bit[15:0] data;
+    rand bit[15:0] dest;
+    rand bit[15:0] user;    
 endclass
 
 
@@ -39,17 +39,24 @@ module merge_sorter_tb ();
     event test_start;
 
     reg [15:0] data_in[max_data_length-1:0];
-    reg [15:0] data_out[];
+    reg [15:0] dest_in[max_data_length-1:0];
+    reg [15:0] user_in[max_data_length-1:0];
 
-    axi_stream #(.DATA_WIDTH(16)) sorter_in();
-    axi_stream sorter_out();
+    reg [15:0] data_out[];
+    reg [15:0] dest_out[];
+    reg [15:0] user_out[];
+
+    axi_stream #(.DATA_WIDTH(16), .DEST_WIDTH(16), .USER_WIDTH(16)) sorter_in();
+    axi_stream #(.DATA_WIDTH(16), .DEST_WIDTH(16), .USER_WIDTH(16)) sorter_out();
 
     
 
-    axis_BFM#(16, 32, 32) in_bfm;
+    axis_BFM#(16, 16, 16) in_bfm;
     
     merge_sorter #(
         .DATA_WIDTH(16),
+        .DEST_WIDTH(16),
+        .USER_WIDTH(16),
         .MAX_SORT_LENGTH(256)
     )UUT(
         .clock(clock),
@@ -60,45 +67,131 @@ module merge_sorter_tb ();
         .output_data(sorter_out)
     );
 
-    task generate_test_data(input integer n, output reg [15:0] data[max_data_length-1:0]);
-        for (integer y = 0; y<max_data_length ; y +=1 ) begin
-            if(y<n) begin
-                data[y] = $random();
-            end else begin
-                data[y] = 0;
-            end
-        end
-    endtask
 
-    task read_sorted_results(input int length, output reg [15:0] data_out[]);
+    task read_sorted_results(
+        input int length,
+        output reg [15:0] data_out[],
+        output reg [15:0] dest_out[],
+        output reg [15:0] user_out[]
+    );
         sorter_out.ready = 1;
 
         data_out = new[length];
+        dest_out = new[length];
+        user_out = new[length];
 
         for(int k = 0; k < max_data_length; k = k + 1) begin
             data_out[k] = 0;
+            dest_out[k] = 0;
+            user_out[k] = 0;
         end
         
         @(posedge sorter_out.valid)
         for(int x = 0; x < length; x = x + 1) begin
             @(negedge clock);
             data_out[x] = sorter_out.data;
+            dest_out[x] = sorter_out.dest;
+            user_out[x] = sorter_out.user;
             @(posedge clock);
         end
     endtask
 
-    task check_result(input int length, input reg [15:0] data_in[max_data_length-1:0], input reg [15:0] data_out[]);
-        reg [15:0] data_expected[];
+    reg [15:0] data_expected[];
+    reg [15:0] dest_expected[];
+    reg [15:0] user_expected[];
+
+
+    task check_result(
+        input int length,
+        axis_item input_data[max_data_length],
+        input reg [15:0] data_out[],
+        input reg [15:0] dest_out[],
+        input reg [15:0] user_out[]
+    );
+    
+        axis_item working_data[];
+        reg [15:0] unique_data [$];
+
+        working_data = new[length];
 
         data_expected = new [length];
-        for(int i = 0; i < length; i = i + 1) begin
-            data_expected[i] = data_in[i];
+        dest_expected = new [length];
+        user_expected = new [length];
+
+        for(int i = 0; i<length; i++)begin
+            working_data[i] = input_data[i];
         end
-        data_expected.sort();
-        output_data_sorting_check:
-            assert (data_expected == data_out)
-            else
-                $fatal("%m The output data stream was not sorted correctly");
+
+        working_data.sort() with (item.data);
+
+        for(int i = 0; i<length; i++)begin
+            data_expected[i] = working_data[i].data;
+            dest_expected[i] = working_data[i].dest;
+            user_expected[i] = working_data[i].user;
+        end
+        
+        
+
+        data_sorting_check:
+        assert (data_expected == data_out)
+        else begin
+            $display("-------------------------------------------------------------------------------------");
+            $display("%m");
+            $display("-------------------------------------------------------------------------------------");
+            $display("Expected:");
+            for(int j = 0; j < length; j = j + 1) begin
+                $display(" %h", data_expected[j]);
+            end
+            $display("Got:");
+            for(int j = 0; j < length; j = j + 1) begin
+                $display(" %h", data_out[j]);
+            end
+            $display("-------------------------------------------------------------------------------------");
+            $finish;
+        end
+
+        unique_data = data_expected.unique();
+
+        dest_passthrough_check:
+        assert (dest_expected == dest_out)
+        else begin
+            if(unique_data.size() ==length)begin // avoid checking if there are duplicates because the sorting is not stable
+                $display("-------------------------------------------------------------------------------------");
+                $display("%m");
+                $display("-------------------------------------------------------------------------------------");
+                $display("Expected:");
+                for(int j = 0; j < length; j = j + 1) begin
+                    $display(" %h", dest_expected[j]);
+                end
+                $display("Got:");
+                for(int j = 0; j < length; j = j + 1) begin
+                    $display(" %h", dest_out[j]);
+                end
+                $display("-------------------------------------------------------------------------------------");
+                $finish;
+            end
+        end
+        
+        user_passthrough_check:
+        assert (user_expected == user_out)
+        else begin
+            if(unique_data.size() ==length)begin // avoid checking if there are duplicates because the sorting is not stable
+                $display("-------------------------------------------------------------------------------------");
+                $display("%m");
+                $display("-------------------------------------------------------------------------------------");
+                $display("Expected:");
+                for(int j = 0; j < length; j = j + 1) begin
+                    $display(" %h", user_expected[j]);
+                end
+                $display("Got:");
+                for(int j = 0; j < length; j = j + 1) begin
+                    $display(" %h", user_out[j]);
+                end
+                $display("-------------------------------------------------------------------------------------");
+                $finish;
+            end
+        end
+        
     endtask
 
 
@@ -126,10 +219,15 @@ module merge_sorter_tb ();
 
         ->test_start;
         forever begin
-            stimulus stim = new ();
-            stim.randomize();
-            data_length = stim.length;
-            data_in = stim.data;
+            axis_item item[max_data_length];
+
+            foreach(item[i])begin
+                item[i] = new();
+                item[i].randomize();
+            end
+
+            //data_length = $urandom_range('hff,'hf);
+            data_length = 15;
 
             for(int i = 0; i < data_length; i = i + 1) begin
                 if(i == 0) begin
@@ -137,12 +235,12 @@ module merge_sorter_tb ();
                 end else begin
                     start = 0;
                 end
-                in_bfm.write(data_in[i]);
+                in_bfm.write_complete(item[i].data, item[i].dest, item[i].user);
             end
 
-            read_sorted_results(data_length, data_out);
+            read_sorted_results(data_length, data_out, dest_out, user_out);
 
-            #1 check_result(data_length, data_in, data_out);
+            #1 check_result(data_length, item, data_out, dest_out, user_out);
             #200;
         end
     end

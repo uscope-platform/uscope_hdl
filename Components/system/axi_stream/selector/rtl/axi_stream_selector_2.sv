@@ -27,7 +27,7 @@ module axi_stream_selector_2 #(parameter DATA_WIDTH = 16, REGISTERED = 1)(
 
     generate
 
-        if(REGISTERED==1) begin
+        if(REGISTERED) begin
             always_ff@(posedge clock) begin
                 stream_out_1.valid <= 0;
                 stream_out_2.valid <= 0;
@@ -57,7 +57,7 @@ module axi_stream_selector_2 #(parameter DATA_WIDTH = 16, REGISTERED = 1)(
             1: stream_in.ready <= stream_out_2.ready;
             default: stream_in.ready <= 0;
             endcase 
-            if(REGISTERED != 1) begin
+            if(~REGISTERED) begin
                 case (address)
                 0:begin
                         stream_out_1.data <= stream_in.data;

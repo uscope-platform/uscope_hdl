@@ -173,7 +173,7 @@ module uScope #(
 	);
 
     axis_fifo_xpm #(
-        .INPUT_DATA_WIDTH(32),
+        .DATA_WIDTH(32),
         .FIFO_DEPTH(8192)
     ) scope_fifo(
         .clock(clock),

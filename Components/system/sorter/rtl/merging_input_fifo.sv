@@ -34,7 +34,7 @@ module merger_input_fifo #(
     axi_stream #(.DATA_WIDTH(DATA_WIDTH)) fifo_input();
 
     axis_fifo_xpm #(
-        .INPUT_DATA_WIDTH(32), 
+        .DATA_WIDTH(DATA_WIDTH), 
         .FIFO_DEPTH(MAX_SORT_LENGTH)
     ) buffer_fifo (
         .clock(clock),

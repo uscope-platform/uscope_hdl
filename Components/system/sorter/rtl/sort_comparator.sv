@@ -17,15 +17,17 @@
 `include "interfaces.svh"
 
 module sort_comparator #(
-    parameter DATA_WIDTH = 32
+    parameter DATA_WIDTH = 32,
+    parameter USER_WIDTH = 32,
+    parameter DEST_WIDTH = 32
 )(
     input wire clock,
-    input wire [DATA_WIDTH-1:0] data_in [1:0],
-    output reg [DATA_WIDTH-1:0] data_out [1:0]
+    input wire [(DATA_WIDTH+USER_WIDTH+DEST_WIDTH)-1:0] data_in [1:0],
+    output reg [(DATA_WIDTH+USER_WIDTH+DEST_WIDTH)-1:0] data_out [1:0]
 );
 
 always_ff @(posedge clock) begin
-    if(data_in[0]>data_in[1]) begin
+    if(data_in[0][DATA_WIDTH-1:0] > data_in[1][DATA_WIDTH-1:0]) begin
         data_out[0] <= data_in[1];
         data_out[1] <= data_in[0];
     end else begin

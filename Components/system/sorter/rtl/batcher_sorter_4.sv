@@ -17,18 +17,22 @@
 `include "interfaces.svh"
 
 module batcher_sorter_4 #(
-    parameter DATA_WIDTH = 32
+    parameter DATA_WIDTH = 32,
+    parameter USER_WIDTH = 32,
+    parameter DEST_WIDTH = 32
 )(
     input wire clock,
-    input wire [DATA_WIDTH-1:0] data_in [3:0],
-    output reg [DATA_WIDTH-1:0] data_out [3:0]
+    input wire [(DATA_WIDTH+USER_WIDTH+DEST_WIDTH)-1:0] data_in [3:0],
+    output reg [(DATA_WIDTH+USER_WIDTH+DEST_WIDTH)-1:0] data_out [3:0]
 );
 
-wire [DATA_WIDTH-1:0] stage_1 [3:0];
-wire [DATA_WIDTH-1:0] stage_2 [3:0];
+wire [(DATA_WIDTH+USER_WIDTH+DEST_WIDTH)-1:0] stage_1 [3:0];
+wire [(DATA_WIDTH+USER_WIDTH+DEST_WIDTH)-1:0] stage_2 [3:0];
 
 sort_comparator #(
-    .DATA_WIDTH(DATA_WIDTH)
+    .DATA_WIDTH(DATA_WIDTH),
+    .USER_WIDTH(USER_WIDTH),
+    .DEST_WIDTH(DEST_WIDTH)
 ) cmp_1(
     .clock(clock),
     .data_in(data_in[1:0]),
@@ -36,7 +40,9 @@ sort_comparator #(
 );
 
 sort_comparator #(
-    .DATA_WIDTH(DATA_WIDTH)
+    .DATA_WIDTH(DATA_WIDTH),
+    .USER_WIDTH(USER_WIDTH),
+    .DEST_WIDTH(DEST_WIDTH)
 ) cmp_2(
     .clock(clock),
     .data_in(data_in[3:2]),
@@ -45,7 +51,9 @@ sort_comparator #(
 
 
 sort_comparator #(
-    .DATA_WIDTH(DATA_WIDTH)
+    .DATA_WIDTH(DATA_WIDTH),
+    .USER_WIDTH(USER_WIDTH),
+    .DEST_WIDTH(DEST_WIDTH)
 ) cmp_3(
     .clock(clock),
     .data_in('{stage_1[2], stage_1[0]}),
@@ -54,7 +62,9 @@ sort_comparator #(
 
 
 sort_comparator #(
-    .DATA_WIDTH(DATA_WIDTH)
+    .DATA_WIDTH(DATA_WIDTH),
+    .USER_WIDTH(USER_WIDTH),
+    .DEST_WIDTH(DEST_WIDTH)
 ) cmp_4(
     .clock(clock),
     .data_in('{stage_1[3], stage_1[1]}),
@@ -64,7 +74,9 @@ sort_comparator #(
 
 
 sort_comparator #(
-    .DATA_WIDTH(DATA_WIDTH)
+    .DATA_WIDTH(DATA_WIDTH),
+    .USER_WIDTH(USER_WIDTH),
+    .DEST_WIDTH(DEST_WIDTH)
 ) cmp_5(
     .clock(clock),
     .data_in('{stage_2[2], stage_2[1]}),
