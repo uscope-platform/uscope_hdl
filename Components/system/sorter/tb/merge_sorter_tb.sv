@@ -226,8 +226,8 @@ module merge_sorter_tb ();
                 item[i].randomize();
             end
 
-            //data_length = $urandom_range('hff,'hf);
-            data_length = 15;
+            data_length = $urandom_range('hff,'hf);
+            //data_length = 15;
 
             for(int i = 0; i < data_length; i = i + 1) begin
                 if(i == 0) begin

@@ -146,15 +146,20 @@ module merging_unit #(
         output_selector <= 0;
         select_merge_bypass <= 1;
         if(registered_input.valid)begin
+            input_chunk_size <= 8;
+            result_size <= 8;
             fsm_merger <= fsm_bypass;
             if(last_chunk_size != 0)begin
+                    if(n_chunks_in == 1) begin
+                        input_chunk_size <= last_chunk_size;
+                    end else if (n_chunks_in == 0) begin
+                        input_chunk_size <= last_chunk_size;
+                        result_size <= last_chunk_size;
+                    end
                 chunks_to_merge <= n_chunks_in;
             end else begin
                 chunks_to_merge <= n_chunks_in-1;
             end
-            
-            input_chunk_size <= 8;
-            result_size <= 8;
         end
         end
         fsm_bypass:begin

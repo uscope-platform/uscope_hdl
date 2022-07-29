@@ -53,7 +53,14 @@ module merging_core #(
             chunk_a_counter <= 0;
             chunk_b_counter <= 0;
             if(start) begin
-                core_fsm <= fsm_merging_ab;
+                if(chunk_a_size == 0)begin
+                    core_fsm <= fsm_merging_b;
+                end else if(chunk_b_size == 0)begin
+                    core_fsm <= fsm_merging_a;
+                end else begin
+                    core_fsm <= fsm_merging_ab;
+                end
+                
             end
         end
         fsm_merging_ab:begin
