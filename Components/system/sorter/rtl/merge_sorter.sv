@@ -17,15 +17,15 @@
 `include "interfaces.svh"
 
 module merge_sorter #(
-    parameter DATA_WIDTH=32,
-    parameter DEST_WIDTH=32,
-    parameter USER_WIDTH=32,
-    parameter MAX_SORT_LENGTH=32
+    parameter DATA_WIDTH=16,
+    parameter DEST_WIDTH=16,
+    parameter USER_WIDTH=16,
+    parameter MAX_SORT_LENGTH=256
 )(
     input wire clock,
     input wire reset,
     input wire start,
-    input wire [15:0] data_length,
+    input wire [$clog2(MAX_SORT_LENGTH)-1:0] data_length,
     output reg done,
     axi_stream.slave input_data,
     axi_stream.master output_data
@@ -90,7 +90,7 @@ module merge_sorter #(
 
 
     reg batches_counter_working = 0;
-    reg [$clog2(MAX_SORT_LENGTH-1):0] batches_counter  = 0;
+    reg [$clog2(MAX_SORT_LENGTH)-1:0] batches_counter  = 0;
     always_ff @(posedge clock) begin
         if(~batches_counter_working)begin
             batches_counter <= 0;
