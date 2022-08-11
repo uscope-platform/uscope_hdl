@@ -129,25 +129,26 @@ module fCore_tb();
 
     reg dbg = 0;
     reg [7:0] read_idx = 0;
-    reg [31:0] expected_results [12:0];
+    reg [31:0] expected_results [13:0];
     localparam CORE_DMA_BASE_ADDRESS = 32'h43c00004;
     
     event run_test_done;
     event bus_read_test_done;
     initial begin
         if(RECIPROCAL_PRESENT==1) begin
-            expected_results <= {'h428C0000,'h0000000c,'h40a00000,'h3c6d7304,'h40800000,'h40400000,'hc0800000,'h428c0000,'h40400000,'h00000005,'hc0800000,'h40800000,'h0};
+            expected_results <= {'h40e00001, 'h428C0000,'h0000000c,'h40a00000,'h3c6d7304,'h40800000,'h40400000,'hc0800000,'h428c0000,'h40400000,'h00000005,'hc0800000,'h40800000,'h0};
         end else begin
-            expected_results <= {'h428C0000,'h0000000c,'h40a00000,'h0,'h40800000,'h40400000,'hc0800000,'h428c0000,'h40400000,'h00000005,'hc0800000,'h40800000,'h0};
+            expected_results <= {'h40e00001, 'h428C0000,'h0000000c,'h40a00000,'h0,'h40800000,'h40400000,'hc0800000,'h428c0000,'h40400000,'h00000005,'hc0800000,'h40800000,'h0};
         end
         @(posedge done) $display("femtoCore Processing Done");
         ->run_test_done;
         #100;
-        for (integer i = 1; i<13; i++) begin
-            
+        for (integer i = 1; i<14; i++) begin      
             read_req_BFM.write(CORE_DMA_BASE_ADDRESS+4*read_idx);
             read_resp_BFM.read(reg_readback);
-            if(reg_readback!=expected_results[read_idx]) $display("BUS READ ERROR Register %d  Wrong Value detected. Expected %h Got %h",read_idx,expected_results[read_idx],reg_readback);
+            if(reg_readback!=expected_results[read_idx]) begin
+                $display("BUS READ ERROR Register %d  Wrong Value detected. Expected %h Got %h",read_idx,expected_results[read_idx],reg_readback);
+            end
             read_idx++;
             #100;
         end

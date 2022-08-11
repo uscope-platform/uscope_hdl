@@ -74,6 +74,7 @@ module fCore_exec #(OPCODE_WIDTH = 4, DATA_WIDTH = 32, REG_ADDR_WIDTH = 4, RECIP
             fcore_isa::LDC,
             fcore_isa::REC,
             fcore_isa::POPCNT,
+            fcore_isa::ABS,
             fcore_isa::ITF:begin
                 result.data <= alu_res.data;
                 result.dest <= alu_res.dest;

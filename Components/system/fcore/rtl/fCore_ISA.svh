@@ -34,4 +34,5 @@ package fcore_isa;
     parameter SATN = 17;
     parameter REC = 18;
     parameter POPCNT = 19;
+    parameter ABS = 20;
 endpackage

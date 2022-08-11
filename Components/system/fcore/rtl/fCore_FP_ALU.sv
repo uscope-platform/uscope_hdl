@@ -170,6 +170,7 @@ module fCore_FP_ALU #(parameter DATAPATH_WIDTH =32, PIPELINE_DEPTH=5, OPCODE_WID
                 result.valid <= 1;
             end
             fcore_isa::POPCNT,
+            fcore_isa::ABS,
             fcore_isa::LAND,
             fcore_isa::LOR,
             fcore_isa::LNOT:begin
@@ -222,6 +223,11 @@ module fCore_FP_ALU #(parameter DATAPATH_WIDTH =32, PIPELINE_DEPTH=5, OPCODE_WID
                     early_logic_result.valid <= 1;
                     early_logic_result.user <= operand_a.user;
                     early_logic_result.data <= ones;  
+                end
+                4:begin
+                    early_logic_result.valid <= 1;
+                    early_logic_result.user <= operand_a.user;
+                    early_logic_result.data <= {0, operand_a.data[30:0]};  
                 end
             endcase
         end

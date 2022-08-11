@@ -151,4 +151,14 @@ or r1, r5, r12
 nop
 nop
 nop
+nop
+nop
+ldc r20, -7.0
+abs r20, r13
+popcnt r5,r3
+nop
+nop
+nop
+nop
+nop
 stop
