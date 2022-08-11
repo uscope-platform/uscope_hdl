@@ -18,7 +18,8 @@
 module axil_external_registers_cu #(
     parameter REGISTERS_WIDTH = 32,
     REGISTERED_BUFFERS = 0,
-    BASE_ADDRESS = 0
+    BASE_ADDRESS = 0,
+    READ_DELAY = 0
 ) (
     input wire clock,
     input wire reset,
@@ -142,6 +143,7 @@ always @ (posedge clock) begin
     end else begin
         if (read_data.valid)begin
             axi_in.RVALID <= 1'b1;
+            axi_in.RDATA <= read_data.data;
         end else if (axi_in.RREADY) begin
             axi_in.RVALID <= 1'b0;
         end        
@@ -154,7 +156,6 @@ assign	axi_in.RRESP = 2'b00;
 
 assign read_address.data = register_read_address;
 assign read_address.valid = read_address_valid;
-assign axi_in.RDATA = read_data.data;
 assign read_data.ready = read_ready;
 
 wire [31:0] register_write_address;
