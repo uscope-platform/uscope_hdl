@@ -15,7 +15,7 @@
 
 `timescale 10ns / 1ns
 `include "interfaces.svh"
-`include "fCore_ISA.svh"
+import fcore_isa::*;
 
 module fCore_decoder #(parameter INSTRUCTION_WIDTH = 16,MAX_CHANNELS = 255, DATAPATH_WIDTH = 16, PC_WIDTH = 12, OPCODE_WIDTH = 4, REG_ADDR_WIDTH=4, IMMEDIATE_WIDTH=12, CHANNEL_ADDR_WIDTH = 8)(
     input wire clock,
@@ -31,29 +31,6 @@ module fCore_decoder #(parameter INSTRUCTION_WIDTH = 16,MAX_CHANNELS = 255, DATA
     axi_stream.master operand_b_if,
     axi_stream.master operation_if
     );
-
-    enum { 
-        NOP = 0,
-        ADD = 1,
-        SUB = 2,
-        MUL = 3,
-        ITF = 4,
-        FTI = 5,
-        LDC = 6,
-        LDR = 7,
-        BGT = 8,
-        BLE = 9,
-        BEQ = 10,
-        BNE = 11,
-        STOP = 12,
-        AND = 13,
-        OR = 14,
-        NOT = 15,
-        SATP = 16,
-        SATN = 17,
-        REC = 18
-    }ISA;
-
 
     wire [OPCODE_WIDTH-1:0] opcode;
     assign opcode = instruction[OPCODE_WIDTH-1:0];
@@ -81,7 +58,7 @@ module fCore_decoder #(parameter INSTRUCTION_WIDTH = 16,MAX_CHANNELS = 255, DATA
         if(enable)begin
             exec_opcode <= opcode;
             case(opcode)
-                ADD: begin
+                fcore_isa::ADD: begin
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -91,7 +68,7 @@ module fCore_decoder #(parameter INSTRUCTION_WIDTH = 16,MAX_CHANNELS = 255, DATA
                     operation_if.data <= 0;
                     operation_if.valid <= 1;
                 end
-                SUB: begin
+                fcore_isa::SUB: begin
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -101,7 +78,7 @@ module fCore_decoder #(parameter INSTRUCTION_WIDTH = 16,MAX_CHANNELS = 255, DATA
                     operation_if.data <= 1;
                     operation_if.valid <= 1;
                 end
-                MUL: begin
+                fcore_isa::MUL: begin
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -110,32 +87,32 @@ module fCore_decoder #(parameter INSTRUCTION_WIDTH = 16,MAX_CHANNELS = 255, DATA
                     operand_b_if.valid <= 1;
                     operand_b_if.user <= operand_b+(2**REG_ADDR_WIDTH*channel_address);
                 end
-                REC: begin
+                fcore_isa::REC: begin
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= operand_b+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
                 end
-                FTI:begin
+                fcore_isa::FTI:begin
                     operand_b_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_b_if.user <= operand_b+(2**REG_ADDR_WIDTH*channel_address);
                     operand_b_if.valid <= 1;
                 end
-                ITF:begin
+                fcore_isa::ITF:begin
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= operand_b+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
                 end
-                LDC:begin
+                fcore_isa::LDC:begin
                     operand_a_if.dest <= load_data;
                     operand_a_if.user <= operand_a+(2**REG_ADDR_WIDTH*(channel_address));
                     operand_a_if.valid <= 1;
                 end
-                LDR: begin
+                fcore_isa::LDR: begin
                     operand_a_if.dest <= load_reg_val;
                     operand_a_if.user <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
                 end
-                BGT:begin
+                fcore_isa::BGT:begin
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -145,7 +122,7 @@ module fCore_decoder #(parameter INSTRUCTION_WIDTH = 16,MAX_CHANNELS = 255, DATA
                     operation_if.data <= 'b100100;
                     operation_if.valid <= 1;
                 end
-                BLE:begin
+                fcore_isa::BLE:begin
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -155,7 +132,7 @@ module fCore_decoder #(parameter INSTRUCTION_WIDTH = 16,MAX_CHANNELS = 255, DATA
                     operation_if.data <= 'b011100;
                     operation_if.valid <= 1;
                 end
-                BEQ:begin
+                fcore_isa::BEQ:begin
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -165,7 +142,7 @@ module fCore_decoder #(parameter INSTRUCTION_WIDTH = 16,MAX_CHANNELS = 255, DATA
                     operation_if.data <= 'b010100;
                     operation_if.valid <= 1;
                 end
-                BNE:begin
+                fcore_isa::BNE:begin
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1; 
@@ -175,7 +152,17 @@ module fCore_decoder #(parameter INSTRUCTION_WIDTH = 16,MAX_CHANNELS = 255, DATA
                     operation_if.data <= 'b101100;
                     operation_if.valid <= 1;
                 end
-                AND:begin
+                fcore_isa::POPCNT:begin
+                    operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
+                    operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
+                    operand_a_if.valid <= 1;
+                    operand_b_if.dest <= operand_b+(2**REG_ADDR_WIDTH*channel_address);
+                    operand_b_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
+                    operand_b_if.valid <= 1;
+                    operation_if.data <= 3;
+                    operation_if.valid <= 1;
+                end
+                fcore_isa::LAND:begin
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -185,7 +172,7 @@ module fCore_decoder #(parameter INSTRUCTION_WIDTH = 16,MAX_CHANNELS = 255, DATA
                     operation_if.data <= 0;
                     operation_if.valid <= 1;
                 end
-                OR:begin
+                fcore_isa::LOR:begin
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -196,14 +183,14 @@ module fCore_decoder #(parameter INSTRUCTION_WIDTH = 16,MAX_CHANNELS = 255, DATA
                     operation_if.data <= 1;
                     operation_if.valid <= 1;
                 end
-                NOT:begin
+                fcore_isa::LNOT:begin
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= operand_b+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
                     operation_if.data <= 2;
                     operation_if.valid <= 1;
                 end
-                SATP:begin
+                fcore_isa::SATP:begin
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -214,7 +201,7 @@ module fCore_decoder #(parameter INSTRUCTION_WIDTH = 16,MAX_CHANNELS = 255, DATA
                     operation_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operation_if.valid <= 1;
                 end
-                SATN:begin
+                fcore_isa::SATN:begin
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -225,10 +212,10 @@ module fCore_decoder #(parameter INSTRUCTION_WIDTH = 16,MAX_CHANNELS = 255, DATA
                     operation_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operation_if.valid <= 1;
                 end
-                STOP:begin
+                fcore_isa::STOP:begin
                     core_stop <= 1;
                 end         
-                NOP: begin
+                fcore_isa::NOP: begin
                     operand_a_if.dest <= 0;
                     operand_a_if.user <= 0;
                     operand_b_if.dest <= 0;

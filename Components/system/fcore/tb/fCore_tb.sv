@@ -127,7 +127,8 @@ module fCore_tb();
         #5 run <=  0;
     end
 
-    
+    reg dbg = 0;
+    reg [7:0] read_idx = 0;
     reg [31:0] expected_results [12:0];
     localparam CORE_DMA_BASE_ADDRESS = 32'h43c00004;
     
@@ -135,17 +136,19 @@ module fCore_tb();
     event bus_read_test_done;
     initial begin
         if(RECIPROCAL_PRESENT==1) begin
-            expected_results <= {'h428C0000,'h0000000c,'h40a00000,'h3c6d7304,'h40800000,'h40400000,'hc0800000,'h428c0000,'h40400000,'hc0c00000,'hc0800000,'h40800000,'h0};
+            expected_results <= {'h428C0000,'h0000000c,'h40a00000,'h3c6d7304,'h40800000,'h40400000,'hc0800000,'h428c0000,'h40400000,'h00000005,'hc0800000,'h40800000,'h0};
         end else begin
-            expected_results <= {'h428C0000,'h0000000c,'h40a00000,'h0,'h40800000,'h40400000,'hc0800000,'h428c0000,'h40400000,'hc0c00000,'hc0800000,'h40800000,'h0};
+            expected_results <= {'h428C0000,'h0000000c,'h40a00000,'h0,'h40800000,'h40400000,'hc0800000,'h428c0000,'h40400000,'h00000005,'hc0800000,'h40800000,'h0};
         end
         @(posedge done) $display("femtoCore Processing Done");
         ->run_test_done;
         #100;
-        for (integer i = 0; i<13; i++) begin
-            read_req_BFM.write(CORE_DMA_BASE_ADDRESS+4*i);
+        for (integer i = 1; i<13; i++) begin
+            
+            read_req_BFM.write(CORE_DMA_BASE_ADDRESS+4*read_idx);
             read_resp_BFM.read(reg_readback);
-            if(reg_readback!=expected_results[i]) $display("BUS READ ERROR Register %d  Wrong Value detected. Expected %h Got %h",i,expected_results[i],reg_readback);
+            if(reg_readback!=expected_results[read_idx]) $display("BUS READ ERROR Register %d  Wrong Value detected. Expected %h Got %h",read_idx,expected_results[read_idx],reg_readback);
+            read_idx++;
             #100;
         end
         ->bus_read_test_done;
@@ -169,9 +172,10 @@ module fCore_tb();
             @(data_out.valid)
             assert (data_out.data == expected_results[data_out.dest]) 
             else begin
-                $display("AXI STREAM DMA ERROR Wrong Value detected on register %d . Expected %h Got %h",data_out.dest,expected_results[i],data_out.data);
+                $display("AXI STREAM DMA ERROR Wrong Value detected on register %d . Expected %h Got %h",data_out.dest,expected_results[data_out.dest],data_out.data);
                 $finish();
             end
+            #1;
         end
         ->axis_dma_test_done;
     end

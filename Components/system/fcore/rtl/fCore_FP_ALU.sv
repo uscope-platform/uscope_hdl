@@ -15,6 +15,7 @@
 
 `timescale 10ns / 1ns
 `include "interfaces.svh"
+import fcore_isa::*;
 
 module fCore_FP_ALU #(parameter DATAPATH_WIDTH =32, PIPELINE_DEPTH=5, OPCODE_WIDTH=8, REGISTER_ADDR_WIDTH = 8, RECIPROCAL_PRESENT=0)(
     input wire clock,
@@ -81,6 +82,7 @@ module fCore_FP_ALU #(parameter DATAPATH_WIDTH =32, PIPELINE_DEPTH=5, OPCODE_WID
     ) ldc_operand_a();
     /*   THERE IS A BUG IN VIVADO WHERE THIS CONDITIONAL CRASHES SYNTHESIS (2020.2 and 2021.1)
          UNTIL IT IS SOLVED THE CORRECT ALU MUST BE COPY PASTED BELOW
+    */
     generate 
         if(RECIPROCAL_PRESENT==1)begin
         
@@ -102,7 +104,9 @@ module fCore_FP_ALU #(parameter DATAPATH_WIDTH =32, PIPELINE_DEPTH=5, OPCODE_WID
 
         end else begin
 
-            simple_alu_wrapper simple_alu (
+            simple_alu_wrapper #(
+                .REGISTER_ADDR_WIDTH(REGISTER_ADDR_WIDTH)
+            ) simple_alu (
                 .clock(clock),
                 .reset(reset),
                 .operand_a(operand_a),
@@ -116,102 +120,65 @@ module fCore_FP_ALU #(parameter DATAPATH_WIDTH =32, PIPELINE_DEPTH=5, OPCODE_WID
             );    
         end
         
-    endgenerate
-    */
-
-    simple_alu_wrapper #(
-        .REGISTER_ADDR_WIDTH(REGISTER_ADDR_WIDTH)
-    ) simple_alu (
-        .clock(clock),
-        .reset(reset),
-        .operand_a(operand_a),
-        .operand_b(operand_b),
-        .operation(operation),
-        .add_result(add_result),
-        .cmp_result(cmp_result),
-        .fti_result(fti_result),
-        .itf_result(itf_result),
-        .mul_result(mul_result)
-    );    
-
-    enum { 
-        NOP = 0,
-        ADD = 1,
-        SUB = 2,
-        MUL = 3,
-        ITF = 4,
-        FTI = 5,
-        LDC = 6,
-        LDR = 7,
-        BGT = 8,
-        BLE = 9,
-        BEQ = 10,
-        BNE = 11,
-        STOP = 12,
-        AND = 13,
-        OR = 14,
-        NOT = 15,
-        SATP = 16,
-        SATN = 17,
-        REC = 18
-    }ISA;
+    endgenerate  
 
     always_comb begin
 
         case (result_select)
-            ADD,
-            SUB: begin
+            fcore_isa::ADD,
+            fcore_isa::SUB: begin
                 result.data <= add_result.data;
                 result.dest <= add_result.user;
                 result.valid <= 1;
             end
-            MUL:begin
+            fcore_isa::MUL:begin
                 result.data <= mul_result.data;
                 result.dest <= mul_result.user;
                 result.valid <= 1;          
             end
-            REC:begin
+            fcore_isa::REC:begin
                 result.data <= reciprocal_result.data;
                 result.dest <= reciprocal_result.user;
                 result.valid <= 1;       
             end
-            LDR:begin
+            fcore_isa::LDR:begin
                 result.data <= ldr_operand_a.dest;
                 result.dest <= ldr_operand_a.user;
                 result.valid <= 1;     
             end
-            LDC:begin
+            fcore_isa::LDC:begin
                 result.data <= ldc_operand_a.dest;
                 result.dest <= ldc_operand_a.user;
                 result.valid <= 1;
             end
-            BGT,
-            BLE,
-            BEQ,
-            BNE: begin
+            fcore_isa::BGT,
+            fcore_isa::BLE,
+            fcore_isa::BEQ,
+            fcore_isa::BNE: begin
                 result.data <= cmp_result.data;
                 result.dest <= cmp_result.user;
                 result.valid <= 1;
             end
-            FTI:begin
+            fcore_isa::FTI:begin
                 result.data <= fti_result.data;
                 result.dest <= fti_result.user;
                 result.valid <= 1;
             end
-            ITF: begin
+            fcore_isa::ITF: begin
                 result.data <= itf_result.data;
                 result.dest <= itf_result.user;
                 result.valid <= 1;
             end
-            AND,
-            OR,
-            NOT:begin
+            fcore_isa::POPCNT,
+            fcore_isa::LAND,
+            fcore_isa::LOR,
+            fcore_isa::LNOT:begin
                 result.data <= logic_result.data;
                 result.dest <= logic_result.user;
                 result.valid <= 1;
             end
-            SATN,
-            SATP:begin
+            fcore_isa::SATN,
+            fcore_isa::SATP:begin
                 result.data <= saturation_result.data;
                 result.dest <= saturation_result.user;
                 result.valid <= 1;
@@ -224,6 +191,7 @@ module fCore_FP_ALU #(parameter DATAPATH_WIDTH =32, PIPELINE_DEPTH=5, OPCODE_WID
         endcase
     end
 
+    reg [7:0] ones;
     always@(posedge clock) begin
         early_logic_result.valid <= 0;
         early_logic_result.user <= 0;
@@ -244,6 +212,16 @@ module fCore_FP_ALU #(parameter DATAPATH_WIDTH =32, PIPELINE_DEPTH=5, OPCODE_WID
                     early_logic_result.valid <= 1;
                     early_logic_result.user <= operand_a.user;
                     early_logic_result.data <= ~operand_a.data;                     
+                end
+                3:begin
+                    // TODO: BREAK DOWN THIS GIGANTIC ADDER INTO 4 8 BIT ONES
+                    ones = 0;
+                    foreach(operand_a.data[idx]) begin
+                        ones += operand_a.data[idx];
+                    end
+                    early_logic_result.valid <= 1;
+                    early_logic_result.user <= operand_a.user;
+                    early_logic_result.data <= ones;  
                 end
             endcase
         end

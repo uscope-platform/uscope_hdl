@@ -15,6 +15,7 @@
 
 `timescale 10ns / 1ns
 `include "interfaces.svh"
+import fcore_isa::*;
 
 module fCore_exec #(OPCODE_WIDTH = 4, DATA_WIDTH = 32, REG_ADDR_WIDTH = 4, RECIPROCAL_PRESENT=0) (
     input wire clock,
@@ -25,28 +26,6 @@ module fCore_exec #(OPCODE_WIDTH = 4, DATA_WIDTH = 32, REG_ADDR_WIDTH = 4, RECIP
     axi_stream.slave operation,
     axi_stream.master result
 );
-
-    enum { 
-        NOP = 0,
-        ADD = 1,
-        SUB = 2,
-        MUL = 3,
-        ITF = 4,
-        FTI = 5,
-        LDC = 6,
-        LDR = 7,
-        BGT = 8,
-        BLE = 9,
-        BEQ = 10,
-        BNE = 11,
-        STOP = 12,
-        AND = 13,
-        OR = 14,
-        NOT = 15,
-        SATP = 16,
-        SATN = 17,
-        REC = 18
-    }ISA;
 
     localparam  PIPELINE_LENGTH = 5+3*RECIPROCAL_PRESENT;
 
@@ -82,27 +61,28 @@ module fCore_exec #(OPCODE_WIDTH = 4, DATA_WIDTH = 32, REG_ADDR_WIDTH = 4, RECIP
     
     always_comb begin
         case(opcode_dly[PIPELINE_LENGTH])
-            ADD,
-            SUB,
-            MUL,
-            FTI,
-            AND,
-            OR,
-            NOT,
-            SATP,
-            SATN,
-            LDR,
-            LDC,
-            REC,
-            ITF:begin
+            fcore_isa::ADD,
+            fcore_isa::SUB,
+            fcore_isa::MUL,
+            fcore_isa::FTI,
+            fcore_isa::LAND,
+            fcore_isa::LOR,
+            fcore_isa::LNOT,
+            fcore_isa::SATP,
+            fcore_isa::SATN,
+            fcore_isa::LDR,
+            fcore_isa::LDC,
+            fcore_isa::REC,
+            fcore_isa::POPCNT,
+            fcore_isa::ITF:begin
                 result.data <= alu_res.data;
                 result.dest <= alu_res.dest;
                 result.valid <= 1;
             end
-            BGT,
-            BLE,
-            BEQ,
-            BNE:begin
+            fcore_isa::BGT,
+            fcore_isa::BLE,
+            fcore_isa::BEQ,
+            fcore_isa::BNE:begin
                 if(alu_res.data[7:0]) 
                     result.data <= {32{1'b1}};
                 else 

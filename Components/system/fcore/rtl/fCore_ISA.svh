@@ -13,10 +13,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-`ifndef FCORE_ISA_H
-`define FCORE_ISA_H
-
-
-
-`endif
-    
+package fcore_isa;
+    parameter NOP = 0;
+    parameter ADD = 1;
+    parameter SUB = 2;
+    parameter MUL = 3; 
+    parameter ITF = 4;
+    parameter FTI = 5;
+    parameter LDC = 6;
+    parameter LDR = 7;
+    parameter BGT = 8;
+    parameter BLE = 9;
+    parameter BEQ = 10;
+    parameter BNE = 11;
+    parameter STOP = 12;
+    parameter LAND = 13;
+    parameter LOR = 14;
+    parameter LNOT = 15;
+    parameter SATP = 16;
+    parameter SATN = 17;
+    parameter REC = 18;
+    parameter POPCNT = 19;
+endpackage
