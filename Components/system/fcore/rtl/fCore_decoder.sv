@@ -216,6 +216,10 @@ module fCore_decoder #(parameter INSTRUCTION_WIDTH = 16,MAX_CHANNELS = 255, DATA
                     operation_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operation_if.valid <= 1;
                 end
+                fcore_isa::EFI:begin
+                    operand_a_if.dest <= operand_b;
+                    operand_a_if.user <= operand_a;
+                end
                 fcore_isa::STOP:begin
                     core_stop <= 1;
                 end         

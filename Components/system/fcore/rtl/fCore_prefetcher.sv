@@ -15,7 +15,7 @@
 
 `timescale 10ns / 1ns
 `include "interfaces.svh"
-`include "fCore_ISA.svh"
+import fcore_isa::*;
 
 module fCore_prefetcher #(parameter INSTRUCTION_WIDTH = 16, OPCODE_WIDTH = 5, MAX_CHANNELS = 255)(
     input wire clock,
@@ -27,30 +27,9 @@ module fCore_prefetcher #(parameter INSTRUCTION_WIDTH = 16, OPCODE_WIDTH = 5, MA
     output reg [INSTRUCTION_WIDTH-1:0] instruction_out,
     output reg [INSTRUCTION_WIDTH-1:0] load_data,
     output reg [$clog2(MAX_CHANNELS)-1:0] channel_address_out,
-    output wire immediate_advance
+    output wire immediate_advance,
+    output wire efi_call
     );
-
-
-    enum { 
-        NOP = 0,
-        ADD = 1,
-        SUB = 2,
-        MUL = 3,
-        ITF = 4,
-        FTI = 5,
-        LDC = 6,
-        LDR = 7,
-        BGT = 8,
-        BLE = 9,
-        BEQ = 10,
-        BNE = 11,
-        STOP = 12,
-        AND = 13,
-        OR = 14,
-        NOT = 15,
-        SATP = 16,
-        SATN = 17
-    }ISA;
 
     reg load_blanking = 0;
 
@@ -64,14 +43,15 @@ module fCore_prefetcher #(parameter INSTRUCTION_WIDTH = 16, OPCODE_WIDTH = 5, MA
     wire [INSTRUCTION_WIDTH-1:0] instr_2;
     assign instr_2 = instruction_in[2*INSTRUCTION_WIDTH-1:INSTRUCTION_WIDTH];
 
+    assign immediate_advance = (opcode == fcore_isa::LDC) & ~load_blanking;
 
-    assign immediate_advance = (opcode == LDC) & ~load_blanking;
+    assign efi_call = opcode == fcore_isa::EFI;
 
     always_ff@(posedge clock)begin
         if(run)begin
             load_blanking <= 0;
         end
-        if(opcode == LDC)begin
+        if(opcode == fcore_isa::LDC)begin
             load_blanking <= 1;
             instruction_out <= instr_1;
             load_data <= instr_2;

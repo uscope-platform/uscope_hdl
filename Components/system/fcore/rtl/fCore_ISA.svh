@@ -35,4 +35,5 @@ package fcore_isa;
     parameter REC = 18;
     parameter POPCNT = 19;
     parameter ABS = 20;
+    parameter EFI = 21;
 endpackage

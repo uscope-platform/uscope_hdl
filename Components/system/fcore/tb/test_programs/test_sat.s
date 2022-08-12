@@ -152,7 +152,7 @@ nop
 nop
 nop
 nop
-nop
+efi r5, r10, r20
 ldc r20, -7.0
 abs r20, r13
 popcnt r5,r3

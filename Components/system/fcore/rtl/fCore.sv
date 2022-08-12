@@ -20,7 +20,12 @@ module fCore(
     input wire clock,
     input wire reset,
     input wire run,
+    input wire efi_done,
     output wire done,
+    output wire efi_start,
+    axi_stream.master efi_arguments,
+    axi_stream.slave efi_results,
+
     axi_lite.slave control_axi_in,
     AXI.slave axi,
     axi_stream.slave axis_dma_write,
@@ -86,8 +91,10 @@ module fCore(
     wire [REG_ADDR_WIDTH-1:0] dma_read_addr;
     wire [DATAPATH_WIDTH-1:0] dma_read_data;
 
+    wire [REG_ADDR_WIDTH-1:0] efi_read_addr;
+    wire [DATAPATH_WIDTH-1:0] efi_read_data;
 
-    wire immediate_advance;
+    wire immediate_advance, efi_call, mem_efi_enable;
     wire [CH_ADDRESS_WIDTH-1:0] channel_address_cu;
     wire [CH_ADDRESS_WIDTH-1:0] channel_address;
     wire [CH_ADDRESS_WIDTH-1:0] n_channels;
@@ -102,6 +109,9 @@ module fCore(
         .immediate_advance(immediate_advance),
         .core_stop(core_stop),
         .n_channels(n_channels),
+        .efi_call(efi_call),
+        .efi_done(efi_done),
+        .efi_start(efi_start),
         .program_counter(program_counter),
         .decoder_enable(decoder_enable),
         .dma_enable(dma_enable),
@@ -123,7 +133,8 @@ module fCore(
         .instruction_out(instruction),
         .load_data(load_data),
         .channel_address_out(channel_address),
-        .immediate_advance(immediate_advance)
+        .immediate_advance(immediate_advance),
+        .efi_call(efi_call)
     );
 
 
@@ -203,6 +214,25 @@ module fCore(
     ///////////////////////////////
     //      AUXILIARY BLOCKS     //
     ///////////////////////////////
+
+
+    fCore_efi_memory_handler #(
+        .DATAPATH_WIDTH(DATAPATH_WIDTH),
+        .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
+        .CH_ADDRESS_WIDTH(CH_ADDRESS_WIDTH)
+    )efi_handler(
+        .clock(clock),
+        .reset(reset),
+        .send_arguments(efi_start),
+        .base_address(operand_a.user),
+        .channel_address(channel_address), 
+        .length(operand_a.dest),
+        .mem_address(efi_read_addr),
+        .mem_read_data(efi_read_data),
+        .mem_efi_enable(mem_efi_enable),
+        .efi_arguments(efi_arguments),
+        .efi_results(efi_results)
+    );
     
     axi_stream dma_write();
 
@@ -246,14 +276,16 @@ module fCore(
         .reset(reset),
         .write_if(result),
         .dma_enable(dma_enable),
+        .efi_enable(mem_efi_enable),
         .read_addr_a(operand_a.dest),
         .read_data_a(operand_data_a),
         .read_addr_b(operand_b.dest),
         .read_data_b(operand_data_b),
         .dma_read_addr(dma_read_addr),
         .dma_read_data(dma_read_data),
+        .efi_read_addr(efi_read_addr),
+        .efi_read_data(efi_read_data),
         .dma_write(dma_write)
     );
-
     
 endmodule

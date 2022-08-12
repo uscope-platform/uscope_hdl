@@ -20,6 +20,9 @@ module fCore_ControlUnit #(parameter PC_WIDTH = 12, MAX_CHANNELS = 255)(
     input wire clock,
     input wire run,
     input wire immediate_advance,
+    input wire efi_call,
+    input wire efi_done,
+    output reg efi_start,
     input wire core_stop,
     input wire [$clog2(MAX_CHANNELS)-1:0] n_channels,
     output reg [PC_WIDTH-1: 0] program_counter,
@@ -38,7 +41,8 @@ module fCore_ControlUnit #(parameter PC_WIDTH = 12, MAX_CHANNELS = 255)(
 
     enum reg [2:0] {IDLE = 3'b000,
                     PREFETCH = 3'b001,
-                    RUN = 3'b010
+                    RUN = 3'b010,
+                    EFI_CALL = 3'b011
                     } state = IDLE;
 
     always@(posedge clock)begin
@@ -47,6 +51,7 @@ module fCore_ControlUnit #(parameter PC_WIDTH = 12, MAX_CHANNELS = 255)(
                 program_counter <= 0;
                 channel_counter <= 0;
                 decoder_enable <= 0;
+                efi_start <= 0;
                 done <= 0;
                 dma_enable <= 1;
                 if(run) begin
@@ -63,7 +68,10 @@ module fCore_ControlUnit #(parameter PC_WIDTH = 12, MAX_CHANNELS = 255)(
             RUN:begin
                 dma_enable <= 0;
                 decoder_enable <= 1;
-                if((channel_counter == n_channels-1) | immediate_advance)begin
+                if(efi_call)begin
+                    state <= EFI_CALL;
+                    efi_start <= 1;
+                end else if((channel_counter == n_channels-1) | immediate_advance)begin
                     program_counter <= program_counter+1;
                     channel_counter <= 0;
                 end else begin
@@ -72,6 +80,18 @@ module fCore_ControlUnit #(parameter PC_WIDTH = 12, MAX_CHANNELS = 255)(
                 if(core_stop)begin
                     done <= 1;
                     state <= IDLE;
+                end
+            end
+            EFI_CALL:begin
+                efi_start <= 0;
+                if(efi_done)begin
+                    if((channel_counter == n_channels-1) | immediate_advance)begin
+                        program_counter <= program_counter+1;
+                        channel_counter <= 0;
+                    end else begin
+                        channel_counter <= channel_counter+1;
+                    end
+                    state <= RUN;
                 end
             end
         endcase

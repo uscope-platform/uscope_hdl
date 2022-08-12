@@ -23,13 +23,20 @@ module fCore_registerFile #(parameter REGISTER_WIDTH = 32, FILE_DEPTH = 12, REG_
     axi_stream.slave write_if,
     
     input wire dma_enable,
+    input wire efi_enable,
     
     input wire [$clog2(FILE_DEPTH)-1:0] read_addr_a,
     output reg [REGISTER_WIDTH-1:0] read_data_a,
     input wire [$clog2(FILE_DEPTH)-1:0] read_addr_b,
     output reg [REGISTER_WIDTH-1:0] read_data_b,
+
     input wire [$clog2(FILE_DEPTH)-1:0] dma_read_addr,
     output reg [REGISTER_WIDTH-1:0] dma_read_data,
+
+    input wire [$clog2(FILE_DEPTH)-1:0] efi_read_addr,
+    output reg [REGISTER_WIDTH-1:0] efi_read_data,
+
+
     axi_stream.slave dma_write
     );
 
@@ -77,7 +84,13 @@ module fCore_registerFile #(parameter REGISTER_WIDTH = 32, FILE_DEPTH = 12, REG_
 
     
     always_comb begin
-        if(dma_enable) begin
+        if(efi_enable)begin
+            ram_a_read_addr <= efi_read_addr;
+            ram_b_read_addr <= efi_read_addr;
+            efi_read_data <= ram_a_read_data;
+            read_data_a <= 0;
+            read_data_b <= 0;
+        end else if(dma_enable) begin
             ram_write_if.data <= dma_write.data;
             ram_write_if.dest <= dma_write.dest;
             ram_write_if.valid <= dma_write.valid;

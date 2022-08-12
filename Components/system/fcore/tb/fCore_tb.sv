@@ -57,8 +57,30 @@ module fCore_tb();
         .axi_out(axi_master)
     );
 
-
+    reg efi_done, efi_start, efi_working;
     
+    reg [7:0] efi_counter = 0;
+
+    always_ff @(posedge core_clk) begin
+        efi_done <= 0;
+        if (efi_start) begin
+            efi_working <=1;
+        end
+        if(efi_working)begin
+            efi_counter <= efi_counter + 1;
+            if (efi_counter == 20) begin
+                efi_done <= 1;
+                efi_counter <= 0;
+                efi_working <= 0;
+            end
+        end
+         
+    end
+
+
+    axi_stream efi_arguments();
+    axi_stream efi_results();
+
     defparam uut.executor.RECIPROCAL_PRESENT = RECIPROCAL_PRESENT;
     fCore #(
         .FAST_DEBUG("TRUE"),
@@ -69,11 +91,15 @@ module fCore_tb();
         .reset(rst),
         .run(run),
         .done(done),
+        .efi_done(efi_done),
+        .efi_start(efi_start),
         .control_axi_in(axi_master),
         .axi(axi_programmer),
         .axis_dma_write(axis_dma_write),
         .axis_dma_read_request(dma_read_request),
-        .axis_dma_read_response(dma_read_response)
+        .axis_dma_read_response(dma_read_response),
+        .efi_arguments(efi_arguments),
+        .efi_results(efi_results)
     );
 
     reg data_mover_start;
