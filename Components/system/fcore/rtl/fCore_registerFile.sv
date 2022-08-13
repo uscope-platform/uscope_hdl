@@ -19,11 +19,9 @@
 module fCore_registerFile #(parameter REGISTER_WIDTH = 32, FILE_DEPTH = 12, REG_PER_CHANNEL = 16)(
     input wire clock,
     input wire reset,
-
-    axi_stream.slave write_if,
     
     input wire dma_enable,
-    input wire efi_enable,
+    input wire [1:0] efi_enable,
     
     input wire [$clog2(FILE_DEPTH)-1:0] read_addr_a,
     output reg [REGISTER_WIDTH-1:0] read_data_a,
@@ -35,12 +33,11 @@ module fCore_registerFile #(parameter REGISTER_WIDTH = 32, FILE_DEPTH = 12, REG_
 
     input wire [$clog2(FILE_DEPTH)-1:0] efi_read_addr,
     output reg [REGISTER_WIDTH-1:0] efi_read_data,
-
-
-    axi_stream.slave dma_write
+    
+    axi_stream.slave write_if,
+    axi_stream.slave dma_write,
+    axi_stream.slave efi_write
     );
-
-
 
 
 
@@ -84,12 +81,19 @@ module fCore_registerFile #(parameter REGISTER_WIDTH = 32, FILE_DEPTH = 12, REG_
 
     
     always_comb begin
-        if(efi_enable)begin
-            ram_a_read_addr <= efi_read_addr;
-            ram_b_read_addr <= efi_read_addr;
-            efi_read_data <= ram_a_read_data;
-            read_data_a <= 0;
-            read_data_b <= 0;
+        if(efi_enable[0])begin
+            if(efi_enable[1])begin
+                ram_write_if.data <= efi_write.data;
+                ram_write_if.dest <= efi_write.dest;
+                ram_write_if.valid <= efi_write.valid;
+            end else begin
+                ram_a_read_addr <= efi_read_addr;
+                ram_b_read_addr <= efi_read_addr;
+                efi_read_data <= ram_a_read_data;
+                read_data_a <= 0;
+                read_data_b <= 0;
+            end
+
         end else if(dma_enable) begin
             ram_write_if.data <= dma_write.data;
             ram_write_if.dest <= dma_write.dest;

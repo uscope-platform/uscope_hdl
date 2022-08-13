@@ -1,4 +1,7 @@
-nop
+add r1, r2, r1
+add r2, r1, r2
+add r1, r2, r1
+add r2, r1, r2
 ldc r1, 4.0
 ldc r2, -4.0
 ldc r3, -6.0
@@ -50,14 +53,10 @@ nop
 nop
 nop
 nop
-ldr r10, 5
+ldc r10, 5.0
 nop
 nop
 nop
-nop
-nop
-nop
-itf r10, r10
 nop
 nop
 nop
@@ -152,7 +151,6 @@ nop
 nop
 nop
 nop
-efi r5, r10, r20
 ldc r20, -7.0
 abs r20, r13
 popcnt r5,r3

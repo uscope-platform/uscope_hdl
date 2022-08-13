@@ -81,7 +81,6 @@ module fCore(
     wire [ADDR_WIDTH-1:0] program_counter;
 
     wire [2*INSTRUCTION_WIDTH-1:0] instruction_w;
-    wire [INSTRUCTION_WIDTH-1:0] instruction;
     wire [INSTRUCTION_WIDTH-1:0] load_data;
     wire [ALU_OPCODE_WIDTH-1:0] exec_opcode;
 
@@ -94,50 +93,32 @@ module fCore(
     wire [REG_ADDR_WIDTH-1:0] efi_read_addr;
     wire [DATAPATH_WIDTH-1:0] efi_read_data;
 
-    wire immediate_advance, efi_call, mem_efi_enable;
-    wire [CH_ADDRESS_WIDTH-1:0] channel_address_cu;
-    wire [CH_ADDRESS_WIDTH-1:0] channel_address;
+    wire immediate_advance;
+    wire [1:0] mem_efi_enable;
     wire [CH_ADDRESS_WIDTH-1:0] n_channels;
 
+    axi_stream instruction_stream();
     
     fCore_ControlUnit #(
         .MAX_CHANNELS(MAX_CHANNELS),
-        .PC_WIDTH(ADDR_WIDTH)
+        .PC_WIDTH(ADDR_WIDTH),
+        .INSTRUCTION_WIDTH(INSTRUCTION_WIDTH)
     ) control_unit (
-        .clock(clock),
-        .run(run),
-        .immediate_advance(immediate_advance),
-        .core_stop(core_stop),
-        .n_channels(n_channels),
-        .efi_call(efi_call),
-        .efi_done(efi_done),
-        .efi_start(efi_start),
-        .program_counter(program_counter),
-        .decoder_enable(decoder_enable),
-        .dma_enable(dma_enable),
-        .channel_address(channel_address_cu),
-        .done(done)
-    );
-
-
-    fCore_prefetcher #(
-        .INSTRUCTION_WIDTH(INSTRUCTION_WIDTH),
-        .MAX_CHANNELS(MAX_CHANNELS)
-    ) pre_fetcher(
         .clock(clock),
         .reset(reset),
         .run(run),
-        .channel_address_in(channel_address_cu),
+        .efi_done(efi_done),
+        .efi_start(efi_start),
+        .core_stop(core_stop),
+        .wide_instruction_in(instruction_w),
         .n_channels(n_channels),
-        .instruction_in(instruction_w),
-        .instruction_out(instruction),
+        .program_counter(program_counter),
         .load_data(load_data),
-        .channel_address_out(channel_address),
-        .immediate_advance(immediate_advance),
-        .efi_call(efi_call)
+        .decoder_enable(decoder_enable),
+        .dma_enable(dma_enable),
+        .done(done),
+        .instruction_stream(instruction_stream)
     );
-
-
 
     fCore_decoder #(
         .INSTRUCTION_WIDTH(INSTRUCTION_WIDTH),
@@ -151,10 +132,9 @@ module fCore(
         .clock(clock),
         .reset(reset),
         .enable(decoder_enable),
-        .instruction(instruction),
+        .instruction_stream(instruction_stream),
         .load_data(load_data),
         .n_channels(n_channels),
-        .channel_address(channel_address),
         .exec_opcode(exec_opcode),
         .core_stop(core_stop),
         .operand_a_if(operand_a),
@@ -214,24 +194,28 @@ module fCore(
     ///////////////////////////////
     //      AUXILIARY BLOCKS     //
     ///////////////////////////////
-
+    
+    axi_stream efi_writeback();
 
     fCore_efi_memory_handler #(
         .DATAPATH_WIDTH(DATAPATH_WIDTH),
         .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
+        .BASE_REG_ADDR_WIDTH(BASE_REG_ADDR_WIDTH),
         .CH_ADDRESS_WIDTH(CH_ADDRESS_WIDTH)
     )efi_handler(
         .clock(clock),
         .reset(reset),
         .send_arguments(efi_start),
-        .base_address(operand_a.user),
-        .channel_address(channel_address), 
+        .arguments_base_address(operand_a.user),
+        .return_base_address(operand_b.dest),
+        .channel_address(instruction_stream.dest), 
         .length(operand_a.dest),
         .mem_address(efi_read_addr),
         .mem_read_data(efi_read_data),
         .mem_efi_enable(mem_efi_enable),
         .efi_arguments(efi_arguments),
-        .efi_results(efi_results)
+        .efi_results(efi_results),
+        .result_writeback(efi_writeback)
     );
     
     axi_stream dma_write();
@@ -285,7 +269,8 @@ module fCore(
         .dma_read_data(dma_read_data),
         .efi_read_addr(efi_read_addr),
         .efi_read_data(efi_read_data),
-        .dma_write(dma_write)
+        .dma_write(dma_write),
+        .efi_write(efi_writeback)
     );
     
 endmodule

@@ -16,27 +16,44 @@
 `timescale 10ns / 1ns
 `include "interfaces.svh"
 
-module fCore_ControlUnit #(parameter PC_WIDTH = 12, MAX_CHANNELS = 255)(
+module fCore_ControlUnit #(parameter PC_WIDTH = 12, OPCODE_WIDTH = 5, MAX_CHANNELS = 255, INSTRUCTION_WIDTH=32)(
     input wire clock,
+    input wire reset,
     input wire run,
-    input wire immediate_advance,
-    input wire efi_call,
     input wire efi_done,
     output reg efi_start,
     input wire core_stop,
+    input wire [2*INSTRUCTION_WIDTH-1:0] wide_instruction_in,
     input wire [$clog2(MAX_CHANNELS)-1:0] n_channels,
     output reg [PC_WIDTH-1: 0] program_counter,
-    output reg [$clog2(MAX_CHANNELS)-1:0] channel_address,
+    output reg [INSTRUCTION_WIDTH-1:0] load_data,
     output reg decoder_enable,
     output reg dma_enable,
-    output reg done
+    output reg done,
+    axi_stream.master instruction_stream
     );
 
     reg [$clog2(MAX_CHANNELS)-1:0] channel_counter;
 
+    reg [$clog2(MAX_CHANNELS)-1:0] ch_addr;
+    reg load_blanking = 0;
+
+
+    wire [OPCODE_WIDTH-1:0] opcode;
+    assign opcode = wide_instruction_in[OPCODE_WIDTH-1:0];
+
+
+    wire [INSTRUCTION_WIDTH-1:0] instr_1;
+    assign instr_1 = wide_instruction_in[INSTRUCTION_WIDTH-1:0];
+
+    wire [INSTRUCTION_WIDTH-1:0] instr_2;
+    assign instr_2 = wide_instruction_in[2*INSTRUCTION_WIDTH-1:INSTRUCTION_WIDTH];
+
+    wire [OPCODE_WIDTH-1:0] next_opcode;
+    assign next_opcode = instr_2[OPCODE_WIDTH-1:0];
 
     always@(posedge clock)begin
-        channel_address <= channel_counter;
+        ch_addr <= channel_counter;
     end
 
     enum reg [2:0] {IDLE = 3'b000,
@@ -48,6 +65,7 @@ module fCore_ControlUnit #(parameter PC_WIDTH = 12, MAX_CHANNELS = 255)(
     always@(posedge clock)begin
         case(state)
             IDLE:begin
+                load_blanking <= 0;
                 program_counter <= 0;
                 channel_counter <= 0;
                 decoder_enable <= 0;
@@ -68,10 +86,10 @@ module fCore_ControlUnit #(parameter PC_WIDTH = 12, MAX_CHANNELS = 255)(
             RUN:begin
                 dma_enable <= 0;
                 decoder_enable <= 1;
-                if(efi_call)begin
+                if(opcode == fcore_isa::EFI)begin
                     state <= EFI_CALL;
                     efi_start <= 1;
-                end else if((channel_counter == n_channels-1) | immediate_advance)begin
+                end else if((channel_counter == n_channels-1) | (opcode == fcore_isa::LDC) & ~load_blanking)begin
                     program_counter <= program_counter+1;
                     channel_counter <= 0;
                 end else begin
@@ -85,7 +103,7 @@ module fCore_ControlUnit #(parameter PC_WIDTH = 12, MAX_CHANNELS = 255)(
             EFI_CALL:begin
                 efi_start <= 0;
                 if(efi_done)begin
-                    if((channel_counter == n_channels-1) | immediate_advance)begin
+                    if((channel_counter == n_channels-1) | (opcode == fcore_isa::LDC) & ~load_blanking)begin
                         program_counter <= program_counter+1;
                         channel_counter <= 0;
                     end else begin
@@ -95,6 +113,22 @@ module fCore_ControlUnit #(parameter PC_WIDTH = 12, MAX_CHANNELS = 255)(
                 end
             end
         endcase
+
+        if(state==RUN)begin
+             
+            if(opcode == fcore_isa::LDC)begin
+                load_blanking <= 1;
+                instruction_stream.data <= instr_1;
+                load_data <= instr_2;
+            end else if(~load_blanking)begin
+                instruction_stream.data <= instr_1;
+            end
+            if(load_blanking & ch_addr==n_channels-1) begin
+                load_blanking <= 0;  
+                instruction_stream.data <= instr_1;              
+            end
+            instruction_stream.dest <= ch_addr;
+        end
     end
 
     

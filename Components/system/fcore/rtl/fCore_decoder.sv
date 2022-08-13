@@ -22,33 +22,34 @@ module fCore_decoder #(parameter INSTRUCTION_WIDTH = 16,MAX_CHANNELS = 255, DATA
     input wire reset,
     input wire enable,
     input wire [$clog2(MAX_CHANNELS)-1:0] n_channels,
-    input wire [INSTRUCTION_WIDTH-1:0] instruction,
     input wire [INSTRUCTION_WIDTH-1:0] load_data,
-    input wire [CHANNEL_ADDR_WIDTH-1:0] channel_address,
     output reg [OPCODE_WIDTH-1:0] exec_opcode,
     output reg core_stop,
+    axi_stream.slave instruction_stream,
     axi_stream.master operand_a_if,
     axi_stream.master operand_b_if,
     axi_stream.master operation_if
     );
 
     wire [OPCODE_WIDTH-1:0] opcode;
-    assign opcode = instruction[OPCODE_WIDTH-1:0];
+    assign opcode = instruction_stream.data[OPCODE_WIDTH-1:0];
 
     wire [REG_ADDR_WIDTH-1:0] operand_a;
-    assign operand_a = instruction[OPCODE_WIDTH+REG_ADDR_WIDTH-1:OPCODE_WIDTH];
+    assign operand_a = instruction_stream.data[OPCODE_WIDTH+REG_ADDR_WIDTH-1:OPCODE_WIDTH];
 
     wire [REG_ADDR_WIDTH-1:0] operand_b;
-    assign operand_b = instruction[OPCODE_WIDTH+2*REG_ADDR_WIDTH-1:OPCODE_WIDTH+REG_ADDR_WIDTH];
+    assign operand_b = instruction_stream.data[OPCODE_WIDTH+2*REG_ADDR_WIDTH-1:OPCODE_WIDTH+REG_ADDR_WIDTH];
 
     wire [REG_ADDR_WIDTH-1:0] alu_dest;
-    assign alu_dest = instruction[OPCODE_WIDTH+3*REG_ADDR_WIDTH-1:OPCODE_WIDTH+2*REG_ADDR_WIDTH];
+    assign alu_dest = instruction_stream.data[OPCODE_WIDTH+3*REG_ADDR_WIDTH-1:OPCODE_WIDTH+2*REG_ADDR_WIDTH];
 
     wire [IMMEDIATE_WIDTH-1:0] load_reg_val;
-    assign load_reg_val = instruction[OPCODE_WIDTH+REG_ADDR_WIDTH+12:OPCODE_WIDTH+REG_ADDR_WIDTH];
+    assign load_reg_val = instruction_stream.data[OPCODE_WIDTH+REG_ADDR_WIDTH+12:OPCODE_WIDTH+REG_ADDR_WIDTH];
                     
+    wire [CHANNEL_ADDR_WIDTH-1:0] channel_address;
+    assign channel_address = instruction_stream.dest;
     
-    
+
     always@(posedge clock)begin
         core_stop <= 0;
         exec_opcode <= 0;
@@ -219,6 +220,7 @@ module fCore_decoder #(parameter INSTRUCTION_WIDTH = 16,MAX_CHANNELS = 255, DATA
                 fcore_isa::EFI:begin
                     operand_a_if.dest <= operand_b;
                     operand_a_if.user <= operand_a;
+                    operand_b_if.dest <= alu_dest;
                 end
                 fcore_isa::STOP:begin
                     core_stop <= 1;
