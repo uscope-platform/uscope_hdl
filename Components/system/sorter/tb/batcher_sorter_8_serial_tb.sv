@@ -24,8 +24,6 @@ class batcher_sorter_serial_stimulus;
     constraint length_bounds {length>8 && length<150;}
 endclass
 
-
-
 module batcher_sorter_8_serial_tb ();
 
     reg clock, reset, start;

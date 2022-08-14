@@ -15,6 +15,7 @@
 
 `timescale 10ns / 1ns
 `include "interfaces.svh"
+import fcore_isa::*;
 
 module fCore_ControlUnit #(parameter PC_WIDTH = 12, OPCODE_WIDTH = 5, MAX_CHANNELS = 255, INSTRUCTION_WIDTH=32)(
     input wire clock,

@@ -20,7 +20,7 @@ module fCore(
     input wire clock,
     input wire reset,
     input wire run,
-    input wire efi_done,
+
     output wire done,
     output wire efi_start,
     axi_stream.master efi_arguments,
@@ -107,7 +107,7 @@ module fCore(
         .clock(clock),
         .reset(reset),
         .run(run),
-        .efi_done(efi_done),
+        .efi_done(efi_results.tlast),
         .efi_start(efi_start),
         .core_stop(core_stop),
         .wide_instruction_in(instruction_w),
