@@ -18,7 +18,7 @@
 `include "axi_lite_BFM.svh"
 `include "axis_BFM.svh"
 
-module sorter_efi_tb();
+module efi_sorter_tb();
 
 
     `define DEBUG
@@ -58,65 +58,29 @@ module sorter_efi_tb();
         .axi_out(axi_master)
     );
 
-    reg efi_done, efi_start;
+    reg efi_start;
     
-    reg [7:0] efi_counter = 0;
-    reg [31:0] efi_memory [9:0];
-
     axi_stream efi_arguments();
     axi_stream efi_results();
-    axi_stream sorter_out();
-    reg efi_working = 0;
-
-    reg [31:0] sorter_counter = 0;
-    reg efi_data_valid = 0;
-    always_ff @(posedge core_clk) begin
-        if(sorter_out.valid & efi_data_valid)begin
-            efi_working <= 0;
-            sorter_counter <= sorter_counter+1;
-            efi_results.data <= sorter_out.dest;
-            efi_results.dest <= sorter_counter;
-            efi_results.valid <= sorter_out.valid;
-            if(sorter_counter == 9)begin
-               efi_results.tlast <= 1; 
-               efi_data_valid <= 0;
-            end
-        end
-        if(efi_arguments.valid)begin
-            efi_working <= 1;
-            efi_data_valid <= 1;
-            sorter_counter<= 0;
-        end
-        if(~efi_data_valid)begin
-            efi_results.tlast <= 0;
-            efi_results.valid <= 0;
-        end
-
-    end
 
 
-
-    merge_sorter #(
+    efi_sorter #(
         .DATA_WIDTH(32),
-        .DEST_WIDTH(32),
+        .DEST_WIDTH(8),
         .USER_WIDTH(1),
         .MAX_SORT_LENGTH(256)
-    )sorter(
+    )efi_1(
         .clock(core_clk),
         .reset(rst),
-        .start(efi_arguments.valid & ~efi_working),
-        .data_length(10),
-        .input_data(efi_arguments),
-        .output_data(sorter_out)
+        .efi_arguments(efi_arguments),
+        .efi_results(efi_results)
     );
-
-
 
     defparam core.executor.RECIPROCAL_PRESENT = RECIPROCAL_PRESENT;
     fCore #(
         .FAST_DEBUG("TRUE"),
         .MAX_CHANNELS(9),
-        .INIT_FILE("/home/fils/git/uscope_hdl/public/Components/system/sorter/tb/test_efi.mem")
+        .INIT_FILE("/home/fils/git/uscope_hdl/public/Components/system/fcore/efi/sorter/tb/test_efi.mem")
     ) core(
         .clock(core_clk),
         .reset(rst),

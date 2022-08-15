@@ -20,7 +20,6 @@ module fCore(
     input wire clock,
     input wire reset,
     input wire run,
-
     output wire done,
     output wire efi_start,
     axi_stream.master efi_arguments,
@@ -250,7 +249,7 @@ module fCore(
         .dma_read_data_w(instruction_w),
         .axi(axi)
     );
-
+    
     fCore_registerFile #(
         .REGISTER_WIDTH(DATAPATH_WIDTH),
         .FILE_DEPTH(REG_FILE_SIZE),
