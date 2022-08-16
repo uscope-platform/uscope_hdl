@@ -166,4 +166,8 @@ bset r20, r55, r20
 bclr r20, r55, r20
 nop
 nop
+binv r20, r55, r20
+binv r20, r55, r20
+nop
+nop
 stop

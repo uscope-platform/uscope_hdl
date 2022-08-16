@@ -246,7 +246,7 @@ module fCore_FP_ALU #(parameter DATAPATH_WIDTH =32, PIPELINE_DEPTH=5, OPCODE_WID
                     early_logic_result.valid <= 1;
                     early_logic_result.user <= operand_a.user;
                     early_logic_result.data <= operand_a.data[31:0];
-                    early_logic_result.data[operand_b.data] = ~early_logic_result.data[operand_b.data];
+                    early_logic_result.data <= operand_a.data[31:0] ^ (1'b1<<operand_b.data);  
                 end
                 
             endcase
