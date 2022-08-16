@@ -167,6 +167,7 @@ bclr r20, r55, r20
 nop
 nop
 binv r20, r55, r20
+bsel r20, r55, r22
 binv r20, r55, r20
 nop
 nop
