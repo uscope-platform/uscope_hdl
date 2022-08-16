@@ -36,4 +36,7 @@ package fcore_isa;
     parameter POPCNT = 19;
     parameter ABS = 20;
     parameter EFI = 21;
+    parameter BSET = 22;
+    parameter BCLR = 23;
+    parameter BINV = 24;
 endpackage

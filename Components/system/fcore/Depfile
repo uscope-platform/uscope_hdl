@@ -34,7 +34,8 @@
     "excluded_modules":[
         "fCore_PS_bd",
         "fp_alu",
-        "fcore_simple_alu"
+        "fcore_simple_alu",
+        "fcore_div_alu"
     ],
     "constraints": []
 }

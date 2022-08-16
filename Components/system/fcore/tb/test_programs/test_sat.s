@@ -159,4 +159,11 @@ nop
 nop
 nop
 nop
+nop
+ldc r55, 5.0
+fti r55, r55
+bset r20, r55, r20
+bclr r20, r55, r20
+nop
+nop
 stop

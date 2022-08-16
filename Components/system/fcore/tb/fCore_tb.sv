@@ -103,7 +103,6 @@ module fCore_tb();
         .reset(rst),
         .run(run),
         .done(done),
-        .efi_done(efi_done),
         .efi_start(efi_start),
         .control_axi_in(axi_master),
         .axi(axi_programmer),
