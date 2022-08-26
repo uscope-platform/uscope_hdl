@@ -40,4 +40,5 @@ package fcore_isa;
     parameter BCLR = 23;
     parameter BINV = 24;
     parameter BSEL = 25;
+    parameter LXOR = 26;
 endpackage

@@ -171,4 +171,11 @@ bsel r20, r55, r22
 binv r20, r55, r20
 nop
 nop
+nop
+ldc r56, 5.0
+ldc r57, -1.0
+xor r56, r57, r58
+nop
+nop
+nop
 stop

@@ -13,30 +13,42 @@ ldc r12, 51.2
 nop
 nop
 nop
+ldc r40, 74395.24852
 nop
 nop
 nop
 nop
 nop
-nop
-efi r1, r11, r15
-nop
-nop
+efi r1, r11, r52
+bsel r40, r52, r48
 nop
 nop
+bsel r40, r53, r49
 nop
 nop
+bsel r40, r54, r48
 nop
-itf r15, r15
-itf r16, r16
-itf r17, r17
-itf r18, r18
-itf r19, r19
-itf r20, r20
-itf r21, r21
-itf r22, r22
-itf r23, r23
-itf r24, r24
+nop
+bsel r40, r55, r49
+nop
+nop
+bsel r40, r56, r48
+nop
+nop
+bsel r40, r57, r49
+nop
+nop
+bsel r40, r58, r48
+nop
+nop
+bsel r40, r59, r49
+nop
+nop
+bsel r40, r60, r48
+nop
+nop
+bsel r40, r61, r49
+nop
 nop
 nop
 nop

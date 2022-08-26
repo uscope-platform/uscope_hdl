@@ -85,14 +85,14 @@ module efi_sorter #(
                         efi_results.dest <= 0;
                     end
                     sorter_counter <= sorter_counter+1;
-                    efi_results.data <= sorter_out.dest;
+                    efi_results.data <= sorter_out.dest-1;
                     efi_results.valid <= sorter_out.valid;
                     efi_fsm <= fsm_data_out;
                 end
             end
             fsm_data_out:begin
                 sorter_counter <= sorter_counter+1;
-                efi_results.data <= sorter_out.dest;
+                efi_results.data <= sorter_out.dest-1;
                 if(order)begin
                     efi_results.dest <= 9 - sorter_counter;
                 end else begin

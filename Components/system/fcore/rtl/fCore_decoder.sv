@@ -188,6 +188,18 @@ module fCore_decoder #(parameter INSTRUCTION_WIDTH = 16,MAX_CHANNELS = 255, DATA
                     operation_if.data <= 1;
                     operation_if.valid <= 1;
                 end
+                fcore_isa::LXOR:begin
+                    operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
+                    operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
+                    operand_a_if.valid <= 1;
+                    operand_b_if.dest <= 5;
+                    operand_b_if.dest <= operand_b+(2**REG_ADDR_WIDTH*channel_address);
+                    operand_b_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
+                    operand_b_if.valid <= 1;
+                    operation_if.data <= 9;
+                    operation_if.valid <= 1;
+                end
+                
                 fcore_isa::BSET:begin
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);

@@ -68,6 +68,7 @@ module fCore_exec #(OPCODE_WIDTH = 4, DATA_WIDTH = 32, REG_ADDR_WIDTH = 4, RECIP
             fcore_isa::LAND,
             fcore_isa::LOR,
             fcore_isa::LNOT,
+            fcore_isa::LXOR,
             fcore_isa::SATP,
             fcore_isa::SATN,
             fcore_isa::LDR,
