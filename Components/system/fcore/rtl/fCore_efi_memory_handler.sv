@@ -52,7 +52,8 @@ module fCore_efi_memory_handler #(
     
     reg [7:0] arguments_counter = 0;
 
-    assign efi_arguments.data = mem_read_data; 
+    assign efi_arguments.data = handler_fsm==fsm_idle ? 0 : mem_read_data; 
+    
     always_ff @(posedge clock or negedge reset) begin
         send_args_del <= send_arguments;
         case (handler_fsm)
@@ -63,7 +64,6 @@ module fCore_efi_memory_handler #(
                 arguments_counter <= 1;
                 mem_efi_enable <= 0;
                 result_writeback.valid <= 0;
-                efi_arguments.data <= 0;
                 efi_arguments.tlast <= 0;
                 efi_arguments.valid <= 0;
                 if(send_args_del) begin

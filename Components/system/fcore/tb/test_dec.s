@@ -2,12 +2,12 @@ add r1, r2, r1
 add r2, r1, r2
 add r1, r2, r1
 add r2, r1, r2
-ldc r1, 4.0
-ldc r2, -4.0
-ldc r3, -6.0
-ldc r4, 3.0
-ldc r5, 70.0
-ldc r28, 69.0
+ldc r1, 4.000000
+ldc r2, -4.000000
+ldc r3, -6.000000
+ldc r4, 3.000000
+ldc r5, 70.000000
+ldc r28, 69.000000
 nop
 add r1, r4, r10
 nop
@@ -53,7 +53,7 @@ nop
 nop
 nop
 nop
-ldc r10, 5.0
+ldc r10, 5.000000
 nop
 nop
 nop
@@ -151,31 +151,29 @@ nop
 nop
 nop
 nop
-ldc r20, -7.0
+ldc r20, -7.000000
 abs r20, r13
-popcnt r5,r3
+popcnt r5, r3
 nop
 nop
 nop
 nop
 nop
 nop
-ldc r55, 5.0
+ldc r55, 5.000000
 fti r55, r55
 nop
 nop
-ldc r31, 31.0
-fti r31, r31
-ldc r56, 22.0
+nop
+ldc r56, 22.000000
 bset r56, r31, r1
-bset r56, r31, r0
 nop
 nop
-ldc r56, 5.0
-ldc r57, -1.0
+ldc r56, 5.000000
+ldc r57, -1.000000
 xor r56, r57, r58
 nop
-mov r56, r33
+add r56, r0, r33
 nop
 nop
 stop
