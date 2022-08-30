@@ -107,3 +107,5 @@ Components/system/axi_stream/skid_buffer/axis skid_buffer/
 Components/controls/nearest_level_modulator/nearest_level_modulator/
 
 Components/system/fcore/efi/sorter/efi_sorter/
+
+Components/system/fcore/efi/trig_unit/efi_trig/
