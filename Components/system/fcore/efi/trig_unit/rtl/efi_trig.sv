@@ -80,7 +80,7 @@ module efi_trig #(
                     end else begin
                         efi_results.data <= sin.data;
                     end
-                    efi_results.dest <= sin.dest-1;
+                    efi_results.dest <= sin.dest-2;
                     efi_results.valid<=1;
                     efi_results.tlast<=1;
                 end
