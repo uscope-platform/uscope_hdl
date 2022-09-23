@@ -24,7 +24,6 @@ module fCore(
     output wire efi_start,
     axi_stream.master efi_arguments,
     axi_stream.slave efi_results,
-
     axi_lite.slave control_axi_in,
     AXI.slave axi,
     axi_stream.slave axis_dma_write,
@@ -92,7 +91,6 @@ module fCore(
     wire [REG_ADDR_WIDTH-1:0] efi_read_addr;
     wire [DATAPATH_WIDTH-1:0] efi_read_data;
 
-    wire immediate_advance;
     wire [1:0] mem_efi_enable;
     wire [CH_ADDRESS_WIDTH-1:0] n_channels;
 
