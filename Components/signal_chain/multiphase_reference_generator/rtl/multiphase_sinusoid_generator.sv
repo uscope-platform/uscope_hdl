@@ -15,27 +15,50 @@
 `timescale 10ns / 1ns
 `include "interfaces.svh"
 
-module multiphase_sinusoid_generator #(parameter N_PHASES=6, BASE_ADDRESS='h43c00000)(
+module multiphase_sinusoid_generator #(parameter N_PHASES=6, BASE_ADDRESS='h43c00000, DATA_WIDTH=16)(
     input wire clock,
     input wire reset,
-    input wire [15:0] phase_shifts [N_PHASES-1:0],
+    input wire [DATA_WIDTH-1:0] phase_shifts [N_PHASES-1:0],
     axi_stream.slave phase,
     axi_stream.master sin_out,
     axi_stream.master cos_out
 );
 
-    reg [15:0] latched_phase;
+    reg [DATA_WIDTH-1:0] latched_phase;
     reg[$clog2(N_PHASES)-1:0] phase_in_counter;
     reg[$clog2(N_PHASES)-1:0] phase_out_counter;
-    reg [5:0] lut_enable;
+    reg [N_PHASES-1:0] lut_enable;
     reg start_output_fsm;
     
     axi_stream #(
-        .DATA_WIDTH(16)
+        .DATA_WIDTH(DATA_WIDTH)
     ) theta [N_PHASES]();
     axi_stream sin [N_PHASES]();
     axi_stream cos [N_PHASES]();
+
+    axi_stream #(
+        .DATA_WIDTH(DATA_WIDTH)
+    ) sin_out_n();
+    axi_stream #(
+        .DATA_WIDTH(DATA_WIDTH)
+    ) cos_out_n();
+
+    logic [DATA_WIDTH-1:0] cos_out_data_flat [N_PHASES-1:0];
+    logic [DATA_WIDTH-1:0] cos_out_dest_flat [N_PHASES-1:0];
+    logic [N_PHASES-1:0] cos_out_valid_flat;
+
+    reg [DATA_WIDTH-1:0] cos_out_dest;
+    reg [DATA_WIDTH-1:0] cos_out_data;
+    reg [DATA_WIDTH-1:0] cos_out_valid;
     
+    logic [DATA_WIDTH-1:0] sin_out_data_flat [N_PHASES-1:0];
+    logic [DATA_WIDTH-1:0] sin_out_dest_flat [N_PHASES-1:0];
+    logic [N_PHASES-1:0] sin_out_valid_flat;
+
+    reg [DATA_WIDTH-1:0] sin_out_dest;
+    reg [DATA_WIDTH-1:0] sin_out_data;
+    reg [DATA_WIDTH-1:0] sin_out_valid;
+
     generate
         genvar i;
         for (i = 0; i<N_PHASES; i= i+1) begin
@@ -48,27 +71,46 @@ module multiphase_sinusoid_generator #(parameter N_PHASES=6, BASE_ADDRESS='h43c0
                 .theta(theta[i]),
                 .cos(cos[i]),
                 .sin(sin[i])
-            );     
+            ); 
+            assign cos_out_data_flat[i] = cos[i].data;
+            assign cos_out_dest_flat[i] = cos[i].dest;
+            assign cos_out_valid_flat[i] = cos[i].valid;
+
+            assign sin_out_data_flat[i] = sin[i].data;
+            assign sin_out_dest_flat[i] = sin[i].dest;
+            assign sin_out_valid_flat[i] = sin[i].valid;
+        
         end
     endgenerate
 
-    always_ff@(posedge clock)begin
-        if(~reset) begin
-            cos_out.data <= 0;
-            cos_out.dest <= 0;
-            cos_out.valid <= 0;
-            sin_out.data <= 0;
-            sin_out.dest <= 0;
-            sin_out.valid <= 0;
-        end else begin
-            cos_out.data <= cos[0].data | cos[1].data | cos[2].data | cos[3].data | cos[4].data | cos[5].data;
-            cos_out.dest <= cos[0].dest | cos[1].dest | cos[2].dest | cos[3].dest | cos[4].dest | cos[5].dest;
-            cos_out.valid <= cos[0].valid | cos[1].valid | cos[2].valid | cos[3].valid | cos[4].valid | cos[5].valid;
+    always_comb begin
+        cos_out_data = 0;
+        cos_out_dest = 0;
+        cos_out_valid = 0;
+        
+        sin_out_data = 0;
+        sin_out_dest = 0;
+        sin_out_valid = 0;
+        for (integer j = 0; j<N_PHASES; j= j+1) begin
+            cos_out_data |= cos_out_data_flat[j];
+            cos_out_dest |= cos_out_dest_flat[j];
+            cos_out_valid |= cos_out_valid_flat[j];
 
-            sin_out.data <= sin[0].data | sin[1].data | sin[2].data | sin[3].data | sin[4].data | sin[5].data;
-            sin_out.dest <= sin[0].dest | sin[1].dest | sin[2].dest | sin[3].dest | sin[4].dest | sin[5].dest;
-            sin_out.valid <= sin[0].valid | sin[1].valid | sin[2].valid | sin[3].valid | sin[4].valid | sin[5].valid;
+            sin_out_data |= sin_out_data_flat[j];
+            sin_out_dest |= sin_out_dest_flat[j];
+            sin_out_valid |= sin_out_valid_flat[j];
         end
+    end
+
+
+    always_ff @(posedge clock)begin 
+        cos_out.data <= cos_out_data;
+        cos_out.dest <= cos_out_dest;
+        cos_out.valid <= cos_out_valid;
+        
+        sin_out.data <= sin_out_data;
+        sin_out.dest <= sin_out_dest;
+        sin_out.valid <= sin_out_valid;
     end
 
     enum reg {
