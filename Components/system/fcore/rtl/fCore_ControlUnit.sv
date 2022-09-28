@@ -125,8 +125,7 @@ module fCore_ControlUnit #(parameter PC_WIDTH = 12, OPCODE_WIDTH = 5, MAX_CHANNE
                 instruction_stream.data <= instr_1;
             end
             if(load_blanking & ch_addr==n_channels-1) begin
-                load_blanking <= 0;  
-                instruction_stream.data <= instr_1;              
+                load_blanking <= 0;            
             end
             instruction_stream.dest <= ch_addr;
         end

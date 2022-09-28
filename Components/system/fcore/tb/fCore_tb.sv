@@ -97,7 +97,7 @@ module fCore_tb();
     fCore #(
         .FAST_DEBUG("TRUE"),
         .MAX_CHANNELS(9),
-        .INIT_FILE("/home/fils/git/uscope_hdl/public/Components/system/fcore/tb/test_sat.mem")
+        .INIT_FILE("/home/filssavi/git/uplatform-hdl/public/Components/system/fcore/tb/test_sat.mem")
     ) uut(
         .clock(core_clk),
         .reset(rst),

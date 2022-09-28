@@ -41,7 +41,7 @@ package fcore_isa;
     parameter LXOR = 26;
 endpackage
 
-typedef enum int { 
+typedef enum logic [4:0] { 
     NOP = fcore_isa::NOP,
     ADD = fcore_isa::ADD,
     SUB = fcore_isa::SUB,
@@ -66,5 +66,10 @@ typedef enum int {
     EFI = fcore_isa::EFI,
     BSET = fcore_isa::BSET,
     BSEL = fcore_isa::BSEL,
-    LXOR = fcore_isa::LXOR
+    LXOR = fcore_isa::LXOR,
+    RESERVED_0 = 27,
+    RESERVED_1 = 28,
+    RESERVED_2 = 29,
+    RESERVED_3 = 30,
+    RESERVED_4 = 31
  } fcore_operations;

@@ -73,6 +73,7 @@ module efi_sorter #(
                 sorter_in.data <= efi_arguments.data;
                 sorter_in.dest <= efi_arguments.dest-1;
                 sorter_in.valid <= efi_arguments.valid;
+                sorter_in.tlast <= efi_arguments.tlast;
                 if(~sorter_in.valid)begin
                     efi_fsm <= fsm_wait_result;
                 end
@@ -121,6 +122,7 @@ module efi_sorter #(
         .input_data(sorter_in),
         .output_data(sorter_out)
     );
+
 
 
 endmodule
