@@ -23,7 +23,7 @@ module batcher_sorter_8_serial #(
     parameter MAX_SORT_LENGTH=32
 )(
     input wire clock,
-    input wire [$clog2(MAX_SORT_LENGTH)-1:0] chunk_size,
+    input wire [$clog2(MAX_SORT_LENGTH/8-1):0] chunk_size,
     axi_stream.slave data_in,
     axi_stream.master data_out
 );

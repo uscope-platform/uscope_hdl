@@ -42,7 +42,8 @@ module merge_sorter #(
     batcher_sorter_8_serial #(
        .DATA_WIDTH(DATA_WIDTH),
        .DEST_WIDTH(DEST_WIDTH),
-       .USER_WIDTH(USER_WIDTH)
+       .USER_WIDTH(USER_WIDTH),
+       .MAX_SORT_LENGTH(MAX_SORT_LENGTH)
     )in_sorter(
         .clock(clock),
         .chunk_size(selected_chunk_size),

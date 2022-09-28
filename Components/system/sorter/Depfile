@@ -6,7 +6,8 @@
         "synth_tl": "merge_sorter",
         "sim_modules":[
             "batcher_sorter_8_serial_tb",
-            "sorter_efi_tb"
+            "sorter_tb",
+            "merge_sorter_tb"
             
         ],
         "sim_tl":"sorter_tb",
@@ -19,25 +20,9 @@
             "name":"set_properties.tcl",
             "type": "tcl",
             "arguments":[]
-        },
-        {
-            "name":"fcore_alu.py",
-            "type": "py",
-            "arguments":["fp_alu_div.tcl", "--reciprocal", "--name", "fcore_div_alu"],
-            "product_include":true,
-            "product_type":"tcl"
-        },
-        {
-            "name":"fcore_alu.py",
-            "type": "py",
-            "arguments":["fp_alu_simple.tcl", "--name", "fcore_simple_alu"],
-            "product_include":true,
-            "product_type":"tcl"
         }
     ],
     "excluded_modules":[
-        "fcore_div_alu",
-        "fcore_simple_alu"
     ],
     "constraints": [
         "sorter.xdc"
