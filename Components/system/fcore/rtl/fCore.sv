@@ -41,7 +41,7 @@ module fCore(
     parameter OPCODE_WIDTH = 5;
     parameter REGISTER_FILE_DEPTH = 64;
     parameter RECIPROCAL_PRESENT = 0;
-    
+    parameter BITMANIP_IMPLEMENTED = 0;
     // Maximum number of supported channels
     parameter MAX_CHANNELS = 4;
 
@@ -67,6 +67,10 @@ module fCore(
     axi_stream operand_a_dly();
     axi_stream operand_b();
     axi_stream operand_b_dly();
+    
+    axi_stream operand_c();
+    axi_stream operand_c_dly();
+    
     axi_stream #(
         .DATA_WIDTH(8)
     ) operation();
@@ -83,7 +87,8 @@ module fCore(
     wire [ALU_OPCODE_WIDTH-1:0] exec_opcode;
 
     wire [DATAPATH_WIDTH-1:0] operand_data_a;
-    wire [DATAPATH_WIDTH-1:0] operand_data_b;    
+    wire [DATAPATH_WIDTH-1:0] operand_data_b;
+    wire [DATAPATH_WIDTH-1:0] operand_data_c;    
 
     wire [REG_ADDR_WIDTH-1:0] dma_read_addr;
     wire [DATAPATH_WIDTH-1:0] dma_read_data;
@@ -136,15 +141,9 @@ module fCore(
         .core_stop(core_stop),
         .operand_a_if(operand_a),
         .operand_b_if(operand_b),
+        .operand_c_if(operand_c),
         .operation_if(operation)
     );
-
-
-    assign operand_a.ready = operand_a_dly.ready;
-    assign operand_b.ready = operand_b_dly.ready;
-    
-    assign operand_a_dly.data = operand_data_a;
-    assign operand_b_dly.data = operand_data_b;
 
     register_slice #(
         .DATA_WIDTH(32),
@@ -159,6 +158,13 @@ module fCore(
         .out(operation_dly)
     );
 
+    assign operand_a.ready = operand_a_dly.ready;
+    assign operand_b.ready = operand_b_dly.ready;
+    
+    assign operand_a_dly.data = operand_data_a;
+    assign operand_b_dly.data = operand_data_b;
+
+
     always@(posedge clock)begin
 
         operand_a_dly.dest <= operand_a.dest;
@@ -170,19 +176,36 @@ module fCore(
         operand_b_dly.valid <= operand_b.valid;
     end
 
+    generate
+        if(BITMANIP_IMPLEMENTED==1)begin
+            assign operand_c.ready = operand_c_dly.ready;
+            assign operand_c_dly.data = operand_data_c;
+            
+            always@(posedge clock)begin
+                operand_c_dly.dest <= operand_c.dest;
+                operand_c_dly.user <= operand_c.user;
+                operand_c_dly.valid <= operand_c.valid;
+            end
+
+        end
+    endgenerate
+
+
 
 
     fCore_exec #( 
         .OPCODE_WIDTH(ALU_OPCODE_WIDTH),
         .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
         .DATA_WIDTH(DATAPATH_WIDTH),
-        .RECIPROCAL_PRESENT(RECIPROCAL_PRESENT)
+        .RECIPROCAL_PRESENT(RECIPROCAL_PRESENT),
+        .BITMANIP_IMPLEMENTED(BITMANIP_IMPLEMENTED)
     ) executor (
         .clock(clock),
         .reset(reset),
         .opcode(exec_opcode),
         .operand_a(operand_a_dly),
         .operand_b(operand_b_dly),
+        .operand_c(operand_c_dly),
         .operation(operation_dly),
         .result(result)
     );
@@ -251,7 +274,8 @@ module fCore(
     fCore_registerFile #(
         .REGISTER_WIDTH(DATAPATH_WIDTH),
         .FILE_DEPTH(REG_FILE_SIZE),
-        .REG_PER_CHANNEL(REGISTER_FILE_DEPTH)
+        .REG_PER_CHANNEL(REGISTER_FILE_DEPTH),
+        .BITMANIP_IMPLEMENTED(BITMANIP_IMPLEMENTED)
     ) registers(
         .clock(clock),
         .reset(reset),
@@ -262,6 +286,8 @@ module fCore(
         .read_data_a(operand_data_a),
         .read_addr_b(operand_b.dest),
         .read_data_b(operand_data_b),
+        .read_addr_c(operand_c.dest),
+        .read_data_c(operand_data_c),
         .dma_read_addr(dma_read_addr),
         .dma_read_data(dma_read_data),
         .efi_read_addr(efi_read_addr),

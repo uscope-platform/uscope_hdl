@@ -17,12 +17,20 @@
 `include "interfaces.svh"
 import fcore_isa::*;
 
-module fCore_FP_ALU #(parameter DATAPATH_WIDTH =32, PIPELINE_DEPTH=5, OPCODE_WIDTH=8, REGISTER_ADDR_WIDTH = 8, RECIPROCAL_PRESENT=0)(
+module fCore_FP_ALU #(
+    parameter DATAPATH_WIDTH =32,
+    PIPELINE_DEPTH=5,
+    OPCODE_WIDTH=8, 
+    REGISTER_ADDR_WIDTH = 8,
+    RECIPROCAL_PRESENT=0,
+    BITMANIP_IMPLEMENTED = 0
+)(
     input wire clock,
     input wire reset,
     input wire [OPCODE_WIDTH-1:0] result_select,
     axi_stream.slave operand_a,
     axi_stream.slave operand_b,
+    axi_stream.slave operand_c,
     axi_stream.slave operation,
     axi_stream.master result 
 );
@@ -80,12 +88,10 @@ module fCore_FP_ALU #(parameter DATAPATH_WIDTH =32, PIPELINE_DEPTH=5, OPCODE_WID
     axi_stream #(
         .USER_WIDTH(REGISTER_ADDR_WIDTH)
     ) ldc_operand_a();
-    /*   THERE IS A BUG IN VIVADO WHERE THIS CONDITIONAL CRASHES SYNTHESIS (2020.2 and 2021.1)
-         UNTIL IT IS SOLVED THE CORRECT ALU MUST BE COPY PASTED BELOW
-    */
+
+
     generate 
         if(RECIPROCAL_PRESENT==1)begin
-        
 
         div_alu_wrapper div_alu (
             .clock(clock),
@@ -247,13 +253,7 @@ module fCore_FP_ALU #(parameter DATAPATH_WIDTH =32, PIPELINE_DEPTH=5, OPCODE_WID
                     early_logic_result.valid <= 1;
                     early_logic_result.user <= operand_a.user;
                     early_logic_result.data <= operand_a.data[31:0];
-                    early_logic_result.data[operand_b.data] <= 0;
-                end
-                8:begin
-                    early_logic_result.valid <= 1;
-                    early_logic_result.user <= operand_a.user;
-                    early_logic_result.data <= operand_a.data[31:0];
-                    early_logic_result.data[operand_b.data] <= 1;
+                    early_logic_result.data[operand_b.data] <= operand_c.data;
                 end
             endcase
         end
@@ -319,9 +319,6 @@ module fCore_FP_ALU #(parameter DATAPATH_WIDTH =32, PIPELINE_DEPTH=5, OPCODE_WID
     always_ff@(posedge clock)begin
         ldc_adj_a.user <= operand_a.user;
     end
-
-
-
 
     register_slice #(
         .DATA_WIDTH(32),

@@ -16,7 +16,7 @@
 `timescale 10ns / 1ns
 `include "interfaces.svh"
 
-module fCore_registerFile #(parameter REGISTER_WIDTH = 32, FILE_DEPTH = 12, REG_PER_CHANNEL = 16)(
+module fCore_registerFile #(parameter REGISTER_WIDTH = 32, FILE_DEPTH = 12, REG_PER_CHANNEL = 16, BITMANIP_IMPLEMENTED=0)(
     input wire clock,
     input wire reset,
     
@@ -25,8 +25,12 @@ module fCore_registerFile #(parameter REGISTER_WIDTH = 32, FILE_DEPTH = 12, REG_
     
     input wire [$clog2(FILE_DEPTH)-1:0] read_addr_a,
     output reg [REGISTER_WIDTH-1:0] read_data_a,
+
     input wire [$clog2(FILE_DEPTH)-1:0] read_addr_b,
     output reg [REGISTER_WIDTH-1:0] read_data_b,
+
+    input wire [$clog2(FILE_DEPTH)-1:0] read_addr_c,
+    output reg [REGISTER_WIDTH-1:0] read_data_c,
 
     input wire [$clog2(FILE_DEPTH)-1:0] dma_read_addr,
     output reg [REGISTER_WIDTH-1:0] dma_read_data,
@@ -43,6 +47,7 @@ module fCore_registerFile #(parameter REGISTER_WIDTH = 32, FILE_DEPTH = 12, REG_
 
     reg [REGISTER_WIDTH-1:0] ram_a_read_data;
     reg [$clog2(FILE_DEPTH)-1:0] ram_a_read_addr;
+
     reg [REGISTER_WIDTH-1:0] ram_b_read_data;
     reg [$clog2(FILE_DEPTH)-1:0] ram_b_read_addr;
 
@@ -78,6 +83,40 @@ module fCore_registerFile #(parameter REGISTER_WIDTH = 32, FILE_DEPTH = 12, REG_
         .we_a(ram_write_if.valid),
         .en_b(1'b1)
     );
+
+    generate
+
+
+        if(BITMANIP_IMPLEMENTED==1) begin
+        
+            reg [REGISTER_WIDTH-1:0] ram_c_read_data;
+            reg [$clog2(FILE_DEPTH)-1:0] ram_c_read_addr;
+    
+            DP_RAM#(
+                .DATA_WIDTH(REGISTER_WIDTH),
+                .ADDR_WIDTH($clog2(FILE_DEPTH))
+            ) mem_c (
+                .clk(clock),
+                .data_a(ram_write_if.data),
+                .data_b(ram_c_read_data),
+                .addr_a(ram_write_if.dest),
+                .addr_b(ram_c_read_addr),
+                .we_a(ram_write_if.valid),
+                .en_b(1'b1)
+            );
+            always_comb begin
+                ram_c_read_addr <= read_addr_c;
+                read_data_c <= ram_c_read_data;
+            end
+        end else begin
+
+        always_comb begin
+            read_data_c <= 0;
+        end
+
+        end
+    endgenerate
+
 
     
     always_comb begin

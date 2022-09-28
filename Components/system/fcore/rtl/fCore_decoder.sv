@@ -17,7 +17,16 @@
 `include "interfaces.svh"
 import fcore_isa::*;
 
-module fCore_decoder #(parameter INSTRUCTION_WIDTH = 16,MAX_CHANNELS = 255, DATAPATH_WIDTH = 16, PC_WIDTH = 12, OPCODE_WIDTH = 4, REG_ADDR_WIDTH=4, IMMEDIATE_WIDTH=12, CHANNEL_ADDR_WIDTH = 8)(
+module fCore_decoder #(
+    parameter INSTRUCTION_WIDTH = 16,
+    MAX_CHANNELS = 255,
+    DATAPATH_WIDTH = 16,
+    PC_WIDTH = 12, 
+    OPCODE_WIDTH = 4,
+    REG_ADDR_WIDTH=4,
+    IMMEDIATE_WIDTH=12,
+    CHANNEL_ADDR_WIDTH = 8
+)(
     input wire clock,
     input wire reset,
     input wire enable,
@@ -28,6 +37,7 @@ module fCore_decoder #(parameter INSTRUCTION_WIDTH = 16,MAX_CHANNELS = 255, DATA
     axi_stream.slave instruction_stream,
     axi_stream.master operand_a_if,
     axi_stream.master operand_b_if,
+    axi_stream.master operand_c_if,
     axi_stream.master operation_if
     );
 
@@ -57,6 +67,7 @@ module fCore_decoder #(parameter INSTRUCTION_WIDTH = 16,MAX_CHANNELS = 255, DATA
         exec_opcode <= 0;
         operand_a_if.valid <= 0;
         operand_b_if.valid <= 0;
+        operand_c_if.valid <= 0;
         operation_if.valid <= 0;
         if(enable)begin
             exec_opcode <= opcode;
@@ -207,10 +218,11 @@ module fCore_decoder #(parameter INSTRUCTION_WIDTH = 16,MAX_CHANNELS = 255, DATA
                     operand_a_if.user <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
                     operand_b_if.dest <= operand_b+(2**REG_ADDR_WIDTH*channel_address);
-                    operand_b_if.dest <= operand_b+(2**REG_ADDR_WIDTH*channel_address);
                     operand_b_if.user <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_b_if.valid <= 1;
-                    operation_if.data <= alu_dest+7;
+                    operand_c_if.dest <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
+                    operand_c_if.valid <= 1;
+                    operation_if.data <=  7;
                     operation_if.valid <= 1;
                 end
                 fcore_isa::BSEL:begin
@@ -264,14 +276,18 @@ module fCore_decoder #(parameter INSTRUCTION_WIDTH = 16,MAX_CHANNELS = 255, DATA
                 fcore_isa::NOP: begin
                     operand_a_if.dest <= 0;
                     operand_a_if.user <= 0;
+                    operand_a_if.valid <= 0;
+
                     operand_b_if.dest <= 0;
                     operand_b_if.user <= 0;
+                    operand_b_if.valid <= 0;
+                    
+                    operand_c_if.dest <= 0;
+                    operand_c_if.user <= 0;
+                    operand_c_if.valid <= 0;
+                    
                     operation_if.data <= 0;
                     operation_if.dest <= 0;
-                    operand_a_if.data <= 0;
-                    operand_b_if.data <= 0;
-                    operand_a_if.valid <= 0;
-                    operand_b_if.valid <= 0;
                     operation_if.valid <= 0;
                     operation_if.user <= 0;
                 end
@@ -279,14 +295,18 @@ module fCore_decoder #(parameter INSTRUCTION_WIDTH = 16,MAX_CHANNELS = 255, DATA
         end else begin
             operand_a_if.dest <= 0;
             operand_a_if.user <= 0;
+            operand_a_if.valid <= 0;
+            
             operand_b_if.dest <= 0;
             operand_b_if.user <= 0;
-            operation_if.data <= 0;
-            operation_if.dest <= 0;
-            operand_a_if.data <= 0;
-            operand_b_if.data <= 0;
-            operand_a_if.valid <= 0;
             operand_b_if.valid <= 0;
+
+            operand_c_if.dest <= 0;
+            operand_c_if.user <= 0;
+            operand_c_if.valid <= 0;
+
+            operation_if.data <= 0;
+            operation_if.dest <= 0;            
             operation_if.valid <= 0;
             operation_if.user <= 0;
         end

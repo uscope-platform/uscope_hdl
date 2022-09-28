@@ -17,12 +17,19 @@
 `include "interfaces.svh"
 import fcore_isa::*;
 
-module fCore_exec #(OPCODE_WIDTH = 4, DATA_WIDTH = 32, REG_ADDR_WIDTH = 4, RECIPROCAL_PRESENT=0) (
+module fCore_exec #(
+    OPCODE_WIDTH = 4, 
+    DATA_WIDTH = 32, 
+    REG_ADDR_WIDTH = 4, 
+    RECIPROCAL_PRESENT=0,
+    BITMANIP_IMPLEMENTED = 0
+) (
     input wire clock,
     input wire reset,
     input wire [OPCODE_WIDTH-1:0] opcode,
     axi_stream.slave operand_a,
     axi_stream.slave operand_b,
+    axi_stream.slave operand_c,
     axi_stream.slave operation,
     axi_stream.master result
 );
@@ -46,6 +53,7 @@ module fCore_exec #(OPCODE_WIDTH = 4, DATA_WIDTH = 32, REG_ADDR_WIDTH = 4, RECIP
         .result_select(opcode_dly[PIPELINE_LENGTH]),
         .operand_a(operand_a),
         .operand_b(operand_b),
+        .operand_c(operand_c),
         .operation(operation),
         .result(alu_res)
     );
