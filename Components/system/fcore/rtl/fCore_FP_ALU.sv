@@ -89,6 +89,13 @@ module fCore_FP_ALU #(
         .USER_WIDTH(REGISTER_ADDR_WIDTH)
     ) ldc_operand_a();
 
+    axi_stream #(
+        .USER_WIDTH(REGISTER_ADDR_WIDTH)
+    ) early_bitmanip_result();
+
+    axi_stream #(
+        .USER_WIDTH(REGISTER_ADDR_WIDTH)
+    ) bitmanip_result();
 
     generate 
         if(RECIPROCAL_PRESENT==1)begin
@@ -175,16 +182,20 @@ module fCore_FP_ALU #(
                 result.dest <= itf_result.user;
                 result.valid <= 1;
             end
-            fcore_isa::POPCNT,
             fcore_isa::ABS,
             fcore_isa::LAND,
             fcore_isa::LOR,
             fcore_isa::LXOR,
-            fcore_isa::LNOT,
-            fcore_isa::BSET,
-            fcore_isa::BSEL:begin
+            fcore_isa::LNOT:begin
                 result.data <= logic_result.data;
                 result.dest <= logic_result.user;
+                result.valid <= 1;
+            end
+            fcore_isa::POPCNT,
+            fcore_isa::BSET,
+            fcore_isa::BSEL:begin
+                result.data <= bitmanip_result.data;
+                result.dest <= bitmanip_result.user;
                 result.valid <= 1;
             end
             fcore_isa::SATN,
@@ -200,6 +211,13 @@ module fCore_FP_ALU #(
             end
         endcase
     end
+
+
+    ////////////////////////////////////////////////
+    //                    LOGIC                   //
+    ////////////////////////////////////////////////
+    
+
 
     reg [7:0] ones;
     always@(posedge clock) begin
@@ -223,37 +241,15 @@ module fCore_FP_ALU #(
                     early_logic_result.user <= operand_a.user;
                     early_logic_result.data <= ~operand_a.data;                     
                 end
-                3:begin
-                    // TODO: BREAK DOWN THIS GIGANTIC ADDER INTO 4 8 BIT ONES
-                    ones = 0;
-                    foreach(operand_a.data[idx]) begin
-                        ones += operand_a.data[idx];
-                    end
-                    early_logic_result.valid <= 1;
-                    early_logic_result.user <= operand_a.user;
-                    early_logic_result.data <= ones;  
-                end
                 4:begin
                     early_logic_result.valid <= 1;
                     early_logic_result.user <= operand_a.user;
                     early_logic_result.data <= {0, operand_a.data[30:0]};  
                 end
-                5:begin
-                    early_logic_result.valid <= 1;
-                    early_logic_result.user <= operand_a.user;
-                    early_logic_result.data <= operand_a.data[31:0];
-                    early_logic_result.data <= operand_a.data[operand_b.data];  
-                end
                 6:begin
                     early_logic_result.valid <= 1;
                     early_logic_result.user <= operand_a.user;
                     early_logic_result.data <= operand_a.data ^ operand_b.data;
-                end
-                7:begin
-                    early_logic_result.valid <= 1;
-                    early_logic_result.user <= operand_a.user;
-                    early_logic_result.data <= operand_a.data[31:0];
-                    early_logic_result.data[operand_b.data] <= operand_c.data;
                 end
             endcase
         end
@@ -271,6 +267,39 @@ module fCore_FP_ALU #(
         .in(early_logic_result),
         .out(logic_result)
     );
+
+    ////////////////////////////////////////////////
+    //                  BITMANIP                  //
+    ////////////////////////////////////////////////
+    generate
+        if(BITMANIP_IMPLEMENTED==1)begin
+            fCore_bitmanip_unit bitmanip_engine (
+                .clock(clock),
+                .reset(reset),
+                .operand_a(operand_a),
+                .operand_b(operand_b),
+                .operand_c(operand_c),
+                .operation(operation),
+                .result(early_bitmanip_result) 
+            );
+
+            register_slice #(
+                .DATA_WIDTH(32),
+                .DEST_WIDTH(32),
+                .USER_WIDTH(32),
+                .N_STAGES(PIPELINE_DEPTH-1),
+                .READY_REG(0)
+            ) bitmanip_pipeline_adapter (
+                .clock(clock),
+                .reset(reset),
+                .in(early_bitmanip_result),
+                .out(bitmanip_result)
+            );
+        end
+    endgenerate
+    ////////////////////////////////////////////////
+    //                  SATURATION                //
+    ////////////////////////////////////////////////
 
     FP_saturator #(
         .DATA_WIDTH(32),
@@ -297,6 +326,12 @@ module fCore_FP_ALU #(
         .in(early_saturation_result),
         .out(saturation_result)
     );
+
+
+    ////////////////////////////////////////////////
+    //                    LDC/LDR                 //
+    ////////////////////////////////////////////////
+
 
     register_slice #(
         .DATA_WIDTH(32),

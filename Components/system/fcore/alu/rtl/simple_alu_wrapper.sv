@@ -64,6 +64,8 @@ module simple_alu_wrapper #(parameter REGISTER_ADDR_WIDTH = 32) (
         .comp_a_tvalid(operand_a.valid),
         .comp_b_tdata(operand_b.data),
         .comp_b_tvalid(operand_b.valid),
+        .comp_op_tdata(operation.data),
+        .comp_op_tvalid(operation.valid),
         .fti_b_tdata(operand_b.data),
         .fti_b_tuser(operand_b.user),
         .fti_b_tvalid(operand_b.valid),

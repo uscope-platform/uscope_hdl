@@ -46,7 +46,8 @@ module fCore_exec #(
         .OPCODE_WIDTH(OPCODE_WIDTH),
         .REGISTER_ADDR_WIDTH(REG_ADDR_WIDTH),
         .PIPELINE_DEPTH(PIPELINE_LENGTH),
-        .RECIPROCAL_PRESENT(RECIPROCAL_PRESENT)
+        .RECIPROCAL_PRESENT(RECIPROCAL_PRESENT),
+        .BITMANIP_IMPLEMENTED(BITMANIP_IMPLEMENTED)
         )fp_alu(
         .clock(clock),
         .reset(reset),

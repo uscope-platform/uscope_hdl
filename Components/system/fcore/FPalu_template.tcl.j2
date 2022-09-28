@@ -87,6 +87,11 @@ set_property -dict $DefaultInputPortProps $comp_a
 set comp_b [ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:axis_rtl:1.0 comp_b ]
 set_property -dict $DefaultInputPortProps $comp_b
 
+set comp_op [ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:axis_rtl:1.0 comp_op ]
+set_property -dict $DefaultInputPortProps $comp_op
+set_property CONFIG.TDATA_NUM_BYTES 1 $comp_op
+set_property CONFIG.TDEST_WIDTH 4 $comp_op
+
 set fti_b [ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:axis_rtl:1.0 fti_b ]
 set_property -dict $DefaultInputPortProps $fti_b
 
@@ -164,7 +169,7 @@ set_property -dict [ list \
 CONFIG.A_TUSER_Width {32} \
 CONFIG.C_Accum_Input_Msb {15} \
 CONFIG.C_Accum_Lsb {-24} \
-CONFIG.C_Compare_Operation {Greater_Than} \
+CONFIG.C_Compare_Operation {Programmable} \
 CONFIG.C_Latency {2} \
 CONFIG.C_Mult_Usage {No_Usage} \
 CONFIG.C_Result_Exponent_Width {1} \
@@ -306,7 +311,7 @@ connect_bd_intf_net -intf_net rec_result_c [get_bd_intf_ports rec_res] [get_bd_i
 
 connect_bd_intf_net -intf_net comp_a [get_bd_intf_ports comp_a] [get_bd_intf_pins FP_comparer/S_AXIS_A]
 connect_bd_intf_net -intf_net comp_b [get_bd_intf_ports comp_b] [get_bd_intf_pins FP_comparer/S_AXIS_B]
-
+connect_bd_intf_net -intf_net comp_op [get_bd_intf_ports comp_op] [get_bd_intf_pins FP_comparer/S_AXIS_OPERATION]
 
 connect_bd_intf_net -intf_net cmp_result_c [get_bd_intf_pins FP_comparer/M_AXIS_RESULT] [get_bd_intf_pins axis_cmp_0/S_AXIS]
 connect_bd_intf_net -intf_net cmp_del_0_c [get_bd_intf_pins axis_cmp_0/M_AXIS] [get_bd_intf_pins axis_cmp_1/S_AXIS]
