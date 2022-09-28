@@ -22,7 +22,8 @@ module fCore_exec #(
     DATA_WIDTH = 32, 
     REG_ADDR_WIDTH = 4, 
     RECIPROCAL_PRESENT=0,
-    BITMANIP_IMPLEMENTED = 0
+    BITMANIP_IMPLEMENTED = 0,
+    LOGIC_IMPLEMENTED = 0
 ) (
     input wire clock,
     input wire reset,
@@ -47,7 +48,8 @@ module fCore_exec #(
         .REGISTER_ADDR_WIDTH(REG_ADDR_WIDTH),
         .PIPELINE_DEPTH(PIPELINE_LENGTH),
         .RECIPROCAL_PRESENT(RECIPROCAL_PRESENT),
-        .BITMANIP_IMPLEMENTED(BITMANIP_IMPLEMENTED)
+        .BITMANIP_IMPLEMENTED(BITMANIP_IMPLEMENTED),
+        .LOGIC_IMPLEMENTED(LOGIC_IMPLEMENTED)
         )fp_alu(
         .clock(clock),
         .reset(reset),

@@ -42,6 +42,7 @@ module fCore(
     parameter REGISTER_FILE_DEPTH = 64;
     parameter RECIPROCAL_PRESENT = 0;
     parameter BITMANIP_IMPLEMENTED = 0;
+    parameter LOGIC_IMPLEMENTED = 1;
     // Maximum number of supported channels
     parameter MAX_CHANNELS = 4;
 
@@ -191,14 +192,13 @@ module fCore(
     endgenerate
 
 
-
-
     fCore_exec #( 
         .OPCODE_WIDTH(ALU_OPCODE_WIDTH),
         .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
         .DATA_WIDTH(DATAPATH_WIDTH),
         .RECIPROCAL_PRESENT(RECIPROCAL_PRESENT),
-        .BITMANIP_IMPLEMENTED(BITMANIP_IMPLEMENTED)
+        .BITMANIP_IMPLEMENTED(BITMANIP_IMPLEMENTED),
+        .LOGIC_IMPLEMENTED(LOGIC_IMPLEMENTED)
     ) executor (
         .clock(clock),
         .reset(reset),
