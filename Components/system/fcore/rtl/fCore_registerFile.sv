@@ -16,7 +16,13 @@
 `timescale 10ns / 1ns
 `include "interfaces.svh"
 
-module fCore_registerFile #(parameter REGISTER_WIDTH = 32, FILE_DEPTH = 12, REG_PER_CHANNEL = 16, BITMANIP_IMPLEMENTED=0)(
+module fCore_registerFile #(
+    parameter REGISTER_WIDTH = 32,
+    FILE_DEPTH = 12, 
+    REG_PER_CHANNEL = 16,
+    BITMANIP_IMPLEMENTED=0,
+    EFI_IMPLEMENTED = 0
+)(
     input wire clock,
     input wire reset,
     
@@ -104,10 +110,12 @@ module fCore_registerFile #(parameter REGISTER_WIDTH = 32, FILE_DEPTH = 12, REG_
                 .we_a(ram_write_if.valid),
                 .en_b(1'b1)
             );
+
             always_comb begin
                 ram_c_read_addr <= read_addr_c;
                 read_data_c <= ram_c_read_data;
             end
+            
         end else begin
 
         always_comb begin
@@ -120,7 +128,10 @@ module fCore_registerFile #(parameter REGISTER_WIDTH = 32, FILE_DEPTH = 12, REG_
 
     
     always_comb begin
-        if(efi_enable[0])begin
+        read_data_a <= ram_a_read_data;
+        read_data_b <= ram_b_read_data;
+        
+        if(efi_enable[0] & EFI_IMPLEMENTED==1)begin
             if(efi_enable[1])begin
                 ram_write_if.data <= efi_write.data;
                 ram_write_if.dest <= efi_write.dest;
@@ -129,10 +140,7 @@ module fCore_registerFile #(parameter REGISTER_WIDTH = 32, FILE_DEPTH = 12, REG_
                 ram_a_read_addr <= efi_read_addr;
                 ram_b_read_addr <= efi_read_addr;
                 efi_read_data <= ram_a_read_data;
-                read_data_a <= 0;
-                read_data_b <= 0;
             end
-
         end else if(dma_enable) begin
             ram_write_if.data <= dma_write.data;
             ram_write_if.dest <= dma_write.dest;
@@ -140,8 +148,6 @@ module fCore_registerFile #(parameter REGISTER_WIDTH = 32, FILE_DEPTH = 12, REG_
             ram_a_read_addr <= dma_read_addr;
             ram_b_read_addr <= dma_read_addr;
             dma_read_data <= ram_a_read_data;
-            read_data_a <= 0;
-            read_data_b <= 0;
         end else begin
             if(write_if.dest % REG_PER_CHANNEL != 0)begin
                 ram_write_if.data <= write_if.data;
@@ -153,8 +159,6 @@ module fCore_registerFile #(parameter REGISTER_WIDTH = 32, FILE_DEPTH = 12, REG_
             ram_a_read_addr <= read_addr_a;
             ram_b_read_addr <= read_addr_b;
             dma_read_data <= 0;
-            read_data_a <= ram_a_read_data;
-            read_data_b <= ram_b_read_data;
         end
     end
     

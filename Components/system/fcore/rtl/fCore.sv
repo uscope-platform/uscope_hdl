@@ -43,6 +43,8 @@ module fCore(
     parameter RECIPROCAL_PRESENT = 0;
     parameter BITMANIP_IMPLEMENTED = 0;
     parameter LOGIC_IMPLEMENTED = 1;
+    parameter EFI_IMPLEMENTED = 0;
+
     // Maximum number of supported channels
     parameter MAX_CHANNELS = 4;
 
@@ -105,7 +107,8 @@ module fCore(
     fCore_ControlUnit #(
         .MAX_CHANNELS(MAX_CHANNELS),
         .PC_WIDTH(ADDR_WIDTH),
-        .INSTRUCTION_WIDTH(INSTRUCTION_WIDTH)
+        .INSTRUCTION_WIDTH(INSTRUCTION_WIDTH),
+        .EFI_IMPLEMENTED(EFI_IMPLEMENTED)
     ) control_unit (
         .clock(clock),
         .reset(reset),
@@ -214,29 +217,32 @@ module fCore(
     ///////////////////////////////
     //      AUXILIARY BLOCKS     //
     ///////////////////////////////
-    
+        
     axi_stream efi_writeback();
-
-    fCore_efi_memory_handler #(
-        .DATAPATH_WIDTH(DATAPATH_WIDTH),
-        .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
-        .BASE_REG_ADDR_WIDTH(BASE_REG_ADDR_WIDTH),
-        .CH_ADDRESS_WIDTH(CH_ADDRESS_WIDTH)
-    )efi_handler(
-        .clock(clock),
-        .reset(reset),
-        .send_arguments(efi_start),
-        .arguments_base_address(operand_a.user),
-        .return_base_address(operand_b.dest),
-        .channel_address(instruction_stream.dest), 
-        .length(operand_a.dest),
-        .mem_address(efi_read_addr),
-        .mem_read_data(efi_read_data),
-        .mem_efi_enable(mem_efi_enable),
-        .efi_arguments(efi_arguments),
-        .efi_results(efi_results),
-        .result_writeback(efi_writeback)
-    );
+    generate
+        if(EFI_IMPLEMENTED == 1) begin
+            fCore_efi_memory_handler #(
+                .DATAPATH_WIDTH(DATAPATH_WIDTH),
+                .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
+                .BASE_REG_ADDR_WIDTH(BASE_REG_ADDR_WIDTH),
+                .CH_ADDRESS_WIDTH(CH_ADDRESS_WIDTH)
+            )efi_handler(
+                .clock(clock),
+                .reset(reset),
+                .send_arguments(efi_start),
+                .arguments_base_address(operand_a.user),
+                .return_base_address(operand_b.dest),
+                .channel_address(instruction_stream.dest), 
+                .length(operand_a.dest),
+                .mem_address(efi_read_addr),
+                .mem_read_data(efi_read_data),
+                .mem_efi_enable(mem_efi_enable),
+                .efi_arguments(efi_arguments),
+                .efi_results(efi_results),
+                .result_writeback(efi_writeback)
+            );
+        end
+    endgenerate
     
     axi_stream dma_write();
 
@@ -275,7 +281,8 @@ module fCore(
         .REGISTER_WIDTH(DATAPATH_WIDTH),
         .FILE_DEPTH(REG_FILE_SIZE),
         .REG_PER_CHANNEL(REGISTER_FILE_DEPTH),
-        .BITMANIP_IMPLEMENTED(BITMANIP_IMPLEMENTED)
+        .BITMANIP_IMPLEMENTED(BITMANIP_IMPLEMENTED),
+        .EFI_IMPLEMENTED(EFI_IMPLEMENTED)
     ) registers(
         .clock(clock),
         .reset(reset),

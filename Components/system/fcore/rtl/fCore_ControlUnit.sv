@@ -17,7 +17,13 @@
 `include "interfaces.svh"
 import fcore_isa::*;
 
-module fCore_ControlUnit #(parameter PC_WIDTH = 12, OPCODE_WIDTH = 5, MAX_CHANNELS = 255, INSTRUCTION_WIDTH=32)(
+module fCore_ControlUnit #(
+    parameter PC_WIDTH = 12,
+    OPCODE_WIDTH = 5,
+    MAX_CHANNELS = 255,
+    INSTRUCTION_WIDTH=32,
+    EFI_IMPLEMENTED = 0
+)(
     input wire clock,
     input wire reset,
     input wire run,
@@ -87,7 +93,7 @@ module fCore_ControlUnit #(parameter PC_WIDTH = 12, OPCODE_WIDTH = 5, MAX_CHANNE
             RUN:begin
                 dma_enable <= 0;
                 decoder_enable <= 1;
-                if(opcode == fcore_isa::EFI)begin
+                if(opcode == fcore_isa::EFI & EFI_IMPLEMENTED==1)begin
                     state <= EFI_CALL;
                     efi_start <= 1;
                 end else if((channel_counter == n_channels-1) | (opcode == fcore_isa::LDC) & ~load_blanking)begin
