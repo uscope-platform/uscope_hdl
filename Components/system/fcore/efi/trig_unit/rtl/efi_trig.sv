@@ -35,11 +35,6 @@ module efi_trig #(
 
     reg opcode = 0;
 
-    wire [15:0] sin_out;
-    wire [15:0] cos_out;
-
-    assign efi_arguments.data = opcode ? sin_out:cos_out;
-    
     enum logic [1:0] { 
         fsm_idle = 0,
         fsm_calculate = 1,
