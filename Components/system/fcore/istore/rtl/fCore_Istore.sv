@@ -15,7 +15,7 @@
 
 `timescale 10ns / 1ns
 `include "interfaces.svh"
-module fCore_Istore# (
+module fCore_Istore # (
         parameter integer ID_WIDTH = 1,
         parameter integer DATA_WIDTH = 32,
         parameter integer USER_WIDTH = 10,
@@ -25,8 +25,10 @@ module fCore_Istore# (
         parameter FAST_DEBUG = "TRUE",
         parameter INIT_FILE = "init.mem"
     )(
-        input wire clock,
-        input wire reset,
+        input wire clock_in,
+        input wire clock_out,
+        input wire reset_in,
+        input wire reset_out,
         input wire [$clog2(MEM_DEPTH)-1:0] dma_read_addr,
         output reg [2*DATA_WIDTH-1:0] dma_read_data_w,
         AXI.slave axi
@@ -66,8 +68,8 @@ module fCore_Istore# (
     assign  aw_wrap_en = ((axi_awaddr & aw_wrap_size) == aw_wrap_size)? 1'b1: 1'b0;
     assign  ar_wrap_en = ((axi_araddr & ar_wrap_size) == ar_wrap_size)? 1'b1: 1'b0;
 
-    always @( posedge clock ) begin : axi_awready_generation
-        if ( reset == 1'b0 ) begin
+    always @( posedge clock_in ) begin : axi_awready_generation
+        if ( reset_in == 1'b0 ) begin
             axi.AWREADY <= 1'b0;
             axi_awv_awr_flag <= 1'b0;
         end else begin    
@@ -83,8 +85,8 @@ module fCore_Istore# (
     end     
 
 
-    always @( posedge clock ) begin : write_address_latching
-        if ( reset == 1'b0 ) begin
+    always @( posedge clock_in ) begin : write_address_latching
+        if ( reset_in == 1'b0 ) begin
             axi_awaddr <= 0;
             axi_awlen_cntr <= 0;
             axi_awburst <= 0;
@@ -120,8 +122,8 @@ module fCore_Istore# (
         end 
     end       
 
-    always @( posedge clock ) begin : wready_generation
-        if ( reset == 1'b0 ) begin
+    always @( posedge clock_in ) begin : wready_generation
+        if ( reset_in == 1'b0 ) begin
             axi.WREADY <= 1'b0;
         end else begin    
             if ( ~axi.WREADY && axi.WVALID && axi_awv_awr_flag) begin
@@ -132,8 +134,8 @@ module fCore_Istore# (
         end 
     end       
     
-    always @( posedge clock ) begin : write_response_generation
-        if ( reset == 1'b0 ) begin
+    always @( posedge clock_in ) begin : write_response_generation
+        if ( reset_in == 1'b0 ) begin
             axi.BVALID <= 0;
             axi.BRESP <= 2'b0;
             axi.BUSER <= 0;
@@ -150,8 +152,8 @@ module fCore_Istore# (
     end   
 
 
-    always @( posedge clock ) begin : read_address_ready_generation
-        if ( reset == 1'b0 ) begin
+    always @( posedge clock_in ) begin : read_address_ready_generation
+        if ( reset_in == 1'b0 ) begin
             axi.ARREADY <= 1'b0;
             axi_arv_arr_flag <= 1'b0;
         end else begin    
@@ -166,8 +168,8 @@ module fCore_Istore# (
         end 
     end       
 
-    always @( posedge clock ) begin: read_address_latching
-        if ( reset == 1'b0 ) begin
+    always @( posedge clock_in ) begin: read_address_latching
+        if ( reset_in == 1'b0 ) begin
             axi_araddr <= 0;
             axi_arlen_cntr <= 0;
             axi_arburst <= 0;
@@ -211,8 +213,8 @@ module fCore_Istore# (
         end 
     end
            
-    always @( posedge clock ) begin : read_address_valid_gen
-        if ( reset == 1'b0 ) begin
+    always @( posedge clock_in ) begin : read_address_valid_gen
+        if ( reset_in == 1'b0 ) begin
           axi.RVALID <= 0;
           axi.RRESP  <= 0;
         end else begin    
@@ -239,8 +241,9 @@ module fCore_Istore# (
         .INIT_FILE(INIT_FILE),
         .FAST_DEBUG(FAST_DEBUG)
     ) memory_block(
-        .clock(clock),
-        .reset(reset),
+        .clock_in(clock_in),
+        .clock_out(clock_out),
+        .reset(reset_in),
         .data_a(axi.WDATA),
         .data_b(dma_read_data_w),
         .addr_a(axi_awaddr),

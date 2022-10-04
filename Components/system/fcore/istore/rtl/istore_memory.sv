@@ -17,7 +17,8 @@
 `include "interfaces.svh"
 
 module istore_memory #(parameter DATA_WIDTH_A=32, DATA_WIDTH_B=64, parameter ADDR_WIDTH=8, FAST_DEBUG="FALSE", INIT_FILE = "") (
-    input wire clock,
+    input wire clock_in,
+    input wire clock_out,
     input wire reset,
     input wire [(DATA_WIDTH_A-1):0] data_a,
     output reg [(DATA_WIDTH_B-1):0] data_b,
@@ -31,7 +32,7 @@ module istore_memory #(parameter DATA_WIDTH_A=32, DATA_WIDTH_B=64, parameter ADD
     integer ram_index;
     generate
         if(FAST_DEBUG=="TRUE")begin
-            always@(posedge clock)begin
+            always@(posedge clock_out)begin
                 if(~reset)begin
                     $display("LOAD FCORE 2 PROGRAM FROM: %s", INIT_FILE);
                     $readmemh(INIT_FILE, ram);
@@ -46,12 +47,14 @@ module istore_memory #(parameter DATA_WIDTH_A=32, DATA_WIDTH_B=64, parameter ADD
     endgenerate
 
 
-    always @(posedge clock) begin
+    always @(posedge clock_in) begin
         if (we_a)
             ram[addr_a] <= data_a;
+    end
+
+    always @(posedge clock_out) begin
         data_b[31:0] <= ram[addr_b];
         data_b[63:32]<= ram[addr_b+1];
     end
-
-
+    
 endmodule

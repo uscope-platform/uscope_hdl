@@ -18,7 +18,9 @@
 
 module fCore(
     input wire clock,
+    input wire axi_clock,
     input wire reset,
+    input wire reset_axi,
     input wire run,
     output wire done,
     output wire efi_start,
@@ -271,13 +273,17 @@ module fCore(
         .FAST_DEBUG(FAST_DEBUG),
         .INIT_FILE(INIT_FILE)
     ) store(
-        .clock(clock),
-        .reset(reset),
+        .clock_in(axi_clock),
+        .clock_out(clock),
+        .reset_in(reset_axi),
+        .reset_out(reset),
         .dma_read_addr(program_counter),
         .dma_read_data_w(instruction_w),
         .axi(axi)
     );
     
+
+
     fCore_registerFile #(
         .REGISTER_WIDTH(DATAPATH_WIDTH),
         .FILE_DEPTH(REG_FILE_SIZE),
