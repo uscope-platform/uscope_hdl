@@ -45,6 +45,7 @@ module fCore_ControlUnit #(
     reg [$clog2(MAX_CHANNELS)-1:0] ch_addr;
     reg load_blanking = 0;
 
+    reg [INSTRUCTION_WIDTH-1:0] load_instr;
 
     wire [OPCODE_WIDTH-1:0] opcode;
     assign opcode = wide_instruction_in[OPCODE_WIDTH-1:0];
@@ -123,13 +124,16 @@ module fCore_ControlUnit #(
 
         if(state==RUN)begin
              
-            if(opcode == fcore_isa::LDC)begin
+            if(load_blanking)begin
+                instruction_stream.data <= load_instr;
+            end else if(opcode == fcore_isa::LDC)begin
                 load_blanking <= 1;
+                load_instr <= instr_1;
                 instruction_stream.data <= instr_1;
                 load_data <= instr_2;
             end else if(~load_blanking)begin
                 instruction_stream.data <= instr_1;
-            end
+            end 
             if(load_blanking & ch_addr==n_channels-1) begin
                 load_blanking <= 0;            
             end
