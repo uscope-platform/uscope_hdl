@@ -23,7 +23,8 @@ module fCore_exec #(
     REG_ADDR_WIDTH = 4, 
     RECIPROCAL_PRESENT=0,
     BITMANIP_IMPLEMENTED = 0,
-    LOGIC_IMPLEMENTED = 0
+    LOGIC_IMPLEMENTED = 0,
+    FULL_COMPARE = 1
 ) (
     input wire clock,
     input wire reset,
@@ -98,10 +99,14 @@ module fCore_exec #(
             fcore_isa::BLE,
             fcore_isa::BEQ,
             fcore_isa::BNE:begin
-                if(alu_res.data[7:0]) 
-                    result.data <= {32{1'b1}};
-                else 
-                    result.data <= 32'h0;
+                if(FULL_COMPARE==1)begin
+                    if(alu_res.data[7:0]) 
+                        result.data <= {32{1'b1}};
+                    else 
+                        result.data <= 32'h0;
+                end else begin
+                    result.data <= alu_res.data;
+                end
                 result.dest <= alu_res.dest;
                 result.valid <= 1;
             end

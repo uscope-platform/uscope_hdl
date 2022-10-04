@@ -44,7 +44,7 @@ module fCore(
     parameter BITMANIP_IMPLEMENTED = 0;
     parameter LOGIC_IMPLEMENTED = 1;
     parameter EFI_IMPLEMENTED = 0;
-
+    parameter FULL_COMPARE = 1;
     // Maximum number of supported channels
     parameter MAX_CHANNELS = 4;
 
@@ -201,7 +201,8 @@ module fCore(
         .DATA_WIDTH(DATAPATH_WIDTH),
         .RECIPROCAL_PRESENT(RECIPROCAL_PRESENT),
         .BITMANIP_IMPLEMENTED(BITMANIP_IMPLEMENTED),
-        .LOGIC_IMPLEMENTED(LOGIC_IMPLEMENTED)
+        .LOGIC_IMPLEMENTED(LOGIC_IMPLEMENTED),
+        .FULL_COMPARE(FULL_COMPARE)
     ) executor (
         .clock(clock),
         .reset(reset),
