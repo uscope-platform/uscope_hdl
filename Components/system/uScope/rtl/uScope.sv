@@ -16,7 +16,8 @@
 `include "interfaces.svh"
 
 module uScope #(
-    N_TRIGGERS = 16
+    N_TRIGGERS = 16,
+    DATA_WIDTH = 16
 )(
     input wire clock,
     input wire reset,
@@ -116,6 +117,7 @@ module uScope #(
 
     scope_combiner #(
         .MSB_DEST_SUPPORT( "TRUE"),
+        .INPUT_DATA_WIDTH(DATA_WIDTH),
         .OUTPUT_DATA_WIDTH(32)
     ) combiner(
         .clock(clock),

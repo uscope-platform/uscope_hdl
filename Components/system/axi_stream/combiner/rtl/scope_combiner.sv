@@ -43,7 +43,11 @@ module scope_combiner #(parameter INPUT_DATA_WIDTH = 16, OUTPUT_DATA_WIDTH = 32,
         assign stream_out.valid = combined_valid;
         assign stream_out.dest = combined_dest;
         if(MSB_DEST_SUPPORT == "TRUE")
-            assign stream_out.data = {combined_dest, {(OUTPUT_DATA_WIDTH-INPUT_DATA_WIDTH-8){combined_data[INPUT_DATA_WIDTH-1]} }, combined_data};
+            if(OUTPUT_DATA_WIDTH == INPUT_DATA_WIDTH+8) begin
+                assign stream_out.data = {combined_dest, combined_data}; 
+            end else begin
+                assign stream_out.data = {combined_dest, {(OUTPUT_DATA_WIDTH-INPUT_DATA_WIDTH-8){combined_data[INPUT_DATA_WIDTH-1]} }, combined_data}; 
+            end
         else
             assign stream_out.data = {{(OUTPUT_DATA_WIDTH-INPUT_DATA_WIDTH){1'b0}},combined_data};
     endgenerate
