@@ -17,7 +17,8 @@
 
 module multiphase_reference_generator #(
     parameter N_PHASES=6, 
-    DATA_PATH_WIDTH=16
+    DATA_PATH_WIDTH=16,
+    HIGH_PERFORMANCE_SCALING = 0
 )(
     input wire clock,
     input wire reset,
@@ -139,18 +140,36 @@ module multiphase_reference_generator #(
     reg [DATA_PATH_WIDTH-1:0] latched_Id;
     reg [DATA_PATH_WIDTH-1:0] latched_Iq;
     reg [DATA_PATH_WIDTH-1:0] internal_reference_data [N_PHASES-1:0];
-    
-    wire signed [2*DATA_PATH_WIDTH-1:0] id_factor;
-    wire signed [2*DATA_PATH_WIDTH-1:0] iq_factor;
-    
-    assign id_factor = ($signed(latched_Id)*$signed(sin.data));
-    assign iq_factor = -($signed(latched_Iq)*$signed(cos.data));
 
+    reg signed [2*DATA_PATH_WIDTH-1:0] id_factor;
+    reg signed [2*DATA_PATH_WIDTH-1:0] iq_factor;
+    reg[31:0] factors_dest;
+    reg[31:0] factors_valid;
+
+    generate
+        if(HIGH_PERFORMANCE_SCALING)begin
+            always_ff@(posedge clock) begin 
+                factors_dest <= sin.dest;
+                factors_valid <= sin.valid;
+                id_factor <= ($signed(latched_Id)*$signed(sin.data));
+                iq_factor <= -($signed(latched_Iq)*$signed(cos.data));
+            end
+        end else begin
+            always_comb begin
+                factors_dest <= sin.dest;
+                factors_valid <= sin.valid;
+                id_factor <= ($signed(latched_Id)*$signed(sin.data));
+                iq_factor <= -($signed(latched_Iq)*$signed(cos.data));
+            end  
+        end
+    endgenerate
+    
     wire [DATA_PATH_WIDTH-1:0] scaled_id_factor;
     wire [DATA_PATH_WIDTH-1:0] scaled_iq_factor;
 
     assign scaled_id_factor = id_factor >>> (DATA_PATH_WIDTH-1);
     assign scaled_iq_factor = iq_factor >>> (DATA_PATH_WIDTH-1);
+
 
     always_ff@(posedge clock) begin
         if(~reset) begin
@@ -162,14 +181,14 @@ module multiphase_reference_generator #(
                 latched_Id <= Id;
                 latched_Iq <= Iq;
             end
-            if(sin.valid)begin
-                internal_reference_data[sin.dest] <= scaled_id_factor + scaled_iq_factor;
+            if(factors_valid)begin
+                internal_reference_data[factors_dest] <= scaled_id_factor + scaled_iq_factor;
             end
         end
     end
 
     reg [$clog2(N_PHASES)-1:0] output_phase_counter;
-    reg sync_delay;
+    reg [1:0] sync_delay;
     always_ff@(posedge clock)begin
         if(~reset)begin
             reference_out.data <= 0;
@@ -178,7 +197,8 @@ module multiphase_reference_generator #(
             output_phase_counter <= 0;
         end else begin
             reference_out.valid <= 0;
-            sync_delay <= sync;
+            sync_delay[0] <= sync;
+            sync_delay[1] <= sync_delay[0];
             if(output_phase_counter != 0)begin
                 reference_out.data <= internal_reference_data[output_phase_counter];
                 reference_out.dest <= output_phase_counter;
@@ -188,7 +208,7 @@ module multiphase_reference_generator #(
                     output_phase_counter <= 0;
                 end
             end 
-            if(sync_delay)begin
+            if(sync_delay[1])begin
                 reference_out.data <= internal_reference_data[output_phase_counter];
                 reference_out.dest <= output_phase_counter;
                 reference_out.valid <= 1;
