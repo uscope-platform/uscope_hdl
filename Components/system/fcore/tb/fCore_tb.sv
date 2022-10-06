@@ -92,16 +92,17 @@ module fCore_tb();
     end
 
 
-
     defparam uut.executor.RECIPROCAL_PRESENT = RECIPROCAL_PRESENT;
     fCore #(
         .FAST_DEBUG("TRUE"),
         .MAX_CHANNELS(9),
-        .INIT_FILE("/home/filssavi/git/uplatform-hdl/public/Components/system/fcore/tb/test_sat.mem"),
+        .INIT_FILE("/home/filssavi/git/uplatform-hdl/public/Components/system/fcore/tb/test_issue.mem"),
         .BITMANIP_IMPLEMENTED(1)
     ) uut(
         .clock(core_clk),
+        .axi_clock(core_clk),
         .reset(rst),
+        .reset_axi(rst),
         .run(run),
         .done(done),
         .efi_start(efi_start),

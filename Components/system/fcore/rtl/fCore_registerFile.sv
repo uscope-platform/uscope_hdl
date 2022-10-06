@@ -111,16 +111,12 @@ module fCore_registerFile #(
                 .en_b(1'b1)
             );
 
-            always_comb begin
-                ram_c_read_addr <= read_addr_c;
-                read_data_c <= ram_c_read_data;
-            end
+        assign ram_c_read_addr = read_addr_c;
+        assign read_data_c = ram_c_read_data;
             
         end else begin
 
-        always_comb begin
-            read_data_c <= 0;
-        end
+        assign read_data_c = 0;
 
         end
     endgenerate

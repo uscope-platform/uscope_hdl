@@ -17,7 +17,9 @@
 `include "interfaces.svh"
 import fcore_isa::*;
 
-module fCore_bitmanip_unit (
+module fCore_bitmanip_unit #(
+    PIPELINE_DEPTH=5
+)(
     input wire clock,
     input wire reset,
     axi_stream.slave operand_a,
@@ -27,36 +29,82 @@ module fCore_bitmanip_unit (
     axi_stream.master result 
 );
 
+    axi_stream bitmanip_result();
+    axi_stream popcount_result();
 
+    assign result.data = bitmanip_result.data | popcount_result.data;
+    assign result.dest = bitmanip_result.dest | popcount_result.dest;
+    assign result.user = bitmanip_result.user | popcount_result.user;
+    assign result.valid = bitmanip_result.valid | popcount_result.valid;
+    assign result.tlast = bitmanip_result.tlast | popcount_result.tlast;
+    assign bitmanip_result.ready = result.ready;
+    assign popcount_result.ready = result.ready;
 
+    axi_stream early_bitmanip_result();
+    register_slice #(
+        .DATA_WIDTH(32),
+        .DEST_WIDTH(32),
+        .USER_WIDTH(32),
+        .N_STAGES(PIPELINE_DEPTH-1),
+        .READY_REG(0)
+    ) bitmanip_pipeline_adapter (
+        .clock(clock),
+        .reset(reset),
+        .in(early_bitmanip_result),
+        .out(bitmanip_result)
+    );
 
-    reg [7:0] ones = 0;
-    always@(posedge clock) begin
-        result.valid <= 0;
-        result.user <= 0;
-        result.data <= 0;
+    axi_stream early_popcount_result();
+    register_slice #(
+        .DATA_WIDTH(32),
+        .DEST_WIDTH(32),
+        .USER_WIDTH(32),
+        .N_STAGES(PIPELINE_DEPTH-2),
+        .READY_REG(0)
+    ) popcount_pipeline_adapter (
+        .clock(clock),
+        .reset(reset),
+        .in(early_popcount_result),
+        .out(popcount_result)
+    );
+    
+    wire [15:0] popcount_in_partition_0;
+    wire [15:0] popcount_in_partition_1;
+    assign popcount_in_partition_0 = operand_a.data[15:0];
+    assign popcount_in_partition_1 = operand_a.data[31:16];
+
+    reg [5:0] popcount_partials [1:0];
+
+    reg [31:0] popcount_user;
+
+    always_ff @(posedge clock) begin
+        early_bitmanip_result.valid <= 0;
+        early_bitmanip_result.user <= 0;
+        early_bitmanip_result.data <= 0;
+        early_popcount_result.valid <= 0;
+        early_popcount_result.user <= 0;
+        early_popcount_result.data <= 0;
         if(operand_a.valid)begin
             case(operation.data)
                 3:begin
-                    ones = 0;
-                    foreach(operand_a.data[idx]) begin
-                        ones += operand_a.data[idx];
-                    end
-                    result.valid <= 1;
-                    result.user <= operand_a.user;
-                    result.data <= ones;  
+                    popcount_partials[0] <= popcount_in_partition_0[0] + popcount_in_partition_0[1] + popcount_in_partition_0[2] + popcount_in_partition_0[3] + popcount_in_partition_0[4] + popcount_in_partition_0[4] + popcount_in_partition_0[5] + popcount_in_partition_0[6] + popcount_in_partition_0[7] + popcount_in_partition_0[8] + popcount_in_partition_0[9] + popcount_in_partition_0[10] + popcount_in_partition_0[11] + popcount_in_partition_0[12] + popcount_in_partition_0[13] + popcount_in_partition_0[14] + popcount_in_partition_0[15];
+                    popcount_partials[1] <= popcount_in_partition_1[0] + popcount_in_partition_1[1] + popcount_in_partition_1[2] + popcount_in_partition_1[3] + popcount_in_partition_1[4] + popcount_in_partition_1[4] + popcount_in_partition_1[5] + popcount_in_partition_1[6] + popcount_in_partition_1[7] + popcount_in_partition_1[8] + popcount_in_partition_1[9] + popcount_in_partition_1[10] + popcount_in_partition_1[11] + popcount_in_partition_1[12] + popcount_in_partition_1[13] + popcount_in_partition_1[14] + popcount_in_partition_1[15];
+                    popcount_user <= operand_a.user;
+                    early_popcount_result.data <= popcount_partials[0] + popcount_partials[1];
+                    early_popcount_result.valid <= 1;
+                    early_popcount_result.user <= popcount_user;
                 end
                 5:begin
-                    result.valid <= 1;
-                    result.user <= operand_a.user;
-                    result.data <= operand_a.data[31:0];
-                    result.data <= operand_a.data[operand_b.data];  
+                    early_bitmanip_result.valid <= 1;
+                    early_bitmanip_result.user <= operand_a.user;
+                    early_bitmanip_result.data <= operand_a.data[31:0];
+                    early_bitmanip_result.data <= operand_a.data[operand_b.data];  
                 end
                 7:begin
-                    result.valid <= 1;
-                    result.user <= operand_a.user;
-                    result.data <= operand_a.data[31:0];
-                    result.data[operand_b.data] <= operand_c.data;
+                    early_bitmanip_result.valid <= 1;
+                    early_bitmanip_result.user <= operand_a.user;
+                    early_bitmanip_result.data <= operand_a.data[31:0];
+                    early_bitmanip_result.data[operand_b.data] <= operand_c.data;
                 end
             endcase
         end

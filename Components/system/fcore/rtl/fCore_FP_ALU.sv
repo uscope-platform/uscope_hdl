@@ -24,7 +24,8 @@ module fCore_FP_ALU #(
     REGISTER_ADDR_WIDTH = 8,
     RECIPROCAL_PRESENT=0,
     BITMANIP_IMPLEMENTED = 0,
-    LOGIC_IMPLEMENTED = 0
+    LOGIC_IMPLEMENTED = 0,
+    FULL_COMPARE = 1
 )(
     input wire clock,
     input wire reset,
@@ -178,7 +179,14 @@ module fCore_FP_ALU #(
             fcore_isa::BLE,
             fcore_isa::BEQ,
             fcore_isa::BNE: begin
-                result.data <= cmp_result.data;
+                if(FULL_COMPARE==1)begin
+                    if(cmp_result.data[7:0]) 
+                        result.data <= {32{1'b1}};
+                    else 
+                        result.data <= 32'h0;
+                end else begin
+                    result.data <= cmp_result.data;
+                end
                 result.dest <= cmp_result.user;
                 result.valid <= 1;
             end
@@ -294,27 +302,16 @@ module fCore_FP_ALU #(
     ////////////////////////////////////////////////
     generate
         if(BITMANIP_IMPLEMENTED==1)begin
-            fCore_bitmanip_unit bitmanip_engine (
+            fCore_bitmanip_unit #(
+                .PIPELINE_DEPTH(PIPELINE_DEPTH)
+            ) bitmanip_engine (
                 .clock(clock),
                 .reset(reset),
                 .operand_a(operand_a),
                 .operand_b(operand_b),
                 .operand_c(operand_c),
                 .operation(operation),
-                .result(early_bitmanip_result) 
-            );
-
-            register_slice #(
-                .DATA_WIDTH(32),
-                .DEST_WIDTH(32),
-                .USER_WIDTH(32),
-                .N_STAGES(PIPELINE_DEPTH-1),
-                .READY_REG(0)
-            ) bitmanip_pipeline_adapter (
-                .clock(clock),
-                .reset(reset),
-                .in(early_bitmanip_result),
-                .out(bitmanip_result)
+                .result(bitmanip_result) 
             );
         end
     endgenerate

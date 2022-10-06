@@ -42,26 +42,6 @@ module fCore_exec #(
     
     reg [OPCODE_WIDTH-1:0] opcode_dly[PIPELINE_LENGTH:0];
 
-    axi_stream alu_res();
-
-    fCore_FP_ALU #(
-        .OPCODE_WIDTH(OPCODE_WIDTH),
-        .REGISTER_ADDR_WIDTH(REG_ADDR_WIDTH),
-        .PIPELINE_DEPTH(PIPELINE_LENGTH),
-        .RECIPROCAL_PRESENT(RECIPROCAL_PRESENT),
-        .BITMANIP_IMPLEMENTED(BITMANIP_IMPLEMENTED),
-        .LOGIC_IMPLEMENTED(LOGIC_IMPLEMENTED)
-        )fp_alu(
-        .clock(clock),
-        .reset(reset),
-        .result_select(opcode_dly[PIPELINE_LENGTH]),
-        .operand_a(operand_a),
-        .operand_b(operand_b),
-        .operand_c(operand_c),
-        .operation(operation),
-        .result(alu_res)
-    );
-
     always@(posedge clock)begin
 
         opcode_dly[0][OPCODE_WIDTH-1:0] <= opcode;
@@ -70,53 +50,29 @@ module fCore_exec #(
         end
     end
 
-    
-    always_comb begin
-        case(opcode_dly[PIPELINE_LENGTH])
-            fcore_isa::ADD,
-            fcore_isa::SUB,
-            fcore_isa::MUL,
-            fcore_isa::FTI,
-            fcore_isa::LAND,
-            fcore_isa::LOR,
-            fcore_isa::LNOT,
-            fcore_isa::LXOR,
-            fcore_isa::SATP,
-            fcore_isa::SATN,
-            fcore_isa::LDR,
-            fcore_isa::LDC,
-            fcore_isa::REC,
-            fcore_isa::POPCNT,
-            fcore_isa::ABS,
-            fcore_isa::BSET,
-            fcore_isa::BSEL,
-            fcore_isa::ITF:begin
-                result.data <= alu_res.data;
-                result.dest <= alu_res.dest;
-                result.valid <= 1;
-            end
-            fcore_isa::BGT,
-            fcore_isa::BLE,
-            fcore_isa::BEQ,
-            fcore_isa::BNE:begin
-                if(FULL_COMPARE==1)begin
-                    if(alu_res.data[7:0]) 
-                        result.data <= {32{1'b1}};
-                    else 
-                        result.data <= 32'h0;
-                end else begin
-                    result.data <= alu_res.data;
-                end
-                result.dest <= alu_res.dest;
-                result.valid <= 1;
-            end
-            default:begin
-                result.valid <= 0;
-                result.dest <= 0;
-                result.data <= 0;
-            end
-        endcase
-    end
+
+    axi_stream alu_res();
+
+    fCore_FP_ALU #(
+        .OPCODE_WIDTH(OPCODE_WIDTH),
+        .REGISTER_ADDR_WIDTH(REG_ADDR_WIDTH),
+        .PIPELINE_DEPTH(PIPELINE_LENGTH),
+        .RECIPROCAL_PRESENT(RECIPROCAL_PRESENT),
+        .BITMANIP_IMPLEMENTED(BITMANIP_IMPLEMENTED),
+        .LOGIC_IMPLEMENTED(LOGIC_IMPLEMENTED),
+        .FULL_COMPARE(FULL_COMPARE)
+        )fp_alu(
+        .clock(clock),
+        .reset(reset),
+        .result_select(opcode_dly[PIPELINE_LENGTH]),
+        .operand_a(operand_a),
+        .operand_b(operand_b),
+        .operand_c(operand_c),
+        .operation(operation),
+        .result(result)
+    );
+
+
 
     
 endmodule
