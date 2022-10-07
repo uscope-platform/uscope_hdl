@@ -50,7 +50,7 @@ class axis_BFM #(int DATA_WIDTH = 32,int USER_WIDTH = 32, int DEST_WIDTH = 32);
         #(this.clock_period) this.axis.valid <= 1'b0;
     endtask
 
-    task write_complete(input logic [31:0] write_data, logic [31:0] destination, logic [31:0] user);
+    task write_du(input logic [31:0] write_data, logic [31:0] destination, logic [31:0] user);
         this.axis.data <= write_data;
         this.axis.dest <= destination;
         this.axis.user <= user;
@@ -58,6 +58,20 @@ class axis_BFM #(int DATA_WIDTH = 32,int USER_WIDTH = 32, int DEST_WIDTH = 32);
         #(this.clock_period) this.axis.valid <= 1'b0;
     endtask
 
+    task write_complete(input logic [31:0] write_data, logic [31:0] destination, logic [31:0] user, logic tlast, logic wait_ready);
+        this.axis.data <= write_data;
+        this.axis.dest <= destination;
+        this.axis.user <= user;
+        this.axis.tlast <= tlast;
+        if(wait_ready)begin
+            wait(this.axis.ready) this.axis.valid <= 1'b1;
+            #(this.clock_period) this.axis.valid <= 1'b0;
+        end else begin
+            this.axis.valid <= 1'b1;
+            #(this.clock_period) this.axis.valid <= 1'b0;
+        end
+
+    endtask
     
     task  read(output logic [31:0] data);
         this.axis.ready <= 1;

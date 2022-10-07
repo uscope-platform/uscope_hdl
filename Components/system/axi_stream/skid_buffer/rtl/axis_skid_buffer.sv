@@ -17,7 +17,9 @@
 
 module axis_skid_buffer #(
     parameter REGISTER_OUTPUT = 1,
-    parameter DATA_WIDTH = 32
+    parameter DATA_WIDTH = 32,
+    parameter DEST_WIDTH = 32,
+    parameter USER_WIDTH = 32
 ) (
     input wire clock,
     input wire reset,
@@ -55,13 +57,21 @@ module axis_skid_buffer #(
     assign axis_in.ready = registered_ready_reset & !input_skidding;
 
     reg	[DATA_WIDTH-1:0] data_buffer = 0;
-
+    reg	[DATA_WIDTH-1:0] dest_buffer = 0;
+    reg	[DATA_WIDTH-1:0] user_buffer = 0;
+    reg tlast_buffer;
     // manage buffer
     always_ff @(posedge clock) begin
         if (~reset) begin
             data_buffer <= 0;
+            dest_buffer <= 0;
+            user_buffer <= 0;
+            tlast_buffer <= 0;
         end else if(axis_in.ready) begin
             data_buffer <= axis_in.data;
+            dest_buffer <= axis_in.dest;
+            user_buffer <= axis_in.user;
+            tlast_buffer <= axis_in.tlast;
         end
     end
 
@@ -73,10 +83,19 @@ module axis_skid_buffer #(
             always_comb begin
                 if (input_skidding) begin
                     axis_out.data = data_buffer;
+                    axis_out.dest = dest_buffer;
+                    axis_out.user = user_buffer;
+                    axis_out.tlast = tlast_buffer;
                 end else if(axis_in.valid) begin
                     axis_out.data = axis_in.data;
+                    axis_out.dest = axis_in.dest;
+                    axis_out.user = axis_in.user;
+                    axis_out.tlast = axis_in.tlast;
                 end else begin
                     axis_out.data = 0;    
+                    axis_out.dest = 0;    
+                    axis_out.user = 0;    
+                    axis_out.tlast = 0;
                 end
             end
             
@@ -100,8 +119,14 @@ module axis_skid_buffer #(
                 end else if (!axis_out.valid || axis_out.ready) begin
                     if (input_skidding) begin
                         axis_out.data <= data_buffer;
+                        axis_out.dest <= dest_buffer;
+                        axis_out.user <= user_buffer;
+                        axis_out.tlast <= tlast_buffer;
                     end else begin
                         axis_out.data <= axis_in.data;
+                        axis_out.dest <= axis_in.dest;
+                        axis_out.user <= axis_in.user;
+                        axis_out.tlast <= axis_in.tlast;
                     end
                 end
             end

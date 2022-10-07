@@ -27,34 +27,33 @@ module axis_sync_repeater #(parameter DATA_WIDTH= 32, DEST_WIDTH = 8, USER_WIDTH
     axi_stream.master out
 );
 
+    axi_stream registered_stream();
+    
+    axis_skid_buffer #(
+        .REGISTER_OUTPUT(1),
+        .DATA_WIDTH(32)
+    ) buffer (
+        .clock(clock),
+        .reset(reset),
+        .axis_in(in),
+        .axis_out(registered_stream)
+    );
 
-    reg [DATA_WIDTH-1:0] latched_data;
-    reg [DEST_WIDTH-1:0] latched_dest;
-    reg [USER_WIDTH-1:0] latched_user;
-    reg latched_tlast;
-
+    assign registered_stream.ready = out.ready;
     always_ff@(posedge clock)begin
         if(~reset)begin
             out.valid <= 0;
             out.data <= 0;
             out.dest <= 0;
-            latched_data <= 0;
-            latched_dest <= 0;
-            latched_user <= 0;
-            latched_tlast <= 0;
+            out.user <= 0;
+            out.tlast <= 0;
         end else begin
             out.valid <= 0;
-            if(in.valid)begin
-                latched_data <= in.data;
-                latched_dest <= in.dest;
-                latched_user <= in.user;
-                latched_tlast <= in.tlast; 
-            end
             if(sync)begin
-                out.data <= latched_data;
-                out.dest <= latched_dest;
-                out.user <= latched_user;
-                out.tlast <= latched_tlast;
+                out.data <= registered_stream.data;
+                out.dest <= registered_stream.dest;
+                out.user <= registered_stream.user;
+                out.tlast <= registered_stream.tlast;
                 out.valid <= 1;
             end
         end

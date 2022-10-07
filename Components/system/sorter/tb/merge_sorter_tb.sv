@@ -235,7 +235,7 @@ module merge_sorter_tb ();
                 end else begin
                     start = 0;
                 end
-                in_bfm.write_complete(item[i].data, item[i].dest, item[i].user);
+                in_bfm.write_du(item[i].data, item[i].dest, item[i].user);
             end
 
             read_sorted_results(data_length, data_out, dest_out, user_out);
