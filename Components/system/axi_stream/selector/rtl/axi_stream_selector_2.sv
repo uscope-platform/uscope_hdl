@@ -65,6 +65,12 @@ module axi_stream_selector_2 #(parameter DATA_WIDTH = 16, REGISTERED = 1)(
                         stream_out_1.valid <= stream_in.valid;
                         stream_out_1.user <= stream_in.user;
                         stream_out_1.tlast <= stream_in.tlast;
+                        stream_out_2.data <= 0;
+                        stream_out_2.dest<= 0;
+                        stream_out_2.valid <= 0;
+                        stream_out_2.user <= 0;
+                        stream_out_2.tlast <= 0;
+                        
                 end
                 1:begin
                         stream_out_2.data <= stream_in.data;
@@ -72,6 +78,11 @@ module axi_stream_selector_2 #(parameter DATA_WIDTH = 16, REGISTERED = 1)(
                         stream_out_2.valid <= stream_in.valid;
                         stream_out_2.user <= stream_in.user;
                         stream_out_2.tlast <= stream_in.tlast;
+                        stream_out_1 .data <= 0;
+                        stream_out_1.dest<= 0;
+                        stream_out_1.valid <= 0;
+                        stream_out_1.user <= 0;
+                        stream_out_1.tlast <= 0;
                 end
                 endcase 
             end

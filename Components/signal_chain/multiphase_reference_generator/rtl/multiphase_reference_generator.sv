@@ -36,6 +36,8 @@ module multiphase_reference_generator #(
     reg [31:0] emulator_tb;
     reg [15:0] emulator_counter;
 
+    reg emulate_angle;
+
     assign angle_emulation = emulate_angle;
 
     axi_stream #(
@@ -60,7 +62,6 @@ module multiphase_reference_generator #(
     );
 
 
-    reg emulate_angle;
     reg [31:0] emulation_phase_advance;
     reg [31:0] emulation_sampling_period;
 

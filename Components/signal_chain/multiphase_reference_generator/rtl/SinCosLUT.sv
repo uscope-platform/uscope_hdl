@@ -18,9 +18,9 @@
 module SinCosLUT (
     input  wire clock,
     input  wire reset,
-    axi_stream theta,
-    axi_stream sin,
-    axi_stream cos
+    axi_stream.slave theta,
+    axi_stream.master sin,
+    axi_stream.master cos
 );
     reg latched_valid = 0;
     reg [15:0] latched_dest = 0;
