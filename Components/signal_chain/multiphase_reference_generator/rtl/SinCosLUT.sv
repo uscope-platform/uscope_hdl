@@ -22,8 +22,6 @@ module SinCosLUT (
     axi_stream.master sin,
     axi_stream.master cos
 );
-    reg latched_valid = 0;
-    reg [15:0] latched_dest = 0;
 
     reg [15:0] inner_sin_data = 0;
     reg [15:0] inner_cos_data = 0;
@@ -44,6 +42,7 @@ module SinCosLUT (
         $readmemh("sineTable_lut.dat", SinTable);
     end
 
+    assign theta.ready = 1;
 
     assign cos.data = {{16{cos.valid & inner_cos_data[15]}}, inner_cos_data & {16{cos.valid}}};
     assign sin.data = {{16{sin.valid & inner_sin_data[15]}}, inner_sin_data & {16{sin.valid}}}; 
@@ -65,8 +64,6 @@ module SinCosLUT (
         sin.valid <= theta.valid;
         cos.valid <= theta.valid;
 
-        latched_valid <= theta.valid;
-        latched_dest <= theta.dest;
         // look up sin and cos magnitudes
         table_sin_out <= SinTable[addr_b];
         table_cos_out <= SinTable[addr_a];
