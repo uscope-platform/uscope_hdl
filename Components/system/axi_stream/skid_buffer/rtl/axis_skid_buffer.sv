@@ -17,6 +17,7 @@
 
 module axis_skid_buffer #(
     parameter REGISTER_OUTPUT = 1,
+    parameter LATCHING = 0,
     parameter DATA_WIDTH = 32,
     parameter DEST_WIDTH = 32,
     parameter USER_WIDTH = 32
@@ -92,10 +93,12 @@ module axis_skid_buffer #(
                     axis_out.user = axis_in.user;
                     axis_out.tlast = axis_in.tlast;
                 end else begin
-                    axis_out.data = 0;    
-                    axis_out.dest = 0;    
-                    axis_out.user = 0;    
-                    axis_out.tlast = 0;
+                    if(LATCHING==1)begin
+                        axis_out.data = 0;    
+                        axis_out.dest = 0;    
+                        axis_out.user = 0;    
+                        axis_out.tlast = 0;
+                    end
                 end
             end
             
@@ -123,11 +126,22 @@ module axis_skid_buffer #(
                         axis_out.user <= user_buffer;
                         axis_out.tlast <= tlast_buffer;
                     end else begin
-                        axis_out.data <= axis_in.data;
-                        axis_out.dest <= axis_in.dest;
-                        axis_out.user <= axis_in.user;
-                        axis_out.tlast <= axis_in.tlast;
+                        if(LATCHING==1)begin
+                            if(axis_in.valid)begin
+                                axis_out.data <= axis_in.data;
+                                axis_out.dest <= axis_in.dest;
+                                axis_out.user <= axis_in.user;
+                                axis_out.tlast <= axis_in.tlast;
+                            end 
+                        end else begin
+                            axis_out.data <= axis_in.data;
+                            axis_out.dest <= axis_in.dest;
+                            axis_out.user <= axis_in.user;
+                            axis_out.tlast <= axis_in.tlast;
+                        end
+                        
                     end
+
                 end
             end
            
