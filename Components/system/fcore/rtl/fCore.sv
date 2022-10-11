@@ -244,6 +244,9 @@ module fCore(
                 .efi_results(efi_results),
                 .result_writeback(efi_writeback)
             );
+        end else begin
+            assign efi_read_addr = 0;
+            assign mem_efi_enable = 0;
         end
     endgenerate
     
