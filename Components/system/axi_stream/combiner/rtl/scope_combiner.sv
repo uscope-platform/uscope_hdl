@@ -54,8 +54,6 @@ module scope_combiner #(parameter INPUT_DATA_WIDTH = 16, OUTPUT_DATA_WIDTH = 32,
 
     ///////////////STREAM COMBINATION SECTION///////////////
 
-    reg int_stream_1_ready, int_stream_2_ready, int_stream_3_ready, int_stream_4_ready, int_stream_5_ready, int_stream_6_ready;
-
     assign stream_in_1.ready = stream_out.ready;
     assign stream_in_2.ready = stream_out.ready;
     assign stream_in_3.ready = stream_out.ready;
@@ -65,12 +63,6 @@ module scope_combiner #(parameter INPUT_DATA_WIDTH = 16, OUTPUT_DATA_WIDTH = 32,
 
     always@(posedge clock)begin
         if(~reset)begin
-            int_stream_1_ready <= 0;
-            int_stream_2_ready <= 0;
-            int_stream_3_ready <= 0;
-            int_stream_4_ready <= 0;
-            int_stream_5_ready <= 0;
-            int_stream_6_ready <= 0; 
             combined_dest <= 0;
             combined_valid <= 0;
             combined_tlast <= 0;
@@ -122,25 +114,21 @@ module scope_combiner #(parameter INPUT_DATA_WIDTH = 16, OUTPUT_DATA_WIDTH = 32,
                     combined_data <= input_buffer_data[1];
                     combined_dest <= input_buffer_dest[1];
                     memory_status[1] <= 0;
-                    int_stream_2_ready <= 0;
                     combined_valid <=1;
                 end else if(memory_status[2])begin
                     combined_data <= input_buffer_data[2];
                     combined_dest <= input_buffer_dest[2];
                     memory_status[2] <= 0;
-                    int_stream_2_ready <= 0;
                     combined_valid <=1;
                 end else if(memory_status[3])begin
                     combined_data <= input_buffer_data[3];
                     combined_dest <= input_buffer_dest[3];
                     memory_status[3] <= 0;
-                    int_stream_2_ready <= 0;
                     combined_valid <=1;
                 end else if(memory_status[4])begin
                     combined_data <= input_buffer_data[4];
                     combined_dest <= input_buffer_dest[4];
                     memory_status[4] <= 0;
-                    int_stream_2_ready <= 0;
                     combined_valid <=1;
                 end else if(memory_status[5])begin
                     combined_data <= input_buffer_data[5];

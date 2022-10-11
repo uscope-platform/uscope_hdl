@@ -60,6 +60,9 @@ module enable_generator #(
     assign cu_read_registers[1][31:0] = {{ADDITIONAL_BITS{1'b0}},period};
     assign cu_read_registers[2][31:0] = {{ADDITIONAL_BITS{1'b0}},enable_threshold_1};
     
+    wire comparator_out;
+    reg synchronized_tb,prev_comp_out;
+    
     generate
         if(EXTERNAL_TIMEBASE_ENABLE==1)begin
             assign enable_out = synchronized_tb;
@@ -67,8 +70,7 @@ module enable_generator #(
             assign enable_out = comparator_out;
         end
     endgenerate
-    wire comparator_out;
-    reg synchronized_tb,prev_comp_out;
+
 
     always_ff@(posedge clock) begin
         if(period == 0 || period == 1) begin

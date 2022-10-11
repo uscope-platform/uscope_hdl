@@ -31,6 +31,7 @@ module axis_sync_repeater #(parameter DATA_WIDTH= 32, DEST_WIDTH = 8, USER_WIDTH
     
     axis_skid_buffer #(
         .REGISTER_OUTPUT(1),
+        .LATCHING(1),
         .DATA_WIDTH(32)
     ) buffer (
         .clock(clock),

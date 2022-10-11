@@ -132,12 +132,20 @@ module fCore_registerFile #(
                 ram_write_if.data <= efi_write.data;
                 ram_write_if.dest <= efi_write.dest;
                 ram_write_if.valid <= efi_write.valid;
+                efi_read_data <= 0;
+                ram_a_read_addr <= 0;
+                ram_b_read_addr <= 0;
             end else begin
+                ram_write_if.data <= 0;
+                ram_write_if.dest <= 0;
+                ram_write_if.valid <= 0;
                 ram_a_read_addr <= efi_read_addr;
                 ram_b_read_addr <= efi_read_addr;
                 efi_read_data <= ram_a_read_data;
             end
+            dma_read_data <= 0;
         end else if(dma_enable) begin
+            efi_read_data <= 0;
             ram_write_if.data <= dma_write.data;
             ram_write_if.dest <= dma_write.dest;
             ram_write_if.valid <= dma_write.valid;
@@ -150,6 +158,7 @@ module fCore_registerFile #(
             end else begin
                 ram_write_if.data <= 0;
             end
+            efi_read_data <= 0;
             ram_write_if.dest <= write_if.dest;
             ram_write_if.valid <= write_if.valid;
             ram_a_read_addr <= read_addr_a;

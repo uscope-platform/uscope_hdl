@@ -32,14 +32,13 @@ module tlast_generator(
         output wire [15:0] current_sample
     );
 
-    reg prev_in_valid;
+
     reg [15:0] tlast_counter;
     assign current_sample = tlast_counter;
     assign in_ready = out_ready;
 
     always@(posedge clock)begin
         if(~reset)begin
-            prev_in_valid <= 0;
             out_tlast <= 0;
             out_valid <= 0;
             tlast_counter <= 0;
@@ -57,7 +56,6 @@ module tlast_generator(
                 out_tlast <= 0;
             end
         end
-        prev_in_valid <= in_valid;
     end
 
 
