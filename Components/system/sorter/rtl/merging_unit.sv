@@ -126,6 +126,8 @@ module merging_unit #(
     );
 
 
+    reg [2:0] start_merging_pipe;
+
 
     reg[15:0] chunks_to_merge  = 0;
 
@@ -145,7 +147,11 @@ module merging_unit #(
         bypass_load_ctr <=1;
         output_selector <= 0;
         select_merge_bypass <= 1;
-        if(registered_input.valid)begin
+        start_merging_pipe[0] <= data_in.valid;
+        start_merging_pipe[1] <= start_merging_pipe[0];
+        start_merging_pipe[2] <= start_merging_pipe[1];
+        core_start <= 0;
+        if(start_merging_pipe[2])begin
             input_chunk_size <= 8;
             result_size <= 8;
             fsm_merger <= fsm_bypass;

@@ -82,12 +82,13 @@ module fCore_efi_memory_handler #(
                 if(arguments_counter == working_length)begin
                     handler_fsm <= fsm_wait_execution;
                     efi_arguments.tlast <= 1;
-                    mem_efi_enable <= 0;
+                    
                 end else begin
                     arguments_counter <= arguments_counter + 1;
                 end
             end
             fsm_wait_execution:begin
+                mem_efi_enable <= 0;
                 efi_arguments.valid <= 0;
                 efi_arguments.tlast <= 0;
                 if(efi_results.valid)begin

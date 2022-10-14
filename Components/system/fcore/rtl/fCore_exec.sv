@@ -51,7 +51,6 @@ module fCore_exec #(
     end
 
 
-    axi_stream alu_res();
 
     fCore_FP_ALU #(
         .OPCODE_WIDTH(OPCODE_WIDTH),
