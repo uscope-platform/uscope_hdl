@@ -29,7 +29,7 @@ module fCore_FP_ALU #(
 )(
     input wire clock,
     input wire reset,
-    input wire [OPCODE_WIDTH-1:0] result_select,
+    input wire [OPCODE_WIDTH-1:0] opcode,
     axi_stream.slave operand_a,
     axi_stream.slave operand_b,
     axi_stream.slave operand_c,
@@ -37,6 +37,21 @@ module fCore_FP_ALU #(
     axi_stream.master result 
 );
 
+    localparam  PIPELINE_LENGTH = 5+3*RECIPROCAL_PRESENT;
+
+    reg [OPCODE_WIDTH-1:0] result_select_dly[PIPELINE_LENGTH:0];
+
+    wire [OPCODE_WIDTH-1:0] result_select;
+    assign result_select = result_select_dly[PIPELINE_LENGTH];
+    
+
+    always@(posedge clock)begin
+
+        result_select_dly[0][OPCODE_WIDTH-1:0] <= opcode;
+        for(integer i =0 ; i<PIPELINE_LENGTH; i= i+1) begin
+            result_select_dly[i+1][OPCODE_WIDTH-1:0] <= result_select_dly[i][OPCODE_WIDTH-1:0];
+        end
+    end
 
     
     axi_stream #(

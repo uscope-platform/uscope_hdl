@@ -197,15 +197,16 @@ module fCore(
     endgenerate
 
 
-    fCore_exec #( 
-        .OPCODE_WIDTH(ALU_OPCODE_WIDTH),
-        .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
+
+    fCore_FP_ALU #(
+        .OPCODE_WIDTH(OPCODE_WIDTH),
         .DATA_WIDTH(DATAPATH_WIDTH),
+        .REGISTER_ADDR_WIDTH(REG_ADDR_WIDTH),
         .RECIPROCAL_PRESENT(RECIPROCAL_PRESENT),
         .BITMANIP_IMPLEMENTED(BITMANIP_IMPLEMENTED),
         .LOGIC_IMPLEMENTED(LOGIC_IMPLEMENTED),
         .FULL_COMPARE(FULL_COMPARE)
-    ) executor (
+    )executor(
         .clock(clock),
         .reset(reset),
         .opcode(exec_opcode),
@@ -215,6 +216,7 @@ module fCore(
         .operation(operation_dly),
         .result(result)
     );
+
 
     
     ///////////////////////////////
