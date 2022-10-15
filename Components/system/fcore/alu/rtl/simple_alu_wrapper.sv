@@ -23,17 +23,11 @@ module simple_alu_wrapper #(parameter REGISTER_ADDR_WIDTH = 32) (
     axi_stream.slave operand_b,
     axi_stream.slave operation,
     axi_stream.master add_result,
-    axi_stream.master cmp_result,
     axi_stream.master fti_result,
     axi_stream.master itf_result,
     axi_stream.master mul_result
 );
 
-    wire [31:0] cmp_res_tuser;
-    assign cmp_result.user = cmp_res_tuser[REGISTER_ADDR_WIDTH-1:0];
-    
-    wire [7:0] cmp_res_tdata;
-    assign cmp_result.data = {24'b0,cmp_res_tdata};
 
     wire [31:0] add_res_tuser;
     assign add_result.user = add_res_tuser[REGISTER_ADDR_WIDTH-1:0];
@@ -59,13 +53,6 @@ module simple_alu_wrapper #(parameter REGISTER_ADDR_WIDTH = 32) (
         .adder_b_tvalid(operand_b.valid),
         .adder_op_tdata(operation.data),
         .adder_op_tvalid(operation.valid),
-        .comp_a_tdata(operand_a.data),
-        .comp_a_tuser(operand_a.user),
-        .comp_a_tvalid(operand_a.valid),
-        .comp_b_tdata(operand_b.data),
-        .comp_b_tvalid(operand_b.valid),
-        .comp_op_tdata(operation.data),
-        .comp_op_tvalid(operation.valid),
         .fti_b_tdata(operand_b.data),
         .fti_b_tuser(operand_b.user),
         .fti_b_tvalid(operand_b.valid),
@@ -81,9 +68,6 @@ module simple_alu_wrapper #(parameter REGISTER_ADDR_WIDTH = 32) (
         .add_res_tdata(add_result.data),
         .add_res_tuser(add_res_tuser),
         .add_res_tvalid(add_result.valid),
-        .cmp_res_tdata(cmp_res_tdata),
-        .cmp_res_tuser(cmp_res_tuser),
-        .cmp_res_tvalid(cmp_result.valid),
         .fti_res_tdata(fti_result.data),
         .fti_res_tuser(fti_res_tuser),
         .fti_res_tvalid(fti_result.valid),

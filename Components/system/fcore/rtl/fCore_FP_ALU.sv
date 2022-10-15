@@ -68,10 +68,6 @@ module fCore_FP_ALU #(
 
     axi_stream #(
         .USER_WIDTH(REGISTER_ADDR_WIDTH)
-    ) cmp_result();
-
-    axi_stream #(
-        .USER_WIDTH(REGISTER_ADDR_WIDTH)
     ) fti_result();
 
     axi_stream #(
@@ -133,7 +129,6 @@ module fCore_FP_ALU #(
             .operand_b(operand_b),
             .operation(operation),
             .add_result(add_result),
-            .cmp_result(cmp_result),
             .fti_result(fti_result),
             .itf_result(itf_result),
             .mul_result(mul_result),
@@ -152,7 +147,6 @@ module fCore_FP_ALU #(
                 .operand_b(operand_b),
                 .operation(operation),
                 .add_result(add_result),
-                .cmp_result(cmp_result),
                 .fti_result(fti_result),
                 .itf_result(itf_result),
                 .mul_result(mul_result)
