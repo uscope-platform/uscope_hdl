@@ -151,7 +151,7 @@ module merging_unit #(
         start_merging_pipe[1] <= start_merging_pipe[0];
         start_merging_pipe[2] <= start_merging_pipe[1];
         core_start <= 0;
-        if(start_merging_pipe[2])begin
+        if(registered_input.valid & start_merging_pipe[2])begin
             input_chunk_size <= 8;
             result_size <= 8;
             fsm_merger <= fsm_bypass;

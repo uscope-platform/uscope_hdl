@@ -50,6 +50,7 @@ module merging_core #(
         case(core_fsm)
         fsm_idle:begin
             merge_done <= 0;
+            merged_stream.tlast <= 0;
             chunk_a_counter <= 0;
             chunk_b_counter <= 0;
             if(start) begin
@@ -80,15 +81,21 @@ module merging_core #(
         end
         fsm_merging_a:begin
                 chunk_a_counter += 1;
-            if(chunk_a_counter ==  chunk_a_size)begin
+            if(chunk_a_counter ==  chunk_a_size-1) begin
+                merged_stream.tlast <=1;
+            end else if(chunk_a_counter ==  chunk_a_size)begin
                 core_fsm <= fsm_idle;
+                merged_stream.tlast <=0;
                 merge_done <= 1;
             end
         end
         fsm_merging_b:begin
             chunk_b_counter += 1;
-            if(chunk_b_counter ==  chunk_b_size)begin
+            if(chunk_b_counter ==  chunk_b_size-1) begin
+                merged_stream.tlast <=1;
+            end else if(chunk_b_counter ==  chunk_b_size)begin
                 core_fsm <= fsm_idle;
+                merged_stream.tlast <=0;
                 merge_done <= 1;
             end
         end

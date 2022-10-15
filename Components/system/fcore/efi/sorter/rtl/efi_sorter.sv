@@ -52,6 +52,7 @@ module efi_sorter #(
                 sorter_in.data <= 0;
                 sorter_in.dest <= 0;
                 sorter_in.valid <= 0;
+                sorter_in.tlast <= 0;
                 efi_results.tlast <= 0;
                 efi_results.valid <= 0;
                 order <= 0;

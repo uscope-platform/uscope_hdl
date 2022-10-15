@@ -80,10 +80,13 @@ module efi_sorter_tb();
     fCore #(
         .FAST_DEBUG("TRUE"),
         .MAX_CHANNELS(9),
-        .INIT_FILE("/home/filssavi/git/uplatform-hdl/public/Components/system/fcore/efi/sorter/tb/test_efi.mem")
+        .EFI_IMPLEMENTED(1),
+        .INIT_FILE("/home/fils/git/uscope_hdl/public/Components/system/fcore/efi/sorter/tb/test_efi.mem")
     ) core(
         .clock(core_clk),
+        .axi_clock(core_clk),
         .reset(rst),
+        .reset_axi(rst),
         .run(run),
         .done(done),
         .efi_start(efi_start),
