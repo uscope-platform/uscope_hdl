@@ -141,6 +141,7 @@ module fCore(
         .reset(reset),
         .enable(decoder_enable),
         .instruction_stream(instruction_stream),
+        .writeback_addr(result.dest),
         .load_data(load_data),
         .n_channels(n_channels),
         .exec_opcode(exec_opcode),

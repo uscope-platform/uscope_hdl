@@ -31,6 +31,7 @@ module fCore_decoder #(
     input wire reset,
     input wire enable,
     input wire [$clog2(MAX_CHANNELS)-1:0] n_channels,
+    input wire [REG_ADDR_WIDTH-1:0] writeback_addr,
     input wire [INSTRUCTION_WIDTH-1:0] load_data,
     output reg [OPCODE_WIDTH-1:0] exec_opcode,
     output reg core_stop,
@@ -61,6 +62,20 @@ module fCore_decoder #(
     wire [CHANNEL_ADDR_WIDTH-1:0] channel_address;
     assign channel_address = instruction_stream.dest;
     
+
+    fCore_pipeline_tracker #(
+        .OPCODE_WIDTH(OPCODE_WIDTH),
+        .REG_ADDR_WIDTH(OPCODE_WIDTH)
+    ) pipeline_tracker (
+        .clock(clock),
+        .reset(clock),
+        .writeback_addr(writeback_addr),
+        .op_dest(operand_a_if.user),
+        .operand_a(operand_a_if.dest),
+        .operand_b(operand_b_if.dest),
+        .operand_c(operand_c_if.dest)
+    );
+
 
     always@(posedge clock)begin
         core_stop <= 0;
