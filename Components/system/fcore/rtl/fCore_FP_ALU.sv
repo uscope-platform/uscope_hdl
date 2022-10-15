@@ -84,15 +84,16 @@ module fCore_FP_ALU #(
  
     axi_stream #(
         .USER_WIDTH(REGISTER_ADDR_WIDTH)
+    ) comparison_result();
+
+    axi_stream #(
+        .USER_WIDTH(REGISTER_ADDR_WIDTH)
     ) early_logic_result();
 
     axi_stream #(
         .USER_WIDTH(REGISTER_ADDR_WIDTH)
     ) saturation_result();
 
-    axi_stream #(
-        .USER_WIDTH(REGISTER_ADDR_WIDTH)
-    ) early_saturation_result();
 
     axi_stream #(
         .USER_WIDTH(REGISTER_ADDR_WIDTH)
@@ -113,7 +114,6 @@ module fCore_FP_ALU #(
     axi_stream #(
         .USER_WIDTH(REGISTER_ADDR_WIDTH)
     ) bitmanip_result();
-
 
     axi_stream #(
         .USER_WIDTH(REGISTER_ADDR_WIDTH)
@@ -194,15 +194,8 @@ module fCore_FP_ALU #(
             fcore_isa::BLE,
             fcore_isa::BEQ,
             fcore_isa::BNE: begin
-                if(FULL_COMPARE==1)begin
-                    if(cmp_result.data[7:0]) 
-                        result.data <= {32{1'b1}};
-                    else 
-                        result.data <= 32'h0;
-                end else begin
-                    result.data <= cmp_result.data;
-                end
-                result.dest <= cmp_result.user;
+                result.data <= comparison_result.data;
+                result.dest <= comparison_result.user;
                 result.valid <= 1;
             end
             fcore_isa::FTI:begin
@@ -315,6 +308,7 @@ module fCore_FP_ALU #(
     ////////////////////////////////////////////////
     //                  BITMANIP                  //
     ////////////////////////////////////////////////
+    
     generate
         if(BITMANIP_IMPLEMENTED==1)begin
             fCore_bitmanip_unit #(
@@ -330,6 +324,8 @@ module fCore_FP_ALU #(
             );
         end
     endgenerate
+
+
     ////////////////////////////////////////////////
     //                  SATURATION                //
     ////////////////////////////////////////////////
@@ -337,6 +333,7 @@ module fCore_FP_ALU #(
     FP_saturator #(
         .DATA_WIDTH(32),
         .REG_ADDR_WIDTH(REGISTER_ADDR_WIDTH),
+        .PIPELINE_DEPTH(PIPELINE_DEPTH),
         .SELCTION_DEST(0)
     ) saturator(
         .clock(clock),
@@ -344,22 +341,25 @@ module fCore_FP_ALU #(
         .operand_a(operand_a.data),
         .operand_b(operand_b.data),
         .operation(operation),
-        .result(early_saturation_result)
+        .result(saturation_result)
     );
 
-    register_slice #(
-        .DATA_WIDTH(32),
-        .DEST_WIDTH(32),
-        .USER_WIDTH(32),
-        .N_STAGES(PIPELINE_DEPTH-2),
-        .READY_REG(0)
-    ) sat_pipeline_adapter (
+    ////////////////////////////////////////////////
+    //                  COMPARISON                //
+    ////////////////////////////////////////////////
+
+    fCore_compare_unit #(
+        .FULL_COMPARE(FULL_COMPARE),
+        .PIPELINE_DEPTH(PIPELINE_DEPTH)
+    )compare_unit(
         .clock(clock),
         .reset(reset),
-        .in(early_saturation_result),
-        .out(saturation_result)
+        .operand_a(operand_a),
+        .operand_b(operand_b),
+        .operand_c(operand_c),
+        .operation(operation),
+        .result(comparison_result)
     );
-
 
     ////////////////////////////////////////////////
     //                    LDC/LDR                 //
