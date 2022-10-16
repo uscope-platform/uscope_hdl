@@ -143,6 +143,12 @@ module merging_core #(
             stream_in_a.ready <= 0;
             merged_stream.valid <= 1;   
         end
+        default: begin
+            merged_stream.data <= 0;
+            merged_stream.dest <= 0;
+            merged_stream.user <= 0;
+            merged_stream.valid <= 0;   
+        end
         endcase
     end
 
