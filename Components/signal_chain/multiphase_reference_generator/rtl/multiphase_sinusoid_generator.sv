@@ -49,7 +49,7 @@ module multiphase_sinusoid_generator #(parameter N_PHASES=6, BASE_ADDRESS='h43c0
 
     reg [DATA_WIDTH-1:0] cos_out_dest;
     reg [DATA_WIDTH-1:0] cos_out_data;
-    reg [DATA_WIDTH-1:0] cos_out_valid;
+    reg cos_out_valid;
     
     logic [DATA_WIDTH-1:0] sin_out_data_flat [N_PHASES-1:0];
     logic [DATA_WIDTH-1:0] sin_out_dest_flat [N_PHASES-1:0];
@@ -57,7 +57,7 @@ module multiphase_sinusoid_generator #(parameter N_PHASES=6, BASE_ADDRESS='h43c0
 
     reg [DATA_WIDTH-1:0] sin_out_dest;
     reg [DATA_WIDTH-1:0] sin_out_data;
-    reg [DATA_WIDTH-1:0] sin_out_valid;
+    reg sin_out_valid;
 
     generate
         genvar i;

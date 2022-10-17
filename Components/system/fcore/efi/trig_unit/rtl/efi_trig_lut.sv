@@ -59,7 +59,7 @@ module efi_trig_lut (
 
 
     reg [3:0] valid_pipeline;
-    reg [15:0] dest_pipeline[3:0];
+    reg [7:0] dest_pipeline[3:0];
 
     always @ (posedge clock) begin
         valid_pipeline[0] <= theta.valid;
