@@ -97,7 +97,8 @@ module fCore_tb();
         .FAST_DEBUG("TRUE"),
         .MAX_CHANNELS(9),
         .INIT_FILE("/home/filssavi/git/uplatform-hdl/public/Components/system/fcore/tb/test_issue.mem"),
-        .BITMANIP_IMPLEMENTED(1)
+        .BITMANIP_IMPLEMENTED(1),
+        .INSTRUCTION_STORE_SIZE(512)
     ) uut(
         .clock(core_clk),
         .axi_clock(core_clk),

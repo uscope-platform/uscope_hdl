@@ -29,6 +29,7 @@ module fCore_Istore # (
         input wire clock_out,
         input wire reset_in,
         input wire reset_out,
+        input wire enable_bus_read,
         input wire [$clog2(MEM_DEPTH)-1:0] dma_read_addr,
         output reg [2*DATA_WIDTH-1:0] dma_read_data_w,
         AXI.slave axi
@@ -230,11 +231,12 @@ module fCore_Istore # (
     // ------------------------------------------
     // -- Example code to access user logic memory region
     // ------------------------------------------
+    
+    wire [31:0]  memory_read_addr; 
+    assign axi.RDATA = dma_read_data_w[31:0];
 
-    wire [$clog2(MEM_DEPTH)-1:0] IStore_raddr;
-    assign IStore_raddr = axi_araddr >>1;
-
-    assign axi.RDATA = 0;
+    
+    assign memory_read_addr = enable_bus_read ? axi_araddr : dma_read_addr;
 
     istore_memory #(
         .ADDR_WIDTH($clog2(MEM_DEPTH)),
@@ -247,7 +249,7 @@ module fCore_Istore # (
         .data_a(axi.WDATA),
         .data_b(dma_read_data_w),
         .addr_a(axi_awaddr),
-        .addr_b(dma_read_addr),
+        .addr_b(memory_read_addr),
         .we_a(axi.WREADY && axi.WVALID)
     );
 

@@ -282,6 +282,7 @@ module fCore(
         .clock_out(clock),
         .reset_in(reset_axi),
         .reset_out(reset),
+        .enable_bus_read(dma_enable),
         .dma_read_addr(program_counter),
         .dma_read_data_w(instruction_w),
         .axi(axi)
