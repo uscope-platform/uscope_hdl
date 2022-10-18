@@ -38,10 +38,9 @@ module fCore_Istore # (
     localparam ADDR_WIDTH = $clog2(MEM_DEPTH);
     // AXI SPECIFIC SIGNALS
 
-    (* keep="true" *) reg [ADDR_WIDTH-1 : 0] axi_awaddr;
+    reg [ADDR_WIDTH-1 : 0] axi_awaddr;
     reg [ADDR_WIDTH-1 : 0] axi_word_address_w;
-    (* keep="true" *) reg [31:0] axi_debug_addr;
-    assign axi_debug_addr = axi.AWADDR;
+    reg [ADDR_WIDTH-1 : 0] axi_word_address_r;
     reg [ADDR_WIDTH-1 : 0] 	axi_araddr;
 
     wire aw_wrap_en;
@@ -170,7 +169,9 @@ module fCore_Istore # (
                 axi.ARREADY <= 1'b0;
             end
         end 
-    end       
+    end     
+
+    assign axi_word_address_r = axi.ARADDR>>2;
 
     always @( posedge clock_in ) begin: read_address_latching
         if ( reset_in == 1'b0 ) begin
@@ -182,7 +183,7 @@ module fCore_Istore # (
             axi.RUSER <= 0;
         end else begin    
             if (~axi.ARREADY && axi.ARVALID && ~axi_arv_arr_flag) begin
-                axi_araddr <= axi.ARADDR[ADDR_WIDTH - 1:0]; 
+                axi_araddr <= axi_word_address_r[ADDR_WIDTH - 1:0]; 
                 axi_arburst <= axi.ARBURST; 
                 axi_arlen <= axi.ARLEN;     
                 axi_arlen_cntr <= 0;
