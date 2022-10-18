@@ -35,10 +35,11 @@ module fCore_Istore # (
         AXI.slave axi
     );
     
-    localparam ADDR_WIDTH = $clog2(MEM_DEPTH);// THE +1 is needed because I dont do byte addressing only word
+    localparam ADDR_WIDTH = $clog2(MEM_DEPTH);
     // AXI SPECIFIC SIGNALS
 
     (* keep="true" *) reg [ADDR_WIDTH-1 : 0] axi_awaddr;
+    reg [ADDR_WIDTH-1 : 0] axi_word_address_w;
     (* keep="true" *) reg [31:0] axi_debug_addr;
     assign axi_debug_addr = axi.AWADDR;
     reg [ADDR_WIDTH-1 : 0] 	axi_araddr;
@@ -49,12 +50,12 @@ module fCore_Istore # (
     wire [31:0]  ar_wrap_size ; 
     reg axi_awv_awr_flag;
     reg axi_arv_arr_flag; 
-    reg [7:0] axi_awlen_cntr;
-    reg [7:0] axi_arlen_cntr;
+    reg [ADDR_WIDTH-1:0] axi_awlen_cntr;
+    reg [ADDR_WIDTH-1:0] axi_arlen_cntr;
     reg [1:0] axi_arburst;
     reg [1:0] axi_awburst;
-    reg [7:0] axi_arlen;
-    reg [7:0] axi_awlen;
+    reg [ADDR_WIDTH:0] axi_arlen;
+    reg [ADDR_WIDTH:0] axi_awlen;
 
     localparam integer ADDR_LSB = (DATA_WIDTH/32)+ 1;
     localparam integer OPT_MEM_ADDR_BITS = 7;
@@ -85,6 +86,8 @@ module fCore_Istore # (
         end 
     end     
 
+    
+    assign axi_word_address_w = axi.AWADDR >>2;
 
     always @( posedge clock_in ) begin : write_address_latching
         if ( reset_in == 1'b0 ) begin
@@ -94,7 +97,7 @@ module fCore_Istore # (
             axi_awlen <= 0;
         end else begin    
             if (~axi.AWREADY && axi.AWVALID && ~axi_awv_awr_flag) begin
-                axi_awaddr <= axi.AWADDR[ADDR_WIDTH - 1:0]>>2;  
+                axi_awaddr <= axi_word_address_w[ADDR_WIDTH - 1:0];  
                 axi_awburst <= axi.AWBURST; 
                 axi_awlen <= axi.AWLEN;     
                 axi_awlen_cntr <= 0;
