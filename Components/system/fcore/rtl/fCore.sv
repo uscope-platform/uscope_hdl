@@ -79,9 +79,11 @@ module fCore(
     axi_stream #(
         .DATA_WIDTH(8)
     ) operation();
+
     axi_stream #(
         .DATA_WIDTH(8)
     ) operation_dly();
+
     axi_stream result();
     wire core_stop, decoder_enable;
     wire dma_enable;
@@ -315,5 +317,25 @@ module fCore(
         .dma_write(dma_write),
         .efi_write(efi_writeback)
     );
-    
+
+    fCore_tracer #(
+        .PC_WIDTH(ADDR_WIDTH),
+        .MAX_CHANNELS(MAX_CHANNELS)
+    ) tracer (
+        .clock(clock),
+        .reset(reset),
+        .start(run),
+        .done(done),
+        .instruction_stream(instruction_stream),
+        .operand_a(operand_a_dly),
+        .operand_b(operand_b_dly),
+        .operand_c(operand_c_dly),
+        .operation(operation_dly),
+        .result(result),
+        .efi_arguments(efi_arguments),
+        .efi_results(efi_results),
+        .efi_writeback(efi_writeback),
+        .dma_write(dma_write)
+    );
+
 endmodule

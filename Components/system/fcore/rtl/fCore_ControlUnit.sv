@@ -138,6 +138,7 @@ module fCore_ControlUnit #(
                 load_blanking <= 0;            
             end
             instruction_stream.dest <= ch_addr;
+            instruction_stream.user <= program_counter;
         end
     end
 

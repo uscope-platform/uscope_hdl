@@ -48,7 +48,7 @@ module axil_external_registers_cu #(
 
 logic [31:0] internal_read_address;
 logic read_address_valid;
-
+logic read_ready;
 
 axil_skid_buffer #(
     .REGISTER_OUTPUT(REGISTERED_BUFFERS),
@@ -132,8 +132,6 @@ assign write_valid = write_data_valid && write_address_valid;
 wire [31:0] register_read_address;
 assign register_read_address = (internal_read_address - BASE_ADDRESS) >> 2;
 
-
-logic read_ready;
 
 initial axi_in.RVALID = 0;
 

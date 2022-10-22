@@ -96,7 +96,7 @@ module fCore_tb();
     fCore #(
         .FAST_DEBUG("TRUE"),
         .MAX_CHANNELS(9),
-        .INIT_FILE("/home/filssavi/git/uplatform-hdl/public/Components/system/fcore/tb/test_issue.mem"),
+        .INIT_FILE("/home/fils/git/uscope_hdl/public/Components/system/fcore/tb/test_issue.mem"),
         .BITMANIP_IMPLEMENTED(1),
         .INSTRUCTION_STORE_SIZE(512)
     ) uut(

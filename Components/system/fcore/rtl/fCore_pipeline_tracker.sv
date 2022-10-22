@@ -36,10 +36,4 @@ module fCore_pipeline_tracker #(
     end
 
 
-
-
-
-
-
-
 endmodule
