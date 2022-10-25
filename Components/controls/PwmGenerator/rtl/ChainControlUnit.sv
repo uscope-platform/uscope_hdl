@@ -18,37 +18,34 @@
 
 module ChainControlUnit #(
     parameter BASE_ADDRESS = 0,
-    N_CHANNELS = 3,
+    N_CHANNELS = 4,
     COUNTER_WIDTH=16
 )(
     input wire clock,
     input wire reset,
     input wire counter_running,
-    output reg [15:0] timebase_shift,
+    output reg [COUNTER_WIDTH-1:0] timebase_shift,
     output reg [2:0] counter_mode,
     output reg [COUNTER_WIDTH-1:0] counter_start_data,
     output reg [COUNTER_WIDTH-1:0] counter_stop_data,
     output reg [COUNTER_WIDTH-1:0] comparator_tresholds [N_CHANNELS*2-1:0],
     output reg [1:0] output_enable [N_CHANNELS-1:0],
-    output reg [15:0] deadtime [N_CHANNELS-1:0],
+    output reg [COUNTER_WIDTH-1:0] deadtime [N_CHANNELS-1:0],
     output reg deadtime_enable [N_CHANNELS-1:0],
     axi_lite.slave axi_in
 );
 
-    reg [31:0] cu_write_registers [14:0];
-    reg [31:0] cu_read_registers [14:0];
+    reg [31:0] cu_write_registers [N_CHANNELS*3+5:0];
+    reg [31:0] cu_read_registers [N_CHANNELS*3+5:0];
     
     localparam [31:0] THRESH_LOW_IV [N_CHANNELS-1:0] = '{N_CHANNELS{32'b0}};
     localparam [31:0] THRESH_HIGH_IV [N_CHANNELS-1:0] = '{N_CHANNELS{32'hffffffff}};
-    localparam [31:0] OTHER_IV [8:0] = '{9{32'b0}};
-
-    localparam [31:0] INITIAL_REGISTER_VALUES [14:0] = {OTHER_IV, THRESH_HIGH_IV, THRESH_LOW_IV};
-
-
+    localparam [31:0] OTHER_IV [9:0] = '{10{32'b0}};
+    localparam [31:0] INITIAL_REGISTER_VALUES [N_CHANNELS*3+5:0] = {OTHER_IV, THRESH_HIGH_IV, THRESH_LOW_IV};
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(15),
-        .N_WRITE_REGISTERS(15),
+        .N_READ_REGISTERS((N_CHANNELS*3+5)+1),
+        .N_WRITE_REGISTERS((N_CHANNELS*3+5)+1),
         .REGISTERS_WIDTH(32),
         .ADDRESS_MASK('hff),
         .INITIAL_OUTPUT_VALUES(INITIAL_REGISTER_VALUES)
@@ -60,20 +57,22 @@ module ChainControlUnit #(
         .axil(axi_in)
     );
 
-
     always_latch begin
-        comparator_tresholds[0] <= cu_write_registers[0];
-        comparator_tresholds[1] <= cu_write_registers[1];
-        comparator_tresholds[2] <= cu_write_registers[2];
-        comparator_tresholds[3] <= cu_write_registers[3];
-        comparator_tresholds[4] <= cu_write_registers[4];
-        comparator_tresholds[5] <= cu_write_registers[5];
-        output_enable[0] <= cu_write_registers[12][1:0];
-        output_enable[1] <= cu_write_registers[12][3:2];
-        output_enable[2] <= cu_write_registers[12][5:4];
-        deadtime_enable[0] <= cu_write_registers[13][0];
-        deadtime_enable[1] <= cu_write_registers[13][1];
-        deadtime_enable[2] <= cu_write_registers[13][2];
+        for(integer i=0; i<N_CHANNELS*2; i=i+1) begin 
+             comparator_tresholds[i] <= cu_write_registers[i];
+        end 
+        // for(integer i=0; i<N_CHANNELS; i=i+1) begin 
+        //     output_enable[i] <= cu_write_registers[N_CHANNELS*3][i*2+:1];
+        // end      
+
+        output_enable[0] <= cu_write_registers[N_CHANNELS*3][1:0];
+        output_enable[1] <= cu_write_registers[N_CHANNELS*3][3:2];
+        output_enable[2] <= cu_write_registers[N_CHANNELS*3][5:4];
+        output_enable[3] <= cu_write_registers[N_CHANNELS*3][7:6];
+
+        for(integer i=0; i<N_CHANNELS; i=i+1) begin 
+            deadtime_enable[i] <= cu_write_registers[N_CHANNELS*3+1][i];
+        end           
     end 
 
     always_ff @(posedge clock) begin
@@ -87,17 +86,18 @@ module ChainControlUnit #(
             timebase_shift <= 0;
         end else begin
             if(~counter_running) begin
-                deadtime[0] <= cu_write_registers[6];
-                deadtime[1] <= cu_write_registers[7];
-                deadtime[2] <= cu_write_registers[8];
-                counter_start_data <= cu_write_registers[9];
-                counter_stop_data <= cu_write_registers[10];
-                timebase_shift <= cu_write_registers[11];
-                counter_mode <= cu_write_registers[14][2:0];
+
+                for(integer i=0; i<N_CHANNELS; i=i+1) begin 
+                   deadtime[i] <= cu_write_registers[N_CHANNELS*2+i];
+                end
+
+                counter_start_data <= cu_write_registers[N_CHANNELS*3+2];
+                counter_stop_data <= cu_write_registers[N_CHANNELS*3+3];
+                timebase_shift <= cu_write_registers[N_CHANNELS*3+4];
+                counter_mode <= cu_write_registers[N_CHANNELS*3+5][2:0];
+
             end
-    
-        end
-       
+        end    
     end
 
     assign cu_read_registers = cu_write_registers;

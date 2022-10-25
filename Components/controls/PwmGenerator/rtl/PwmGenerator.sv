@@ -16,13 +16,17 @@
 `timescale 10 ns / 1 ns
 `include "interfaces.svh"
 
-module PwmGenerator #(parameter BASE_ADDRESS = 32'h43c00000, COUNTER_WIDTH=16, INITIAL_STOPPED_STATE = 0)(
+module PwmGenerator #(
+    parameter BASE_ADDRESS = 32'h43c00000, 
+    N_CHANNELS = 4, COUNTER_WIDTH=16, 
+    INITIAL_STOPPED_STATE = 0
+)(
     input wire clock,
     input wire reset,
     input wire ext_timebase,
     input wire fault,
     output wire timebase,
-    output reg [11:0] pwm_out,
+    output reg [COUNTER_WIDTH-1:0] pwm_out,
     axi_lite.slave axi_in
 );
 
@@ -33,37 +37,36 @@ module PwmGenerator #(parameter BASE_ADDRESS = 32'h43c00000, COUNTER_WIDTH=16, I
     reg selected_timebase;
     wire ext_timebase_enable;
     wire [1:0] counter_status;
-    wire [11:0] counter_stopped_state;
-    wire [11:0] internal_pwm_out;
+    wire [COUNTER_WIDTH-1:0] counter_stopped_state;
+    wire [COUNTER_WIDTH-1:0] internal_pwm_out;
 
     reg [1:0] stop_chain = 0;
     assign timebase = internal_timebase;
     
     always@(posedge clock)begin
-        if(counter_status[0] & internal_pwm_out[5:0] == counter_stopped_state[5:0])begin
-            stop_chain[0]<=1;
+        if(counter_status[0] & internal_pwm_out[7:0] == counter_stopped_state[7:0])begin
+            stop_chain[0]<=0;
         end else 
             stop_chain[0] <= 0;
 
         if(counter_status[0] & ~fault)begin
-            pwm_out[5:0] = internal_pwm_out[5:0];
+            pwm_out[7:0] = internal_pwm_out[7:0];
         end else begin
-            pwm_out[5:0] = counter_stopped_state[5:0];
+            pwm_out[7:0] = counter_stopped_state[7:0];
         end
         
-        if(counter_status[1] & internal_pwm_out[11:6] == counter_stopped_state[11:6])begin
-            stop_chain[1]<=1;
+        if(counter_status[1] & internal_pwm_out[15:8] == counter_stopped_state[15:8])begin
+            stop_chain[0]<=0;
         end else 
-            stop_chain[1] <= 0;
+            stop_chain[0] <= 0;
 
         if(counter_status[1] & ~fault)begin
-            pwm_out[11:6] = internal_pwm_out[11:6];
+            pwm_out[15:8] = internal_pwm_out[15:8];
         end else begin
-            pwm_out[11:6] = counter_stopped_state[11:6];
+            pwm_out[15:8] = counter_stopped_state[15:8];
         end
         
     end
-
 
     always@(posedge clock)begin
         if(~reset)begin
@@ -76,8 +79,6 @@ module PwmGenerator #(parameter BASE_ADDRESS = 32'h43c00000, COUNTER_WIDTH=16, I
         
         end
     end
-
-
 
     localparam GEN_CONTROLLER_ADDRESS_AXI = BASE_ADDRESS;
     localparam CHAIN_1_ADDRESS_AXI = BASE_ADDRESS+'h100;
@@ -101,8 +102,6 @@ module PwmGenerator #(parameter BASE_ADDRESS = 32'h43c00000, COUNTER_WIDTH=16, I
         .masters('{controller_axi, chain_1_axi, chain_2_axi})
     );
 
-    
-    
     PwmControlUnit #(
         .INITIAL_STOPPED_STATE(INITIAL_STOPPED_STATE)
     ) pwm_cu(
@@ -136,11 +135,10 @@ module PwmGenerator #(parameter BASE_ADDRESS = 32'h43c00000, COUNTER_WIDTH=16, I
         .timebase(selected_timebase),
         .external_counter_run(counter_run),
         .counter_status(counter_status[0]),
-        .out_a(internal_pwm_out[2:0]),
-        .out_b(internal_pwm_out[5:3]),
+        .out_a(internal_pwm_out[3:0]),
+        .out_b(internal_pwm_out[7:4]),
         .axi_in(chain_1_axi)
     );
-
     
     pwmChain #(
         .COUNTER_WIDTH(COUNTER_WIDTH)
@@ -152,13 +150,11 @@ module PwmGenerator #(parameter BASE_ADDRESS = 32'h43c00000, COUNTER_WIDTH=16, I
         .timebase(selected_timebase),
         .external_counter_run(counter_run),
         .counter_status(counter_status[1]),
-        .out_a(internal_pwm_out[8:6]),
-        .out_b(internal_pwm_out[11:9]),
+        .out_a(internal_pwm_out[11:8]),
+        .out_b(internal_pwm_out[15:12]),
         .axi_in(chain_2_axi)
     );
 
-
-    
 endmodule
 
 

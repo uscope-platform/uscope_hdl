@@ -15,17 +15,19 @@
 
 `timescale 10 ns / 1 ns
 
-module counter_core #(parameter COUNTER_WIDTH = 16)(
-        input wire clockIn,
-        input wire reset,
-        input wire timebase,
-        input wire enable,
-        input wire direction,
-        input wire inhibit_load,
-        input wire [COUNTER_WIDTH-1:0] reload_value,
-        input wire [COUNTER_WIDTH-1:0] count_in,
-        output wire [COUNTER_WIDTH-1:0] count_out
-    );
+module counter_core #(
+    parameter COUNTER_WIDTH = 16
+)(
+    input wire clockIn,
+    input wire reset,
+    input wire timebase,
+    input wire enable,
+    input wire direction,
+    input wire inhibit_load,
+    input wire [COUNTER_WIDTH-1:0] reload_value,
+    input wire [COUNTER_WIDTH-1:0] count_in,
+    output wire [COUNTER_WIDTH-1:0] count_out
+);
 
     reg [COUNTER_WIDTH-1:0] count = {COUNTER_WIDTH{1'b0}};
 

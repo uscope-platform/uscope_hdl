@@ -15,15 +15,15 @@
 `timescale 10 ns / 1 ns
 `include "interfaces.svh"
 
-module CounterEnableDelay (
+module CounterEnableDelay #(
+    parameter COUNTER_WIDTH = 16
+)(
     input wire clock,
     input wire reset,
     input wire enable,
-    input wire [15:0] delay,
+    input wire [COUNTER_WIDTH-1:0] delay,
     output reg delayedEnable
 );
-
-parameter COUNTER_WIDTH = 16;
 
 reg startCounter;
 reg resetCounter;
