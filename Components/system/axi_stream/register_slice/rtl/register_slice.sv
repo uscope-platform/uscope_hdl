@@ -72,7 +72,7 @@ module register_slice #(parameter DATA_WIDTH = 32, DEST_WIDTH = 32, USER_WIDTH =
                 for(integer i = 1; i < N_STAGES; i++) begin
                     data_reg[i] <= data_reg[i-1];
                 end
-                dest_reg[00] <= in.dest;
+                dest_reg[0] <= in.dest;
                 for(integer i = 1; i < N_STAGES; i++) begin
                     dest_reg[i] <= dest_reg[i-1];
                 end
