@@ -189,9 +189,9 @@ module fCore_tb();
     event bus_read_test_done;
     initial begin
         if(RECIPROCAL_PRESENT==1) begin
-            expected_results <= {'h40e00001, 'h428C0000,'h0000000c,'h40a00000,'h3c6d7304,'h40800000,'h40400000,'hc0800000,'h428c0000,'h40400000,'h00000005,'hc0800000,'h40800000,'h0};
+            expected_results <= {'h40e00001, 'h428C0000,'h0000000c,'h40a00000,'h3c6d7304,'h40800000,'h40400000,'hc0800000,'h428c0000,'h40400000,'h40800000,'hc0800000,'h00000005,'h0};
         end else begin
-            expected_results <= {'h40e00001, 'h428C0000,'h0000000c,'h40a00000,'h0,'h40800000,'h40400000,'hc0800000,'h428c0000,'h40400000,'h00000005,'hc0800000,'h40800000,'h0};
+            expected_results <= {'h40e00001, 'h428C0000,'h0000000c,'h40a00000,'h0,'h40800000,'h40400000,'hc0800000,'h428c0000,'h40400000,'h40800000,'hc0800000,'h00000005,'h0};
         end
         @(posedge done) $display("femtoCore Processing Done");
         ->run_test_done;
