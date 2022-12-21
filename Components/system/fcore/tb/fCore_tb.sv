@@ -162,7 +162,7 @@ module fCore_tb();
         run <= 0;
         #10.5;
         #20.5 rst <=1;
-        #35 write_BFM.write_dest(8,32'h43c00000); // CHANNELS
+        #35 write_BFM.write_dest('h8,32'h43c00000); // CHANNELS
         // IO TRANSLATION TABLE ROW 1
         #35 write_BFM.write_dest(1,32'h43c00004); // TRANSL ADDR
         #35 write_BFM.write_dest(3,32'h43c00008); // TRANSL DATA
@@ -178,6 +178,9 @@ module fCore_tb();
 
         #4; run <= 1;
         #5 run <=  0;
+
+        #8000  write_BFM.write_dest('hCAFE0008,32'h43c00000);
+        read_req_BFM.write(32'h43c00000);
     end
 
     reg dbg = 0;

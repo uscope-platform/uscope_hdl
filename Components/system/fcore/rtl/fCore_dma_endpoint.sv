@@ -30,6 +30,7 @@ module fCore_dma_endpoint #(
     output reg [REG_ADDR_WIDTH-1:0] dma_read_addr,
     input wire [DATAPATH_WIDTH-1:0] dma_read_data,
     output reg [$clog2(REG_ADDR_WIDTH)-1:0] n_channels,
+    output reg [15:0] program_size,
     axi_stream.slave axis_dma_write,
     axi_stream.slave axis_dma_read_request,
     axi_stream.master axis_dma_read_response
@@ -73,7 +74,8 @@ module fCore_dma_endpoint #(
             end
         end else if(axi_write_data.valid)begin
             if(axi_write_data.dest == 0) begin
-                n_channels <= axi_write_data.data;
+                n_channels <= axi_write_data.data[15:0];
+                program_size <= axi_write_data.data[31:16];
                 reg_dma_write.valid <= 0;
                 reg_dma_write.dest <= 0;
                 reg_dma_write.data <= 0;
@@ -181,7 +183,7 @@ module fCore_dma_endpoint #(
                 axis_dma_read_response.valid <= 0;
                 bus_read_valid <= 1;
                 if(read_n_channels) begin
-                    bus_read_data <= n_channels;
+                    bus_read_data <= {program_size,{16-$clog2(REG_ADDR_WIDTH){1'b0}}, n_channels};
                 end else if(read_translation_addr)begin
                     bus_read_data <= translation_table_address;
                 end else if(read_translation_data)begin
