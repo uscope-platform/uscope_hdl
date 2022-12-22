@@ -41,7 +41,6 @@ module axis_to_axil (
 
     always_ff @(posedge clock) begin
         if(!reset)begin
-            axis_write.ready <= 1;
             axi_out.WDATA <= 0;
             axi_out.WVALID <= 0;
             axi_out.AWADDR <= 0;
@@ -114,8 +113,6 @@ module axis_to_axil (
 
     always_ff @(posedge clock) begin
         if(!reset)begin
-            axi_out.RDATA <= 0;
-            axi_out.RVALID <= 0;
             axi_out.ARADDR <= 0;
             axi_out.ARVALID <= 0;
             axi_out.RREADY <= 1;

@@ -23,6 +23,7 @@ module fCore(
     input wire reset_axi,
     input wire run,
     output wire done,
+    output wire fault,
     output wire efi_start,
     axi_stream.master efi_arguments,
     axi_stream.slave efi_results,
@@ -105,6 +106,7 @@ module fCore(
 
     wire [1:0] mem_efi_enable;
     wire [CH_ADDRESS_WIDTH-1:0] n_channels;
+    wire [15:0] program_size;
 
     axi_stream instruction_stream();
     
@@ -120,6 +122,7 @@ module fCore(
         .efi_done(efi_results.tlast),
         .efi_start(efi_start),
         .core_stop(core_stop),
+        .program_size(program_size),
         .wide_instruction_in(instruction_w),
         .n_channels(n_channels),
         .program_counter(program_counter),
@@ -127,6 +130,7 @@ module fCore(
         .decoder_enable(decoder_enable),
         .dma_enable(dma_enable),
         .done(done),
+        .fault(fault),
         .instruction_stream(instruction_stream)
     );
 
@@ -259,7 +263,8 @@ module fCore(
     fCore_dma_endpoint #( 
         .BASE_ADDRESS(DMA_BASE_ADDRESS),
         .DATAPATH_WIDTH(DATAPATH_WIDTH),
-        .REG_ADDR_WIDTH(REG_ADDR_WIDTH)
+        .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
+        .REGISTER_FILE_DEPTH(REGISTER_FILE_DEPTH)
     )dma_ep(
         .clock(clock),
         .reset(reset),
@@ -268,6 +273,7 @@ module fCore(
         .dma_read_data(dma_read_data),
         .reg_dma_write(dma_write),
         .n_channels(n_channels),
+        .program_size(program_size),
         .axis_dma_write(axis_dma_write),
         .axis_dma_read_request(axis_dma_read_request),
         .axis_dma_read_response(axis_dma_read_response)

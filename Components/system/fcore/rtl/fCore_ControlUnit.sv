@@ -28,6 +28,7 @@ module fCore_ControlUnit #(
     input wire reset,
     input wire run,
     input wire efi_done,
+    input wire [15:0] program_size,
     output reg efi_start,
     input wire core_stop,
     input wire [2*INSTRUCTION_WIDTH-1:0] wide_instruction_in,
@@ -37,6 +38,7 @@ module fCore_ControlUnit #(
     output reg decoder_enable,
     output reg dma_enable,
     output reg done,
+    output reg fault,
     axi_stream.master instruction_stream
     );
 
@@ -67,7 +69,8 @@ module fCore_ControlUnit #(
     enum reg [2:0] {IDLE = 3'b000,
                     PREFETCH = 3'b001,
                     RUN = 3'b010,
-                    EFI_CALL = 3'b011
+                    EFI_CALL = 3'b011,
+                    FAULT = 3'b100
                     } state = IDLE;
 
     always@(posedge clock)begin
@@ -102,6 +105,9 @@ module fCore_ControlUnit #(
                     channel_counter <= 0;
                 end else begin
                     channel_counter <= channel_counter+1;
+                end
+                if(channel_counter>program_size-1)begin
+                    state <= FAULT;
                 end
                 if(core_stop)begin
                     done <= 1;

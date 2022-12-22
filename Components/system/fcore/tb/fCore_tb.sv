@@ -96,7 +96,7 @@ module fCore_tb();
     fCore #(
         .FAST_DEBUG("TRUE"),
         .MAX_CHANNELS(9),
-        .INIT_FILE("/home/fils/git/uscope_hdl/public/Components/system/fcore/tb/test_issue.mem"),
+        .INIT_FILE("/home/filssavi/git/uplatform-hdl/public/Components/system/fcore/tb/test_sat.mem"),
         .BITMANIP_IMPLEMENTED(1),
         .INSTRUCTION_STORE_SIZE(512)
     ) uut(
@@ -162,9 +162,25 @@ module fCore_tb();
         run <= 0;
         #10.5;
         #20.5 rst <=1;
-        #35 write_BFM.write_dest(8,32'h43c00000);
+        #35 write_BFM.write_dest('h8,32'h43c00000); // CHANNELS
+        // IO TRANSLATION TABLE ROW 1
+        #35 write_BFM.write_dest(1,32'h43c00004); // TRANSL ADDR
+        #35 write_BFM.write_dest(3,32'h43c00008); // TRANSL DATA
+        // IO TRANSLATION TABLE ROW 2
+        #35 write_BFM.write_dest(2,32'h43c00004); // TRANSL ADDR
+        #35 write_BFM.write_dest(2,32'h43c00008); // TRANSL DATA
+        // IO TRANSLATION TABLE ROW 3
+        #35 write_BFM.write_dest(3,32'h43c00004); // TRANSL ADDR
+        #35 write_BFM.write_dest(1,32'h43c00008); // TRANSL DATA
+        // IO TRANSLATION TABLE ROW 3
+        #35 write_BFM.write_dest(63,32'h43c00004); // TRANSL ADDR
+        #35 write_BFM.write_dest('h1b,32'h43c00008); // TRANSL DATA
+
         #4; run <= 1;
         #5 run <=  0;
+
+        #8000  write_BFM.write_dest('hCAFE0008,32'h43c00000);
+        read_req_BFM.write(32'h43c00000);
     end
 
     reg dbg = 0;
@@ -176,15 +192,15 @@ module fCore_tb();
     event bus_read_test_done;
     initial begin
         if(RECIPROCAL_PRESENT==1) begin
-            expected_results <= {'h40e00001, 'h428C0000,'h0000000c,'h40a00000,'h3c6d7304,'h40800000,'h40400000,'hc0800000,'h428c0000,'h40400000,'h00000005,'hc0800000,'h40800000,'h0};
+            expected_results <= {'h40e00001, 'h428C0000,'h0000000c,'h40a00000,'h3c6d7304,'h40800000,'h40400000,'hc0800000,'h428c0000,'h40400000,'h40800000,'hc0800000,'h00000005,'h0};
         end else begin
-            expected_results <= {'h40e00001, 'h428C0000,'h0000000c,'h40a00000,'h0,'h40800000,'h40400000,'hc0800000,'h428c0000,'h40400000,'h00000005,'hc0800000,'h40800000,'h0};
+            expected_results <= {'h40e00001, 'h428C0000,'h0000000c,'h40a00000,'h0,'h40800000,'h40400000,'hc0800000,'h428c0000,'h40400000,'h40800000,'hc0800000,'h00000005,'h0};
         end
         @(posedge done) $display("femtoCore Processing Done");
         ->run_test_done;
         #100;
         for (integer i = 1; i<14; i++) begin      
-            read_req_BFM.write(CORE_DMA_BASE_ADDRESS+4*read_idx);
+            read_req_BFM.write(CORE_DMA_BASE_ADDRESS+4*(read_idx+2));
             read_resp_BFM.read(reg_readback);
             if(reg_readback!=expected_results[read_idx]) begin
                 $display("BUS READ ERROR Register %d  Wrong Value detected. Expected %f (%h) Got %f (%h)",read_idx,$bitstoshortreal(expected_results[read_idx]),expected_results[read_idx],$bitstoshortreal(reg_readback),reg_readback);
