@@ -157,7 +157,7 @@ module PwmGenerator #(
         .external_counter_run(counter_run),
         .counter_status(counter_status[1]),
         .out_a(internal_pwm_out[3*N_CHANNELS-1:2*N_CHANNELS]),
-        .out_b(internal_pwm_out[4*N_CHANNELS*2-1:3*N_CHANNELS]),
+        .out_b(internal_pwm_out[4*N_CHANNELS-1:3*N_CHANNELS]),
         .axi_in(chain_2_axi)
     );
 
