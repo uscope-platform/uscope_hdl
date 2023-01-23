@@ -106,7 +106,8 @@ module pwmChain #(
     );
 
     CompareUnit #(
-        .COUNTER_WIDTH(COUNTER_WIDTH)
+        .COUNTER_WIDTH(COUNTER_WIDTH),
+        .N_CHANNELS(N_CHANNELS)
     ) compare(
         .clock(clock),
         .reset(reset),

@@ -40,8 +40,9 @@ module ChainControlUnit #(
     
     localparam [31:0] THRESH_LOW_IV [N_CHANNELS-1:0] = '{N_CHANNELS{32'b0}};
     localparam [31:0] THRESH_HIGH_IV [N_CHANNELS-1:0] = '{N_CHANNELS{32'hffffffff}};
-    localparam [31:0] OTHER_IV [9:0] = '{10{32'b0}};
-    localparam [31:0] INITIAL_REGISTER_VALUES [N_CHANNELS*3+5:0] = {OTHER_IV, THRESH_HIGH_IV, THRESH_LOW_IV};
+    localparam [31:0] DT_IV [N_CHANNELS-1:0] = '{N_CHANNELS{32'h50}};
+    localparam [31:0] OTHER_IV [5:0] = '{6{32'b0}};
+    localparam [31:0] INITIAL_REGISTER_VALUES [N_CHANNELS*3+5:0] = {OTHER_IV, DT_IV, THRESH_HIGH_IV, THRESH_LOW_IV};
 
     axil_simple_register_cu #(
         .N_READ_REGISTERS((N_CHANNELS*3+5)+1),
@@ -61,18 +62,6 @@ module ChainControlUnit #(
         for(integer i=0; i<N_CHANNELS*2; i=i+1) begin 
              comparator_tresholds[i] <= cu_write_registers[i];
         end 
-        // for(integer i=0; i<N_CHANNELS; i=i+1) begin 
-        //     output_enable[i] <= cu_write_registers[N_CHANNELS*3][i*2+:1];
-        // end      
-
-        output_enable[0] <= cu_write_registers[N_CHANNELS*3][1:0];
-        output_enable[1] <= cu_write_registers[N_CHANNELS*3][3:2];
-        output_enable[2] <= cu_write_registers[N_CHANNELS*3][5:4];
-        output_enable[3] <= cu_write_registers[N_CHANNELS*3][7:6];
-
-        for(integer i=0; i<N_CHANNELS; i=i+1) begin 
-            deadtime_enable[i] <= cu_write_registers[N_CHANNELS*3+1][i];
-        end           
     end 
 
     always_ff @(posedge clock) begin
@@ -91,9 +80,19 @@ module ChainControlUnit #(
                    deadtime[i] <= cu_write_registers[N_CHANNELS*2+i];
                 end
 
-                counter_start_data <= cu_write_registers[N_CHANNELS*3+2];
-                counter_stop_data <= cu_write_registers[N_CHANNELS*3+3];
-                timebase_shift <= cu_write_registers[N_CHANNELS*3+4];
+
+                
+                counter_start_data <= cu_write_registers[N_CHANNELS*3];
+                counter_stop_data <= cu_write_registers[N_CHANNELS*3+1];
+                timebase_shift <= cu_write_registers[N_CHANNELS*3+2];
+                
+                for(integer i=0; i<N_CHANNELS*2; i=i+2) begin 
+                   output_enable[i/2] <= {cu_write_registers[N_CHANNELS*3+3][i+1],cu_write_registers[N_CHANNELS*3+3][i]};
+                end
+
+                for(integer i=0; i<N_CHANNELS; i=i+1) begin 
+                   deadtime_enable[i] <= cu_write_registers[N_CHANNELS*3+4][i];
+                end
                 counter_mode <= cu_write_registers[N_CHANNELS*3+5][2:0];
 
             end

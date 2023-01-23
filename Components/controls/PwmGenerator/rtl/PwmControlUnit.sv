@@ -18,7 +18,8 @@
 
 
 module PwmControlUnit #( 
-    INITIAL_STOPPED_STATE = 0
+    INITIAL_STOPPED_STATE = 0,
+    N_PWM = 3*2*2
 )(
     input wire        clock,
     input wire        reset,
@@ -28,7 +29,7 @@ module PwmControlUnit #(
     output reg        timebase_external_enable,
     output reg        counter_run,
     output reg        sync,
-    output reg [15:0] counter_stopped_state,
+    output reg [N_PWM-1:0] counter_stopped_state,
     axi_lite.slave axi_in
 );
 
