@@ -28,7 +28,7 @@ module PwmControlUnit #(
     output reg        timebase_external_enable,
     output reg        counter_run,
     output reg        sync,
-    output reg [11:0] counter_stopped_state,
+    output reg [15:0] counter_stopped_state,
     axi_lite.slave axi_in
 );
 
@@ -73,7 +73,7 @@ module PwmControlUnit #(
                         timebase_external_enable <= cu_write_registers[0][4];    
                     end
                     counter_run <= cu_write_registers[0][5];
-                    counter_stopped_state[11:0] <= cu_write_registers[0][18:7];    
+                    counter_stopped_state[15:0] <= cu_write_registers[0][22:7];    
                 end
             end else begin
                 sync <= 0;
@@ -86,7 +86,7 @@ module PwmControlUnit #(
                     timebase_external_enable <= cu_write_registers[0][4];    
                 end
                 counter_run <= cu_write_registers[0][5];
-                counter_stopped_state[11:0] <= cu_write_registers[0][18:7];    
+                counter_stopped_state[15:0] <= cu_write_registers[0][22:7];    
             end
             
         end

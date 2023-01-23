@@ -17,7 +17,7 @@
 
 module pwmChain #(
     parameter N_CHAINS=2,
-    N_CHANNELS=3,
+    N_CHANNELS=4,
     COUNTER_WIDTH=16
 )(
     input wire clock,
@@ -40,7 +40,6 @@ module pwmChain #(
     wire [N_CHANNELS-1:0] pin_out_a;
     wire [N_CHANNELS-1:0] pin_out_b;
     wire reload_compare;
-
 
     wire [2:0] counter_mode;
     wire [COUNTER_WIDTH-1:0] compare_tresholds [N_CHANNELS*2-1:0];
@@ -83,15 +82,13 @@ module pwmChain #(
         .axi_in(axi_in)
     );
 
-
- CounterEnableDelay timebase_shifter(
+    CounterEnableDelay timebase_shifter(
         .clock(clock),
         .reset(reset),
         .enable(external_counter_run & ~stop_request),
         .delay(timebase_shift),
         .delayedEnable(counterEnable)
     );
-
 
     Counter #(
         .COUNTER_WIDTH(COUNTER_WIDTH)
@@ -108,7 +105,6 @@ module pwmChain #(
         .reload_compare(reload_compare)
     );
 
-    
     CompareUnit #(
         .COUNTER_WIDTH(COUNTER_WIDTH)
     ) compare(
@@ -121,7 +117,6 @@ module pwmChain #(
         .matchHigh(compare_match_high),
         .matchLow(compare_match_low)
     );
-
 
     genvar i;
     generate for (i = 0; i < N_CHANNELS; i = i + 1) begin : pwm_chain

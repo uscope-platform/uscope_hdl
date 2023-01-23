@@ -15,23 +15,23 @@
 `timescale 10 ns / 1 ns
 `include "interfaces.svh"
 
-module DeadTimeGenerator (
-input wire         clock,
-input wire         reset,
-input wire         enable,
-input wire  [15:0] deadTime,
-input wire         in_a,
-input wire         in_b,
-output reg out_a,
-output reg out_b
+module DeadTimeGenerator #(
+    parameter COUNTER_WIDTH = 16
+)(
+    input wire         clock,
+    input wire         reset,
+    input wire         enable,
+    input wire  [COUNTER_WIDTH-1:0] deadTime,
+    input wire         in_a,
+    input wire         in_b,
+    output reg out_a,
+    output reg out_b
 );
 
 
 reg counter_enable;
 
-wire [15:0] counter;
-
-parameter COUNTER_WIDTH = 16;
+wire [COUNTER_WIDTH-1:0] counter;
 
 reg load_counter;
 
