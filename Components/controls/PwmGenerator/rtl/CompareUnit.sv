@@ -56,8 +56,8 @@ module CompareUnit  #(
             end
                         
             for(integer i = 0; i < N_CHANNELS; i = i+1) begin
-                if(counterValue > working_registers[N_CHANNELS+i]) matchHigh[N_CHANNELS+i] <= 1;
-                else matchHigh[N_CHANNELS+i] <= 0;
+                if(counterValue > working_registers[N_CHANNELS+i]) matchHigh[i] <= 1;
+                else matchHigh[i] <= 0;
             end
 
         end
