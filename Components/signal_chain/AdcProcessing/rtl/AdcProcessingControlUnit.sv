@@ -66,6 +66,7 @@ module AdcProcessingControlUnit #(
     assign calibrator_coefficients[1] =  cu_write_registers[4][15:0];
     assign calibrator_coefficients[0] =  cu_write_registers[4][31:16];
 
+    assign gain_enable = cu_write_registers[5][0];
     assign latch_mode = cu_write_registers[5][2:1];
     assign clear_latch = cu_write_registers[5][4:3];
     assign calibrator_coefficients[2] = cu_write_registers[5][7:5];
