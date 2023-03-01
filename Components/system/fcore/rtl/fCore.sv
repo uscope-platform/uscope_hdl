@@ -109,7 +109,7 @@ module fCore(
     wire [15:0] program_size;
 
     axi_stream instruction_stream();
-    
+    axi_stream io_mapping();
     fCore_ControlUnit #(
         .MAX_CHANNELS(MAX_CHANNELS),
         .PC_WIDTH(ADDR_WIDTH),
@@ -131,7 +131,8 @@ module fCore(
         .dma_enable(dma_enable),
         .done(done),
         .fault(fault),
-        .instruction_stream(instruction_stream)
+        .instruction_stream(instruction_stream),
+        .io_mapping(io_mapping)
     );
 
     fCore_decoder #(
@@ -269,6 +270,7 @@ module fCore(
         .clock(clock),
         .reset(reset),
         .axi_in(control_axi_in),
+        .io_mapping(io_mapping),
         .dma_read_addr(dma_read_addr),
         .dma_read_data(dma_read_data),
         .reg_dma_write(dma_write),

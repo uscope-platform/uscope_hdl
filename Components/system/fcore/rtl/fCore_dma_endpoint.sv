@@ -26,6 +26,7 @@ module fCore_dma_endpoint #(
     input wire clock,
     input wire reset,
     axi_lite.slave axi_in,
+    axi_stream.slave io_mapping,
     axi_stream.master reg_dma_write,
     output reg [REG_ADDR_WIDTH-1:0] dma_read_addr,
     input wire [DATAPATH_WIDTH-1:0] dma_read_data,
@@ -52,6 +53,12 @@ module fCore_dma_endpoint #(
         .axi_in(axi_in)
     );
 
+
+    always_ff @(posedge clock) begin
+        if(io_mapping.valid)begin
+            translation_table[io_mapping.data[15:0]] <= io_mapping.data[31:16];
+        end
+    end
 
     reg [31:0] translation_table [REGISTER_FILE_DEPTH-1:0];
     reg [$clog2(REGISTER_FILE_DEPTH)-1:0] translation_table_address;

@@ -35,6 +35,7 @@ module fCore_ControlUnit #(
     input wire [$clog2(MAX_CHANNELS)-1:0] n_channels,
     output reg [PC_WIDTH-1: 0] program_counter,
     output reg [INSTRUCTION_WIDTH-1:0] load_data,
+    axi_stream.master io_mapping,
     output reg decoder_enable,
     output reg dma_enable,
     output reg done,
@@ -66,11 +67,14 @@ module fCore_ControlUnit #(
         ch_addr <= channel_counter;
     end
 
-    enum reg [2:0] {IDLE = 3'b000,
-                    PREFETCH = 3'b001,
-                    RUN = 3'b010,
-                    EFI_CALL = 3'b011,
-                    FAULT = 3'b100
+    reg [PC_WIDTH-1: 0] pc_delay;
+
+    enum reg [2:0] {IDLE = 0,
+                    SEC_METADATA = 1,
+                    SEC_IO_MAPPING = 2,
+                    RUN = 3,
+                    EFI_CALL = 4,
+                    FAULT = 5
                     } state = IDLE;
 
     always@(posedge clock)begin
@@ -80,21 +84,35 @@ module fCore_ControlUnit #(
                 program_counter <= 0;
                 channel_counter <= 0;
                 decoder_enable <= 0;
+                io_mapping.valid <= 0;
+                io_mapping.data<= 0;
                 efi_start <= 0;
                 done <= 0;
                 dma_enable <= 1;
                 if(run) begin
                     dma_enable <= 0;
-                    state <= RUN;
+                    state <= SEC_METADATA;
                 end
             end
-            PREFETCH:begin
-                state <= RUN;
-                decoder_enable <= 1;
+            SEC_METADATA:begin
+                if(wide_instruction_in[31:0] == 'hC) begin
+                    state <= SEC_IO_MAPPING;
+                end 
                 dma_enable <= 0;
                 program_counter <= program_counter+1;
             end
-            RUN:begin
+            SEC_IO_MAPPING:begin
+                if(wide_instruction_in[31:0] == 'hC) begin
+                    state <= RUN;
+                    decoder_enable <= 1;
+                    io_mapping.valid <= 0;
+                end else begin
+                    io_mapping.data <= wide_instruction_in[31:0];
+                    io_mapping.valid <= 1;
+                    program_counter <= program_counter+1;
+                end
+            end
+            RUN:begin  
                 dma_enable <= 0;
                 decoder_enable <= 1;
                 if(opcode == fcore_isa::EFI & EFI_IMPLEMENTED==1)begin
@@ -128,6 +146,12 @@ module fCore_ControlUnit #(
             end
         endcase
 
+        if(state==IDLE)begin
+            instruction_stream.data <= 0;
+            instruction_stream.dest <= 0;
+            instruction_stream.user <= 0;
+        end
+        pc_delay <= program_counter;
         if(state==RUN)begin
              
             if(load_blanking)begin
@@ -144,7 +168,7 @@ module fCore_ControlUnit #(
                 load_blanking <= 0;            
             end
             instruction_stream.dest <= ch_addr;
-            instruction_stream.user <= program_counter;
+            instruction_stream.user <= pc_delay;
         end
     end
 
