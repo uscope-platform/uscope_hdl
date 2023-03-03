@@ -16,7 +16,7 @@
 // limitations under the License.
 
 `timescale 10 ns / 1 ns
-`include "axi_lite_BFM.svh"
+`include "axis_BFM.svh"
 `include "interfaces.svh"
 
 module PMP_tb();
@@ -25,6 +25,23 @@ module PMP_tb();
     axi_lite ctrl_axi();
     axi_lite axi_pwm();
 
+
+    axis_BFM write_BFM;
+    axis_BFM read_req_BFM;
+    axis_BFM read_resp_BFM;
+
+    axi_stream read_req();
+    axi_stream read_resp();
+    axi_stream write();
+
+    axis_to_axil WRITER(
+        .clock(clk),
+        .reset(reset), 
+        .axis_write(write),
+        .axis_read_request(read_req),
+        .axis_read_response(read_resp),
+        .axi_out(ctrl_axi)
+    );
 
     pre_modulation_processor #(
         .CONVERTER_SELECTION("DYNAMIC")
@@ -53,13 +70,19 @@ module PMP_tb();
 
 
     initial begin
+        write_BFM = new(write,1);
+        read_req_BFM = new(read_req, 1);
+        read_resp_BFM = new(read_resp, 1);
         //Initial status
         reset <=1'h1;
         #1 reset <=1'h0;
         //TESTS
         #5.5 reset <=1'h1;
 
-
+        #1 write_BFM.write_dest(1000, 'h4);
+        #1 write_BFM.write_dest(500, 'h8);
+        #1 write_BFM.write_dest(200, 'hc);
+        #1 write_BFM.write_dest(40, 'h10);
     end
 
 endmodule

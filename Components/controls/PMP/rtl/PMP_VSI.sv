@@ -21,6 +21,7 @@ module vsi_pre_modulation_processor (
     input wire reset,
     input wire configure,
     input wire [3:0] update,
+    input wire [15:0] period,
     input wire [15:0] duty,
     output reg done,
     axi_stream.master write_request

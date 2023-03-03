@@ -71,7 +71,6 @@ module pre_modulation_processor #(
     assign cu_read_registers[4] = phase_shift_1;
     assign cu_read_registers[5] = phase_shift_2;
 
-
     reg configuration_start;
 
     enum reg [1:0] {
@@ -110,11 +109,14 @@ module pre_modulation_processor #(
     
     wire dab_done, vsi_done;
 
+
     dab_pre_modulation_processor dab_pmp(
         .clock(clock),
         .reset(reset),
         .configure(configuration_start),
         .update(triggers),
+        .modulation_type(modulation_type),
+        .period(period),
         .duty_1(duty_1),
         .duty_2(duty_2),
         .phase_shift_1(phase_shift_1),
@@ -129,6 +131,7 @@ module pre_modulation_processor #(
         .reset(reset),
         .configure(configuration_start),
         .update(triggers),
+        .period(period),
         .duty(duty_1),
         .done(vsi_done),
         .write_request(vsi_write)
