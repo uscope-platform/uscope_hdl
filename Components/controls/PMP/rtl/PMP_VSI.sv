@@ -16,10 +16,14 @@
 `timescale 10 ns / 1 ns
 `include "interfaces.svh"
 
-module vsi_pre_modulation_processor (
+module vsi_pre_modulation_processor  #(
+    PWM_BASE_ADDR = 0
+)(
     input wire clock,
     input wire reset,
     input wire configure,
+    input wire start,
+    input wire stop,
     input wire [3:0] update,
     input wire [15:0] period,
     input wire [15:0] duty,

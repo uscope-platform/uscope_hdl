@@ -16,10 +16,14 @@
 `timescale 10 ns / 1 ns
 `include "interfaces.svh"
 
-module dab_pre_modulation_processor (
+module dab_pre_modulation_processor #(
+    PWM_BASE_ADDR = 0
+)(
     input wire clock,
     input wire reset,
     input wire configure,
+    input wire start,
+    input wire stop,
     input wire [3:0] update,
     input wire [1:0] modulation_type,
     input wire [15:0] period,
@@ -31,12 +35,18 @@ module dab_pre_modulation_processor (
     axi_stream.master write_request
 );
 
+    localparam  modulator_off = 0;
+    localparam  modulator_on = 1;
+
+    localparam pwm_ctrl_addr = 0;
+    localparam pwm_chain_1_base = 4;
 
 
-    reg [31:0] config_data [3:0] = '{'h3f, 'h1, 0, 'h1100};
-    reg [31:0] config_addr [3:0] = '{'h130, 'h138, 'h124, 'h0};
+    reg [31:0] config_data [2:0] = '{'hff, 'h1, 'h1100};
+    reg [31:0] config_addr [2:0] = '{'h13C, 'h144, 'h0};
     
 
+    reg [31:0] modulator_on_config_register = 'h1128;
 
     reg [15:0] pri_ph_a_on;
     reg [15:0] pri_ph_a_off;
@@ -60,17 +70,18 @@ module dab_pre_modulation_processor (
     };
         
     wire [31:0] modulator_registers_address [8:0] = '{
-            'h11C,
-            'h118,
-            'h114,
-            'h110, 
-            'h10C,
-            'h108,
-            'h104,
-            'h100, 
-            'h128
+        'h100,
+        'h104,
+        'h108,
+        'h10C,
+        'h110,
+        'h114,
+        'h118,
+        'h11C,
+        'h134
     };
 
+    reg modulator_status;
 
     reg [31:0] modulator_on_config_register = 'h1128;
     reg [31:0] modulator_timebase_shift_addr = 'h12c;
@@ -112,7 +123,8 @@ module dab_pre_modulation_processor (
                         config_counter <= 0;
                         calculation_state <= configuration_state;
                     end
-                    if(update_needed)begin
+
+                    if(update_needed & modulator_status==modulator_off)begin
                         if(modulation_type == 0)begin
                             sps_start <= 1;
                         end else if(modulation_type == 1)begin
@@ -120,20 +132,35 @@ module dab_pre_modulation_processor (
                         end
                         update_needed <=0;
                     end
+
                     if(sps_done | dps_done)begin
                         sps_done <= 0;
                         dps_done <= 0;
                         config_counter <= 0;
                         calculation_state <= update_modulator;
                     end
+
+                     if(start) begin 
+                        modulator_status <= modulator_on;
+                        write_request.dest <= PWM_BASE_ADDR;
+                        write_request.data <= modulator_on_config_register;
+                        write_request.valid <= 1;
+                    end
+
+                    if(stop) begin 
+                        modulator_status <= modulator_off;
+                        write_request.dest <= PWM_BASE_ADDR;
+                        write_request.data <= config_data[0];
+                        write_request.valid <= 1;
+                    end
                 end
                 configuration_state:begin
                     update_needed <= update_needed | (|update);
                     if(write_request.ready)begin
-                        write_request.dest <= config_addr[config_counter];
+                        write_request.dest <= PWM_BASE_ADDR + config_addr[config_counter];
                         write_request.data <= config_data[config_counter];
                         write_request.valid <= 1;
-                        if(config_counter==3)begin
+                        if(config_counter==2)begin
                             calculation_state <= calc_idle_state;
                             done <= 1;
                         end else begin
@@ -153,7 +180,7 @@ module dab_pre_modulation_processor (
 
                 update_modulator:begin
                     if(write_request.ready)begin
-                        write_request.dest <= modulator_registers_address[config_counter];
+                        write_request.dest <= PWM_BASE_ADDR + modulator_registers_address[config_counter];
                         write_request.data <= modulator_registers_data[config_counter];
                         write_request.valid <= 1;
                         if(config_counter==8)begin

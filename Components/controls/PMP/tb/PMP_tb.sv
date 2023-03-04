@@ -23,7 +23,7 @@ module PMP_tb();
     reg clk, reset;
 
     axi_lite ctrl_axi();
-    axi_lite axi_pwm();
+    axi_lite axi_pwm_dab();
 
 
     axis_BFM write_BFM;
@@ -44,23 +44,24 @@ module PMP_tb();
     );
 
     pre_modulation_processor #(
-        .CONVERTER_SELECTION("DYNAMIC")
+        .CONVERTER_SELECTION("DYNAMIC"),
+        .PWM_BASE_ADDR(0)
     ) UUT (
         .clock(clk),
         .reset(reset),
         .axi_in(ctrl_axi),
-        .axi_out(axi_pwm)
+        .axi_out(axi_pwm_dab)
     );
 
 
     PwmGenerator #(
        .BASE_ADDRESS(0)
-    ) gen_checker(
+    ) dab_gen_checker(
         .clock(clk),
         .reset(reset),
         .ext_timebase(0),
         .fault(0),
-        .axi_in(axi_pwm)
+        .axi_in(axi_pwm_dab)
     );
 
 
@@ -83,6 +84,8 @@ module PMP_tb();
         #1 write_BFM.write_dest(500, 'h8);
         #1 write_BFM.write_dest(200, 'hc);
         #1 write_BFM.write_dest(40, 'h10);
+        #30;
+        #1 write_BFM.write_dest('h30, 'h0);
     end
 
 endmodule
