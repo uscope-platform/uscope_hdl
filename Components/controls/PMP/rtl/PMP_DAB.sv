@@ -17,7 +17,8 @@
 `include "interfaces.svh"
 
 module dab_pre_modulation_processor #(
-    PWM_BASE_ADDR = 0
+    PWM_BASE_ADDR = 0,
+    N_PWM_CHANNELS = 4
 )(
     input wire clock,
     input wire reset,
@@ -44,43 +45,25 @@ module dab_pre_modulation_processor #(
 
 
     reg [31:0] config_data [2:0] = '{'hff, 'h1, 'h1100};
-    reg [31:0] config_addr [2:0] = '{'h13C, 'h144, 'h0};
-    
+    reg [31:0] config_addr [2:0] = '{
+        'h100+(3*N_PWM_CHANNELS+3)*4, 
+        'h100+(3*N_PWM_CHANNELS+5)*4,
+        'h0};
 
-    reg [31:0] modulator_on_config_register = 'h1128;
+    reg [15:0] modulator_registers_data [8:0];
+    reg [31:0] modulator_registers_address [8:0];
 
-    reg [15:0] pri_ph_a_on;
-    reg [15:0] pri_ph_a_off;
-    reg [15:0] pri_ph_b_on;
-    reg [15:0] pri_ph_b_off;
-    reg [15:0] sec_ph_a_on;
-    reg [15:0] sec_ph_a_off;
-    reg [15:0] sec_ph_b_on;
-    reg [15:0] sec_ph_b_off;
-
-    wire [31:0] modulator_registers_data [8:0] = '{
-        {16'b0, pri_ph_a_on},
-        {16'b0, pri_ph_b_on},
-        {16'b0, sec_ph_a_on},
-        {16'b0, sec_ph_b_on},
-        {16'b0, pri_ph_a_off},
-        {16'b0, pri_ph_b_off},
-        {16'b0, sec_ph_a_off},
-        {16'b0, sec_ph_b_off},
-        {16'b0, period}
-    };
+    initial begin
+        modulator_registers_address[0] = 'h100 + (3*N_PWM_CHANNELS+1)*4;
         
-    wire [31:0] modulator_registers_address [8:0] = '{
-        'h100,
-        'h104,
-        'h108,
-        'h10C,
-        'h110,
-        'h114,
-        'h118,
-        'h11C,
-        'h134
-    };
+        for(integer i = 3; i>=0; i--)begin
+            modulator_registers_address[i+1] = 'h100 + 4*i;
+        end
+        for(integer i = 7; i>3; i--)begin
+            modulator_registers_address[i+1] = 'h100 + 4*(i+(N_PWM_CHANNELS-4));
+        end
+    end
+
 
     wire signed [16:0] s_period;
     wire signed [16:0] s_duty_1;
@@ -122,12 +105,14 @@ module dab_pre_modulation_processor #(
             dps_done <= 0;
             modulator_status <= modulator_off;
         end else begin
+            modulator_registers_data[0] <=period;
+
             case (calculation_state)
                 calc_idle_state: begin
                     update_needed <= update_needed | (|update);
                     done <= 0;
                     write_request.valid <= 0;
-
+                    
                     if(configure)begin
                         config_counter <= 0;
                         calculation_state <= configuration_state;
@@ -204,30 +189,33 @@ module dab_pre_modulation_processor #(
 
             if(sps_start)begin
                 sps_start <= 0;
-                pri_ph_a_on <= period/2 - duty_1/2;
-                pri_ph_b_on <= period/2 - duty_1/2;
-                pri_ph_a_off <= period/2 + duty_1/2;
-                pri_ph_b_off <= period/2 + duty_1/2;
 
-                sec_ph_a_on <= s_period/2 - s_duty_1/2 + phase_shift_1/2;
-                sec_ph_b_on <= s_period/2 - s_duty_1/2 + phase_shift_1/2;
+                modulator_registers_data[1] <= period/2 - duty_1/2;
+                modulator_registers_data[2] <= period/2 - duty_1/2;
+                modulator_registers_data[5] <= period/2 + duty_1/2;
+                modulator_registers_data[6] <= period/2 + duty_1/2;
 
-                sec_ph_a_off <= s_period/2 + s_duty_1/2 + phase_shift_1/2;
-                sec_ph_b_off <= s_period/2 + s_duty_1/2 + phase_shift_1/2;
+                modulator_registers_data[3] <= s_period/2 - s_duty_1/2 + phase_shift_1/2;
+                modulator_registers_data[4] <= s_period/2 - s_duty_1/2 + phase_shift_1/2;
+
+                modulator_registers_data[7] <= s_period/2 + s_duty_1/2 + phase_shift_1/2;
+                modulator_registers_data[8] <= s_period/2 + s_duty_1/2 + phase_shift_1/2;
                 sps_done <= 1;
             end
 
             if(dps_start)begin
                 dps_start <= 0;
-                pri_ph_a_on <= period/2 - duty_1/2;
-                pri_ph_a_off <= period/2 + duty_1/2;
-                pri_ph_b_on <= s_period/2 - s_duty_1/2 + phase_shift_2/2;
-                pri_ph_b_off <= s_period/2 + s_duty_1/2 + phase_shift_2/2;
+                
+                modulator_registers_data[1] <= period/2 - duty_1/2;
+                modulator_registers_data[5] <= period/2 + duty_1/2;
+                modulator_registers_data[2] <= s_period/2 - s_duty_1/2 + phase_shift_2/2;
+                modulator_registers_data[6] <= s_period/2 + s_duty_1/2 + phase_shift_2/2;
 
-                sec_ph_a_on <= s_period/2 - s_duty_1/2 + phase_shift_1/2;
-                sec_ph_a_off <= s_period/2 + s_duty_1/2 + phase_shift_1/2;
-                sec_ph_b_on <= s_period/2 - s_duty_1/2 + phase_shift_1/2+phase_shift_2/2;
-                sec_ph_b_off <= s_period/2 + s_duty_1/2 + phase_shift_1/2+phase_shift_2/2;
+                modulator_registers_data[3] <= s_period/2 - s_duty_1/2 + phase_shift_1/2;
+                modulator_registers_data[7] <= s_period/2 + s_duty_1/2 + phase_shift_1/2;
+                modulator_registers_data[4] <= s_period/2 - s_duty_1/2 + phase_shift_1/2+phase_shift_2/2;
+                modulator_registers_data[8] <= s_period/2 + s_duty_1/2 + phase_shift_1/2+phase_shift_2/2;
+                
                 sps_done <= 1;
             end
         end

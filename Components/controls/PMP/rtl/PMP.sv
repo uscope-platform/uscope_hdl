@@ -18,7 +18,8 @@
 
 module pre_modulation_processor #(
     CONVERTER_SELECTION = "DYNAMIC",
-    PWM_BASE_ADDR = 0
+    PWM_BASE_ADDR = 0,
+    N_PWM_CHANNELS = 4
 )(
     input wire clock,
     input wire reset,
@@ -120,7 +121,8 @@ module pre_modulation_processor #(
     wire dab_modulator_status, vsi_modulator_status;
     
     dab_pre_modulation_processor #(
-        .PWM_BASE_ADDR(PWM_BASE_ADDR)
+        .PWM_BASE_ADDR(PWM_BASE_ADDR),
+        .N_PWM_CHANNELS(N_PWM_CHANNELS)
     ) dab_pmp (
         .clock(clock),
         .reset(reset),
@@ -139,9 +141,15 @@ module pre_modulation_processor #(
         .write_request(dab_write)
     );
 
-
+    reg [15:0] duty_buck[3:0] ='{
+        200,
+        400,
+        600,
+        800
+    };
     vsi_pre_modulation_processor  #(
-        .PWM_BASE_ADDR(PWM_BASE_ADDR)
+        .PWM_BASE_ADDR(PWM_BASE_ADDR),
+        .N_PWM_CHANNELS(N_PWM_CHANNELS)
     ) vsi_pmp (
         .clock(clock),
         .reset(reset),
@@ -150,7 +158,7 @@ module pre_modulation_processor #(
         .configure(configuration_start),
         .update(triggers[4:1]),
         .period(period),
-        .duty(duty_1),
+        .duty(duty_buck),
         .done(vsi_done),
         .modulator_status(vsi_modulator_status),
         .write_request(vsi_write)
