@@ -29,8 +29,9 @@ module dab_pre_modulation_processor #(
     input wire [15:0] period,
     input wire [15:0] duty_1,
     input wire [15:0] duty_2,
-    input wire [15:0] phase_shift_1,
-    input wire [15:0] phase_shift_2,
+    input wire signed [15:0] phase_shift_1,
+    input wire signed [15:0] phase_shift_2,
+    output reg modulator_status,
     output reg done,
     axi_stream.master write_request
 );
@@ -58,14 +59,14 @@ module dab_pre_modulation_processor #(
     reg [15:0] sec_ph_b_off;
 
     wire [31:0] modulator_registers_data [8:0] = '{
-        {16'b0, sec_ph_b_off},
-        {16'b0, sec_ph_a_off},
-        {16'b0, pri_ph_b_off},
-        {16'b0, pri_ph_a_off},
-        {16'b0, sec_ph_b_on},
-        {16'b0, sec_ph_a_on},
-        {16'b0, pri_ph_b_on},
         {16'b0, pri_ph_a_on},
+        {16'b0, pri_ph_b_on},
+        {16'b0, sec_ph_a_on},
+        {16'b0, sec_ph_b_on},
+        {16'b0, pri_ph_a_off},
+        {16'b0, pri_ph_b_off},
+        {16'b0, sec_ph_a_off},
+        {16'b0, sec_ph_b_off},
         {16'b0, period}
     };
         
@@ -81,7 +82,14 @@ module dab_pre_modulation_processor #(
         'h134
     };
 
-    reg modulator_status;
+    wire signed [16:0] s_period;
+    wire signed [16:0] s_duty_1;
+    wire signed [16:0] s_duty_2;
+
+    assign s_period = $signed(period);
+    assign s_duty_1 = $signed(duty_1);
+    assign s_duty_2 = $signed(duty_2);
+
 
     reg [31:0] modulator_on_config_register = 'h1128;
     reg [31:0] modulator_timebase_shift_addr = 'h12c;
@@ -197,28 +205,29 @@ module dab_pre_modulation_processor #(
             if(sps_start)begin
                 sps_start <= 0;
                 pri_ph_a_on <= period/2 - duty_1/2;
-                pri_ph_a_off <= period/2 + duty_1/2;
                 pri_ph_b_on <= period/2 - duty_1/2;
+                pri_ph_a_off <= period/2 + duty_1/2;
                 pri_ph_b_off <= period/2 + duty_1/2;
-                sec_ph_a_on <= period/2 - duty_1/2 + phase_shift_1/2;
-                sec_ph_a_off <= period/2 + duty_1/2 + phase_shift_1/2;
-                sec_ph_b_on <= period/2 - duty_1/2 + phase_shift_1/2;
-                sec_ph_b_off <= period/2 + duty_1/2 + phase_shift_1/2;
+
+                sec_ph_a_on <= s_period/2 - s_duty_1/2 + phase_shift_1/2;
+                sec_ph_b_on <= s_period/2 - s_duty_1/2 + phase_shift_1/2;
+
+                sec_ph_a_off <= s_period/2 + s_duty_1/2 + phase_shift_1/2;
+                sec_ph_b_off <= s_period/2 + s_duty_1/2 + phase_shift_1/2;
                 sps_done <= 1;
             end
-
 
             if(dps_start)begin
                 dps_start <= 0;
                 pri_ph_a_on <= period/2 - duty_1/2;
                 pri_ph_a_off <= period/2 + duty_1/2;
-                pri_ph_b_on <= period/2 - duty_1/2 + phase_shift_2/2;
-                pri_ph_b_off <= period/2 + duty_1/2 + phase_shift_2/2;
+                pri_ph_b_on <= s_period/2 - s_duty_1/2 + phase_shift_2/2;
+                pri_ph_b_off <= s_period/2 + s_duty_1/2 + phase_shift_2/2;
 
-                sec_ph_a_on <= period/2 - duty_1/2 + phase_shift_1/2;
-                sec_ph_a_off <= period/2 + duty_1/2 + phase_shift_1/2;
-                sec_ph_b_on <= period/2 - duty_1/2 + phase_shift_1/2+phase_shift_2/2;
-                sec_ph_b_off <= period/2 + duty_1/2 + phase_shift_1/2+phase_shift_2/2;
+                sec_ph_a_on <= s_period/2 - s_duty_1/2 + phase_shift_1/2;
+                sec_ph_a_off <= s_period/2 + s_duty_1/2 + phase_shift_1/2;
+                sec_ph_b_on <= s_period/2 - s_duty_1/2 + phase_shift_1/2+phase_shift_2/2;
+                sec_ph_b_off <= s_period/2 + s_duty_1/2 + phase_shift_1/2+phase_shift_2/2;
                 sps_done <= 1;
             end
         end

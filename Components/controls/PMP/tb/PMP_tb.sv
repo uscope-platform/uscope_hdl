@@ -53,6 +53,23 @@ module PMP_tb();
         .axi_out(axi_pwm_dab)
     );
 
+    wire [15:0] gates;
+    
+    wire signed [15:0] pri_a;
+    wire signed [15:0] pri_b;
+    wire signed [15:0] sec_a;
+    wire signed [15:0] sec_b;
+     
+    assign pri_a = gates[0]*1000;
+    assign pri_b = gates[1]*1000;
+    assign sec_a = gates[2]*1000;
+    assign sec_b = gates[3]*1000;
+
+    wire signed[15:0] pri; 
+    wire signed[15:0] sec; 
+
+    assign pri = (pri_a+500)-(500-pri_b);
+    assign sec = (sec_a+500)-(500-sec_b);
 
     PwmGenerator #(
        .BASE_ADDRESS(0)
@@ -61,6 +78,7 @@ module PMP_tb();
         .reset(reset),
         .ext_timebase(0),
         .fault(0),
+        .pwm_out(gates),
         .axi_in(axi_pwm_dab)
     );
 
@@ -80,12 +98,19 @@ module PMP_tb();
         //TESTS
         #5.5 reset <=1'h1;
 
-        #1 write_BFM.write_dest(1000, 'h4);
-        #1 write_BFM.write_dest(500, 'h8);
-        #1 write_BFM.write_dest(200, 'hc);
-        #1 write_BFM.write_dest(40, 'h10);
+        #1 write_BFM.write_dest(1000, 'h4); //period
+        #1 write_BFM.write_dest(500, 'h8);  //on_time
+        #1 write_BFM.write_dest(-500, 'h10); //phase_shift_1
         #300;
         #1 write_BFM.write_dest('h10, 'h0);
+        #30000;
+        #1 write_BFM.write_dest('h0, 'h0);
+        #30000;
+        #1 write_BFM.write_dest('h1, 'h0);
+        #1 write_BFM.write_dest(400, 'h10); //phase_shift_1
+        #1 write_BFM.write_dest(100, 'h14); //phase_shift_2
+        #300;
+        #1 write_BFM.write_dest('h11, 'h0);
     end
 
 endmodule

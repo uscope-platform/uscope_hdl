@@ -33,6 +33,7 @@ module pre_modulation_processor #(
     wire [4:0] triggers;
 
     localparam [31:0] TRIGGER_REGISTERS_IDX [4:0] = '{2, 3, 4, 5, 0};
+    wire modulation_status;
 
     axil_simple_register_cu #(
         .N_READ_REGISTERS(6),
@@ -59,6 +60,7 @@ module pre_modulation_processor #(
     reg [31:0] duty_2;
     reg [31:0] phase_shift_1;
     reg [31:0] phase_shift_2;
+    
 
     assign {modulator_stop_request, modulator_start_request,  converter_type, modulation_type} = cu_write_registers[0];
     assign period = cu_write_registers[1];
@@ -76,7 +78,7 @@ module pre_modulation_processor #(
 
 
     assign modulator_start = triggers[0] & modulator_start_request;
-    assign modulator_stop =  triggers[0] & (~modulator_start_request| modulator_stop_request);
+    assign modulator_stop =  triggers[0] & ((~modulator_start_request & modulation_status)| modulator_stop_request);
 
     reg configuration_start;
 
@@ -115,8 +117,8 @@ module pre_modulation_processor #(
     axi_stream vsi_write();
     
     wire dab_done, vsi_done;
-
-
+    wire dab_modulator_status, vsi_modulator_status;
+    
     dab_pre_modulation_processor #(
         .PWM_BASE_ADDR(PWM_BASE_ADDR)
     ) dab_pmp (
@@ -130,6 +132,7 @@ module pre_modulation_processor #(
         .period(period),
         .duty_1(duty_1),
         .duty_2(duty_2),
+        .modulator_status(dab_modulator_status),
         .phase_shift_1(phase_shift_1),
         .phase_shift_2(phase_shift_2),
         .done(dab_done),
@@ -149,18 +152,23 @@ module pre_modulation_processor #(
         .period(period),
         .duty(duty_1),
         .done(vsi_done),
+        .modulator_status(vsi_modulator_status),
         .write_request(vsi_write)
     );
 
     wire [1:0] mux_selector;
 
     generate
-        if(CONVERTER_SELECTION == "DYNAMIC")
+        if(CONVERTER_SELECTION == "DYNAMIC") begin
             assign mux_selector = converter_type;
-        else if(CONVERTER_SELECTION == "DAB")
+            assign modulation_status = converter_type ? vsi_modulator_status : dab_modulator_status;
+        end else if(CONVERTER_SELECTION == "DAB") begin
             assign mux_selector = 0;
-        else if(CONVERTER_SELECTION == "VSI")
+            assign modulation_status = dab_modulator_status;
+        end else if(CONVERTER_SELECTION == "VSI") begin
             assign mux_selector = 1;
+            assign modulation_status = vsi_modulator_status;
+        end
     endgenerate
 
     axi_stream modulator_if_write();

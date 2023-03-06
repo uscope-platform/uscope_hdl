@@ -28,6 +28,7 @@ module vsi_pre_modulation_processor  #(
     input wire [15:0] period,
     input wire [15:0] duty,
     output reg done,
+    output reg modulator_status,
     axi_stream.master write_request
 );
 
