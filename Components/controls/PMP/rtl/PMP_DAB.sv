@@ -112,6 +112,7 @@ module dab_pre_modulation_processor #(
             sps_done <= 0;
             dps_start <= 0;
             dps_done <= 0;
+            modulator_status <= modulator_off;
         end else begin
             case (calculation_state)
                 calc_idle_state: begin

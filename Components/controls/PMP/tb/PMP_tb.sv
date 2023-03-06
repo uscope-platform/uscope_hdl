@@ -84,8 +84,8 @@ module PMP_tb();
         #1 write_BFM.write_dest(500, 'h8);
         #1 write_BFM.write_dest(200, 'hc);
         #1 write_BFM.write_dest(40, 'h10);
-        #30;
-        #1 write_BFM.write_dest('h30, 'h0);
+        #300;
+        #1 write_BFM.write_dest('h10, 'h0);
     end
 
 endmodule
