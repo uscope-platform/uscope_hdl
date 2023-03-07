@@ -47,7 +47,10 @@ module pwm_generator_tb();
         .axi_out(axil)
     );
     
-    PwmGenerator UUT (
+    PwmGenerator #(
+        .N_CHANNELS(3),
+        .N_CHAINS(2)
+    ) UUT (
         .clock(clk),
         .reset(reset),
         .ext_timebase(ext_tb),

@@ -136,7 +136,7 @@ endmodule
             },
             {
                 "name": "tresh_AH",
-                "offset": "0x10,
+                "offset": "0x10",
                 "description": "Comparator A treshold high",
                 "direction": "RW"
             },
