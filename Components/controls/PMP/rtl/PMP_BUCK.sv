@@ -49,15 +49,15 @@ module buck_pre_modulation_processor  #(
     };
 
     reg [31:0] chain_config_addr [4:0] = '{
-        'h20, // CHAIN CONTROL
-        'h1C, // DEADTIME ENABLE
-        'h18, // OUTPUT ENABLE
-        'h10, // COUNTER STOP
-        'h08 // DEADTIME
+        4*(N_PWM_CHANNELS*3+5), // CHAIN CONTROL
+        4*(N_PWM_CHANNELS*3+4), // DEADTIME ENABLE
+        4*(N_PWM_CHANNELS*3+3), // OUTPUT ENABLE
+        4*(N_PWM_CHANNELS*3+1), // COUNTER STOP
+        4*N_PWM_CHANNELS*2 // DEADTIME
     };
 
-    reg [31:0] phase_shift_offset = 'h14; // PHASE SHIFT
-    reg [31:0] modulation_register_addr = 'h04; // COMPARE HIGH
+    reg [31:0] phase_shift_offset = 4*(N_PWM_CHANNELS*3+2); // PHASE SHIFT
+    reg [31:0] modulation_register_addr = N_PWM_CHANNELS*4*1; // COMPARE HIGH
 
     localparam  modulator_off = 0;
     localparam  modulator_on = 1;
