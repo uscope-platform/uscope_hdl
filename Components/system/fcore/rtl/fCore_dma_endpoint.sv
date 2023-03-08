@@ -74,7 +74,6 @@ module fCore_dma_endpoint #(
         end
     end
 
-
     assign axi_write_data.ready = 1;
     assign axis_dma_write.ready = 1;
 
@@ -92,12 +91,8 @@ module fCore_dma_endpoint #(
                 reg_dma_write.valid <= 0;
                 reg_dma_write.dest <= 0;
                 reg_dma_write.data <= 0;
-            end else if(axi_write_data.dest == 1) begin
-                translation_table_address <= axi_write_data.data;
-            end else if(axi_write_data.dest == 2) begin
-                translation_table[translation_table_address] <= axi_write_data.data;
             end else begin
-                reg_dma_write.dest <= translation_table[axi_write_data.dest-2];
+                reg_dma_write.dest <= translation_table[axi_write_data.dest];
                 reg_dma_write.data <= axi_write_data.data;
                 reg_dma_write.valid <= 1;    
             end
@@ -124,8 +119,6 @@ module fCore_dma_endpoint #(
     assign axi_read_data.valid = bus_read_valid | stream_read_valid;
 
     reg read_n_channels;
-    reg read_translation_addr;
-    reg read_translation_data;
 
     always_ff @(posedge clock) begin
         if(!reset)begin
@@ -134,8 +127,6 @@ module fCore_dma_endpoint #(
             dma_read_addr <= 0;
             stream_read_data <= 0;
             read_n_channels <= 0;
-            read_translation_addr <= 0;
-            read_translation_data <= 0;
             state <= idle;
         end else begin
             case (state)
@@ -151,12 +142,8 @@ module fCore_dma_endpoint #(
                     end else if(axi_read_addr.valid) begin
                         if(axi_read_addr.data == 0) begin
                             read_n_channels <= 1;
-                        end else if(axi_read_addr.data == 1)begin
-                            read_translation_addr <= 1;
-                        end else if(axi_read_addr.data == 2)begin
-                            read_translation_data <= 1;
                         end
-                        dma_read_addr <= translation_table[axi_read_addr.data-2];
+                        dma_read_addr <= translation_table[axi_read_addr.data];
                         state <= bus_read;
                         axis_dma_read_request.ready <= 0;
                         axi_read_addr.ready <= 0;
@@ -168,8 +155,6 @@ module fCore_dma_endpoint #(
                 bus_read: begin
                     axi_read_addr.ready <= 1;
                     read_n_channels <= 0;
-                    read_translation_addr <= 0;
-                    read_translation_data <= 0;
                     axis_dma_read_request.ready <= 1;
                     state <= idle;
                 end
@@ -197,10 +182,6 @@ module fCore_dma_endpoint #(
                 bus_read_valid <= 1;
                 if(read_n_channels) begin
                     bus_read_data <= {program_size,{16-$clog2(REG_ADDR_WIDTH){1'b0}}, n_channels};
-                end else if(read_translation_addr)begin
-                    bus_read_data <= translation_table_address;
-                end else if(read_translation_data)begin
-                    bus_read_data <= translation_table[translation_table_address];
                 end else begin
                     bus_read_data <= dma_read_data;
                 end
