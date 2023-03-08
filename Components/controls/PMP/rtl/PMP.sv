@@ -19,7 +19,8 @@
 module pre_modulation_processor #(
     CONVERTER_SELECTION = "DYNAMIC",
     PWM_BASE_ADDR = 0,
-    N_PWM_CHANNELS = 4
+    N_PWM_CHANNELS = 4,
+    N_CHAINS = 2
 )(
     input wire clock,
     input wire reset,
@@ -84,6 +85,14 @@ module pre_modulation_processor #(
 
     reg configuration_start;
 
+
+    axi_stream dab_write();
+    axi_stream vsi_write();
+    axi_stream buck_write();
+    
+    wire dab_done, vsi_done, buck_done;
+    wire dab_modulator_status, vsi_modulator_status;
+
     enum reg [1:0] {
         start_configuration_state = 0,
         wait_configuration_state = 1,
@@ -105,7 +114,7 @@ module pre_modulation_processor #(
                 wait_configuration_state:begin
                     configuration_start <= 0;
                     config_required <= 0;
-                    if(dab_done || vsi_done)begin
+                    if(dab_done || vsi_done || buck_done)begin
                         config_state <= running_state;
                     end
                 end
@@ -115,11 +124,6 @@ module pre_modulation_processor #(
         end
     end  
 
-    axi_stream dab_write();
-    axi_stream vsi_write();
-    
-    wire dab_done, vsi_done;
-    wire dab_modulator_status, vsi_modulator_status;
     
     dab_pre_modulation_processor #(
         .PWM_BASE_ADDR(PWM_BASE_ADDR),
@@ -142,7 +146,7 @@ module pre_modulation_processor #(
         .write_request(dab_write)
     );
 
-    reg [15:0] duty_buck[3:0] ='{
+    reg [15:0] duty_vsi[3:0] ='{
         800,
         600,
         400,
@@ -160,30 +164,64 @@ module pre_modulation_processor #(
         .configure(configuration_start),
         .update(triggers[4:1]),
         .period(period),
-        .duty(duty_buck),
+        .duty(duty_vsi),
         .done(vsi_done),
         .modulator_status(vsi_modulator_status),
         .write_request(vsi_write)
     );
 
+
+    reg [15:0] ps_buck[5:0] ='{
+        833,
+        667,
+        500,
+        333,
+        167,
+        0
+    };
+
+    buck_pre_modulation_processor  #(
+        .PWM_BASE_ADDR(PWM_BASE_ADDR),
+        .N_PHASES(N_CHAINS),
+        .N_PWM_CHANNELS(N_PWM_CHANNELS)
+    ) buck_pmp (
+        .clock(clock),
+        .reset(reset),
+        .start(modulator_start),
+        .stop(modulator_stop),
+        .configure(configuration_start),
+        .update(triggers[4:1]),
+        .period(period),
+        .phase_shifts(ps_buck),
+        .duty(duty_1),
+        .done(buck_done),
+        .modulator_status(buck_modulator_status),
+        .write_request(buck_write)
+    );
+
     wire [1:0] mux_selector;
+
+    wire [2:0] modulation_status_arr = {buck_modulator_status, vsi_modulator_status, dab_modulator_status};
 
     generate
         if(CONVERTER_SELECTION == "DYNAMIC") begin
             assign mux_selector = converter_type;
-            assign modulation_status = converter_type ? vsi_modulator_status : dab_modulator_status;
+            assign modulation_status = modulation_status_arr[converter_type];
         end else if(CONVERTER_SELECTION == "DAB") begin
             assign mux_selector = 0;
             assign modulation_status = dab_modulator_status;
         end else if(CONVERTER_SELECTION == "VSI") begin
             assign mux_selector = 1;
             assign modulation_status = vsi_modulator_status;
+        end else if(CONVERTER_SELECTION == "BUCK") begin
+            assign mux_selector = 2;
+            assign modulation_status = buck_modulator_status;
         end
     endgenerate
 
     axi_stream modulator_if_write();
 
-    axi_stream_mux_2 #(
+    axi_stream_mux_3 #(
         .DATA_WIDTH(32)
     )write_combiner(
         .clock(clock),
@@ -191,6 +229,7 @@ module pre_modulation_processor #(
         .address(mux_selector),
         .stream_in_1(dab_write),
         .stream_in_2(vsi_write),
+        .stream_in_3(buck_write),
         .stream_out(modulator_if_write)
     );
 

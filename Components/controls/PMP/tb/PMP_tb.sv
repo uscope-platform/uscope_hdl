@@ -23,20 +23,17 @@ module PMP_tb();
     reg clk, reset;
 
     axi_lite ctrl_axi_dab();
-    axi_lite ctrl_axi_buck();
     axi_lite axi_pwm_dab();
-    axi_lite axi_pwm_buck();
 
     axis_BFM write_dab_BFM;
-    axis_BFM write_buck_BFM;
     axis_BFM read_req_BFM;
     axis_BFM read_resp_BFM;
 
     axi_stream read_req();
     axi_stream read_resp();
     axi_stream write_dab();
-    axi_stream write_buck();
 
+    ///////////////////////////////////////////DAB////////////////////////////////////
     axis_to_axil writer_dab(
         .clock(clk),
         .reset(reset), 
@@ -46,7 +43,7 @@ module PMP_tb();
         .axi_out(ctrl_axi_dab)
     );
 
-    localparam N_CHANNEL_DAB = 6;
+    localparam N_CHANNEL_DAB = 4;
 
     pre_modulation_processor #(
         .CONVERTER_SELECTION("DYNAMIC"),
@@ -90,8 +87,68 @@ module PMP_tb();
     assign pri = (pri_a+500)-(500-pri_b);
     assign sec = (sec_a+500)-(500-sec_b);
 
+    ///////////////////////////////////////////VSI////////////////////////////////////
 
-    // 
+    axi_lite ctrl_axi_vsi();
+    axi_lite axi_pwm_vsi();
+    axis_BFM write_vsi_BFM;
+    axi_stream write_vsi();
+
+    axis_to_axil writer_vsi(
+        .clock(clk),
+        .reset(reset), 
+        .axis_write(write_vsi),
+        .axis_read_request(read_req),
+        .axis_read_response(read_resp),
+        .axi_out(ctrl_axi_vsi)
+    );
+
+    localparam N_CHANNEL_VSI = 4;
+
+    pre_modulation_processor #(
+        .CONVERTER_SELECTION("DYNAMIC"),
+        .PWM_BASE_ADDR(0),
+        .N_PWM_CHANNELS(N_CHANNEL_VSI)
+    ) UUT_vsi (
+        .clock(clk),
+        .reset(reset),
+        .axi_in(ctrl_axi_vsi),
+        .axi_out(axi_pwm_vsi)
+    );
+    
+    wire [15:0] gates_vsi;
+
+    PwmGenerator #(
+       .BASE_ADDRESS(0),
+       .N_CHANNELS(N_CHANNEL_VSI)
+    )  vsi_gen_checker(
+        .clock(clk),
+        .reset(reset),
+        .ext_timebase(0),
+        .fault(0),
+        .pwm_out(gates_vsi),
+        .axi_in(axi_pwm_vsi)
+    );
+
+    wire signed [15:0] vsi_phase_a;
+    wire signed [15:0] vsi_phase_b;
+    wire signed [15:0] vsi_phase_c;
+    wire signed [15:0] vsi_phase_d;
+
+
+    assign vsi_phase_a = gates_vsi[0]*1000;
+    assign vsi_phase_b = gates_vsi[1]*1000;
+    assign vsi_phase_c = gates_vsi[2]*1000;
+    assign vsi_phase_d = gates_vsi[3]*1000;
+
+
+    
+    ///////////////////////////////////////////BUCK////////////////////////////////////
+
+    axi_lite ctrl_axi_buck();
+    axi_lite axi_pwm_buck();
+    axis_BFM write_buck_BFM;
+    axi_stream write_buck();
 
     axis_to_axil writer_buck(
         .clock(clk),
@@ -102,11 +159,12 @@ module PMP_tb();
         .axi_out(ctrl_axi_buck)
     );
 
-    localparam N_CHANNEL_BUCK = 6;
+    localparam N_CHANNEL_BUCK = 1;
 
     pre_modulation_processor #(
         .CONVERTER_SELECTION("DYNAMIC"),
         .PWM_BASE_ADDR(0),
+        .N_CHAINS(6),
         .N_PWM_CHANNELS(N_CHANNEL_BUCK)
     ) UUT_buck (
         .clock(clk),
@@ -119,6 +177,7 @@ module PMP_tb();
 
     PwmGenerator #(
        .BASE_ADDRESS(0),
+       .N_CHAINS(6),
        .N_CHANNELS(N_CHANNEL_BUCK)
     )  buck_gen_checker(
         .clock(clk),
@@ -129,6 +188,25 @@ module PMP_tb();
         .axi_in(axi_pwm_buck)
     );
 
+
+    wire signed [15:0] buck_phase_a;
+    wire signed [15:0] buck_phase_b;
+    wire signed [15:0] buck_phase_c;
+    wire signed [15:0] buck_phase_d;
+    wire signed [15:0] buck_phase_e;
+    wire signed [15:0] buck_phase_f;
+
+
+    assign buck_phase_a = gates_buck[0]*1000;
+    assign buck_phase_b = gates_buck[1]*1000;
+    assign buck_phase_c = gates_buck[2]*1000;
+    assign buck_phase_d = gates_buck[3]*1000;
+    assign buck_phase_e = gates_buck[4]*1000;
+    assign buck_phase_f = gates_buck[5]*1000;
+    
+
+
+    ///////////////////////////////////////////////////////////////////////////////////
     //clock generation
     initial clk = 0; 
     always #0.5 clk = ~clk; 
@@ -137,6 +215,7 @@ module PMP_tb();
     initial begin
         write_dab_BFM = new(write_dab,1);
         write_buck_BFM = new(write_buck,1);
+        write_vsi_BFM = new(write_vsi,1);
         read_req_BFM = new(read_req, 1);
         read_resp_BFM = new(read_resp, 1);
         //Initial status
@@ -163,24 +242,22 @@ module PMP_tb();
     initial begin
         #6.5 reset <=1'h1;
 
-        #1 write_buck_BFM.write_dest('h4, 'h0);
-        #1 write_buck_BFM.write_dest(1000, 'h4); //period
-        #1 write_buck_BFM.write_dest(500, 'h8);  //on_time
+        #1 write_vsi_BFM.write_dest('h4, 'h0);
+        #1 write_vsi_BFM.write_dest(1000, 'h4); //period
+        #1 write_vsi_BFM.write_dest(500, 'h8);  //on_time
         #300;
-        #1 write_buck_BFM.write_dest('h14, 'h0);
+        #1 write_vsi_BFM.write_dest('h14, 'h0);
     end
 
-    
-    wire signed [15:0] phase_a;
-    wire signed [15:0] phase_b;
-    wire signed [15:0] phase_c;
-    wire signed [15:0] phase_d;
+    initial begin
+        #6.5 reset <=1'h1;
 
-
-    assign phase_a = gates_buck[0]*1000;
-    assign phase_b = gates_buck[1]*1000;
-    assign phase_c = gates_buck[2]*1000;
-    assign phase_d = gates_buck[3]*1000;
+        #1 write_buck_BFM.write_dest('h8, 'h0);
+        #1 write_buck_BFM.write_dest(1000, 'h4); //period
+        #1 write_buck_BFM.write_dest(500, 'h8);  //on_time
+        #450;
+        #1 write_buck_BFM.write_dest('h18, 'h0);
+    end
 
 
 

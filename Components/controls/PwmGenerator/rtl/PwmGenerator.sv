@@ -141,8 +141,8 @@ module PwmGenerator #(
 
     always_comb begin
         for (int j=0; j < N_CHAINS; j++)begin
-            internal_pwm_out[j*N_CHANNELS+:N_CHANNELS] = partial_pwm_out_a[j];
-            internal_pwm_out[N_CHAINS*N_CHANNELS+j*N_CHANNELS+:N_CHANNELS] = partial_pwm_out_b[j];
+            internal_pwm_out[j*N_CHANNELS+:N_CHANNELS] = partial_pwm_out_a[(N_CHAINS-1)-j];
+            internal_pwm_out[N_CHAINS*N_CHANNELS+j*N_CHANNELS+:N_CHANNELS] = partial_pwm_out_b[(N_CHAINS-1)-j];
         end
     
     end

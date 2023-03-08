@@ -40,9 +40,6 @@ module dab_pre_modulation_processor #(
     localparam  modulator_off = 0;
     localparam  modulator_on = 1;
 
-    localparam pwm_ctrl_addr = 0;
-    localparam pwm_chain_1_base = 4;
-
 
     reg [31:0] config_data [2:0] = '{'hff, 'h1, 'h1100};
     reg [31:0] config_addr [2:0] = '{
@@ -75,7 +72,6 @@ module dab_pre_modulation_processor #(
 
 
     reg [31:0] modulator_on_config_register = 'h1128;
-    reg [31:0] modulator_timebase_shift_addr = 'h12c;
     
     reg update_needed = 0;
     reg sps_start, dps_start, sps_done, dps_done;
