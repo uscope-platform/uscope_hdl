@@ -34,6 +34,7 @@ module fCore(
     axi_stream.master axis_dma_read_response
 );
 
+    parameter SIM_CONFIG = "FALSE";
     parameter FAST_DEBUG = "TRUE";
     parameter INIT_FILE = "init.mem";
     parameter DMA_BASE_ADDRESS = 32'h43c00000;
@@ -326,24 +327,29 @@ module fCore(
         .efi_write(efi_writeback)
     );
 
-    fCore_tracer #(
-        .PC_WIDTH(ADDR_WIDTH),
-        .MAX_CHANNELS(MAX_CHANNELS)
-    ) tracer (
-        .clock(clock),
-        .reset(reset),
-        .start(run),
-        .done(done),
-        .instruction_stream(instruction_stream),
-        .operand_a(operand_a_dly),
-        .operand_b(operand_b_dly),
-        .operand_c(operand_c_dly),
-        .operation(operation_dly),
-        .result(result),
-        .efi_arguments(efi_arguments),
-        .efi_results(efi_results),
-        .efi_writeback(efi_writeback),
-        .dma_write(dma_write)
-    );
+    generate
+    if(SIM_CONFIG == "TRUE")begin
+        fCore_tracer #(
+            .PC_WIDTH(ADDR_WIDTH),
+            .MAX_CHANNELS(MAX_CHANNELS)
+        ) tracer (
+            .clock(clock),
+            .reset(reset),
+            .start(run),
+            .done(done),
+            .instruction_stream(instruction_stream),
+            .operand_a(operand_a_dly),
+            .operand_b(operand_b_dly),
+            .operand_c(operand_c_dly),
+            .operation(operation_dly),
+            .result(result),
+            .efi_arguments(efi_arguments),
+            .efi_results(efi_results),
+            .efi_writeback(efi_writeback),
+            .dma_write(dma_write)
+        );
+    end
+    endgenerate
+    
 
 endmodule
