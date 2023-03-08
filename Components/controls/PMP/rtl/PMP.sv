@@ -76,7 +76,8 @@ module pre_modulation_processor #(
     assign cu_read_registers[3] = duty_2;
     assign cu_read_registers[4] = phase_shift_1;
     assign cu_read_registers[5] = phase_shift_2;
-
+    
+    wire modulator_start, modulator_stop;
 
     assign modulator_start = triggers[0] & modulator_start_request;
     assign modulator_stop =  triggers[0] & ((~modulator_start_request & modulation_status)| modulator_stop_request);
@@ -142,11 +143,12 @@ module pre_modulation_processor #(
     );
 
     reg [15:0] duty_buck[3:0] ='{
-        200,
-        400,
+        800,
         600,
-        800
+        400,
+        200
     };
+
     vsi_pre_modulation_processor  #(
         .PWM_BASE_ADDR(PWM_BASE_ADDR),
         .N_PWM_CHANNELS(N_PWM_CHANNELS)

@@ -166,7 +166,6 @@ module PMP_tb();
         #1 write_buck_BFM.write_dest('h4, 'h0);
         #1 write_buck_BFM.write_dest(1000, 'h4); //period
         #1 write_buck_BFM.write_dest(500, 'h8);  //on_time
-        #1 write_buck_BFM.write_dest(-500, 'h10); //phase_shift_1
         #300;
         #1 write_buck_BFM.write_dest('h14, 'h0);
     end
