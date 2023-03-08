@@ -111,6 +111,7 @@ module fCore(
 
     axi_stream instruction_stream();
     axi_stream io_mapping();
+
     fCore_ControlUnit #(
         .MAX_CHANNELS(MAX_CHANNELS),
         .PC_WIDTH(ADDR_WIDTH),

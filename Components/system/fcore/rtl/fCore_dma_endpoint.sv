@@ -53,21 +53,27 @@ module fCore_dma_endpoint #(
         .axi_in(axi_in)
     );
 
-
-    always_ff @(posedge clock) begin
-        if(io_mapping.valid)begin
-            translation_table[io_mapping.data[15:0]] <= io_mapping.data[31:16];
-        end
-    end
+    wire [31:0] table_write_data;
+    assign table_write_data = {16'b0, io_mapping.data[31:16]};
+    
+    wire [$clog2(REGISTER_FILE_DEPTH)-1:0] table_write_address;
+    assign table_write_address = io_mapping.data[15:0];
+    
 
     reg [31:0] translation_table [REGISTER_FILE_DEPTH-1:0];
     reg [$clog2(REGISTER_FILE_DEPTH)-1:0] translation_table_address;
 
-    initial begin
-        for(integer i = 0; i< REGISTER_FILE_DEPTH; i++)begin
-            translation_table[i] <= i;
+
+    always_ff @(posedge clock) begin
+        if(!reset) begin
+            for(integer i = 0; i< REGISTER_FILE_DEPTH; i++)begin
+                translation_table[i] <= i;
+            end
+        end else if(io_mapping.valid)begin
+            translation_table[table_write_address] <= table_write_data;
         end
     end
+
 
     assign axi_write_data.ready = 1;
     assign axis_dma_write.ready = 1;
