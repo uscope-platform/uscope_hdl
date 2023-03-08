@@ -153,7 +153,7 @@ module pre_modulation_processor #(
         .configure(configuration_start),
         .update(triggers[4:1]),
         .period(period),
-        .modulation_parameters(modulation_parameters[3:0]),
+        .modulation_parameters(modulation_parameters[11:0]),
         .done(vsi_done),
         .modulator_status(vsi_modulator_status),
         .write_request(vsi_write)
