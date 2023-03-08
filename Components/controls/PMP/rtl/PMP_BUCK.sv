@@ -28,12 +28,16 @@ module buck_pre_modulation_processor  #(
     input wire stop,
     input wire [3:0] update,
     input wire [15:0] period,
-    input wire [15:0] duty,
-    input wire [15:0] phase_shifts[N_PHASES-1:0],
+    input wire [15:0] modulation_parameters[11:0],
     output reg done,
     output reg modulator_status,
     axi_stream.master write_request
 );
+
+    wire [15:0] duty;
+    assign duty = modulation_parameters[0];
+    wire [15:0] phase_shifts[N_PHASES-1:0];
+    assign phase_shifts[N_PHASES-1:0] = modulation_parameters[N_PHASES:1];
 
     localparam [15:0] deadtime = 5;
 

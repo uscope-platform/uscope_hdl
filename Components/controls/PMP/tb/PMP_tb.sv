@@ -244,17 +244,37 @@ module PMP_tb();
 
         #1 write_vsi_BFM.write_dest('h4, 'h0);
         #1 write_vsi_BFM.write_dest(1000, 'h4); //period
-        #1 write_vsi_BFM.write_dest(500, 'h8);  //on_time
+        #1 write_vsi_BFM.write_dest(200, 'h8);  //on_time
+        #1 write_vsi_BFM.write_dest(400, 'hC);  //on_time
+        #1 write_vsi_BFM.write_dest(600, 'h10);  //on_time
+        #1 write_vsi_BFM.write_dest(800, 'h14);  //on_time
         #300;
         #1 write_vsi_BFM.write_dest('h14, 'h0);
     end
 
+
+    reg [15:0] ps_buck[5:0] ='{
+        833,
+        667,
+        500,
+        333,
+        167,
+        0
+    };
+
+    
     initial begin
         #6.5 reset <=1'h1;
 
         #1 write_buck_BFM.write_dest('h8, 'h0);
         #1 write_buck_BFM.write_dest(1000, 'h4); //period
         #1 write_buck_BFM.write_dest(500, 'h8);  //on_time
+        #1 write_buck_BFM.write_dest(0, 'hC);    //ps_0
+        #1 write_buck_BFM.write_dest(167, 'h10); //ps_1
+        #1 write_buck_BFM.write_dest(333, 'h14); //ps_2
+        #1 write_buck_BFM.write_dest(500, 'h18); //ps_3
+        #1 write_buck_BFM.write_dest(667, 'h1C); //ps_4
+        #1 write_buck_BFM.write_dest(833, 'h20); //ps_5
         #450;
         #1 write_buck_BFM.write_dest('h18, 'h0);
     end

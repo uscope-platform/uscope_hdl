@@ -28,12 +28,15 @@ module vsi_pre_modulation_processor  #(
     input wire stop,
     input wire [3:0] update,
     input wire [15:0] period,
-    input wire [15:0] duty[N_PHASES-1:0],
+    input wire [15:0] modulation_parameters[11:0],
     output reg done,
     output reg modulator_status,
     axi_stream.master write_request
 );
 
+    
+    wire [15:0] duty[N_PHASES-1:0];
+    assign duty = modulation_parameters[N_PHASES-1:0];
     
     localparam  modulator_off = 0;
     localparam  modulator_on = 1;

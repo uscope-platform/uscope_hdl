@@ -28,8 +28,8 @@ module pre_modulation_processor #(
     axi_lite.master axi_out
 );
 
-    reg [31:0] cu_write_registers [5:0];
-    reg [31:0] cu_read_registers [5:0];
+    reg [31:0] cu_write_registers [13:0];
+    reg [31:0] cu_read_registers [13:0];
 
     reg config_required;
     wire [4:0] triggers;
@@ -38,8 +38,8 @@ module pre_modulation_processor #(
     wire modulation_status;
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(6),
-        .N_WRITE_REGISTERS(6),
+        .N_READ_REGISTERS(14),
+        .N_WRITE_REGISTERS(14),
         .REGISTERS_WIDTH(32),
         .ADDRESS_MASK('h3f),
         .N_TRIGGER_REGISTERS(5),
@@ -58,25 +58,24 @@ module pre_modulation_processor #(
     reg [1:0] modulation_type;
     reg [1:0] converter_type;
     reg [31:0] period;
-    reg [31:0] duty_1;
-    reg [31:0] duty_2;
-    reg [31:0] phase_shift_1;
-    reg [31:0] phase_shift_2;
     
+    reg [15:0] modulation_parameters [11:0];
 
     assign {modulator_stop_request, modulator_start_request,  converter_type, modulation_type} = cu_write_registers[0];
     assign period = cu_write_registers[1];
-    assign duty_1 = cu_write_registers[2];
-    assign duty_2 = cu_write_registers[3];
-    assign phase_shift_1 = cu_write_registers[4];
-    assign phase_shift_2 = cu_write_registers[5];
+    
+    genvar i;
+    for(i = 0; i<12; i++)begin
+        assign modulation_parameters[i] = cu_write_registers[i+2];
+    end
+    
 
     assign cu_read_registers[0] = {modulator_stop_request, modulator_start_request, converter_type, modulation_type};
     assign cu_read_registers[1] = period;
-    assign cu_read_registers[2] = duty_1;
-    assign cu_read_registers[3] = duty_2;
-    assign cu_read_registers[4] = phase_shift_1;
-    assign cu_read_registers[5] = phase_shift_2;
+    
+    for(i = 0; i<12; i++)begin
+        assign cu_read_registers[i+2] = modulation_parameters[i];
+    end
     
     wire modulator_start, modulator_stop;
 
@@ -137,21 +136,11 @@ module pre_modulation_processor #(
         .update(triggers[4:1]),
         .modulation_type(modulation_type),
         .period(period),
-        .duty_1(duty_1),
-        .duty_2(duty_2),
+        .modulation_parameters(modulation_parameters),
         .modulator_status(dab_modulator_status),
-        .phase_shift_1(phase_shift_1),
-        .phase_shift_2(phase_shift_2),
         .done(dab_done),
         .write_request(dab_write)
     );
-
-    reg [15:0] duty_vsi[3:0] ='{
-        800,
-        600,
-        400,
-        200
-    };
 
     vsi_pre_modulation_processor  #(
         .PWM_BASE_ADDR(PWM_BASE_ADDR),
@@ -164,21 +153,12 @@ module pre_modulation_processor #(
         .configure(configuration_start),
         .update(triggers[4:1]),
         .period(period),
-        .duty(duty_vsi),
+        .modulation_parameters(modulation_parameters[3:0]),
         .done(vsi_done),
         .modulator_status(vsi_modulator_status),
         .write_request(vsi_write)
     );
 
-
-    reg [15:0] ps_buck[5:0] ='{
-        833,
-        667,
-        500,
-        333,
-        167,
-        0
-    };
 
     buck_pre_modulation_processor  #(
         .PWM_BASE_ADDR(PWM_BASE_ADDR),
@@ -192,8 +172,7 @@ module pre_modulation_processor #(
         .configure(configuration_start),
         .update(triggers[4:1]),
         .period(period),
-        .phase_shifts(ps_buck),
-        .duty(duty_1),
+        .modulation_parameters(modulation_parameters[11:0]),
         .done(buck_done),
         .modulator_status(buck_modulator_status),
         .write_request(buck_write)

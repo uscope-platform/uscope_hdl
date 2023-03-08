@@ -28,14 +28,21 @@ module dab_pre_modulation_processor #(
     input wire [3:0] update,
     input wire [1:0] modulation_type,
     input wire [15:0] period,
-    input wire [15:0] duty_1,
-    input wire [15:0] duty_2,
-    input wire signed [15:0] phase_shift_1,
-    input wire signed [15:0] phase_shift_2,
+    input wire [15:0] modulation_parameters[11:0],
     output reg modulator_status,
     output reg done,
     axi_stream.master write_request
 );
+
+
+    wire [15:0] duty_1;
+    assign duty_1 = modulation_parameters[0];
+    wire [15:0] duty_2;
+    assign duty_2 = modulation_parameters[1];
+    wire signed [15:0] phase_shift_1;
+    assign phase_shift_1 = modulation_parameters[2];
+    wire signed [15:0] phase_shift_2;
+    assign phase_shift_2 = modulation_parameters[3];
 
     localparam  modulator_off = 0;
     localparam  modulator_on = 1;
