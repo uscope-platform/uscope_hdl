@@ -46,30 +46,16 @@ module PwmGenerator #(
     reg [N_CHAINS-1:0] stop_chain = 0;
     assign timebase = internal_timebase;
     
-    always@(posedge clock)begin
-        if(counter_status[0] & internal_pwm_out[N_CHANNELS*N_CHAINS-1:0] == counter_stopped_state[N_CHANNELS*N_CHAINS-1:0])begin
-            stop_chain[0]<=0;
-        end else 
-            stop_chain[0] <= 0;
 
-        if(counter_status[0] & ~fault)begin
-            pwm_out[N_CHANNELS*N_CHAINS-1:0] = internal_pwm_out[N_CHANNELS*N_CHAINS-1:0];
-        end else begin
-            pwm_out[N_CHANNELS*N_CHAINS-1:0] = counter_stopped_state[N_CHANNELS*N_CHAINS-1:0];
-        end
-        
-        if(counter_status[1] & internal_pwm_out[N_CHANNELS*N_CHAINS*2-1:N_CHANNELS*N_CHAINS] == counter_stopped_state[N_CHANNELS*N_CHAINS*2-1:N_CHANNELS*N_CHAINS])begin
-            stop_chain[0]<=0;
-        end else 
-            stop_chain[0] <= 0;
 
-        if(counter_status[1] & ~fault)begin
-            pwm_out[N_CHANNELS*N_CHAINS*2-1:N_CHANNELS*N_CHAINS] = internal_pwm_out[N_CHANNELS*N_CHAINS*2-1:N_CHANNELS*N_CHAINS];
-        end else begin
-            pwm_out[N_CHANNELS*N_CHAINS*2-1:N_CHANNELS*N_CHAINS] = counter_stopped_state[N_CHANNELS*N_CHAINS*2-1:N_CHANNELS*N_CHAINS];
-        end
-        
+    genvar i;
+
+    for(i=0; i<N_CHAINS;i++)begin
+        assign pwm_out[(i+1)*2*N_CHANNELS*N_CHAINS-1:i*2*N_CHANNELS*N_CHAINS] = counter_status[i] & ~fault ?
+            internal_pwm_out[(i+1)*2*N_CHANNELS*N_CHAINS-1:i*2*N_CHANNELS*N_CHAINS] : 
+            counter_stopped_state[(i+1)*2*N_CHANNELS*N_CHAINS-1:i*2*N_CHANNELS*N_CHAINS];
     end
+
 
     always@(posedge clock)begin
         if(~reset)begin
@@ -94,7 +80,6 @@ module PwmGenerator #(
     localparam [31:0] AXI_ADDRESSES [N_CHAINS:0] = ADDR_CALC(); 
 
 
-    genvar i;
 
     axi_lite internal_bus[N_CHAINS+1]();
 
