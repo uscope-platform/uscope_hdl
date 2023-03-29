@@ -51,9 +51,9 @@ module PwmGenerator #(
     genvar i;
 
     for(i=0; i<N_CHAINS;i++)begin
-        assign pwm_out[(i+1)*2*N_CHANNELS*N_CHAINS-1:i*2*N_CHANNELS*N_CHAINS] = counter_status[i] & ~fault ?
-            internal_pwm_out[(i+1)*2*N_CHANNELS*N_CHAINS-1:i*2*N_CHANNELS*N_CHAINS] : 
-            counter_stopped_state[(i+1)*2*N_CHANNELS*N_CHAINS-1:i*2*N_CHANNELS*N_CHAINS];
+        assign pwm_out[(i+1)*2*N_CHANNELS-1:i*2*N_CHANNELS] = counter_status[i] & ~fault ?
+            internal_pwm_out[(i+1)*2*N_CHANNELS-1:i*2*N_CHANNELS] : 
+            counter_stopped_state[(i+1)*2*N_CHANNELS-1:i*2*N_CHANNELS];
     end
 
 
