@@ -20,7 +20,7 @@ module AdcProcessing #(
     DECIMATED = 1,
     ENABLE_AVERAGE = 0,
     STICKY_FAULT = 0,
-    N_CHANNELS = 1
+    N_CHANNELS = 4
 )(
     input  wire       clock,
     input  wire       reset,
@@ -31,7 +31,7 @@ module AdcProcessing #(
     output reg        fault
 );
 
-    wire gain_enable;
+    wire shift_enable;
     wire [1:0] latch_mode;
     wire [1:0] clear_latch;
     wire [1:0] trip_high;
@@ -39,13 +39,15 @@ module AdcProcessing #(
     wire [7:0] decimation_ratio;
 
 
-    wire signed [DATA_PATH_WIDTH-1:0] cal_coefficients [2:0];
     wire signed [DATA_PATH_WIDTH-1:0] comparator_thresholds [0:7];
 
+    wire [DATA_PATH_WIDTH-1:0] offset [N_CHANNELS-1:0];
+    wire [DATA_PATH_WIDTH-1:0] shift [N_CHANNELS-1:0];
 
     AdcProcessingControlUnit #(
         .STICKY_FAULT(STICKY_FAULT),
-        .DATA_PATH_WIDTH(DATA_PATH_WIDTH)
+        .DATA_PATH_WIDTH(DATA_PATH_WIDTH),
+        .N_CHANNELS(N_CHANNELS)
     ) AdcCU(
         .clock(clock),
         .reset(reset),
@@ -58,8 +60,9 @@ module AdcProcessing #(
         .trip_high(trip_high),
         .trip_low(trip_low),
         // CALIBRATION
-        .calibrator_coefficients(cal_coefficients),
-        .gain_enable(gain_enable),
+        .shift(shift),
+        .offset(offset),
+        .shift_enable(shift_enable),
         .fault(fault),
         .decimation_ratio(decimation_ratio)
     );
@@ -82,14 +85,15 @@ module AdcProcessing #(
     ) cal_out();
 
     calibration #(
-        .DATA_PATH_WIDTH(DATA_PATH_WIDTH)
+        .DATA_PATH_WIDTH(DATA_PATH_WIDTH),
+        .N_CHANNELS(N_CHANNELS)
     ) calibrator(
         .clock(clock),
         .reset(reset),
         .data_in(data_in),
-        .shift(cal_coefficients[2]),
-        .offset(cal_coefficients[1]),
-        .gain_enable(gain_enable),
+        .shift(shift),
+        .offset(offset),
+        .shift_enable(shift_enable),
         .data_out(cal_out)
     );
 
@@ -110,7 +114,8 @@ module AdcProcessing #(
             standard_decimator #(
                 .MAX_DECIMATION_RATIO(16),
                 .DATA_WIDTH(DATA_PATH_WIDTH),
-                .AVERAGING(ENABLE_AVERAGE)
+                .AVERAGING(ENABLE_AVERAGE),
+                .N_CHANNELS(N_CHANNELS)
             ) dec(
                 .clock(clock),
                 .reset(reset),

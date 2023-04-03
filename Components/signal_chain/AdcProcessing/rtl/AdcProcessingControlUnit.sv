@@ -17,7 +17,8 @@
 
 module AdcProcessingControlUnit #(
     STICKY_FAULT = 0,
-    DATA_PATH_WIDTH = 16
+    DATA_PATH_WIDTH = 16,
+    N_CHANNELS = 4
 )(
     input wire clock,
     input wire reset,
@@ -30,8 +31,9 @@ module AdcProcessingControlUnit #(
     input wire [1:0]  trip_high,
     input wire [1:0]  trip_low,
     // CALIBRATION
-    output reg signed [DATA_PATH_WIDTH-1:0] calibrator_coefficients [2:0],
-    output reg        gain_enable,
+    output wire signed [DATA_PATH_WIDTH-1:0] offset [N_CHANNELS-1:0],
+    output wire [DATA_PATH_WIDTH-1:0] shift [N_CHANNELS-1:0],
+    output reg        shift_enable,
     output reg        fault,
     output reg [7:0]  decimation_ratio
 );
@@ -39,14 +41,14 @@ module AdcProcessingControlUnit #(
     reg clear_fault, disable_fault;
     reg [7:0] slow_fault_threshold;
 
-    reg [31:0] cu_write_registers [5:0];
-    reg [31:0] cu_read_registers [5:0];
+    reg [31:0] cu_write_registers [9:0];
+    reg [31:0] cu_read_registers [9:0];
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(6),
-        .N_WRITE_REGISTERS(6),
+        .N_READ_REGISTERS(10),
+        .N_WRITE_REGISTERS(10),
         .REGISTERS_WIDTH(32),
-        .ADDRESS_MASK('h1f)
+        .ADDRESS_MASK('hff)
     ) CU (
         .clock(clock),
         .reset(reset),
@@ -63,17 +65,23 @@ module AdcProcessingControlUnit #(
     assign comparator_thresholds[6] =  cu_write_registers[2][31:16];
     assign comparator_thresholds[3] =  cu_write_registers[3][15:0];
     assign comparator_thresholds[7] =  cu_write_registers[3][31:16];
-    assign calibrator_coefficients[1] =  cu_write_registers[4][15:0];
-    assign calibrator_coefficients[0] =  cu_write_registers[4][31:16];
+    assign offset[0] =  cu_write_registers[4][15:0];
+    assign offset[1] =  cu_write_registers[5][15:0];
+    assign offset[2] =  cu_write_registers[6][15:0];
+    assign offset[3] =  cu_write_registers[7][15:0];
+    assign shift[0] = cu_write_registers[8][3:0];
+    assign shift[1] = cu_write_registers[8][7:4];
+    assign shift[2] = cu_write_registers[8][11:8];
+    assign shift[3] = cu_write_registers[8][15:12];
 
-    assign gain_enable = cu_write_registers[5][0];
-    assign latch_mode = cu_write_registers[5][2:1];
-    assign clear_latch = cu_write_registers[5][4:3];
-    assign calibrator_coefficients[2] = cu_write_registers[5][7:5];
-    assign slow_fault_threshold = cu_write_registers[5][15:8];
-    assign clear_fault = cu_write_registers[5][16];
-    assign disable_fault =cu_write_registers[5][17];
-    assign decimation_ratio = cu_write_registers[5][31:24];
+
+    assign shift_enable = cu_write_registers[9][0];
+    assign latch_mode = cu_write_registers[9][2:1];
+    assign clear_latch = cu_write_registers[9][4:3];
+    assign slow_fault_threshold = cu_write_registers[9][15:8];
+    assign clear_fault = cu_write_registers[9][16];
+    assign disable_fault =cu_write_registers[9][17];
+    assign decimation_ratio = cu_write_registers[9][31:24];
 
 
     assign cu_read_registers = cu_write_registers;

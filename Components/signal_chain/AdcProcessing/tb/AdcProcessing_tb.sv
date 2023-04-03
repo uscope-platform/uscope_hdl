@@ -78,7 +78,7 @@ module AdcProcessing_tb();
     axis_BFM axis_BFM;
 
     reg [15:0] cal_gain = 1;
-    reg [15:0] cal_offset = 0;
+    reg [15:0] cal_offset = 4;
     reg signed [15:0] trip_high_f2 = 16'sd29000;
     reg signed [15:0] trip_high_f1 = 16'sd29000;
     reg signed [15:0] trip_low_f1 = -16'sd28999;
@@ -101,14 +101,17 @@ module AdcProcessing_tb();
         //TESTS
         #5.5 reset <=1'h1;
         //Comparators
-        #10 write_BFM.write_dest({trip_low_s, trip_low_f2}, 8'h00);
-        #10 write_BFM.write_dest({trip_low_s, trip_low_f1}, 8'h04);
-        #10 write_BFM.write_dest({trip_high_s, trip_high_f1}, 8'h08);
-        #10 write_BFM.write_dest({trip_high_s, trip_high_f2}, 8'h0C);
+        #10 write_BFM.write_dest({trip_low_s, trip_low_f2}, 'h00);
+        #10 write_BFM.write_dest({trip_low_s, trip_low_f1}, 'h04);
+        #10 write_BFM.write_dest({trip_high_s, trip_high_f1}, 'h08);
+        #10 write_BFM.write_dest({trip_high_s, trip_high_f2}, 'h0C);
         //Calibration
-        #10 write_BFM.write_dest({cal_gain, cal_offset}, 8'h10);
+        #10 write_BFM.write_dest(cal_offset, 'h10);
+        #10 write_BFM.write_dest(cal_offset, 'h14);
+        #10 write_BFM.write_dest(cal_offset, 'h18);
+        #10 write_BFM.write_dest(cal_offset, 'h1c);
         //CU
-        #10 write_BFM.write_dest(32'h04010000, 8'h14);
+        #10 write_BFM.write_dest(32'h04010000, 'h24);
         #10 ->configuration_done;
     end
 
@@ -133,10 +136,10 @@ module AdcProcessing_tb();
                 input_counter = input_counter + 1;
 
             input_data = $urandom() % ((2<<15)-1);
-            accumulated_input = $signed(accumulated_input) + $signed(input_data);
+            accumulated_input = $signed(accumulated_input) + $signed(input_data+cal_offset);
 
             uncalibrated_accumulator = $signed(uncalibrated_accumulator) + $signed(input_data);
-            axis_BFM.write_dest(input_data, 0);
+            axis_BFM.write_dest(input_data, 2);
         end    
     end
 
@@ -186,12 +189,12 @@ module AdcProcessing_tb();
             #1;
             uncalibrated_out = uncalibrated_accumulator/4;
             #2;
-            expected_out = ((accumulated_input>>>2) + cal_offset)*cal_gain;
+            expected_out = (accumulated_input)>>>2;
             
             assert (expected_out==processing_out.data) 
             else begin
                 $display("OUTPUT DATA ERROR: expected value %h | actual value %h", expected_out[15:0], processing_out.data[15:0]);
-               // $stop();
+                $stop();
             end
             uncalibrated_accumulator = 0;
             accumulated_input = 0;
