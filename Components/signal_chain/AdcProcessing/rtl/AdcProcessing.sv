@@ -19,12 +19,14 @@ module AdcProcessing #(
     parameter DATA_PATH_WIDTH = 16,
     DECIMATED = 1,
     ENABLE_AVERAGE = 0,
-    STICKY_FAULT = 0
+    STICKY_FAULT = 0,
+    N_CHANNELS = 1
 )(
     input  wire       clock,
     input  wire       reset,
     axi_stream.slave  data_in,
-    axi_stream.master data_out,
+    axi_stream.master filtered_data_out,
+    axi_stream.master fast_data_out,
     axi_lite.slave    axi_in,
     output reg        fault
 );
@@ -40,9 +42,6 @@ module AdcProcessing #(
     wire signed [DATA_PATH_WIDTH-1:0] cal_coefficients [2:0];
     wire signed [DATA_PATH_WIDTH-1:0] comparator_thresholds [0:7];
 
-    axi_stream #(
-        .DATA_WIDTH(DATA_PATH_WIDTH)
-    ) cal_in();
 
     AdcProcessingControlUnit #(
         .STICKY_FAULT(STICKY_FAULT),
@@ -78,15 +77,36 @@ module AdcProcessing #(
         .trip_low(trip_low[0])
     );
 
+    axi_stream #(
+        .DATA_WIDTH(DATA_PATH_WIDTH)
+    ) cal_out();
+
+    calibration #(
+        .DATA_PATH_WIDTH(DATA_PATH_WIDTH)
+    ) calibrator(
+        .clock(clock),
+        .reset(reset),
+        .data_in(data_in),
+        .shift(cal_coefficients[2]),
+        .offset(cal_coefficients[1]),
+        .gain_enable(gain_enable),
+        .data_out(cal_out)
+    );
+
+
+    assign fast_data_out.data = cal_out.data;
+    assign fast_data_out.valid = cal_out.valid;
+    assign fast_data_out.dest = cal_out.dest;
+
     generate
         if(DECIMATED==0)begin
-            assign cal_in.data = data_in.data;
-            assign cal_in.valid = data_in.valid;
-            assign data_in.ready = cal_in.ready;
+            assign filtered_data_out.data = fast_data_out.data;
+            assign filtered_data_out.valid = fast_data_out.valid;
+            assign filtered_data_out.dest = fast_data_out.dest;
+            assign fast_data_out.ready = filtered_data_out.ready;
 
         end else if(DECIMATED==1)begin
             
-         
             standard_decimator #(
                 .MAX_DECIMATION_RATIO(16),
                 .DATA_WIDTH(DATA_PATH_WIDTH),
@@ -94,8 +114,8 @@ module AdcProcessing #(
             ) dec(
                 .clock(clock),
                 .reset(reset),
-                .data_in(data_in),
-                .data_out(cal_in),
+                .data_in(cal_out),
+                .data_out(filtered_data_out),
                 .decimation_ratio(decimation_ratio)
             );
 
@@ -104,16 +124,23 @@ module AdcProcessing #(
                 .DATA_PATH_WIDTH(32)
             ) dec(
                 .clock(clock),
-                .data_in_tdata(data_in.data),
-                .data_in_tvalid(data_in.valid),
-                .data_in_tready(data_in.ready),
-                .data_out_tdata(cal_in.data),
-                .data_out_tvalid(cal_in.valid),
-                .data_out_tready(cal_in.ready)
+                .data_in_tdata(fast_data_out.data),
+                .data_in_tvalid(fast_data_out.valid),
+                .data_in_tready(fast_data_out.ready),
+                .data_out_tdata(filtered_data_out.data),
+                .data_out_tvalid(filtered_data_out.valid),
+                .data_out_tready(filtered_data_out.ready)
             );
         end
     endgenerate
 
+    axi_stream #(
+        .DATA_WIDTH(DATA_PATH_WIDTH)
+    ) slow_cmp_in();
+
+    assign slow_cmp_in.data = filtered_data_out.data;
+    assign slow_cmp_in.valid = filtered_data_out.valid;
+    assign slow_cmp_in.dest = filtered_data_out.dest;
 
     comparator #(
         .DATA_PATH_WIDTH(DATA_PATH_WIDTH)
@@ -121,24 +148,13 @@ module AdcProcessing #(
         .clock(clock),
         .reset(reset),
         .thresholds(comparator_thresholds[4:7]),
-        .data_in(cal_in),
+        .data_in(slow_cmp_in),
         .latching_mode(latch_mode[1]),
         .clear_latch(clear_latch[1]),
         .trip_high(trip_high[1]),
         .trip_low(trip_low[1])
     );
 
-
-    calibration #(
-        .DATA_PATH_WIDTH(DATA_PATH_WIDTH)
-    ) calibrator(
-        .clock(clock),
-        .reset(reset),
-        .data_in(cal_in),
-        .calibrator_coefficients(cal_coefficients),
-        .gain_enable(gain_enable),
-        .data_out(data_out)
-    );
 
 endmodule
 

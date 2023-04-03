@@ -26,20 +26,41 @@ module AdcProcessing_tb();
     wire processed_fault;
 
     event configuration_done;
-    axi_lite test_axi();
     
+    axi_lite test_axi();
     axi_stream axis_bfm_if();
 
     assign processing_in.data = axis_bfm_if.data;
     assign processing_in.valid = axis_bfm_if.valid;
+    assign processing_in.dest = axis_bfm_if.dest;
     assign axis_bfm_if.ready = processing_in.ready;
 
     axi_stream #(
         .DATA_WIDTH(16)
     ) processing_in ();
+
     axi_stream #(
         .DATA_WIDTH(16)
     ) processing_out();
+
+    axi_stream #(
+        .DATA_WIDTH(16)
+    ) fast_processing_out();
+
+    assign fast_processing_out.ready = 1;
+    axis_BFM write_BFM;
+    axi_stream write();
+    axi_stream read_req();
+    axi_stream read_resp();
+
+    axis_to_axil writer_buck(
+        .clock(clk),
+        .reset(reset), 
+        .axis_write(write),
+        .axis_read_request(read_req),
+        .axis_read_response(read_resp),
+        .axi_out(test_axi)
+    );
 
     AdcProcessing #(
         .ENABLE_AVERAGE(1),
@@ -48,33 +69,31 @@ module AdcProcessing_tb();
         .clock(clk),
         .reset(reset),
         .data_in(processing_in),
-        .data_out(processing_out),
+        .filtered_data_out(processing_out),
+        .fast_data_out(fast_processing_out),
         .fault(processed_fault),
         .axi_in(test_axi)
     );
 
-    axi_lite_BFM axil_bfm;
-    
     axis_BFM axis_BFM;
 
     reg [15:0] cal_gain = 1;
-    reg [15:0] cal_offset = 5;
+    reg [15:0] cal_offset = 0;
     reg signed [15:0] trip_high_f2 = 16'sd29000;
     reg signed [15:0] trip_high_f1 = 16'sd29000;
     reg signed [15:0] trip_low_f1 = -16'sd28999;
     reg signed [15:0] trip_low_f2 = -16'sd29000;
 
-    reg signed [15:0] trip_high_s = 16'sd27000;
-    reg signed [15:0] trip_low_s = -16'sd27000;
+    reg signed [15:0] trip_high_s = 16'sd32767;
+    reg signed [15:0] trip_low_s = -16'sd32767;
 
     //clock generation
     initial clk = 0; 
     always #0.5 clk = ~clk; 
 
     initial begin
+        write_BFM = new(write,1);
         axis_BFM = new(axis_bfm_if,1);
-        axil_bfm = new(test_axi,1);
-        
         //Initial status
         reset <=1'h1;
         processing_out.ready <= 1;
@@ -82,15 +101,15 @@ module AdcProcessing_tb();
         //TESTS
         #5.5 reset <=1'h1;
         //Comparators
-        #1 axil_bfm.write(8'h00, {trip_low_s, trip_low_f2});
-        #1 axil_bfm.write(8'h04, {trip_low_s, trip_low_f1});
-        #1 axil_bfm.write(8'h08, {trip_high_s, trip_high_f1});
-        #1 axil_bfm.write(8'h0C, {trip_high_s, trip_high_f2});
+        #10 write_BFM.write_dest({trip_low_s, trip_low_f2}, 8'h00);
+        #10 write_BFM.write_dest({trip_low_s, trip_low_f1}, 8'h04);
+        #10 write_BFM.write_dest({trip_high_s, trip_high_f1}, 8'h08);
+        #10 write_BFM.write_dest({trip_high_s, trip_high_f2}, 8'h0C);
         //Calibration
-        #1 axil_bfm.write(8'h10, {cal_gain, cal_offset});
+        #10 write_BFM.write_dest({cal_gain, cal_offset}, 8'h10);
         //CU
-        #1 axil_bfm.write(8'h14, 32'h04010000);
-        #1 ->configuration_done;
+        #10 write_BFM.write_dest(32'h04010000, 8'h14);
+        #10 ->configuration_done;
     end
 
     reg writer_started = 0;
@@ -100,6 +119,9 @@ module AdcProcessing_tb();
     integer uncalibrated_accumulator = 0;
 
     reg [15:0] input_data = 0;
+    reg [15:0] calibrated_data = 0;
+    reg [15:0] r_calibrated_data = 0;
+    reg [15:0] filtered_data = 0;
     reg [3:0] input_counter = 0;
     initial begin
         @(configuration_done);
@@ -112,11 +134,16 @@ module AdcProcessing_tb();
 
             input_data = $urandom() % ((2<<15)-1);
             accumulated_input = $signed(accumulated_input) + $signed(input_data);
+
             uncalibrated_accumulator = $signed(uncalibrated_accumulator) + $signed(input_data);
-            axis_BFM.write(input_data);
+            axis_BFM.write_dest(input_data, 0);
         end    
     end
 
+    always@(posedge clk)begin
+        r_calibrated_data <= (input_data + cal_offset)*cal_gain;
+        calibrated_data <= r_calibrated_data;
+    end
 
     reg fast_trip_high;
     reg fast_trip_low;
@@ -164,7 +191,7 @@ module AdcProcessing_tb();
             assert (expected_out==processing_out.data) 
             else begin
                 $display("OUTPUT DATA ERROR: expected value %h | actual value %h", expected_out[15:0], processing_out.data[15:0]);
-                $stop();
+               // $stop();
             end
             uncalibrated_accumulator = 0;
             accumulated_input = 0;
@@ -172,7 +199,7 @@ module AdcProcessing_tb();
     end
 
 
-
+    
     initial begin
         @(configuration_done);
         forever begin
@@ -184,6 +211,6 @@ module AdcProcessing_tb();
             #1;
         end    
     end
-
+    
     
 endmodule

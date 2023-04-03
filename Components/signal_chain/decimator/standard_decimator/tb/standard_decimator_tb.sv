@@ -31,9 +31,9 @@ module standard_decimator_tb();
     initial clk = 0; 
     always #0.5 clk = ~clk; 
 
-    task automatic send_data(input signed [31:0] data);
+    task automatic send_data(input signed [31:0] data, input [7:0] dest);
         data_in.data <= data;
-        data_in.dest <= 3;
+        data_in.dest <= dest;
         data_in.valid <= 1;
         #1 data_in.valid <= 0;
     endtask //automatic
@@ -42,7 +42,8 @@ module standard_decimator_tb();
         .MAX_DECIMATION_RATIO(16),
         .MAX_CHANNELS(6),
         .DATA_WIDTH(16),
-        .AVERAGING(1)
+        .AVERAGING(1),
+        .N_CHANNELS(4)
     ) UUT (
         .clock(clk),
         .reset(reset),
@@ -62,20 +63,43 @@ module standard_decimator_tb();
         #5.5;
 
         //TESTS
-        send_data(-10);
-        send_data(-7);
-        send_data(-3);
-        send_data(4);
+        send_data(-10, 3);
+        send_data(-7, 3);
+        send_data(-3, 3);
+        send_data(4, 3);
         
-        #10 send_data(16'h7fff);
-        send_data(16'h7fff);
-        send_data(16'h7fff);
-        send_data(16'h7fff);
+        #10 send_data(16'h7fff, 3);
+        send_data(16'h7fff, 3);
+        send_data(16'h7fff, 3);
+        send_data(16'h7fff, 3);
 
-        #10 send_data(16'h8000);
-        send_data(16'h8000);
-        send_data(16'h8000);
-        send_data(16'h8000);
+        #10 send_data(16'h8000, 3);
+        send_data(16'h8000, 3);
+        send_data(16'h8000, 3);
+        send_data(16'h8000, 3); 
+        
+        #500
+
+        send_data(10, 0);
+        send_data(20, 1);
+        send_data(30, 2);
+        send_data(40, 3);
+
+        #10 send_data(10, 0);
+        send_data(20, 1);
+        send_data(30, 2);
+        send_data(40, 3);
+
+        #10 send_data(10, 0);
+        send_data(20, 1);
+        send_data(30, 2);
+        send_data(40, 3);
+
+        #10 send_data(10, 0);
+        send_data(20, 1);
+        send_data(30, 2);
+        send_data(40, 3);       
+        
     end
 
 
