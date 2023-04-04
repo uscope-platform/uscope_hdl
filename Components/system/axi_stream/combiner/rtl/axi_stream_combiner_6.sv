@@ -16,7 +16,7 @@
 `timescale 10ns / 1ns
 `include "interfaces.svh"
 
-module axi_stream_combiner_6 #(parameter INPUT_DATA_WIDTH = 16, OUTPUT_DATA_WIDTH = 32, TLAST_PERIOD = 1024, MSB_DEST_SUPPORT = "TRUE")(
+module axi_stream_combiner_6 #(parameter INPUT_DATA_WIDTH = 16, OUTPUT_DATA_WIDTH = 32, DEST_WIDTH = 8, USER_WIDTH = 8, TLAST_PERIOD = 1024, MSB_DEST_SUPPORT = "TRUE")(
     input wire clock,
     input wire reset,
     axi_stream.slave stream_in_1,
@@ -32,8 +32,8 @@ module axi_stream_combiner_6 #(parameter INPUT_DATA_WIDTH = 16, OUTPUT_DATA_WIDT
 
 
     reg [INPUT_DATA_WIDTH-1:0] combined_data;
-    reg [7:0] combined_dest;
-    reg [7:0] combined_user;
+    reg [DEST_WIDTH-1:0] combined_dest;
+    reg [USER_WIDTH-1:0] combined_user;
     reg combined_valid;
     wire combined_tlast;
 

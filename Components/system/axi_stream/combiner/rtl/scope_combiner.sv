@@ -16,7 +16,7 @@
 `timescale 10ns / 1ns
 `include "interfaces.svh"
 
-module scope_combiner #(parameter INPUT_DATA_WIDTH = 16, OUTPUT_DATA_WIDTH = 32, MSB_DEST_SUPPORT = "TRUE", N_CHANNELS = 6)(
+module scope_combiner #(parameter INPUT_DATA_WIDTH = 16, OUTPUT_DATA_WIDTH = 32, DEST_WIDTH = 8, USER_WIDTH = 8, MSB_DEST_SUPPORT = "TRUE", N_CHANNELS = 6)(
     input wire clock,
     input wire reset,
     axi_stream.slave stream_in_1,
@@ -32,8 +32,8 @@ module scope_combiner #(parameter INPUT_DATA_WIDTH = 16, OUTPUT_DATA_WIDTH = 32,
     reg [INPUT_DATA_WIDTH-1:0] input_buffer_dest [N_CHANNELS-1:0];
     reg [N_CHANNELS-1:0] memory_status;
     reg [INPUT_DATA_WIDTH-1:0] combined_data;
-    reg [7:0] combined_dest;
-    reg [7:0] combined_user;
+    reg [DEST_WIDTH-1:0] combined_dest;
+    reg [USER_WIDTH-1:0] combined_user;
     reg combined_valid;
     reg combined_tlast;
 
