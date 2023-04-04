@@ -238,13 +238,13 @@ module dab_pre_modulation_processor #(
                     modulator_registers_data[7] <= s_period/2 + s_duty_1/2 + phase_shift_1/2;
                     modulator_registers_data[8] <= s_period/2 + s_duty_1/2 + phase_shift_1/2;
                 end else if(modulation_type==1) begin
-                    modulator_registers_data[1] <= period/2 - duty_1/2;
-                    modulator_registers_data[5] <= period/2 + duty_1/2;
+                    modulator_registers_data[1] <= period/2 - duty_1/2-phase_shift_2/2;
+                    modulator_registers_data[5] <= period/2 + duty_1/2-phase_shift_2/2;
                     modulator_registers_data[2] <= s_period/2 - s_duty_1/2 + phase_shift_2/2;
                     modulator_registers_data[6] <= s_period/2 + s_duty_1/2 + phase_shift_2/2;
 
-                    modulator_registers_data[3] <= s_period/2 - s_duty_1/2 + phase_shift_1/2;
-                    modulator_registers_data[7] <= s_period/2 + s_duty_1/2 + phase_shift_1/2;
+                    modulator_registers_data[3] <= s_period/2 - s_duty_1/2 + phase_shift_1/2-phase_shift_2/2;
+                    modulator_registers_data[7] <= s_period/2 + s_duty_1/2 + phase_shift_1/2-phase_shift_2/2;
                     modulator_registers_data[4] <= s_period/2 - s_duty_1/2 + phase_shift_1/2+phase_shift_2/2;
                     modulator_registers_data[8] <= s_period/2 + s_duty_1/2 + phase_shift_1/2+phase_shift_2/2;
                 end
