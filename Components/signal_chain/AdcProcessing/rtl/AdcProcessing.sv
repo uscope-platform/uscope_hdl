@@ -41,7 +41,7 @@ module AdcProcessing #(
 
     wire signed [DATA_PATH_WIDTH-1:0] comparator_thresholds [0:7];
 
-    wire [DATA_PATH_WIDTH-1:0] offset [N_CHANNELS-1:0];
+    wire signed [DATA_PATH_WIDTH-1:0] offset [N_CHANNELS-1:0];
     wire [DATA_PATH_WIDTH-1:0] shift [N_CHANNELS-1:0];
 
     AdcProcessingControlUnit #(

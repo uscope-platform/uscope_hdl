@@ -34,9 +34,10 @@ module calibration #(
     
     assign data_in.ready = data_out.ready | ~reset ? 1 : 0;
 
+
     saturating_adder #(.DATA_WIDTH(DATA_PATH_WIDTH)) offset_adder(
         .a(data_in.data),
-        .b(offset[0]),
+        .b(offset[data_in.dest]),
         .satp({1'b0,{DATA_PATH_WIDTH-1{1'b1}}}),
         .satn({1'b1,{DATA_PATH_WIDTH-1{1'b0}}}),
         .out(raw_data_out)
@@ -51,7 +52,7 @@ module calibration #(
         end else begin
             if(data_in.valid & data_out.ready) begin
                 if(shift_enable) begin
-                    data_out.data <= raw_data_out << shift[0];
+                    data_out.data <= raw_data_out << shift[data_in.dest];
                 end else begin
                     data_out.data <= raw_data_out;
                 end
