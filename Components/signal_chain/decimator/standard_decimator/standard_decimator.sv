@@ -19,6 +19,7 @@ module standard_decimator #(
     parameter MAX_DECIMATION_RATIO = 16, 
     DATA_WIDTH= 16, 
     AVERAGING=0,
+    AVERAGING_DIVISOR=2,
     N_CHANNELS = 1
     )(
     input wire clock,
@@ -61,7 +62,7 @@ module standard_decimator #(
                         average_accumulator[data_in.dest] <= average_accumulator[data_in.dest] + extended_data_in;
                         decimation_counter[data_in.dest] <= decimation_counter[data_in.dest]+1;
                         if((decimation_counter[data_in.dest] == decimation_ratio-1 )| decimation_ratio ==0)begin
-                            data_out.data <= (average_accumulator[data_in.dest] + extended_data_in) >>> 2;
+                            data_out.data <= (average_accumulator[data_in.dest] + extended_data_in) >>> AVERAGING_DIVISOR;
                             average_accumulator[data_in.dest] <= 0;
                             data_out.dest <= data_in.dest;
                             data_out.valid <= 1;
