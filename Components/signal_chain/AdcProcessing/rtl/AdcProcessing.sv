@@ -19,6 +19,7 @@ module AdcProcessing #(
     parameter DATA_PATH_WIDTH = 16,
     DECIMATED = 1,
     ENABLE_AVERAGE = 0,
+    AVERAGING_DIVISOR = 2,
     STICKY_FAULT = 0,
     N_CHANNELS = 4
 )(
@@ -115,6 +116,7 @@ module AdcProcessing #(
                 .MAX_DECIMATION_RATIO(16),
                 .DATA_WIDTH(DATA_PATH_WIDTH),
                 .AVERAGING(ENABLE_AVERAGE),
+                .AVERAGING_DIVISOR(AVERAGING_DIVISOR),
                 .N_CHANNELS(N_CHANNELS)
             ) dec(
                 .clock(clock),

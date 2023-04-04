@@ -44,11 +44,14 @@ module AdcProcessingControlUnit #(
     reg [31:0] cu_write_registers [9:0];
     reg [31:0] cu_read_registers [9:0];
 
+    parameter [31:0] IV [9:0] = '{10{32'h0}};
+
     axil_simple_register_cu #(
         .N_READ_REGISTERS(10),
         .N_WRITE_REGISTERS(10),
         .REGISTERS_WIDTH(32),
-        .ADDRESS_MASK('hff)
+        .ADDRESS_MASK('hff),
+        .INITIAL_OUTPUT_VALUES(IV)
     ) CU (
         .clock(clock),
         .reset(reset),

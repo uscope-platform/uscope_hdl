@@ -61,7 +61,7 @@ module standard_decimator #(
                     if(data_in.valid) begin
                         average_accumulator[data_in.dest] <= average_accumulator[data_in.dest] + extended_data_in;
                         decimation_counter[data_in.dest] <= decimation_counter[data_in.dest]+1;
-                        if((decimation_counter[data_in.dest] == decimation_ratio-1 )| decimation_ratio ==0)begin
+                        if((decimation_counter[data_in.dest] == (1<<AVERAGING_DIVISOR)-1 )| decimation_ratio ==0)begin
                             data_out.data <= (average_accumulator[data_in.dest] + extended_data_in) >>> AVERAGING_DIVISOR;
                             average_accumulator[data_in.dest] <= 0;
                             data_out.dest <= data_in.dest;
