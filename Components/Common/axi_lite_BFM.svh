@@ -50,27 +50,25 @@ class axi_lite_BFM;
     endfunction
 
     task write(input logic [31:0] address, input logic [31:0] data);
-        // WRITE ADDRESS CHANNEL
+
         this.bus.AWADDR <= address;
         this.bus.AWVALID <= 1;
-        // WRITE DATA CHANNEL
+        #1;
+        this.bus.AWVALID <= 0;
         this.bus.WDATA <= data;
         this.bus.WVALID <= 1;
         this.bus.WSTRB <= 'hF;
-
-        this.bus.BREADY <= 1;
-        // WAIT FOR THE WRITE DATA HANDSHAKE
-        wait(this.bus.AWREADY);
-        wait(!this.bus.AWREADY);
-        this.bus.AWVALID <= 0;
-        this.bus.WVALID <= 0;
+        
         #1;
+        this.bus.BREADY <= 1;
 
-        // CHECK THAT THE DATA HANDSHAKE WAS PERFORMED CORRECTLY
+        this.bus.WVALID <= 0;
 
         this.bus.AWADDR <= 0;
         this.bus.WDATA <= 0;
         this.bus.WSTRB <= 0;
+        @(posedge this.bus.BVALID);
+        #1;
     endtask
 
     task  read(input logic [31:0] address, output logic [31:0] data);
