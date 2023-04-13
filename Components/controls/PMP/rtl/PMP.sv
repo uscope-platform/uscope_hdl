@@ -24,8 +24,12 @@ module pre_modulation_processor #(
 )(
     input wire clock,
     input wire reset,
+    input wire external_start,
+    input wire external_stop,
     axi_lite.slave axi_in,
-    axi_lite.master axi_out
+    axi_lite.master axi_out,
+    output reg modulator_ready,
+    output reg modulator_running
 );
 
     reg [31:0] cu_write_registers [13:0];
@@ -79,8 +83,8 @@ module pre_modulation_processor #(
     
     wire modulator_start, modulator_stop;
 
-    assign modulator_start = triggers[0] & modulator_start_request;
-    assign modulator_stop =  triggers[0] & ((~modulator_start_request & modulation_status)| modulator_stop_request);
+    assign modulator_start = triggers[0] & modulator_start_request || external_start;
+    assign modulator_stop =  triggers[0] & ((~modulator_start_request & modulation_status)| modulator_stop_request) || external_stop;
 
     reg configuration_start;
 
@@ -103,6 +107,7 @@ module pre_modulation_processor #(
             config_required <= 1;
             configuration_start <= 0;
             config_state <=start_configuration_state;
+            modulator_ready <= 0;
         end else begin
             case (config_state)
                 start_configuration_state:begin
@@ -115,6 +120,7 @@ module pre_modulation_processor #(
                     config_required <= 0;
                     if(dab_done || vsi_done || buck_done)begin
                         config_state <= running_state;
+                        modulator_ready <= 1;
                     end
                 end
                 default:begin
