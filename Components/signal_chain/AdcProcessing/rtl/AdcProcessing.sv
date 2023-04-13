@@ -21,7 +21,8 @@ module AdcProcessing #(
     ENABLE_AVERAGE = 0,
     AVERAGING_DIVISOR = 2,
     STICKY_FAULT = 0,
-    N_CHANNELS = 4
+    parameter N_CHANNELS = 4,
+    parameter [N_CHANNELS-1:0] OUTPUT_SIGNED = {N_CHANNELS{1'b1}}
 )(
     input  wire       clock,
     input  wire       reset,
@@ -87,7 +88,8 @@ module AdcProcessing #(
 
     calibration #(
         .DATA_PATH_WIDTH(DATA_PATH_WIDTH),
-        .N_CHANNELS(N_CHANNELS)
+        .N_CHANNELS(N_CHANNELS),
+        .OUTPUT_SIGNED(OUTPUT_SIGNED)
     ) calibrator(
         .clock(clock),
         .reset(reset),

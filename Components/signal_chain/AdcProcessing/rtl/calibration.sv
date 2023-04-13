@@ -16,7 +16,8 @@
 
 module calibration #(
     parameter DATA_PATH_WIDTH = 16,
-    N_CHANNELS = 1
+    N_CHANNELS = 1,
+    parameter [N_CHANNELS-1:0] OUTPUT_SIGNED = {N_CHANNELS{1'b1}}
     )(
     input wire clock,
     input wire reset,
@@ -39,7 +40,7 @@ module calibration #(
         .a(data_in.data),
         .b(offset[data_in.dest]),
         .satp({1'b0,{DATA_PATH_WIDTH-1{1'b1}}}),
-        .satn({1'b1,{DATA_PATH_WIDTH-1{1'b0}}}),
+        .satn({OUTPUT_SIGNED[data_in.dest],{DATA_PATH_WIDTH-1{1'b0}}}),
         .out(raw_data_out)
     );
 
