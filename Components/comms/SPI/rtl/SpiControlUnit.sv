@@ -58,15 +58,14 @@ module SpiControlUnit #(
  
     parameter [31:0] INITIAL_REGISTER_VALUES [N_REGISTERS-1:0] = {VARIABLE_INITIAL_VALUES, FIXED_REGISTER_VALUES};
 
+
+    reg bus_start_transfer, axis_start_transfer;
+    
     assign spi_start_transfer = bus_start_transfer | axis_start_transfer;
 
     reg [31:0] cu_write_registers [N_REGISTERS-1:0];
     reg [31:0] cu_read_registers [N_REGISTERS-1:0];
     reg trigger_transfer;
-
-    reg bus_start_transfer, axis_start_transfer;
-
-    
     reg [31:0] axis_spi_data;
     axil_simple_register_cu #(
         .N_READ_REGISTERS(N_REGISTERS),
@@ -115,6 +114,8 @@ module SpiControlUnit #(
         spi_transfer_length, divider_setting, spi_mode
     };
 
+    reg unit_busy = 0;
+
     assign cu_read_registers[1] = spi_delay;
     assign cu_read_registers[2] = period;
     assign cu_read_registers[3] = unit_busy;
@@ -127,7 +128,6 @@ module SpiControlUnit #(
 
     assign bus_start_transfer = trigger_transfer;
 
-    reg unit_busy = 0;
 
     
     always_ff @(posedge clock) begin
