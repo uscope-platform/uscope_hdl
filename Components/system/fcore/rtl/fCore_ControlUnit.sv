@@ -80,6 +80,7 @@ module fCore_ControlUnit #(
     always@(posedge clock)begin
         case(state)
             IDLE:begin
+                fault <= 0;
                 load_blanking <= 0;
                 program_counter <= 0;
                 channel_counter <= 0;
@@ -143,6 +144,9 @@ module fCore_ControlUnit #(
                     end
                     state <= RUN;
                 end
+            end
+            FAULT:begin
+                fault <= 1;
             end
         endcase
 

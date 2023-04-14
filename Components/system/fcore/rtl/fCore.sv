@@ -49,6 +49,7 @@ module fCore(
     parameter LOGIC_IMPLEMENTED = 1;
     parameter EFI_IMPLEMENTED = 0;
     parameter FULL_COMPARE = 1;
+    parameter TRANSLATION_TABLE_INIT = "TRANSPARENT";
     // Maximum number of supported channels
     parameter MAX_CHANNELS = 4;
 
@@ -267,7 +268,8 @@ module fCore(
         .BASE_ADDRESS(DMA_BASE_ADDRESS),
         .DATAPATH_WIDTH(DATAPATH_WIDTH),
         .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
-        .REGISTER_FILE_DEPTH(REGISTER_FILE_DEPTH)
+        .REGISTER_FILE_DEPTH(REGISTER_FILE_DEPTH),
+        .TRANSLATION_TABLE_INIT(TRANSLATION_TABLE_INIT)
     )dma_ep(
         .clock(clock),
         .reset(reset),

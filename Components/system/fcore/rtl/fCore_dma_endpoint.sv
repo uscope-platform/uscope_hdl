@@ -21,7 +21,8 @@ module fCore_dma_endpoint #(
     parameter BASE_ADDRESS = 32'h43c00000,
     DATAPATH_WIDTH = 20,
     REG_ADDR_WIDTH = 8,
-    REGISTER_FILE_DEPTH = 64
+    REGISTER_FILE_DEPTH = 64,
+    TRANSLATION_TABLE_INIT = "TRANSPARENT"
 )(
     input wire clock,
     input wire reset,
@@ -67,7 +68,11 @@ module fCore_dma_endpoint #(
     always_ff @(posedge clock) begin
         if(!reset) begin
             for(integer i = 0; i< REGISTER_FILE_DEPTH; i++)begin
-                translation_table[i] <= i;
+                if(TRANSLATION_TABLE_INIT == "TRANSPARENT")begin
+                    translation_table[i] <= i;
+                end else if(TRANSLATION_TABLE_INIT=="ZERO")begin
+                    translation_table[i] <= 0;
+                end
             end
         end else if(io_mapping.valid)begin
             translation_table[table_write_address] <= table_write_data;
@@ -79,7 +84,7 @@ module fCore_dma_endpoint #(
 
     always_ff @(posedge clock) begin
         if(axis_dma_write.valid)begin
-            if(axis_dma_write.dest != 0) begin
+            if(translation_table[axis_dma_write.dest] != 0) begin
                 reg_dma_write.dest <= translation_table[axis_dma_write.dest];
                 reg_dma_write.data <= axis_dma_write.data;
                 reg_dma_write.valid <= 1;   
@@ -92,9 +97,11 @@ module fCore_dma_endpoint #(
                 reg_dma_write.dest <= 0;
                 reg_dma_write.data <= 0;
             end else begin
-                reg_dma_write.dest <= translation_table[axi_write_data.dest];
-                reg_dma_write.data <= axi_write_data.data;
-                reg_dma_write.valid <= 1;    
+                if(translation_table[axis_dma_write.dest] != 0) begin
+                    reg_dma_write.dest <= translation_table[axi_write_data.dest];
+                    reg_dma_write.data <= axi_write_data.data;
+                    reg_dma_write.valid <= 1;   
+                end 
             end
         end else begin
             reg_dma_write.valid <= 0;
