@@ -50,7 +50,7 @@ module dab_pre_modulation_processor #(
     localparam  modulator_on = 1;
 
 
-    wire [31:0] global_config_data [3:0] = '{'hff, 'hf, 'h1, 'h1100};
+    wire [31:0] global_config_data [3:0] = '{'hff, 'hf, 'h1, 'h00};
     wire [31:0] global_config_addr [3:0] = '{
         'h100+(3*N_PWM_CHANNELS+3)*4, 
         'h100+(3*N_PWM_CHANNELS+4)*4,
@@ -85,7 +85,7 @@ module dab_pre_modulation_processor #(
     assign s_duty_2 = $signed(duty_2);
 
 
-    reg [31:0] modulator_on_config_register = 'h1128;
+    reg [31:0] modulator_on_config_register = 'h28;
     
     reg start_needed = 0;
     reg reset_counter = 0;
