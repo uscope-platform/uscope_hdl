@@ -78,7 +78,10 @@ module PwmGenerator #(
     endfunction 
 
     localparam [31:0] AXI_ADDRESSES [N_CHAINS:0] = ADDR_CALC(); 
-
+    
+    localparam PRAGMA_MKFG_PARAMETRIZED_INTERCONNECT="axi_xbar";
+    localparam PRAGMA_MKFG_BUS_LAYOUT="{\"type\":\"axi_lite\", \"name\":\"axi_xbar\", \"base\":\"BASE_ADDR\", \"offset\":\"0x100\", \"n_seg\":\"N_CHAINS\"}";
+    localparam PRAGMA_MKFG_BUS_ARRAY="internal_bus";
 
 
     axi_lite internal_bus[N_CHAINS+1]();

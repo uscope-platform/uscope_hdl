@@ -18,6 +18,7 @@
 
 module pre_modulation_processor #(
     CONVERTER_SELECTION = "DYNAMIC",
+    BASE_ADDRESS = 0,
     PWM_BASE_ADDR = 0,
     N_PWM_CHANNELS = 4,
     N_CHAINS = 2
@@ -28,35 +29,68 @@ module pre_modulation_processor #(
     input wire external_stop,
     axi_lite.slave axi_in,
     axi_lite.master axi_out,
+    axi_stream.slave modulation_in,
     output reg modulator_ready,
     output reg modulator_running
 );
 
+    axi_stream cu_write();
+    axi_stream cu_read_addr();
+    axi_stream cu_read_data();
+
+    reg [4:0] triggers;
+    reg config_required;
+
+
     reg [31:0] cu_write_registers [13:0];
     reg [31:0] cu_read_registers [13:0];
 
-    reg config_required;
-    wire [4:0] triggers;
-
-    localparam [31:0] TRIGGER_REGISTERS_IDX [4:0] = '{2, 3, 4, 5, 0};
-    wire modulation_status;
-
-    axil_simple_register_cu #(
-        .N_READ_REGISTERS(14),
-        .N_WRITE_REGISTERS(14),
+    axil_external_registers_cu #(
         .REGISTERS_WIDTH(32),
-        .ADDRESS_MASK('h3f),
-        .N_TRIGGER_REGISTERS(5),
-        .TRIGGER_REGISTERS_IDX(TRIGGER_REGISTERS_IDX)
-    ) CU (
+        .REGISTERED_BUFFERS(0),
+        .BASE_ADDRESS(BASE_ADDRESS),
+        .READ_DELAY(0) 
+    )CU (
         .clock(clock),
         .reset(reset | ~config_required),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
-        .trigger_out(triggers),
-        .axil(axi_in)
+        .read_address(cu_read_addr),
+        .read_data(cu_read_data),
+        .write_data(cu_write),
+        .axi_in(axi_in)
     );
 
+    localparam [31:0] TRIGGER_REGISTERS_IDX [4:0] = '{2, 3, 4, 5, 0};
+
+    always_ff@(posedge clock) begin 
+        triggers <= 0;
+        modulation_in.ready <= 1;
+
+        if(cu_write.valid)begin
+            cu_write_registers[cu_write.dest] <= cu_write.data;
+            for(integer i = 0; i< 5; i= i+1)begin
+                if(cu_write.dest == TRIGGER_REGISTERS_IDX[i]) begin
+                    triggers[i] <= 1'b1;
+                end                            
+            end
+        end
+
+        if(modulation_in.valid)begin
+            cu_write_registers[modulation_in.dest & 'hF] <= modulation_in.data;
+            for(integer i = 0; i< 5; i= i+1)begin
+                if(modulation_in.dest == TRIGGER_REGISTERS_IDX[i]) begin
+                    triggers[i] <= 1'b1;
+                end                            
+            end
+        end
+
+        if(cu_read_addr.valid)begin
+            cu_read_data.data <= cu_read_registers[cu_read_addr.data];
+        end
+        cu_read_data.valid <= cu_read_addr.valid;
+        
+    end
+
+    wire modulation_status;
     reg modulator_stop_request;
     reg modulator_start_request;
     reg [1:0] modulation_type;
@@ -87,7 +121,6 @@ module pre_modulation_processor #(
     assign modulator_stop =  triggers[0] & ((~modulator_start_request & modulation_status)| modulator_stop_request) || external_stop;
 
     reg configuration_start;
-
 
     axi_stream dab_write();
     axi_stream vsi_write();
