@@ -25,7 +25,7 @@ module axis_constant #(
     input wire        reset,
     input wire        sync,
     axi_stream.master const_out,
-    axi_lite axil
+    axi_lite.slave axil
 );
 
 
