@@ -251,3 +251,67 @@ module uScope_stream #(
     assign data_in.ready = scope_in_sync[0].ready & scope_in_sync[1].ready & scope_in_sync[2].ready & scope_in_sync[3].ready & scope_in_sync[4].ready & scope_in_sync[5].ready;
 
 endmodule
+/**
+    {
+        "name": "uScope_stream",
+        "type": "peripheral",
+        "registers":[
+            {
+                "name": "channel_mux",
+                "offset": "0x0",
+                "description": "uScope channel MUX control",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"addr_1",
+                        "description": "Address for channel 1",
+                        "start_position": 0,
+                        "length": 3
+                    },
+                    {
+                        "name":"addr_2",
+                        "description": "Address for channel 2",
+                        "start_position": 4,
+                        "length": 3
+                    },
+                    {
+                        "name":"addr_3",
+                        "description": "Address for channel 3",
+                        "start_position": 8,
+                        "length": 3
+                    },
+                    {
+                        "name":"addr_4",
+                        "description": "Address for channel 4",
+                        "start_position": 12,
+                        "length": 3
+                    },
+                    {
+                        "name":"addr_5",
+                        "description": "Address for channel 5",
+                        "start_position": 16,
+                        "length": 3
+                    },
+                    {
+                        "name":"addr_6",
+                        "description": "Address for channel 6",
+                        "start_position": 20,
+                        "length": 3
+                    },
+                    {
+                        "name":"external_capture",
+                        "description": "Enable external caputure",
+                        "start_position": 24,
+                        "length": 1
+                    }
+                ]
+            },
+            {
+                "name": "scope_base",
+                "offset": "0x4",
+                "description": "Scope windows base address",
+                "direction": "RW"
+            }
+        ]
+    }
+**/

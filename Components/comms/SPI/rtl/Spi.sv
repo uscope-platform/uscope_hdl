@@ -178,7 +178,8 @@ endmodule
 
  /**
        {
-        "name": "SPI",
+        "name": "SpiControlUnit",
+        "alias": "SPI",
         "type": "peripheral",
         "registers":[
             {
