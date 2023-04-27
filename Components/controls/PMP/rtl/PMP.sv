@@ -75,6 +75,7 @@ module pre_modulation_processor #(
         end
 
         if(modulation_in.valid)begin
+            modulation_in.ready <= 1;
             cu_write_registers[modulation_in.dest & 'hF] <= modulation_in.data;
             for(integer i = 0; i< 5; i= i+1)begin
                 if(modulation_in.dest == TRIGGER_REGISTERS_IDX[i]) begin
