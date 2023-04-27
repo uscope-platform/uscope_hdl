@@ -64,7 +64,7 @@ module pre_modulation_processor #(
     always_ff@(posedge clock) begin 
         triggers <= 0;
         modulation_in.ready <= 1;
-
+        cu_write.ready <= 1;
         if(cu_write.valid)begin
             cu_write_registers[cu_write.dest] <= cu_write.data;
             for(integer i = 0; i< 5; i= i+1)begin
