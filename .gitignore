@@ -111,3 +111,5 @@ Components/system/fcore/efi/sorter/efi_sorter/
 Components/system/fcore/efi/trig_unit/efi_trig/
 
 Components/controls/PMP/PMP/
+
+Components/system/axi_lite/axil_dma/axil_dma/

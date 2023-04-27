@@ -1,0 +1,30 @@
+{
+    "general":{
+        "project_name":"axil_dma",
+        "target_part":"xc7z020clg400",
+        "synth_modules":[],
+        "synth_tl": "axil_dma",
+        "sim_modules":[],
+        "sim_tl":"axil_dma_tb",
+        "include_paths":[
+            "Components/Common"
+        ]
+    },
+    "scripts":[
+        {
+            "name":"set_properties.tcl",
+            "type": "tcl",
+            "arguments":[]
+        }, 
+        {
+            "name":"axil_dma_VIP_bd.tcl",
+            "type": "tcl",
+            "arguments":[]
+        }
+    ],
+    "excluded_modules":[
+        "axil_dma_vip_bd"
+    ],
+    "constraints": [
+    ]
+}
