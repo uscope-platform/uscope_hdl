@@ -68,13 +68,20 @@ module axil_dma_tb();
         //TESTS
         #30.5 reset <=1'h1;
 
+        data_in.data  <= 0;
+        data_in.valid <= 0;
+        data_in.tlast <= 0;
 
-        #20;
-        for (integer i = 0; i <101; i = i+1 ) begin
-            data_in.data <= $urandom();
+        @(config_done);
+        for (integer i = 0; i <125; i = i+1 ) begin
+            data_in.data <= i;
             data_in.valid <= 1;
-            #1;    
-            @(data_in.ready);
+            if(i==120)begin
+                data_in.tlast <= 1;
+            end else begin
+                data_in.tlast <= 0;
+            end
+            #1;
         end
         data_in.valid <= 0;
     end

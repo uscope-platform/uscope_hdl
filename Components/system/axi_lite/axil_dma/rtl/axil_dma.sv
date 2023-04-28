@@ -57,7 +57,38 @@ module axil_dma #(
     assign cu_read_registers[1] = transfer_size;
     assign cu_read_registers[2] = 0;
 
+
+    wire dma_start;
+    assign dma_start = data_in.tlast;
+
+    axi_stream buffered_data();
+
+    axis_fifo_xpm #(
+        .DATA_WIDTH(32),
+        .FIFO_DEPTH(8192)
+    ) dma_fifo(
+        .clock(clock),
+        .reset(reset),
+        .in(data_in),
+        .out(buffered_data)
+    );
+
+    enum reg [2:0] {
+        writer_idle = 0,
+        writer_dma_send = 1,
+        writer_send_address = 2,
+        writer_send_data = 3,
+        writer_wait_response = 4
+    } writer_state;
+
+
     reg [$clog2(MAX_TRANSFER_SIZE)-1:0] progress_counter = 0;
+
+    reg[31:0] latched_write_address;
+    reg[31:0] latched_write_data;
+
+    wire [31:0] current_target_address;
+    assign current_target_address = target_base + progress_counter*4;
 
     always_ff @(posedge clock) begin
         if(~reset)begin
@@ -73,12 +104,64 @@ module axil_dma #(
             axi_out.ARPROT <= 0;
             axi_out.RREADY <= 1;
             axi_out.BREADY <= 1;
-        end else begin
-            if(data_in.valid)begin
+            buffered_data.ready <= 0;
 
-            end
+            writer_state <= writer_idle;
+        end else begin
+            axi_out.BREADY <= 1;
+            axi_out.AWVALID <= 0;
+            axi_out.WVALID <= 0;
+            case (writer_state)
+                writer_idle:begin
+                    if(dma_start)begin
+                        buffered_data.ready <= 1;
+                        progress_counter <= 0;
+                        writer_state <= writer_dma_send;
+                    end
+                end
+                writer_dma_send:begin
+                    buffered_data.ready <= 0;
+                    if(axi_out.WREADY & axi_out.AWREADY) begin
+                        axi_out.AWADDR <= current_target_address;
+                        axi_out.AWVALID <= 1;
+                        axi_out.WDATA <= buffered_data.data;
+                        axi_out.WVALID <= 1;
+                        writer_state <= writer_wait_response;
+                    end else if(axi_out.AWREADY) begin
+                        axi_out.AWADDR <= current_target_address;
+                        latched_write_data <= buffered_data.data;
+                        axi_out.AWVALID <= 1;
+                        writer_state <= writer_send_data;
+                    end
+                end
+                writer_send_address:begin
+                    if(axi_out.AWREADY) begin
+                        axi_out.AWADDR <= latched_write_address;
+                        axi_out.AWVALID <= 1;
+                        writer_state <= writer_send_data;
+                    end
+                end
+                writer_send_data:begin
+                    if(axi_out.WREADY) begin
+                        axi_out.WDATA <= latched_write_data;
+                        axi_out.WVALID <= 1;
+                        writer_state <= writer_wait_response;
+                    end
+                end
+                writer_wait_response:begin
+                    if(axi_out.BVALID)begin
+                        axi_out.BREADY <= 0;
+                        if(progress_counter == transfer_size-1)begin
+                            writer_state <= writer_idle;
+                        end else begin
+                            writer_state <= writer_dma_send;
+                            buffered_data.ready <= 1;
+                            progress_counter <= progress_counter + 1;
+                        end                       
+                    end
+                end
+            endcase
         end
     end
-
 
 endmodule
