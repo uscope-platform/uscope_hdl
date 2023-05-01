@@ -30,6 +30,7 @@ module fir_filter_parallel #(
     wire [2*DATA_PATH_WIDTH-1:0] pipeline_inputs [PARALLEL_ORDER-1:0];
     reg signed [2*DATA_PATH_WIDTH-1:0] pipeline_registers [PARALLEL_ORDER-1:0];
 
+    assign data_in.ready = data_out.ready;
 
     genvar i;
     generate
@@ -39,7 +40,7 @@ module fir_filter_parallel #(
             assign pipeline_inputs[i] = pipeline_registers[i-1];
         end
 
-        assign data_out.data = pipeline_registers[PARALLEL_ORDER-1]>>>DATA_PATH_WIDTH;
+        assign data_out.data = pipeline_registers[PARALLEL_ORDER-1]>>>(DATA_PATH_WIDTH-1);
 
         for(i = 0; i<PARALLEL_ORDER+1; i++)begin
 
@@ -49,9 +50,11 @@ module fir_filter_parallel #(
                 .clock(clock),
                 .reset(reset),
                 .data_in($signed(data_in.data)),
+                .in_valid(data_in.valid),
                 .tap(current_taps[i]),
                 .pipeline_in(pipeline_inputs[i]),
-                .pipeline_out(pipeline_registers[i])
+                .pipeline_out(pipeline_registers[i]),
+                .out_valid(data_out.valid)
             );
         end
     endgenerate

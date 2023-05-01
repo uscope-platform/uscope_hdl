@@ -20,9 +20,11 @@ module fir_filter_segment #(
     input wire clock,
     input wire reset,
     input wire signed [DATA_PATH_WIDTH-1:0] data_in,
+    input wire in_valid,
     input wire signed [DATA_PATH_WIDTH-1:0] tap,
     input wire signed [2*DATA_PATH_WIDTH-1:0] pipeline_in,
-    output reg signed [2*DATA_PATH_WIDTH-1:0] pipeline_out
+    output reg signed [2*DATA_PATH_WIDTH-1:0] pipeline_out,
+    output reg out_valid
 );
 
 
@@ -33,8 +35,10 @@ always_ff@(posedge clock) begin
     if(~reset) begin
         pipeline_out <= 0;
     end
-
-    pipeline_out <= multiplier_out+pipeline_in;
+    if(in_valid)begin
+        pipeline_out <= multiplier_out+pipeline_in;
+    end
+    out_valid <= in_valid;
 end
 
 endmodule

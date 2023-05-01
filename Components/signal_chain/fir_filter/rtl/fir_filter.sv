@@ -18,7 +18,8 @@
 module fir_filter #(
     parameter DATA_PATH_WIDTH = 16,
     MAX_FOLDING_FACTOR = 1,
-    PARALLEL_ORDER=8
+    PARALLEL_ORDER=8,
+    parameter [DATA_PATH_WIDTH-1:0] TAPS_IV [PARALLEL_ORDER:0] = '{PARALLEL_ORDER+1{0}}
 )(
     input wire clock,
     input wire reset,
@@ -26,6 +27,22 @@ module fir_filter #(
     axi_stream.slave data_in,
     axi_stream.master data_out
 );
+
+    axi_stream #(
+        .DATA_WIDTH(DATA_PATH_WIDTH)
+    ) buffered_data_in();
+
+    axis_skid_buffer #(
+        .REGISTER_OUTPUT(0),
+        .DATA_WIDTH(DATA_PATH_WIDTH)
+    ) input_buffer(
+        .clock(clock),
+        .reset(reset),
+        .axis_in(data_in),
+        .axis_out(buffered_data_in)
+    );
+
+    assign buffered_data_in.ready = data_out.valid;
 
     axi_stream cu_read_addr();
     axi_stream cu_read_data();
@@ -45,7 +62,7 @@ module fir_filter #(
     );
 
     reg [$clog2(MAX_FOLDING_FACTOR):0] folding_factor;
-    reg [DATA_PATH_WIDTH-1:0] taps [MAX_FOLDING_FACTOR*PARALLEL_ORDER:0]; 
+    reg [DATA_PATH_WIDTH-1:0] taps [MAX_FOLDING_FACTOR*PARALLEL_ORDER:0] = TAPS_IV; 
     
 
     always_ff@(posedge clock) begin
@@ -84,7 +101,7 @@ module fir_filter #(
     always_ff@(posedge clock) begin
         case (filter_state)
             filter_idle:begin
-                if(data_in.valid)begin
+                if(buffered_data_in.valid)begin
                     filter_state <= filter_working;
                     folding_counter <= folding_factor;
                 end
@@ -108,7 +125,7 @@ module fir_filter #(
         .clock(clock),
         .reset(reset),
         .current_taps(taps),
-        .data_in(data_in),
+        .data_in(buffered_data_in),
         .data_out(data_out)
     );
 
