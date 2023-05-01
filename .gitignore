@@ -113,3 +113,5 @@ Components/system/fcore/efi/trig_unit/efi_trig/
 Components/controls/PMP/PMP/
 
 Components/system/axi_lite/axil_dma/axil_dma/
+
+Components/signal_chain/fir_filter/fir_filter/

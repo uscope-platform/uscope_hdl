@@ -1,0 +1,22 @@
+{
+    "general":{
+        "project_name":"fir_filter",
+        "target_part":"xc7z020clg400",
+        "synth_modules":[],
+        "synth_tl": "fir_filter",
+        "sim_modules":[],
+        "sim_tl":"fir_filter_tb",
+        "include_paths":[
+            "Components/Common"
+        ]
+    },
+    "scripts":[
+        {
+            "name":"set_properties.tcl",
+            "type": "tcl",
+            "arguments":[]
+        }
+    ],
+    "excluded_modules":[],
+    "constraints": []
+}

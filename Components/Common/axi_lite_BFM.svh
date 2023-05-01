@@ -67,7 +67,7 @@ class axi_lite_BFM;
         this.bus.AWADDR <= 0;
         this.bus.WDATA <= 0;
         this.bus.WSTRB <= 0;
-        @(posedge this.bus.BVALID);
+        @(this.bus.BVALID);
         #1;
     endtask
 
