@@ -17,15 +17,27 @@
 
 module fir_filter_parallel #(
     parameter DATA_PATH_WIDTH = 16,
-    MAX_FOLDING_FACTOR = 1,
-    PARALLEL_ORDER=8
+    PARALLEL_ORDER=8,
+    parameter [DATA_PATH_WIDTH-1:0] TAPS_IV [PARALLEL_ORDER:0] = '{PARALLEL_ORDER+1{0}}
 )(
     input wire clock,
     input wire reset,
-    input reg signed [DATA_PATH_WIDTH-1:0] current_taps [PARALLEL_ORDER:0],
+    input wire [DATA_PATH_WIDTH-1:0] tap_data,
+    input wire [15:0] tap_addr,
+    input wire tap_write,
     axi_stream.slave data_in,
     axi_stream.master data_out
 );
+    
+    reg [DATA_PATH_WIDTH-1:0] taps [PARALLEL_ORDER:0] = TAPS_IV; 
+    
+
+    always_ff@(posedge clock) begin
+        if(tap_write)begin
+            taps[tap_addr] = tap_data;
+        end
+    end
+
 
     wire [2*DATA_PATH_WIDTH-1:0] pipeline_inputs [PARALLEL_ORDER-1:0];
     reg signed [2*DATA_PATH_WIDTH-1:0] pipeline_registers [PARALLEL_ORDER-1:0];
@@ -44,14 +56,13 @@ module fir_filter_parallel #(
 
         for(i = 0; i<PARALLEL_ORDER+1; i++)begin
 
-            fir_filter_segment #(
+            fir_filter_slice #(
                 .DATA_PATH_WIDTH(DATA_PATH_WIDTH)
             ) filter_stage (
                 .clock(clock),
-                .reset(reset),
                 .data_in($signed(data_in.data)),
                 .in_valid(data_in.valid),
-                .tap(current_taps[i]),
+                .tap(taps[i]),
                 .pipeline_in(pipeline_inputs[i]),
                 .pipeline_out(pipeline_registers[i]),
                 .out_valid(data_out.valid)

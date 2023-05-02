@@ -31,7 +31,6 @@ module axil_simple_register_cu #(
     output reg [REGISTERS_WIDTH-1:0] output_registers [N_WRITE_REGISTERS-1:0],
     output reg [N_TRIGGER_REGISTERS-1:0] trigger_out,
     axi_lite.slave axil
-
 );
 
 

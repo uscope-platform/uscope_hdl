@@ -14,31 +14,29 @@
 // limitations under the License.
 `timescale 10 ns / 1 ns
 
-module fir_filter_segment #(
+module fir_filter_slice #(
     parameter DATA_PATH_WIDTH = 16
 )(
     input wire clock,
-    input wire reset,
     input wire signed [DATA_PATH_WIDTH-1:0] data_in,
     input wire in_valid,
     input wire signed [DATA_PATH_WIDTH-1:0] tap,
     input wire signed [2*DATA_PATH_WIDTH-1:0] pipeline_in,
-    output reg signed [2*DATA_PATH_WIDTH-1:0] pipeline_out,
+    output wire signed [2*DATA_PATH_WIDTH-1:0] pipeline_out,
     output reg out_valid
 );
 
+    reg signed [2*DATA_PATH_WIDTH-1:0] internal_out = 0;
+    wire signed [2*DATA_PATH_WIDTH-1:0] multiplier_out;
 
-wire signed [2*DATA_PATH_WIDTH-1:0] multiplier_out;
-assign multiplier_out = data_in*tap;
+    assign pipeline_out = internal_out;
+    assign multiplier_out = data_in*tap;
 
-always_ff@(posedge clock) begin
-    if(~reset) begin
-        pipeline_out <= 0;
+    always_ff@(posedge clock) begin
+        if(in_valid)begin
+            internal_out <= multiplier_out+pipeline_in;
+        end
+        out_valid <= in_valid;
     end
-    if(in_valid)begin
-        pipeline_out <= multiplier_out+pipeline_in;
-    end
-    out_valid <= in_valid;
-end
 
 endmodule

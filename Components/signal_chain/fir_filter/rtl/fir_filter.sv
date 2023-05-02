@@ -17,9 +17,9 @@
 
 module fir_filter #(
     parameter DATA_PATH_WIDTH = 16,
-    MAX_FOLDING_FACTOR = 1,
-    PARALLEL_ORDER=8,
-    parameter [DATA_PATH_WIDTH-1:0] TAPS_IV [PARALLEL_ORDER:0] = '{PARALLEL_ORDER+1{0}}
+    FILTER_IMPLEMENTATION = "SERIAL",
+    MAX_N_TAPS=8,
+    parameter [DATA_PATH_WIDTH-1:0] TAPS_IV [MAX_N_TAPS:0] = '{MAX_N_TAPS+1{0}}
 )(
     input wire clock,
     input wire reset,
@@ -28,106 +28,73 @@ module fir_filter #(
     axi_stream.master data_out
 );
 
-    axi_stream #(
-        .DATA_WIDTH(DATA_PATH_WIDTH)
-    ) buffered_data_in();
-
-    axis_skid_buffer #(
-        .REGISTER_OUTPUT(0),
-        .DATA_WIDTH(DATA_PATH_WIDTH)
-    ) input_buffer(
+    reg [31:0] cu_read_registers [2:0];
+    reg [31:0] cu_write_registers [2:0];
+    reg tap_write;
+    
+    axil_simple_register_cu #(
+        .N_READ_REGISTERS(3),
+        .N_WRITE_REGISTERS(3),
+        .N_TRIGGER_REGISTERS(1),
+        .TRIGGER_REGISTERS_IDX('{2}),
+        .ADDRESS_MASK('h0FF)
+    ) CU (
         .clock(clock),
         .reset(reset),
-        .axis_in(data_in),
-        .axis_out(buffered_data_in)
+        .input_registers(cu_read_registers),
+        .output_registers(cu_write_registers),
+        .trigger_out(tap_write),
+        .axil(cfg_in)
     );
 
-    assign buffered_data_in.ready = data_out.valid;
+    assign cu_read_registers = cu_write_registers;
 
-    axi_stream cu_read_addr();
-    axi_stream cu_read_data();
-    axi_stream cu_write();
+    wire [31:0] control;
+    wire [15:0] tap_addr;
+    wire [15:0] tap_data;
 
-    axil_external_registers_cu #(
-        .REGISTERS_WIDTH(32),
-        .BASE_ADDRESS(0),
-        .READ_DELAY(0)
-    )CU (
-        .clock(clock),
-        .reset(reset),
-        .read_address(cu_read_addr),
-        .read_data(cu_read_data),
-        .write_data(cu_write),
-        .axi_in(cfg_in)
-    );
+    assign control = cu_write_registers[0];
+    assign tap_data = cu_write_registers[1];
+    assign tap_addr = cu_write_registers[2];
 
-    reg [$clog2(MAX_FOLDING_FACTOR):0] folding_factor;
-    reg [DATA_PATH_WIDTH-1:0] taps [MAX_FOLDING_FACTOR*PARALLEL_ORDER:0] = TAPS_IV; 
+    generate
+        if(FILTER_IMPLEMENTATION =="PARALLEL")begin
+            fir_filter_parallel #(
+                .DATA_PATH_WIDTH(DATA_PATH_WIDTH),
+                .PARALLEL_ORDER(MAX_N_TAPS),
+                .TAPS_IV(TAPS_IV)
+            )filter_core(
+                .clock(clock),
+                .reset(reset),
+                .tap_data(tap_data),
+                .tap_addr(tap_addr),
+                .tap_write(tap_write),
+                .data_in(data_in),
+                .data_out(data_out)
+            );
+        end else if(FILTER_IMPLEMENTATION == "SERIAL")begin
+            fir_filter_serial #(
+                .DATA_PATH_WIDTH(DATA_PATH_WIDTH),
+                .MAX_N_TAPS(MAX_N_TAPS),
+                .TAPS_IV(TAPS_IV)
+            )filter_core (
+                .clock(clock),
+                .reset(reset),
+                .n_taps(control),
+                .tap_data(tap_data),
+                .tap_addr(tap_addr),
+                .tap_write(tap_write),
+                .data_in(data_in),
+                .data_out(data_out)
+            );
+        end else begin
+            $error("%m ** Illegal Parameter value ** FILTER_IMPLEMENTATION can be either SERIAL or PARALLEL");
+        end   
+        
+    endgenerate
     
 
-    always_ff@(posedge clock) begin
-        cu_read_data.valid <= 0;
-        cu_write.ready <= 1;
-        if(cu_write.valid)begin
-            if(cu_write.dest == 0)begin
-                folding_factor <= cu_write.data[15:0];
-            end else begin
-                taps[cu_write.dest-1] <= cu_write.data;
-            end
-        end
 
-        if(cu_read_addr.valid)begin
-            if(cu_read_addr.data == 0)begin
-                cu_read_data.data[15:0] <= folding_factor;
-            end else begin
-                cu_read_data.data <= taps[cu_read_addr.dest-1];
-            end 
-            cu_read_data.valid <= 1;
-        end
-    end
-    
-
-
-    reg [$clog2(MAX_FOLDING_FACTOR)-1:0] folding_counter = 0;
-
-
-    //FSM STATE CONTROL REGISTERS
-    enum logic [2:0]{
-        filter_idle = 0,
-        filter_working = 1
-    } filter_state = filter_idle;
-
-
-    always_ff@(posedge clock) begin
-        case (filter_state)
-            filter_idle:begin
-                if(buffered_data_in.valid)begin
-                    filter_state <= filter_working;
-                    folding_counter <= folding_factor;
-                end
-            end
-            filter_working:begin
-                if(folding_counter == 0) begin
-                    filter_state <= filter_idle;
-                end else begin
-                    folding_counter <= folding_counter - 1;
-                end
-            end 
-        endcase
-    end
-
-
-    fir_filter_parallel #(
-        .DATA_PATH_WIDTH(DATA_PATH_WIDTH),
-        .MAX_FOLDING_FACTOR(MAX_FOLDING_FACTOR),
-        .PARALLEL_ORDER(PARALLEL_ORDER)
-    )filter_core(
-        .clock(clock),
-        .reset(reset),
-        .current_taps(taps),
-        .data_in(buffered_data_in),
-        .data_out(data_out)
-    );
 
 
 endmodule
