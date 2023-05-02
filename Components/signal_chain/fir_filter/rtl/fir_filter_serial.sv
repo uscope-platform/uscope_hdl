@@ -53,19 +53,44 @@ module fir_filter_serial #(
     } filter_state = filter_idle;
 
 
-    reg [DATA_PATH_WIDTH-1:0] true_delay_line [101:0] = '{102{0}};
-
-    wire[DATA_PATH_WIDTH-1:0] tdl_out;
-    assign tdl_out = true_delay_line[tap_counter-1];
+    reg [$clog2(MAX_N_TAPS)-1:0] dl_write_addr = 0;
+    reg [$clog2(MAX_N_TAPS)-1:0] dl_read_addr;
+    wire [DATA_PATH_WIDTH-1:0] dl_out;
     
     always_ff@(posedge clock) begin
-        if(data_in.valid) begin
-            true_delay_line[0]<= data_in.data;
-            for(int i = 0; i<100; i++)begin
-                true_delay_line[i+1] <= true_delay_line[i];
+        if(data_in.valid)begin
+            if(dl_write_addr == n_taps) begin
+                dl_write_addr <= 0;
+            end else begin
+                dl_write_addr <= dl_write_addr + 1;
+            end
+            dl_read_addr <= dl_write_addr;
+        end
+
+
+        if(filter_state == filter_running)begin
+            if(dl_read_addr == 0) begin
+                dl_read_addr <= n_taps;
+            end else begin
+                dl_read_addr <= dl_read_addr - 1;
             end
         end
     end
+    
+    DP_RAM #(
+        .DATA_WIDTH(DATA_PATH_WIDTH),
+        .ADDR_WIDTH($clog2(MAX_N_TAPS))
+    ) dl(
+        .clk(clock),
+        .addr_a(dl_write_addr),
+        .data_a(data_in.data),
+        .addr_b(dl_read_addr),
+        .data_b(dl_out),
+        .we_a(data_in.valid),
+        .en_b(1)
+    );
+
+
 
     reg[2*DATA_PATH_WIDTH-1:0] filter_accumulator;
 
@@ -77,11 +102,11 @@ module fir_filter_serial #(
                 if(data_in.valid)begin
                     data_in.ready <= 0;
                     filter_state <= filter_running;
-                    tap_counter <= 1;
+                    tap_counter <= 0;
                 end
             end 
             filter_running:begin
-                filter_accumulator <= $signed(filter_accumulator) + $signed(current_tap)*$signed(tdl_out);
+                filter_accumulator <= $signed(filter_accumulator) + $signed(current_tap)*$signed(dl_out);
                 if(tap_counter==n_taps)begin
                     data_in.ready <= 1;
                     data_out.data <= filter_accumulator>>>15;
