@@ -46,6 +46,11 @@ module AdcProcessing #(
     wire signed [DATA_PATH_WIDTH-1:0] offset [N_CHANNELS-1:0];
     wire [DATA_PATH_WIDTH-1:0] shift [N_CHANNELS-1:0];
 
+    wire [7:0] n_taps;
+    wire [DATA_PATH_WIDTH-1:0] taps_data;
+    wire [7:0] taps_addr;
+    wire taps_we;
+
     AdcProcessingControlUnit #(
         .STICKY_FAULT(STICKY_FAULT),
         .DATA_PATH_WIDTH(DATA_PATH_WIDTH),
@@ -66,7 +71,12 @@ module AdcProcessing #(
         .offset(offset),
         .shift_enable(shift_enable),
         .fault(fault),
-        .decimation_ratio(decimation_ratio)
+        // FILTERING AND DECIMATION
+        .decimation_ratio(decimation_ratio),
+        .n_taps(n_taps),
+        .taps_data(taps_data),
+        .taps_addr(taps_addr),
+        .taps_we(taps_we)
     );
 
     comparator #(
@@ -128,18 +138,39 @@ module AdcProcessing #(
                 .decimation_ratio(decimation_ratio)
             );
 
-        end else begin
-            Decimator_wrapper #(
-                .DATA_PATH_WIDTH(32)
-            ) dec(
-                .clock(clock),
-                .data_in_tdata(fast_data_out.data),
-                .data_in_tvalid(fast_data_out.valid),
-                .data_in_tready(fast_data_out.ready),
-                .data_out_tdata(filtered_data_out.data),
-                .data_out_tvalid(filtered_data_out.valid),
-                .data_out_tready(filtered_data_out.ready)
-            );
+        end else if(DECIMATED == 2)begin
+
+
+        axi_stream #(
+            .DATA_WIDTH(DATA_PATH_WIDTH)
+        ) raw_filtered_out();
+
+        fir_filter_serial #(
+            .DATA_PATH_WIDTH(DATA_PATH_WIDTH),
+            .MAX_N_TAPS(256)
+        )filter(
+            .clock(clock),
+            .reset(reset),
+            .n_taps(n_taps),
+            .tap_data(taps_data),
+            .tap_addr(taps_addr),
+            .tap_write(taps_we),
+            .data_in(cal_out),
+            .data_out(raw_filtered_out)
+        );
+
+        standard_decimator #(
+            .MAX_DECIMATION_RATIO(16),
+            .DATA_WIDTH(DATA_PATH_WIDTH),
+            .AVERAGING(0),
+            .N_CHANNELS(N_CHANNELS)
+        ) dec(
+            .clock(clock),
+            .reset(reset),
+            .data_in(raw_filtered_out),
+            .data_out(filtered_data_out),
+            .decimation_ratio(decimation_ratio)
+        );
         end
     endgenerate
 

@@ -35,28 +35,36 @@ module AdcProcessingControlUnit #(
     output wire [DATA_PATH_WIDTH-1:0] shift [N_CHANNELS-1:0],
     output reg        shift_enable,
     output reg        fault,
-    output reg [7:0]  decimation_ratio
+    // FILTERING AND DECIMATION
+    output reg [7:0]  decimation_ratio,
+    output reg [7:0]  n_taps,
+    output reg [31:0]  taps_data,
+    output reg [31:0]  taps_addr,
+    output reg taps_we
 );
 
     reg clear_fault, disable_fault;
     reg [7:0] slow_fault_threshold;
 
-    reg [31:0] cu_write_registers [9:0];
-    reg [31:0] cu_read_registers [9:0];
+    reg [31:0] cu_write_registers [11:0];
+    reg [31:0] cu_read_registers [11:0];
 
-    parameter [31:0] IV [9:0] = '{10{32'h0}};
+    parameter [31:0] IV [11:0] = '{12{32'h0}};
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(10),
-        .N_WRITE_REGISTERS(10),
+        .N_READ_REGISTERS(12),
+        .N_WRITE_REGISTERS(12),
         .REGISTERS_WIDTH(32),
         .ADDRESS_MASK('hff),
+        .N_TRIGGER_REGISTERS(1),
+        .TRIGGER_REGISTERS_IDX('{11}),
         .INITIAL_OUTPUT_VALUES(IV)
     ) CU (
         .clock(clock),
         .reset(reset),
         .input_registers(cu_read_registers),
         .output_registers(cu_write_registers),
+        .trigger_out(taps_we),
         .axil(axi_in)
     );
 
@@ -81,11 +89,14 @@ module AdcProcessingControlUnit #(
     assign shift_enable = cu_write_registers[9][0];
     assign latch_mode = cu_write_registers[9][2:1];
     assign clear_latch = cu_write_registers[9][4:3];
+    assign clear_fault = cu_write_registers[9][5];
+    assign disable_fault =cu_write_registers[9][6];
     assign slow_fault_threshold = cu_write_registers[9][15:8];
-    assign clear_fault = cu_write_registers[9][16];
-    assign disable_fault =cu_write_registers[9][17];
+    assign n_taps = cu_write_registers[9][23:16];
     assign decimation_ratio = cu_write_registers[9][31:24];
-
+    
+    assign taps_data = cu_write_registers[10];
+    assign taps_addr = cu_write_registers[11];
 
     assign cu_read_registers = cu_write_registers;
     
@@ -136,7 +147,7 @@ endmodule
 
 
  /**
-       {
+    {
         "name": "AdcProcessingControlUnit",
         "alias": "AdcProcessing",
         "type": "peripheral",
@@ -242,6 +253,12 @@ endmodule
                 "direction": "RW",
                 "fields":[
                     {
+                        "name":"shift_enable",
+                        "description": "Enables calibration shifter",
+                        "start_position": 0,
+                        "length": 1
+                    },
+                    {
                         "name":"latch_mode",
                         "description": "Toggles comparators between normal and latching mode",
                         "start_position": 1,
@@ -254,10 +271,16 @@ endmodule
                         "length": 2
                     },
                     {
-                        "name":"cal_shift",
-                        "description": "Ammount of bits the data will be shifted right by (gain)",
+                        "name":"clear_fault",
+                        "description": "Clear sticky fault satus",
                         "start_position": 5,
-                        "length": 3
+                        "length": 1
+                    },
+                    {
+                        "name":"fault_disable",
+                        "description": "Disable fault generation",
+                        "start_position": 6,
+                        "length": 1
                     },
                     {
                         "name":"fault_delay",
@@ -266,16 +289,10 @@ endmodule
                         "length": 8
                     },
                     {
-                        "name":"clear_fault",
-                        "description": "Clear sticky fault satus",
-                        "start_position": 16,
-                        "length": 1
-                    },
-                    {
-                        "name":"fault_disable",
-                        "description": "Disable fault generation",
-                        "start_position": 17,
-                        "length": 1
+                        "name":"n_taps",
+                        "description": "Number of active FIR filter taps",
+                        "start_position": 8,
+                        "length": 8
                     },
                     {
                         "name":"decimation",
@@ -284,7 +301,21 @@ endmodule
                         "length": 8
                     }
                 ]
+            },
+            {
+                "name": "filter_tap_data",
+                "offset": "0x14",
+                "description": "FIR filter coefficient interface data",
+                "direction": "RW",
+                "fields":[]
+            },
+            {
+                "name": "filter_tap_address",
+                "offset": "0x18",
+                "description": "FIR filter coefficient interface address",
+                "direction": "RW",
+                "fields":[]
             }
         ]
-    }  
+    }   
     **/

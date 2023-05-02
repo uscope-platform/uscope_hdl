@@ -18,8 +18,7 @@
         }
     ],
     "excluded_modules":[
-        "zynq_apb_bd",
-        "Decimator"
+        "zynq_apb_bd"
     ],
     "constraints": [
         "adcProcessing.xdc"
