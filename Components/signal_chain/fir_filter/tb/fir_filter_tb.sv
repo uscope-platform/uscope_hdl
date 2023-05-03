@@ -26,17 +26,25 @@ module fir_filter_tb();
     axi_lite cfg_axi();
     axi_lite_BFM axil_bfm;
 
+    //localparam data_width = 16;
+    //localparam signal_amplitude = 'h6fff;
+    localparam data_width = 15;
+    localparam signal_amplitude = 'h37ff;
+    //localparam data_width = 14;
+    //localparam signal_amplitude = 'h1bff;
 
     axi_stream #(
-        .DATA_WIDTH(16)
+        .DATA_WIDTH(data_width)
     ) filter_in();
 
     axi_stream #(
-        .DATA_WIDTH(16)
+        .DATA_WIDTH(data_width)
     ) filter_out();
 
-    fir_filter #(
-        .FILTER_IMPLEMENTATION("SERIAL"),
+    fir_filter #(        
+        .FILTER_IMPLEMENTATION("PARALLEL"),
+        .DATA_PATH_WIDTH(data_width),
+        .TAP_WIDTH(16),
         .MAX_N_TAPS(101)
     )UUT(
         .clock(clk),
@@ -99,7 +107,7 @@ module fir_filter_tb();
                 input_counter <= input_counter +1;
             end
             if(input_counter == 20)begin
-                filter_in.data <= signal_val*'h6fff;
+                filter_in.data <= signal_val*signal_amplitude;
                 filter_in.valid <= 1;
             end
         end

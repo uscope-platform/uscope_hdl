@@ -17,29 +17,49 @@
 
 module fir_filter_serial #(
     parameter DATA_PATH_WIDTH = 16,
+    TAP_WIDTH = 16,
+    WORKING_WIDTH = DATA_PATH_WIDTH > TAP_WIDTH ? DATA_PATH_WIDTH : TAP_WIDTH,
     MAX_N_TAPS=8,
-    parameter [DATA_PATH_WIDTH-1:0] TAPS_IV [MAX_N_TAPS:0] = '{MAX_N_TAPS+1{0}}
+    parameter [WORKING_WIDTH-1:0] TAPS_IV [MAX_N_TAPS:0] = '{MAX_N_TAPS+1{0}}
 )(
     input wire clock,
     input wire reset,
     input wire [15:0] n_taps,
-    input wire [DATA_PATH_WIDTH-1:0] tap_data,
+    input wire [WORKING_WIDTH-1:0] tap_data,
     input wire [15:0] tap_addr,
     input wire tap_write,
     axi_stream.slave data_in,
     axi_stream.master data_out
 );
     
-    reg [DATA_PATH_WIDTH-1:0] current_tap;
+    reg [WORKING_WIDTH-1:0] current_tap;
     reg [15:0] tap_counter = 0;
+    wire [WORKING_WIDTH-1:0] scaled_tap_data;
+    wire [WORKING_WIDTH-1:0] scaled_data_in;
+
+    generate
+        if(DATA_PATH_WIDTH>TAP_WIDTH)begin
+            assign scaled_tap_data = tap_data<<(DATA_PATH_WIDTH-TAP_WIDTH);
+        end else begin
+            assign scaled_tap_data = tap_data;
+        end
+
+        if(TAP_WIDTH>DATA_PATH_WIDTH)begin
+            assign scaled_data_in = data_in.data<<(TAP_WIDTH-DATA_PATH_WIDTH);
+        end else begin
+            assign scaled_data_in = data_in.data;
+        end
+
+    endgenerate
+
 
     DP_RAM #(
-        .DATA_WIDTH(DATA_PATH_WIDTH),
+        .DATA_WIDTH(WORKING_WIDTH),
         .ADDR_WIDTH($clog2(MAX_N_TAPS))
     ) tap_memory(
         .clk(clock),
         .addr_a(tap_addr),
-        .data_a(tap_data),
+        .data_a(scaled_tap_data),
         .addr_b(tap_counter),
         .data_b(current_tap),
         .we_a(tap_write),
@@ -55,7 +75,7 @@ module fir_filter_serial #(
 
     reg [$clog2(MAX_N_TAPS)-1:0] dl_write_addr = 0;
     reg [$clog2(MAX_N_TAPS)-1:0] dl_read_addr;
-    wire [DATA_PATH_WIDTH-1:0] dl_out;
+    wire [WORKING_WIDTH-1:0] dl_out;
     
     always_ff@(posedge clock) begin
         if(data_in.valid)begin
@@ -77,13 +97,15 @@ module fir_filter_serial #(
         end
     end
     
+    
+
     DP_RAM #(
-        .DATA_WIDTH(DATA_PATH_WIDTH),
+        .DATA_WIDTH(WORKING_WIDTH),
         .ADDR_WIDTH($clog2(MAX_N_TAPS))
     ) dl(
         .clk(clock),
         .addr_a(dl_write_addr),
-        .data_a(data_in.data),
+        .data_a(scaled_data_in),
         .addr_b(dl_read_addr),
         .data_b(dl_out),
         .we_a(data_in.valid),
@@ -92,7 +114,7 @@ module fir_filter_serial #(
 
 
 
-    reg[2*DATA_PATH_WIDTH-1:0] filter_accumulator;
+    reg[2*WORKING_WIDTH-1:0] filter_accumulator;
 
     always_ff@(posedge clock) begin
         case (filter_state)
@@ -109,7 +131,10 @@ module fir_filter_serial #(
                 filter_accumulator <= $signed(filter_accumulator) + $signed(current_tap)*$signed(dl_out);
                 if(tap_counter==n_taps)begin
                     data_in.ready <= 1;
-                    data_out.data <= filter_accumulator>>>15;
+                    if(DATA_PATH_WIDTH>=TAP_WIDTH)
+                        data_out.data <= filter_accumulator>>>(WORKING_WIDTH-1);
+                    else    
+                        data_out.data <= filter_accumulator>>>(WORKING_WIDTH-1+TAP_WIDTH-DATA_PATH_WIDTH);
                     data_out.valid <= 1;
                     filter_state <= filter_idle;
                 end else begin

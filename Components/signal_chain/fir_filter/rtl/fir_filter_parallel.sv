@@ -17,30 +17,48 @@
 
 module fir_filter_parallel #(
     parameter DATA_PATH_WIDTH = 16,
+    TAP_WIDTH = 16,
+    WORKING_WIDTH = DATA_PATH_WIDTH > TAP_WIDTH ? DATA_PATH_WIDTH : TAP_WIDTH,
     PARALLEL_ORDER=8,
-    parameter [DATA_PATH_WIDTH-1:0] TAPS_IV [PARALLEL_ORDER:0] = '{PARALLEL_ORDER+1{0}}
+    parameter [WORKING_WIDTH-1:0] TAPS_IV [PARALLEL_ORDER:0] = '{PARALLEL_ORDER+1{0}}
 )(
     input wire clock,
     input wire reset,
-    input wire [DATA_PATH_WIDTH-1:0] tap_data,
+    input wire [WORKING_WIDTH-1:0] tap_data,
     input wire [15:0] tap_addr,
     input wire tap_write,
     axi_stream.slave data_in,
     axi_stream.master data_out
 );
     
-    reg [DATA_PATH_WIDTH-1:0] taps [PARALLEL_ORDER:0] = TAPS_IV; 
-    
+    reg [WORKING_WIDTH-1:0] taps [PARALLEL_ORDER:0] = TAPS_IV; 
 
     always_ff@(posedge clock) begin
         if(tap_write)begin
-            taps[tap_addr] = tap_data;
+            if(DATA_PATH_WIDTH>TAP_WIDTH)begin
+                taps[tap_addr] <= tap_data<<(DATA_PATH_WIDTH-TAP_WIDTH);
+            end else begin
+                taps[tap_addr] <= tap_data;
+            end
         end
     end
 
+    wire [WORKING_WIDTH-1:0] scaled_data_in;
 
-    wire [2*DATA_PATH_WIDTH-1:0] pipeline_inputs [PARALLEL_ORDER-1:0];
-    reg signed [2*DATA_PATH_WIDTH-1:0] pipeline_registers [PARALLEL_ORDER-1:0];
+    generate
+
+        if(TAP_WIDTH>DATA_PATH_WIDTH)begin
+            assign scaled_data_in = data_in.data<<(TAP_WIDTH-DATA_PATH_WIDTH);
+        end else begin
+            assign scaled_data_in = data_in.data;
+        end
+
+    endgenerate
+
+
+
+    wire [2*WORKING_WIDTH-1:0] pipeline_inputs [PARALLEL_ORDER-1:0];
+    reg signed [2*WORKING_WIDTH-1:0] pipeline_registers [PARALLEL_ORDER-1:0];
 
     assign data_in.ready = data_out.ready;
 
@@ -52,15 +70,18 @@ module fir_filter_parallel #(
             assign pipeline_inputs[i] = pipeline_registers[i-1];
         end
 
-        assign data_out.data = pipeline_registers[PARALLEL_ORDER-1]>>>(DATA_PATH_WIDTH-1);
-
+        if(DATA_PATH_WIDTH>=TAP_WIDTH)
+            assign data_out.data = pipeline_registers[PARALLEL_ORDER-1]>>>(WORKING_WIDTH-1);
+        else
+            assign data_out.data = pipeline_registers[PARALLEL_ORDER-1]>>>(WORKING_WIDTH-1+TAP_WIDTH-DATA_PATH_WIDTH);
         for(i = 0; i<PARALLEL_ORDER+1; i++)begin
 
             fir_filter_slice #(
-                .DATA_PATH_WIDTH(DATA_PATH_WIDTH)
+                .DATA_PATH_WIDTH(WORKING_WIDTH),
+                .TAP_WIDTH(WORKING_WIDTH)
             ) filter_stage (
                 .clock(clock),
-                .data_in($signed(data_in.data)),
+                .data_in($signed(scaled_data_in)),
                 .in_valid(data_in.valid),
                 .tap(taps[i]),
                 .pipeline_in(pipeline_inputs[i]),

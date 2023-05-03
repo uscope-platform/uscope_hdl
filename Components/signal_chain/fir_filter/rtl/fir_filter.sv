@@ -17,9 +17,11 @@
 
 module fir_filter #(
     parameter DATA_PATH_WIDTH = 16,
+    TAP_WIDTH = 16,
+    WORKING_WIDTH = DATA_PATH_WIDTH > TAP_WIDTH ? DATA_PATH_WIDTH : TAP_WIDTH,
     FILTER_IMPLEMENTATION = "SERIAL",
     MAX_N_TAPS=8,
-    parameter [DATA_PATH_WIDTH-1:0] TAPS_IV [MAX_N_TAPS:0] = '{MAX_N_TAPS+1{0}}
+    parameter [WORKING_WIDTH-1:0] TAPS_IV [MAX_N_TAPS:0] = '{MAX_N_TAPS+1{0}}
 )(
     input wire clock,
     input wire reset,
@@ -51,7 +53,7 @@ module fir_filter #(
 
     wire [31:0] control;
     wire [15:0] tap_addr;
-    wire [15:0] tap_data;
+    wire [WORKING_WIDTH-1:0] tap_data;
 
     assign control = cu_write_registers[0];
     assign tap_data = cu_write_registers[1];
@@ -61,6 +63,7 @@ module fir_filter #(
         if(FILTER_IMPLEMENTATION =="PARALLEL")begin
             fir_filter_parallel #(
                 .DATA_PATH_WIDTH(DATA_PATH_WIDTH),
+                .TAP_WIDTH(TAP_WIDTH),
                 .PARALLEL_ORDER(MAX_N_TAPS),
                 .TAPS_IV(TAPS_IV)
             )filter_core(
@@ -75,6 +78,7 @@ module fir_filter #(
         end else if(FILTER_IMPLEMENTATION == "SERIAL")begin
             fir_filter_serial #(
                 .DATA_PATH_WIDTH(DATA_PATH_WIDTH),
+                .TAP_WIDTH(TAP_WIDTH),
                 .MAX_N_TAPS(MAX_N_TAPS),
                 .TAPS_IV(TAPS_IV)
             )filter_core (

@@ -15,19 +15,21 @@
 `timescale 10 ns / 1 ns
 
 module fir_filter_slice #(
-    parameter DATA_PATH_WIDTH = 16
+    parameter DATA_PATH_WIDTH = 16,
+    TAP_WIDTH = 16,
+    WORKING_WIDTH = DATA_PATH_WIDTH > TAP_WIDTH ? DATA_PATH_WIDTH : TAP_WIDTH
 )(
     input wire clock,
-    input wire signed [DATA_PATH_WIDTH-1:0] data_in,
+    input wire signed [WORKING_WIDTH-1:0] data_in,
     input wire in_valid,
-    input wire signed [DATA_PATH_WIDTH-1:0] tap,
-    input wire signed [2*DATA_PATH_WIDTH-1:0] pipeline_in,
-    output wire signed [2*DATA_PATH_WIDTH-1:0] pipeline_out,
+    input wire signed [WORKING_WIDTH-1:0] tap,
+    input wire signed [2*WORKING_WIDTH-1:0] pipeline_in,
+    output wire signed [2*WORKING_WIDTH-1:0] pipeline_out,
     output reg out_valid
 );
 
-    reg signed [2*DATA_PATH_WIDTH-1:0] internal_out = 0;
-    wire signed [2*DATA_PATH_WIDTH-1:0] multiplier_out;
+    reg signed [2*WORKING_WIDTH-1:0] internal_out = 0;
+    wire signed [2*WORKING_WIDTH-1:0] multiplier_out;
 
     assign pipeline_out = internal_out;
     assign multiplier_out = data_in*tap;
