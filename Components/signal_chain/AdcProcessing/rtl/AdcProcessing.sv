@@ -22,8 +22,11 @@ module AdcProcessing #(
     ENABLE_AVERAGE = 0,
     AVERAGING_DIVISOR = 2,
     STICKY_FAULT = 0,
-    parameter N_CHANNELS = 4,
-    parameter [N_CHANNELS-1:0] OUTPUT_SIGNED = {N_CHANNELS{1'b1}}
+    N_CHANNELS = 4,
+    MAX_FILTER_TAPS = 256,
+    parameter [N_CHANNELS-1:0] OUTPUT_SIGNED = {N_CHANNELS{1'b1}},
+    FILTER_WORKING_WIDTH = DATA_PATH_WIDTH > FLTER_TAP_WIDTH ? DATA_PATH_WIDTH : FLTER_TAP_WIDTH,
+    parameter [FLTER_TAP_WIDTH-1:0] FILTER_TAPS [MAX_FILTER_TAPS:0] = '{MAX_FILTER_TAPS+1{0}}
 )(
     input  wire       clock,
     input  wire       reset,
@@ -150,7 +153,8 @@ module AdcProcessing #(
         fir_filter_serial #(
             .DATA_PATH_WIDTH(DATA_PATH_WIDTH),
             .TAP_WIDTH(FLTER_TAP_WIDTH),
-            .MAX_N_TAPS(256)
+            .MAX_N_TAPS(MAX_FILTER_TAPS),
+            .TAPS_IV(FILTER_TAPS)
         )filter(
             .clock(clock),
             .reset(reset),

@@ -24,9 +24,9 @@ module fir_filter_serial #(
 )(
     input wire clock,
     input wire reset,
-    input wire [15:0] n_taps,
+    input wire [$clog2(MAX_N_TAPS)-1:0] n_taps,
     input wire [WORKING_WIDTH-1:0] tap_data,
-    input wire [15:0] tap_addr,
+    input wire [$clog2(MAX_N_TAPS)-1:0] tap_addr,
     input wire tap_write,
     axi_stream.slave data_in,
     axi_stream.master data_out
@@ -49,13 +49,14 @@ module fir_filter_serial #(
         end else begin
             assign scaled_data_in = data_in.data;
         end
-
     endgenerate
 
 
     DP_RAM #(
         .DATA_WIDTH(WORKING_WIDTH),
-        .ADDR_WIDTH($clog2(MAX_N_TAPS))
+        .ADDR_WIDTH($clog2(MAX_N_TAPS)),
+        .INIT_LEN(MAX_N_TAPS+1),
+        .MEM_INIT(TAPS_IV)
     ) tap_memory(
         .clk(clock),
         .addr_a(tap_addr),
@@ -119,6 +120,7 @@ module fir_filter_serial #(
     always_ff@(posedge clock) begin
         case (filter_state)
             filter_idle:begin
+                data_in.ready <= 1;
                 data_out.valid <= 0;
                 filter_accumulator <= 0;
                 if(data_in.valid)begin

@@ -14,9 +14,12 @@
 // limitations under the License.
 `timescale 10 ns / 1 ns
 
-module DP_RAM
-#(parameter DATA_WIDTH=32, parameter ADDR_WIDTH=8)
-(
+module DP_RAM #(
+    parameter DATA_WIDTH=32, 
+    parameter ADDR_WIDTH=8,
+    parameter INIT_LEN = 1,
+    parameter [DATA_WIDTH-1:0] MEM_INIT [INIT_LEN-1:0] = '{INIT_LEN{0}}
+)(
     input wire  clk,
     input wire [(DATA_WIDTH-1):0] data_a,
     output reg [(DATA_WIDTH-1):0] data_b,
@@ -26,19 +29,24 @@ module DP_RAM
     input wire en_b
 );
 
-  reg [DATA_WIDTH-1:0] ram [2**ADDR_WIDTH-1:0];
- 
-    integer ram_index;
+
+    reg [DATA_WIDTH-1:0] ram [2**ADDR_WIDTH-1:0];
+
     initial begin
-        for (ram_index = 0; ram_index < 2**ADDR_WIDTH; ram_index = ram_index + 1)
+        for (int ram_index = 0; ram_index < 2**ADDR_WIDTH; ram_index = ram_index + 1)begin
             ram[ram_index] = {DATA_WIDTH{1'b0}};
+        end
+        for (int ram_index = 0; ram_index < INIT_LEN; ram_index = ram_index + 1)begin
+            ram[ram_index] = MEM_INIT[ram_index];
+        end
     end
 
-  always @(posedge clk) begin
-    if (we_a)
-      ram[addr_a] <= data_a;
-    if (en_b)
-      data_b <= ram[addr_b];
-  end
+
+    always @(posedge clk) begin
+        if (we_a)
+            ram[addr_a] <= data_a;
+        if (en_b)
+            data_b <= ram[addr_b];
+    end
 
 endmodule
