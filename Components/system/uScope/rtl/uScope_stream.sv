@@ -68,12 +68,12 @@ module uScope_stream #(
     wire[31:0] int_readdata;
     wire [31:0] scope_window_base;
 
-    reg [31:0] cu_write_registers [1:0];
-    reg [31:0] cu_read_registers [1:0];
+    reg [31:0] cu_write_registers [6:0];
+    reg [31:0] cu_read_registers [6:0];
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(2),
-        .N_WRITE_REGISTERS(2),
+        .N_READ_REGISTERS(7),
+        .N_WRITE_REGISTERS(7),
         .REGISTERS_WIDTH(32),
         .ADDRESS_MASK('hff)
     ) CU (
@@ -85,49 +85,16 @@ module uScope_stream #(
     );
 
     wire external_capture_enable;
-    assign addr_1 = cu_write_registers[0][2:0];
-    assign addr_2 = cu_write_registers[0][6:4];
-    assign addr_3 = cu_write_registers[0][10:8];
-    assign addr_4 = cu_write_registers[0][14:12];
-    assign addr_5 = cu_write_registers[0][18:16];
-    assign addr_6 = cu_write_registers[0][22:20];
-    assign scope_window_base = cu_write_registers[1];
     assign external_capture_enable = cu_write_registers[0][24];
+    assign addr_1 = cu_write_registers[1];
+    assign addr_2 = cu_write_registers[2];
+    assign addr_3 = cu_write_registers[3];
+    assign addr_4 = cu_write_registers[4];
+    assign addr_5 = cu_write_registers[5];
+    assign addr_6 = cu_write_registers[6];
+    
 
-
-    assign cu_read_registers[0][2:0] = addr_1;
-    assign cu_read_registers[0][3] = 0;
-    assign cu_read_registers[0][6:4] = addr_2;
-    assign cu_read_registers[0][7] = 0;
-    assign cu_read_registers[0][10:8] = addr_3;
-    assign cu_read_registers[0][11] = 0;
-    assign cu_read_registers[0][14:12] = addr_4;
-    assign cu_read_registers[0][15] = 0;
-    assign cu_read_registers[0][18:16] = addr_5;
-    assign cu_read_registers[0][19] = 0;
-    assign cu_read_registers[0][22:20] = addr_6;
-    assign cu_read_registers[0][23] = 0;
-    assign cu_read_registers[0][24] = external_capture_enable;
-    assign cu_read_registers[0][31:25] = 0;
-    assign cu_read_registers[1] = scope_window_base;
-
-
-    reg [7:0] selector_1;
-    reg [7:0] selector_2;
-    reg [7:0] selector_3;
-    reg [7:0] selector_4;
-    reg [7:0] selector_5;
-    reg [7:0] selector_6;
-
-    always_ff @(posedge clock) begin
-        selector_1 <= scope_window_base + addr_1;
-        selector_2 <= scope_window_base + addr_2;
-        selector_3 <= scope_window_base + addr_3;
-        selector_4 <= scope_window_base + addr_4;
-        selector_5 <= scope_window_base + addr_5;
-        selector_6 <= scope_window_base + addr_6;
-    end
-
+    assign cu_read_registers = cu_write_registers;
 
 
     axi_stream scope_in[8]();
@@ -137,7 +104,7 @@ module uScope_stream #(
         .REGISTERED(0)
     ) extractor_0(
         .clock(clock),
-        .selector(selector_1),
+        .selector(addr_1),
         .out_dest(0),
         .stream_in(data_in),
         .stream_out(scope_in[0])
@@ -148,7 +115,7 @@ module uScope_stream #(
         .REGISTERED(0)
     ) extractor_1(
         .clock(clock),
-        .selector(selector_2),
+        .selector(addr_2),
         .out_dest(1),
         .stream_in(data_in),
         .stream_out(scope_in[1])
@@ -159,7 +126,7 @@ module uScope_stream #(
         .REGISTERED(0)
     ) extractor_2(
         .clock(clock),
-        .selector(selector_3),
+        .selector(addr_3),
         .out_dest(2),
         .stream_in(data_in),
         .stream_out(scope_in[2])
@@ -170,7 +137,7 @@ module uScope_stream #(
         .REGISTERED(0)
     ) extractor_3(
         .clock(clock),
-        .selector(selector_4),
+        .selector(addr_4),
         .out_dest(3),
         .stream_in(data_in),
         .stream_out(scope_in[3])
@@ -181,7 +148,7 @@ module uScope_stream #(
         .REGISTERED(0)
     ) extractor_4(
         .clock(clock),
-        .selector(selector_5),
+        .selector(addr_5),
         .out_dest(4),
         .stream_in(data_in),
         .stream_out(scope_in[4])
@@ -192,7 +159,7 @@ module uScope_stream #(
         .REGISTERED(0)
     ) extractor_5(
         .clock(clock),
-        .selector(selector_6),
+        .selector(addr_6),
         .out_dest(5),
         .stream_in(data_in),
         .stream_out(scope_in[5])
@@ -257,47 +224,11 @@ endmodule
         "type": "peripheral",
         "registers":[
             {
-                "name": "channel_mux",
+                "name": "scope_control",
                 "offset": "0x0",
-                "description": "uScope channel MUX control",
+                "description": "uScope sampling control",
                 "direction": "RW",
                 "fields":[
-                    {
-                        "name":"addr_1",
-                        "description": "Address for channel 1",
-                        "start_position": 0,
-                        "length": 3
-                    },
-                    {
-                        "name":"addr_2",
-                        "description": "Address for channel 2",
-                        "start_position": 4,
-                        "length": 3
-                    },
-                    {
-                        "name":"addr_3",
-                        "description": "Address for channel 3",
-                        "start_position": 8,
-                        "length": 3
-                    },
-                    {
-                        "name":"addr_4",
-                        "description": "Address for channel 4",
-                        "start_position": 12,
-                        "length": 3
-                    },
-                    {
-                        "name":"addr_5",
-                        "description": "Address for channel 5",
-                        "start_position": 16,
-                        "length": 3
-                    },
-                    {
-                        "name":"addr_6",
-                        "description": "Address for channel 6",
-                        "start_position": 20,
-                        "length": 3
-                    },
                     {
                         "name":"external_capture",
                         "description": "Enable external caputure",
@@ -307,9 +238,39 @@ endmodule
                 ]
             },
             {
-                "name": "scope_base",
+                "name": "addr_1",
                 "offset": "0x4",
-                "description": "Scope windows base address",
+                "description": "Address for channel 1 mux",
+                "direction": "RW"
+            },
+            {
+                "name": "addr_2",
+                "offset": "0x8",
+                "description": "Address for channel 2 mux",
+                "direction": "RW"
+            },
+            {
+                "name": "addr_3",
+                "offset": "0xC",
+                "description": "Address for channel 3 mux",
+                "direction": "RW"
+            },
+            {
+                "name": "addr_4",
+                "offset": "0x10",
+                "description": "Address for channel 4 mux",
+                "direction": "RW"
+            },
+            {
+                "name": "addr_5",
+                "offset": "0x14",
+                "description": "Address for channel 5 mux",
+                "direction": "RW"
+            },
+            {
+                "name": "addr_6",
+                "offset": "0x18",
+                "description": "Address for channel 6 mux",
                 "direction": "RW"
             }
         ]
