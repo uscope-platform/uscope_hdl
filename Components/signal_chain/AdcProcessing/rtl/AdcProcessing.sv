@@ -17,6 +17,7 @@
 
 module AdcProcessing #(
     parameter DATA_PATH_WIDTH = 16,
+    FLTER_TAP_WIDTH = 16,
     DECIMATED = 1,
     ENABLE_AVERAGE = 0,
     AVERAGING_DIVISOR = 2,
@@ -47,12 +48,13 @@ module AdcProcessing #(
     wire [DATA_PATH_WIDTH-1:0] shift [N_CHANNELS-1:0];
 
     wire [7:0] n_taps;
-    wire [DATA_PATH_WIDTH-1:0] taps_data;
+    wire [FLTER_TAP_WIDTH-1:0] taps_data;
     wire [7:0] taps_addr;
     wire taps_we;
 
     AdcProcessingControlUnit #(
         .STICKY_FAULT(STICKY_FAULT),
+        .FLTER_TAP_WIDTH(FLTER_TAP_WIDTH),
         .DATA_PATH_WIDTH(DATA_PATH_WIDTH),
         .N_CHANNELS(N_CHANNELS)
     ) AdcCU(
@@ -147,6 +149,7 @@ module AdcProcessing #(
 
         fir_filter_serial #(
             .DATA_PATH_WIDTH(DATA_PATH_WIDTH),
+            .TAP_WIDTH(FLTER_TAP_WIDTH),
             .MAX_N_TAPS(256)
         )filter(
             .clock(clock),

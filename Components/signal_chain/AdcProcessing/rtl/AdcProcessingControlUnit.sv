@@ -18,6 +18,7 @@
 module AdcProcessingControlUnit #(
     STICKY_FAULT = 0,
     DATA_PATH_WIDTH = 16,
+    FLTER_TAP_WIDTH = 16,
     N_CHANNELS = 4
 )(
     input wire clock,
@@ -38,8 +39,8 @@ module AdcProcessingControlUnit #(
     // FILTERING AND DECIMATION
     output reg [7:0]  decimation_ratio,
     output reg [7:0]  n_taps,
-    output reg [31:0]  taps_data,
-    output reg [31:0]  taps_addr,
+    output reg [FLTER_TAP_WIDTH:0]  taps_data,
+    output reg [7:0]  taps_addr,
     output reg taps_we
 );
 
