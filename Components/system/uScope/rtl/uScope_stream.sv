@@ -31,12 +31,12 @@ module uScope_stream #(
     axi_lite.master dma_axi
 );
 
-    reg[7:0] addr_1;
-    reg[7:0] addr_2;
-    reg[7:0] addr_3;
-    reg[7:0] addr_4;
-    reg[7:0] addr_5;
-    reg[7:0] addr_6;
+    wire [7:0] addr_1;
+    wire [7:0] addr_2;
+    wire [7:0] addr_3;
+    wire [7:0] addr_4;
+    wire [7:0] addr_5;
+    wire [7:0] addr_6;
 
     axi_lite #(.INTERFACE_NAME("MUX CONTROLLER")) mux_ctrl_axi();
     axi_lite #(.INTERFACE_NAME("TRIGGER CONTROLLER")) uscope_axi();
@@ -65,15 +65,14 @@ module uScope_stream #(
     );
 
 
-    wire[31:0] int_readdata;
-    wire [31:0] scope_window_base;
-
     reg [31:0] cu_write_registers [6:0];
     reg [31:0] cu_read_registers [6:0];
+    localparam [31:0] VARIABLE_INITIAL_VALUES [6:0] = '{7{1'b0}};
 
     axil_simple_register_cu #(
         .N_READ_REGISTERS(7),
         .N_WRITE_REGISTERS(7),
+        .INITIAL_OUTPUT_VALUES(VARIABLE_INITIAL_VALUES),
         .REGISTERS_WIDTH(32),
         .ADDRESS_MASK('hff)
     ) CU (

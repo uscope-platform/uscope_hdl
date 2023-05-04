@@ -116,7 +116,7 @@ module fir_filter_serial #(
 
 
     reg[2*WORKING_WIDTH-1:0] filter_accumulator;
-
+    reg [15:0] latched_dest;
     always_ff@(posedge clock) begin
         case (filter_state)
             filter_idle:begin
@@ -125,6 +125,7 @@ module fir_filter_serial #(
                 filter_accumulator <= 0;
                 if(data_in.valid)begin
                     data_in.ready <= 0;
+                    latched_dest <= data_in.dest;
                     filter_state <= filter_running;
                     tap_counter <= 0;
                 end
@@ -137,6 +138,7 @@ module fir_filter_serial #(
                         data_out.data <= filter_accumulator>>>(WORKING_WIDTH-1);
                     else    
                         data_out.data <= filter_accumulator>>>(WORKING_WIDTH-1+TAP_WIDTH-DATA_PATH_WIDTH);
+                    data_out.dest <= latched_dest;
                     data_out.valid <= 1;
                     filter_state <= filter_idle;
                 end else begin

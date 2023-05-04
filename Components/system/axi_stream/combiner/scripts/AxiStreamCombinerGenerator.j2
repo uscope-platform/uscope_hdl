@@ -16,7 +16,7 @@
 `timescale 10ns / 1ns
 `include "interfaces.svh"
 
-module axi_stream_combiner_{{n_streams}} #(parameter INPUT_DATA_WIDTH = 16, OUTPUT_DATA_WIDTH = 32, TLAST_PERIOD = 1024, MSB_DEST_SUPPORT = "TRUE")(
+module axi_stream_combiner_{{n_streams}} #(parameter INPUT_DATA_WIDTH = 16, OUTPUT_DATA_WIDTH = 32, DEST_WIDTH = 8, USER_WIDTH = 8, TLAST_PERIOD = 1024, MSB_DEST_SUPPORT = "TRUE")(
     input wire clock,
     input wire reset,
 {%- for number in streams %}
@@ -26,8 +26,8 @@ module axi_stream_combiner_{{n_streams}} #(parameter INPUT_DATA_WIDTH = 16, OUTP
 );
 
     reg [INPUT_DATA_WIDTH-1:0] combined_data;
-    reg [7:0] combined_dest;
-    reg [7:0] combined_user;
+    reg [DEST_WIDTH-1:0] combined_dest;
+    reg [USER_WIDTH-1:0] combined_user;
     reg combined_valid;
     wire combined_tlast;
 
@@ -39,7 +39,6 @@ module axi_stream_combiner_{{n_streams}} #(parameter INPUT_DATA_WIDTH = 16, OUTP
         if(MSB_DEST_SUPPORT == "TRUE")begin
             assign stream_out.data = {combined_dest, {(OUTPUT_DATA_WIDTH-INPUT_DATA_WIDTH-8){combined_data[INPUT_DATA_WIDTH-1]} }, combined_data};
         end else begin
-        
             assign stream_out.data = {{ '{{' }}(OUTPUT_DATA_WIDTH-INPUT_DATA_WIDTH){combined_data[INPUT_DATA_WIDTH-1]}},combined_data};
         end  
     endgenerate
