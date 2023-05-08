@@ -39,26 +39,30 @@ module AdcProcessingControlUnit #(
     // FILTERING AND DECIMATION
     output reg [7:0]  decimation_ratio,
     output reg [7:0]  n_taps,
-    output reg [FLTER_TAP_WIDTH:0]  taps_data,
+    output reg [FLTER_TAP_WIDTH:0] taps_data,
     output reg [7:0]  taps_addr,
     output reg taps_we
 );
 
+    localparam N_SHIFT_REGS = N_CHANNELS/8+1;
+    localparam N_REGISTERS = 2*N_CHANNELS+N_SHIFT_REGS+3;
+    localparam TAP_ADDR_REG = 2*N_CHANNELS+N_SHIFT_REGS+2;
+
     reg clear_fault, disable_fault;
     reg [7:0] slow_fault_threshold;
 
-    reg [31:0] cu_write_registers [11:0];
-    reg [31:0] cu_read_registers [11:0];
+    reg [31:0] cu_write_registers [N_REGISTERS-1:0];
+    reg [31:0] cu_read_registers [N_REGISTERS-1:0];
 
-    parameter [31:0] IV [11:0] = '{12{32'h0}};
+    parameter [31:0] IV [N_REGISTERS-1:0] = '{N_REGISTERS{32'h0}};
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(12),
-        .N_WRITE_REGISTERS(12),
+        .N_READ_REGISTERS(N_REGISTERS),
+        .N_WRITE_REGISTERS(N_REGISTERS),
         .REGISTERS_WIDTH(32),
         .ADDRESS_MASK('hff),
         .N_TRIGGER_REGISTERS(1),
-        .TRIGGER_REGISTERS_IDX('{11}),
+        .TRIGGER_REGISTERS_IDX('{TAP_ADDR_REG}),
         .INITIAL_OUTPUT_VALUES(IV)
     ) CU (
         .clock(clock),
@@ -68,36 +72,35 @@ module AdcProcessingControlUnit #(
         .trigger_out(taps_we),
         .axil(axi_in)
     );
-
-    assign comparator_thresholds[0] =  cu_write_registers[0][15:0];
-    assign comparator_thresholds[4] =  cu_write_registers[0][31:16];
-    assign comparator_thresholds[1] =  cu_write_registers[1][15:0];
-    assign comparator_thresholds[5] =  cu_write_registers[1][31:16];
-    assign comparator_thresholds[2] =  cu_write_registers[2][15:0];
-    assign comparator_thresholds[6] =  cu_write_registers[2][31:16];
-    assign comparator_thresholds[3] =  cu_write_registers[3][15:0];
-    assign comparator_thresholds[7] =  cu_write_registers[3][31:16];
-    assign offset[0] =  cu_write_registers[4][15:0];
-    assign offset[1] =  cu_write_registers[5][15:0];
-    assign offset[2] =  cu_write_registers[6][15:0];
-    assign offset[3] =  cu_write_registers[7][15:0];
-    assign shift[0] = cu_write_registers[8][3:0];
-    assign shift[1] = cu_write_registers[8][7:4];
-    assign shift[2] = cu_write_registers[8][11:8];
-    assign shift[3] = cu_write_registers[8][15:12];
-
-
-    assign shift_enable = cu_write_registers[9][0];
-    assign latch_mode = cu_write_registers[9][2:1];
-    assign clear_latch = cu_write_registers[9][4:3];
-    assign clear_fault = cu_write_registers[9][5];
-    assign disable_fault =cu_write_registers[9][6];
-    assign slow_fault_threshold = cu_write_registers[9][15:8];
-    assign n_taps = cu_write_registers[9][23:16];
-    assign decimation_ratio = cu_write_registers[9][31:24];
     
-    assign taps_data = cu_write_registers[10];
-    assign taps_addr = cu_write_registers[11];
+    genvar i, j;
+    generate
+        for(i = 0; i<N_CHANNELS; i++)begin
+            assign comparator_thresholds[i] =  cu_write_registers[i][15:0];
+            assign comparator_thresholds[i+1*N_CHANNELS] =  cu_write_registers[i][31:16];
+            assign offset[i] =  cu_write_registers[i+1*N_CHANNELS][15:0];
+        end
+        for(j = 0; j<N_SHIFT_REGS; j++)begin
+            for(i = 0; i<8; i++)begin
+                if(i+j*8<N_CHANNELS)begin
+                    assign shift[i+j*8] = cu_write_registers[2*N_CHANNELS+j][i*4+3:i*4];
+                end
+            end
+        end
+        
+    endgenerate
+
+    assign shift_enable         = cu_write_registers[2*N_CHANNELS+N_SHIFT_REGS][0];
+    assign latch_mode           = cu_write_registers[2*N_CHANNELS+N_SHIFT_REGS][2:1];
+    assign clear_latch          = cu_write_registers[2*N_CHANNELS+N_SHIFT_REGS][4:3];
+    assign clear_fault          = cu_write_registers[2*N_CHANNELS+N_SHIFT_REGS][5];
+    assign disable_fault        = cu_write_registers[2*N_CHANNELS+N_SHIFT_REGS][6];
+    assign slow_fault_threshold = cu_write_registers[2*N_CHANNELS+N_SHIFT_REGS][15:8];
+    assign n_taps               = cu_write_registers[2*N_CHANNELS+N_SHIFT_REGS][23:16];
+    assign decimation_ratio     = cu_write_registers[2*N_CHANNELS+N_SHIFT_REGS][31:24];
+    
+    assign taps_data = cu_write_registers[2*N_CHANNELS+N_SHIFT_REGS+1];
+    assign taps_addr = cu_write_registers[2*N_CHANNELS+N_SHIFT_REGS+2];
 
     assign cu_read_registers = cu_write_registers;
     
