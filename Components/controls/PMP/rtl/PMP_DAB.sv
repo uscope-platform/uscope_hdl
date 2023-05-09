@@ -18,7 +18,8 @@
 
 module dab_pre_modulation_processor #(
     PWM_BASE_ADDR = 0,
-    N_PWM_CHANNELS = 4
+    N_PWM_CHANNELS = 4,
+    N_PARAMETERS = 13
 )(
     input wire clock,
     input wire reset,
@@ -28,7 +29,7 @@ module dab_pre_modulation_processor #(
     input wire [3:0] update,
     input wire [1:0] modulation_type,
     input wire [15:0] period,
-    input wire [15:0] modulation_parameters[11:0],
+    input wire [15:0] modulation_parameters[N_PARAMETERS-1:0],
     output reg modulator_status,
     output reg done,
     axi_stream.master write_request

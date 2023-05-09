@@ -19,7 +19,8 @@
 module buck_pre_modulation_processor  #(
     PWM_BASE_ADDR = 0,
     N_PHASES = 4,
-    N_PWM_CHANNELS = 1
+    N_PWM_CHANNELS = 1,
+    N_PARAMETERS = 13
 )(
     input wire clock,
     input wire reset,
@@ -28,7 +29,7 @@ module buck_pre_modulation_processor  #(
     input wire stop,
     input wire [3:0] update,
     input wire [15:0] period,
-    input wire [15:0] modulation_parameters[11:0],
+    input wire [15:0] modulation_parameters[12:0],
     output reg done,
     output reg modulator_status,
     axi_stream.master write_request
@@ -73,17 +74,19 @@ module buck_pre_modulation_processor  #(
     
     typedef enum reg [3:0] {
         calc_idle_state = 0,
-        configuration_state = 1,
-        write_strobe = 2,
-        update_modulator = 3,
-        configure_shifts = 4
+        wait_period = 1,
+        configuration_state = 2,
+        write_strobe = 3,
+        update_modulator = 4,
+        configure_shifts = 5
     } fsm_state;
 
     fsm_state calculation_state;
     fsm_state next_state;
 
     reg [15:0] phases_counter;
-
+    reg [15:0] period_old = 0;
+    
     // Determine the next state
     always @ (posedge clock) begin : main_fsm
         if (~reset) begin
@@ -95,7 +98,7 @@ module buck_pre_modulation_processor  #(
             phases_counter <= 0;
             modulator_status <= modulator_off;
         end else begin
-            chain_config_data[1] <= period;
+            period_old <= period;
             case (calculation_state)
                 calc_idle_state: begin
                     update_needed <= update_needed | (|update);
@@ -107,7 +110,7 @@ module buck_pre_modulation_processor  #(
                         write_request.dest <= PWM_BASE_ADDR + global_config_addr;
                         write_request.data <= global_config_data;
                         write_request.valid <= 1;
-                        next_state <=configuration_state;
+                        next_state <=wait_period;
                         calculation_state <= write_strobe;
                     end
 
@@ -128,6 +131,12 @@ module buck_pre_modulation_processor  #(
                         write_request.dest <= PWM_BASE_ADDR+ global_config_addr;
                         write_request.data <= global_config_data;
                         write_request.valid <= 1;
+                    end
+                end
+                wait_period:begin
+                    if(period != period_old)begin
+                        chain_config_data[1] <= period;
+                        calculation_state <= configuration_state;
                     end
                 end
                 configuration_state:begin

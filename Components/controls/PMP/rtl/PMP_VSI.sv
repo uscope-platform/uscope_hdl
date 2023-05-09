@@ -19,7 +19,8 @@
 module vsi_pre_modulation_processor  #(
     PWM_BASE_ADDR = 0,
     N_PHASES = 4,
-    N_PWM_CHANNELS = 4
+    N_PWM_CHANNELS = 4,
+    N_PARAMETERS = 13
 )(
     input wire clock,
     input wire reset,
@@ -28,7 +29,7 @@ module vsi_pre_modulation_processor  #(
     input wire stop,
     input wire [3:0] update,
     input wire [15:0] period,
-    input wire [15:0] modulation_parameters[11:0],
+    input wire [15:0] modulation_parameters[N_PARAMETERS-1:0],
     output reg done,
     output reg modulator_status,
     axi_stream.master write_request

@@ -21,6 +21,7 @@ module pre_modulation_processor #(
     BASE_ADDRESS = 0,
     PWM_BASE_ADDR = 0,
     N_PWM_CHANNELS = 4,
+    N_PARAMETERS = 13,
     N_CHAINS = 2
 )(
     input wire clock,
@@ -30,8 +31,7 @@ module pre_modulation_processor #(
     axi_lite.slave axi_in,
     axi_lite.master axi_out,
     axi_stream.slave modulation_in,
-    output reg modulator_ready,
-    output reg modulator_running
+    output reg modulator_ready
 );
 
     axi_stream cu_write();
@@ -42,8 +42,8 @@ module pre_modulation_processor #(
     reg config_required;
 
 
-    reg [31:0] cu_write_registers [13:0];
-    reg [31:0] cu_read_registers [13:0];
+    reg [31:0] cu_write_registers [N_PARAMETERS+1:0] = '{N_PARAMETERS+2{0}};
+    reg [31:0] cu_read_registers [N_PARAMETERS+1:0];
 
     axil_external_registers_cu #(
         .REGISTERS_WIDTH(32),
@@ -98,13 +98,13 @@ module pre_modulation_processor #(
     reg [1:0] converter_type;
     reg [31:0] period;
     
-    reg [15:0] modulation_parameters [11:0];
+    reg [15:0] modulation_parameters [N_PARAMETERS-1:0];
 
     assign {modulator_stop_request, modulator_start_request,  converter_type, modulation_type} = cu_write_registers[0];
     assign period = cu_write_registers[1];
     
     genvar i;
-    for(i = 0; i<12; i++)begin
+    for(i = 0; i<N_PARAMETERS; i++)begin
         assign modulation_parameters[i] = cu_write_registers[i+2];
     end
     
@@ -112,7 +112,7 @@ module pre_modulation_processor #(
     assign cu_read_registers[0] = {modulator_stop_request, modulator_start_request, converter_type, modulation_type};
     assign cu_read_registers[1] = period;
     
-    for(i = 0; i<12; i++)begin
+    for(i = 0; i<N_PARAMETERS; i++)begin
         assign cu_read_registers[i+2] = modulation_parameters[i];
     end
     
@@ -179,7 +179,8 @@ module pre_modulation_processor #(
 
             dab_pre_modulation_processor #(
                 .PWM_BASE_ADDR(PWM_BASE_ADDR),
-                .N_PWM_CHANNELS(N_PWM_CHANNELS)
+                .N_PWM_CHANNELS(N_PWM_CHANNELS),
+                .N_PARAMETERS(N_PARAMETERS)
             ) dab_pmp (
                 .clock(clock),
                 .reset(reset),
@@ -197,7 +198,8 @@ module pre_modulation_processor #(
 
             vsi_pre_modulation_processor  #(
                 .PWM_BASE_ADDR(PWM_BASE_ADDR),
-                .N_PWM_CHANNELS(N_PWM_CHANNELS)
+                .N_PWM_CHANNELS(N_PWM_CHANNELS),
+                .N_PARAMETERS(N_PARAMETERS)
             ) vsi_pmp (
                 .clock(clock),
                 .reset(reset),
@@ -206,7 +208,7 @@ module pre_modulation_processor #(
                 .configure(configuration_start),
                 .update(triggers[4:1]),
                 .period(period),
-                .modulation_parameters(modulation_parameters[11:0]),
+                .modulation_parameters(modulation_parameters),
                 .done(vsi_done),
                 .modulator_status(vsi_modulator_status),
                 .write_request(vsi_write)
@@ -216,7 +218,8 @@ module pre_modulation_processor #(
             buck_pre_modulation_processor  #(
                 .PWM_BASE_ADDR(PWM_BASE_ADDR),
                 .N_PHASES(N_CHAINS),
-                .N_PWM_CHANNELS(N_PWM_CHANNELS)
+                .N_PWM_CHANNELS(N_PWM_CHANNELS),
+                .N_PARAMETERS(N_PARAMETERS)
             ) buck_pmp (
                 .clock(clock),
                 .reset(reset),
@@ -225,7 +228,7 @@ module pre_modulation_processor #(
                 .configure(configuration_start),
                 .update(triggers[4:1]),
                 .period(period),
-                .modulation_parameters(modulation_parameters[11:0]),
+                .modulation_parameters(modulation_parameters),
                 .done(buck_done),
                 .modulator_status(buck_modulator_status),
                 .write_request(buck_write)
