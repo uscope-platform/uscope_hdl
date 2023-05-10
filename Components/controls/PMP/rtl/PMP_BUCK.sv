@@ -76,9 +76,10 @@ module buck_pre_modulation_processor  #(
         calc_idle_state = 0,
         wait_period = 1,
         configuration_state = 2,
-        write_strobe = 3,
-        update_modulator = 4,
-        configure_shifts = 5
+        wait_start = 3,
+        write_strobe = 4,
+        update_modulator = 5,
+        configure_shifts = 6
     } fsm_state;
 
     fsm_state calculation_state;
@@ -86,7 +87,8 @@ module buck_pre_modulation_processor  #(
 
     reg [15:0] phases_counter;
     reg [15:0] period_old = 0;
-    
+    reg inner_done = 0;
+
     // Determine the next state
     always @ (posedge clock) begin : main_fsm
         if (~reset) begin
@@ -101,10 +103,10 @@ module buck_pre_modulation_processor  #(
             period_old <= period;
             case (calculation_state)
                 calc_idle_state: begin
-                    update_needed <= update_needed | (|update);
+                    update_needed <= update_needed | update[3];
                     done <= 0;
                     write_request.valid <= 0;
-
+                    inner_done <= 0;
                     if(configure)begin
                         config_counter <= 0;
                         write_request.dest <= PWM_BASE_ADDR + global_config_addr;
@@ -114,16 +116,14 @@ module buck_pre_modulation_processor  #(
                         calculation_state <= write_strobe;
                     end
 
-                    if(update_needed & modulator_status==modulator_off)begin
+                    if(update_needed)begin
                         calculation_state <= update_modulator;
+                        phases_counter <= 0;
                         update_needed <=0;
                     end
 
                      if(start) begin 
-                        modulator_status <= modulator_on;
-                        write_request.dest <= PWM_BASE_ADDR+ global_config_addr;
-                        write_request.data <= modulator_on_config_register;
-                        write_request.valid <= 1;
+                        calculation_state <=wait_start;
                     end
 
                     if(stop) begin 
@@ -139,8 +139,17 @@ module buck_pre_modulation_processor  #(
                         calculation_state <= configuration_state;
                     end
                 end
+                wait_start:begin
+                    if(write_request.ready)begin
+                        modulator_status <= modulator_on;
+                        write_request.dest <= PWM_BASE_ADDR+ global_config_addr;
+                        write_request.data <= modulator_on_config_register;
+                        write_request.valid <= 1;
+                        calculation_state <= calc_idle_state;
+                    end
+                end
                 configuration_state:begin
-                    update_needed <= update_needed | (|update);
+                    update_needed <= update_needed | update[3];
                     if(write_request.ready)begin
                         write_request.dest <= PWM_BASE_ADDR + 'h100*(phases_counter+1) + chain_config_addr[config_counter];
                         write_request.data <= chain_config_data[config_counter];
@@ -150,7 +159,6 @@ module buck_pre_modulation_processor  #(
                                 phases_counter <= 0;
                                 next_state <= configure_shifts;
                                 calculation_state <= write_strobe;
-                                done <= 1;
                             end else begin
                                 config_counter <= 0;
                                 phases_counter <= phases_counter+1;
@@ -163,7 +171,7 @@ module buck_pre_modulation_processor  #(
                     end
                 end
                 configure_shifts:begin
-                    update_needed <= update_needed | (|update);
+                    update_needed <= update_needed | update[3];
                     if(write_request.ready)begin
                         write_request.dest <= PWM_BASE_ADDR + 'h100*(phases_counter+1) + phase_shift_offset;
                         write_request.data <= phase_shifts[phases_counter];
@@ -172,7 +180,7 @@ module buck_pre_modulation_processor  #(
                             next_state <= calc_idle_state;
                             calculation_state <= write_strobe;
                             phases_counter<= 0;
-                            done <= 1;
+                            inner_done <= 1;
                         end else begin
                             phases_counter <= phases_counter+1;
                             next_state <= configure_shifts;
@@ -181,9 +189,10 @@ module buck_pre_modulation_processor  #(
                     end
                 end
                 write_strobe:begin
-                    update_needed <= update_needed | (|update);
+                    update_needed <= update_needed | update[3];
                     write_request.valid <= 0;
                     if(~write_request.ready)begin   
+                        done <= inner_done;
                         calculation_state <= next_state;    
                     end
                 end

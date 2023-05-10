@@ -39,7 +39,7 @@ module PwmGenerator #(
     wire counter_run;
     reg selected_timebase;
     wire ext_timebase_enable;
-    wire [1:0] counter_status;
+    wire [N_CHAINS-1:0] counter_status;
     wire [N_PWM-1:0] counter_stopped_state;
     reg [N_PWM-1:0] internal_pwm_out;
 
