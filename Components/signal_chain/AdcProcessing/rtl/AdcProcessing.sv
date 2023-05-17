@@ -26,7 +26,10 @@ module AdcProcessing #(
     MAX_FILTER_TAPS = 256,
     parameter [N_CHANNELS-1:0] OUTPUT_SIGNED = {N_CHANNELS{1'b1}},
     FILTER_WORKING_WIDTH = DATA_PATH_WIDTH > FLTER_TAP_WIDTH ? DATA_PATH_WIDTH : FLTER_TAP_WIDTH,
-    parameter [FLTER_TAP_WIDTH-1:0] FILTER_TAPS [MAX_FILTER_TAPS:0] = '{MAX_FILTER_TAPS+1{0}}
+    parameter [FLTER_TAP_WIDTH-1:0] FILTER_TAPS [MAX_FILTER_TAPS:0] = '{MAX_FILTER_TAPS+1{0}},
+    LINEARIZER_SEGMENTS = 4,
+    parameter [DATA_PATH_WIDTH-1:0] LINEARIZER_BOUNDS [LINEARIZER_SEGMENTS-1:0] = '{LINEARIZER_SEGMENTS{0}},
+    parameter [DATA_PATH_WIDTH:0] LINEARIZER_GAINS [N_CHANNELS-1:0][LINEARIZER_SEGMENTS-1:0] = '{default:0}
 )(
     input  wire       clock,
     input  wire       reset,
@@ -45,6 +48,7 @@ module AdcProcessing #(
     wire [7:0] decimation_ratio;
 
 
+
     wire signed [DATA_PATH_WIDTH-1:0] comparator_thresholds [0:7];
 
     wire signed [DATA_PATH_WIDTH-1:0] offset [N_CHANNELS-1:0];
@@ -53,7 +57,7 @@ module AdcProcessing #(
     wire [7:0] n_taps;
     wire [FLTER_TAP_WIDTH-1:0] taps_data;
     wire [7:0] taps_addr;
-    wire taps_we;
+    wire taps_we, linearizer_enable;
 
     AdcProcessingControlUnit #(
         .STICKY_FAULT(STICKY_FAULT),
@@ -76,6 +80,7 @@ module AdcProcessing #(
         .offset(offset),
         .shift_enable(shift_enable),
         .fault(fault),
+        .linearizer_enable(linearizer_enable),
         // FILTERING AND DECIMATION
         .decimation_ratio(decimation_ratio),
         .n_taps(n_taps),
@@ -115,10 +120,27 @@ module AdcProcessing #(
         .data_out(cal_out)
     );
 
+    axi_stream #(
+        .DATA_WIDTH(DATA_PATH_WIDTH)
+    ) lin_out();
 
-    assign fast_data_out.data = cal_out.data;
-    assign fast_data_out.valid = cal_out.valid;
-    assign fast_data_out.dest = cal_out.dest;
+    linearizer #(
+        .DATA_PATH_WIDTH(DATA_PATH_WIDTH),
+        .N_CHANNELS(N_CHANNELS),
+        .N_SEGMENTS(LINEARIZER_SEGMENTS),
+        .BOUNDS(LINEARIZER_BOUNDS),
+        .GAINS(LINEARIZER_GAINS)
+    )linearizer(
+        .clock(clock),
+        .reset(reset),
+        .enable(linearizer_enable),
+        .data_in(cal_out),
+        .data_out(lin_out)
+    );
+
+    assign fast_data_out.data = lin_out.data;
+    assign fast_data_out.valid = lin_out.valid;
+    assign fast_data_out.dest = lin_out.dest;
 
     generate
         if(DECIMATED==0)begin
@@ -138,7 +160,7 @@ module AdcProcessing #(
             ) dec(
                 .clock(clock),
                 .reset(reset),
-                .data_in(cal_out),
+                .data_in(lin_out),
                 .data_out(filtered_data_out),
                 .decimation_ratio(decimation_ratio)
             );
@@ -162,7 +184,7 @@ module AdcProcessing #(
             .tap_data(taps_data),
             .tap_addr(taps_addr),
             .tap_write(taps_we),
-            .data_in(cal_out),
+            .data_in(lin_out),
             .data_out(raw_filtered_out)
         );
 

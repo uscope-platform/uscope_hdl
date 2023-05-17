@@ -39,9 +39,10 @@ module AdcProcessingControlUnit #(
     // FILTERING AND DECIMATION
     output reg [7:0]  decimation_ratio,
     output reg [7:0]  n_taps,
-    output reg [FLTER_TAP_WIDTH:0] taps_data,
+    output reg [FLTER_TAP_WIDTH-1:0] taps_data,
     output reg [7:0]  taps_addr,
-    output reg taps_we
+    output reg taps_we,
+    output reg linearizer_enable
 );
 
     localparam N_SHIFT_REGS = N_CHANNELS/8+1;
@@ -95,6 +96,7 @@ module AdcProcessingControlUnit #(
     assign clear_latch          = cu_write_registers[2*N_CHANNELS+N_SHIFT_REGS][4:3];
     assign clear_fault          = cu_write_registers[2*N_CHANNELS+N_SHIFT_REGS][5];
     assign disable_fault        = cu_write_registers[2*N_CHANNELS+N_SHIFT_REGS][6];
+    assign linearizer_enable    = cu_write_registers[2*N_CHANNELS+N_SHIFT_REGS][7];
     assign slow_fault_threshold = cu_write_registers[2*N_CHANNELS+N_SHIFT_REGS][15:8];
     assign n_taps               = cu_write_registers[2*N_CHANNELS+N_SHIFT_REGS][23:16];
     assign decimation_ratio     = cu_write_registers[2*N_CHANNELS+N_SHIFT_REGS][31:24];
