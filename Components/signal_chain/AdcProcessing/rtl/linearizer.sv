@@ -18,8 +18,8 @@ module linearizer #(
     parameter DATA_PATH_WIDTH = 16,
     N_CHANNELS = 1,
     N_SEGMENTS = 4,
-    parameter [DATA_PATH_WIDTH-1:0] BOUNDS [N_SEGMENTS-1:0] = '{0},
-    parameter [DATA_PATH_WIDTH:0] GAINS [N_CHANNELS-1:0][N_SEGMENTS-1:0] = '{'{0}}
+    parameter [DATA_PATH_WIDTH-1:0] BOUNDS [N_CHANNELS-1:0][N_SEGMENTS-1:0] = '{default:0},
+    parameter [DATA_PATH_WIDTH:0] GAINS [N_CHANNELS-1:0][N_SEGMENTS-1:0] = '{default:0}
     )(
     input wire clock,
     input wire reset,
@@ -60,20 +60,36 @@ module linearizer #(
         end
     end
 
-    genvar i;
+    genvar i, j;
     generate 
+
         for(i = 0; i<N_CHANNELS; i++)begin
+            // USE A BANK OF WINDOW COMPARATORS TO FIND THE CORRECT GAIN TO APPLY
+            reg [N_SEGMENTS-1:0] window_flags;
+            for(j = 0; j<N_SEGMENTS-1; j++)begin
+                always_comb begin
+                    if(data_in.valid && data_in.dest == i) begin
+                        window_flags[j] <= data_in.data>=BOUNDS[i][j] && data_in.data<BOUNDS[i][j+1];
+                    end else begin
+                        window_flags[j] <= 0;
+                    end   
+                end
+            end
+
+            always_comb begin
+                window_flags[N_SEGMENTS-1] <= data_in.data>=BOUNDS[i][N_SEGMENTS-1];
+            end
+            reg [31:0] selected_gain;
+            // APPLY THE GAIN AS A FIXED POINT INTEGER MULTIPLICATION
             always_ff@(posedge clock)begin
                 if(data_in.valid && data_in.dest == i)begin
-                    if(data_in.data>=BOUNDS[0] && data_in.data<BOUNDS[1])begin
-                        linear_channel_data[i] <= (data_in.data*GAINS[i][0])>>>DATA_PATH_WIDTH;
-                    end else if(data_in.data>=BOUNDS[1] && data_in.data<BOUNDS[2])begin
-                        linear_channel_data[i] <= (data_in.data*GAINS[i][1])>>>DATA_PATH_WIDTH;
-                    end else begin
-                        linear_channel_data[i] <= (data_in.data*GAINS[i][2])>>>DATA_PATH_WIDTH;
+                    for(integer k = 0; k<N_SEGMENTS; k++) begin
+                        if(window_flags[k])begin
+                            selected_gain <= GAINS[i][k];
+                            linear_channel_data[i] <= (data_in.data*GAINS[i][k]) >>>DATA_PATH_WIDTH;
+                        end
                     end
                 end
-                
             end
         end
     endgenerate
