@@ -60,9 +60,8 @@ module axi_stream_combiner #(
     wire [N_STREAMS-1:0]valid_bus;
     wire [N_STREAMS-1:0] unrolled_tlast;
     wire [DEST_WIDTH-1:0] unrolled_dest [N_STREAMS-1:0];
-    wire [DEST_WIDTH-1:0] unrolled_user [N_STREAMS-1:0];
-    wire [DEST_WIDTH-1:0] unrolled_data [N_STREAMS-1:0];
-
+    wire [USER_WIDTH-1:0] unrolled_user [N_STREAMS-1:0];
+    wire [INPUT_DATA_WIDTH-1:0] unrolled_data [N_STREAMS-1:0];
 
     wire [N_STREAMS-1:0] ready_gating;
     generate 
