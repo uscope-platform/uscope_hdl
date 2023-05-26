@@ -32,7 +32,6 @@ module pwmChain #(
     axi_lite.slave axi_in
     );
 
-    wire counterEnable;
     wire [COUNTER_WIDTH-1:0] counter_out;
     reg [COUNTER_WIDTH-1:0] counter_out_reg;
     wire [N_CHANNELS-1:0] compare_match_high;
@@ -59,7 +58,7 @@ module pwmChain #(
             counter_stopped <= 1;
             counter_out_reg <= 0;
         end else begin
-            counter_stopped <= ~counterEnable;
+            counter_stopped <= ~(external_counter_run & ~stop_request);
             counter_out_reg <= counter_out;
         end
     end
@@ -82,22 +81,15 @@ module pwmChain #(
         .axi_in(axi_in)
     );
 
-    CounterEnableDelay timebase_shifter(
-        .clock(clock),
-        .reset(reset),
-        .enable(external_counter_run & ~stop_request),
-        .delay(timebase_shift),
-        .delayedEnable(counterEnable)
-    );
-
     Counter #(
         .COUNTER_WIDTH(COUNTER_WIDTH)
     ) counter(
         .clock(clock),
         .reset(reset),
         .sync(sync),
+        .shift(timebase_shift),
         .timebase(timebase),
-        .run(counterEnable),   
+        .run(external_counter_run & ~stop_request),   
         .mode(counter_mode),
         .counter_start_data(counter_start_data),
         .counter_stop_data(counter_stop_data),

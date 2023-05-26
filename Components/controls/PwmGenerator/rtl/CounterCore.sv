@@ -24,15 +24,21 @@ module counter_core #(
     input wire enable,
     input wire direction,
     input wire inhibit_load,
+    input wire  [COUNTER_WIDTH-1:0] shift,  
     input wire [COUNTER_WIDTH-1:0] reload_value,
-    input wire [COUNTER_WIDTH-1:0] count_in,
-    output wire [COUNTER_WIDTH-1:0] count_out
+    output reg [COUNTER_WIDTH-1:0] count_out
 );
 
     reg [COUNTER_WIDTH-1:0] count = {COUNTER_WIDTH{1'b0}};
+    
 
-    assign count_out = count;
-
+    always_comb begin
+        if((count+shift)>=reload_value)begin
+            count_out <= (count+shift)-reload_value; 
+        end else begin
+            count_out <= count+shift;
+        end
+    end
     
  
     always @(posedge clockIn) begin 

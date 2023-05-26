@@ -39,7 +39,8 @@ module Counter #(parameter COUNTER_WIDTH = 16)(
     input wire         clock,
     input wire         timebase,
     input wire         reset,
-    input wire         run,   
+    input wire         run, 
+    input wire  [COUNTER_WIDTH-1:0] shift,  
     input wire  [1:0]  mode,
     input wire         sync,
     input wire [COUNTER_WIDTH-1:0] counter_start_data,
@@ -87,12 +88,12 @@ module Counter #(parameter COUNTER_WIDTH = 16)(
     ) core (
         .clockIn(clock),
         .timebase(timebase),
-        .reset(reset & ~sync ),
+        .reset(reset & ~sync),
         .enable(counter_enable),
         .direction(direction),
         .reload_value(cnt_stopValue),
         .inhibit_load(~mode[1]),
-        .count_in(0),
+        .shift(shift),
         .count_out(counter)
     );
 

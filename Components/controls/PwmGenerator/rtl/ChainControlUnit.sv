@@ -60,7 +60,8 @@ module ChainControlUnit #(
 
     always_latch begin
         for(integer i=0; i<N_CHANNELS*2; i=i+1) begin 
-             comparator_tresholds[i] <= cu_write_registers[i];
+            comparator_tresholds[i] <= cu_write_registers[i];
+            timebase_shift <= cu_write_registers[N_CHANNELS*3+2];
         end 
     end 
 
@@ -80,11 +81,9 @@ module ChainControlUnit #(
                    deadtime[i] <= cu_write_registers[N_CHANNELS*2+i];
                 end
 
-
-                
                 counter_start_data <= cu_write_registers[N_CHANNELS*3];
                 counter_stop_data <= cu_write_registers[N_CHANNELS*3+1];
-                timebase_shift <= cu_write_registers[N_CHANNELS*3+2];
+               
                 
                 for(integer i=0; i<N_CHANNELS*2; i=i+2) begin 
                    output_enable[i/2] <= {cu_write_registers[N_CHANNELS*3+3][i+1],cu_write_registers[N_CHANNELS*3+3][i]};
