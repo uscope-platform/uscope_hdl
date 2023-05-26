@@ -49,6 +49,7 @@ module calibration #(
             gain_corrected_data <= 0;
             truncated_gain_corrected_data <= 0;
             data_out.data <= 0;
+            data_out.dest <= 0;
             data_out.valid <=0;
         end else begin
             if(data_in.valid & data_out.ready) begin

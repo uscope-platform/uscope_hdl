@@ -28,8 +28,8 @@ module linearizer #(
     axi_stream.master data_out
 );
 
-    reg [DATA_PATH_WIDTH-1:0] channel_data [N_CHANNELS-1:0];
-    reg [2*DATA_PATH_WIDTH-1:0] linear_channel_data [N_CHANNELS-1:0];
+    reg [DATA_PATH_WIDTH-1:0] channel_data [N_CHANNELS-1:0]  = '{default:0};
+    reg [2*DATA_PATH_WIDTH-1:0] linear_channel_data [N_CHANNELS-1:0] = '{default:0};
     
 
     reg signed [2*DATA_PATH_WIDTH-1:0] linearized_data = 0;
