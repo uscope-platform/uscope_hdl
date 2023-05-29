@@ -181,7 +181,7 @@ module pre_modulation_processor #(
                 .PWM_BASE_ADDR(PWM_BASE_ADDR),
                 .N_PWM_CHANNELS(N_PWM_CHANNELS),
                 .N_PARAMETERS(N_PARAMETERS)
-            ) dab_pmp (
+            ) dab_core (
                 .clock(clock),
                 .reset(reset),
                 .start(modulator_start),
@@ -200,7 +200,7 @@ module pre_modulation_processor #(
                 .PWM_BASE_ADDR(PWM_BASE_ADDR),
                 .N_PWM_CHANNELS(N_PWM_CHANNELS),
                 .N_PARAMETERS(N_PARAMETERS)
-            ) vsi_pmp (
+            ) vsi_core (
                 .clock(clock),
                 .reset(reset),
                 .start(modulator_start),
@@ -220,7 +220,7 @@ module pre_modulation_processor #(
                 .N_PHASES(N_CHAINS),
                 .N_PWM_CHANNELS(N_PWM_CHANNELS),
                 .N_PARAMETERS(N_PARAMETERS)
-            ) buck_pmp (
+            ) buck_core (
                 .clock(clock),
                 .reset(reset),
                 .start(modulator_start),
@@ -326,17 +326,18 @@ module pre_modulation_processor #(
 
     axi_stream modulator_if_write();
 
-    axi_stream_mux_3 #(
-        .DATA_WIDTH(32)
+    axi_stream_mux #(
+        .N_STREAMS(3),
+        .DEST_WIDTH(32),
+        .BUFFERED(0)
     )write_combiner(
         .clock(clock),
         .reset(reset),
         .address(mux_selector),
-        .stream_in_1(dab_write),
-        .stream_in_2(vsi_write),
-        .stream_in_3(buck_write),
+        .stream_in('{dab_write, vsi_write, buck_write}),
         .stream_out(modulator_if_write)
     );
+
 
     axi_stream read_req();
     assign read_req.valid = 0;
