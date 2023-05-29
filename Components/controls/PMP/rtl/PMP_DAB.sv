@@ -18,7 +18,7 @@
 
 module dab_pre_modulation_processor #(
     PWM_BASE_ADDR = 0,
-    N_PWM_CHANNELS = 4,
+    N_PWM_CHANNELS = 2,
     N_PARAMETERS = 13
 )(
     input wire clock,
@@ -35,6 +35,10 @@ module dab_pre_modulation_processor #(
     axi_stream.master write_request
 );
 
+    ////////////////////////////////////////////
+    //           PARAMETER DECODING           //
+    ////////////////////////////////////////////
+
 
     wire [15:0] duty_1;
     assign duty_1 = modulation_parameters[0];
@@ -47,35 +51,139 @@ module dab_pre_modulation_processor #(
     wire [15:0] deadtime;
     assign deadtime = modulation_parameters[4];
 
-    localparam  modulator_off = 0;
-    localparam  modulator_on = 1;
+
+    ////////////////////////////////////////////
+    //           PWM GENERATOR CONFIG         //
+    ////////////////////////////////////////////
+
+    localparam n_chains = 2;
+
+    wire [31:0] global_config_data [2:0] = '{'hff, 'hf, 'h1};
+    wire [31:0] global_config_addr [2:0] = '{
+        (3*N_PWM_CHANNELS+3)*4, 
+        (3*N_PWM_CHANNELS+4)*4,
+        (3*N_PWM_CHANNELS+5)*4
+    };
+
+    wire [31:0] dt_config_addr = (2*N_PWM_CHANNELS)*4;
+
+    localparam fixed_carrier_register_offset = N_PWM_CHANNELS*3+2;
+    localparam mobile_carrier_register_offset = 0;
+    
+    reg [31:0] modulator_on_config_register = 'h28;
 
 
-    wire [31:0] global_config_data [3:0] = '{'hff, 'hf, 'h1, 'h00};
-    wire [31:0] global_config_addr [3:0] = '{
-        'h100+(3*N_PWM_CHANNELS+3)*4, 
-        'h100+(3*N_PWM_CHANNELS+4)*4,
-        'h100+(3*N_PWM_CHANNELS+5)*4,
-        'h0};
-
-    wire [31:0] dt_config_addr = 'h100+(2*N_PWM_CHANNELS)*4;
-
-
-
-    reg [15:0] modulator_registers_data [8:0];
-    reg [31:0] modulator_registers_address [8:0];
+    reg [15:0] modulator_registers_data [7:0];
+    reg [31:0] modulator_registers_address [7:0];
 
     initial begin
-        modulator_registers_address[0] = 'h100 + (3*N_PWM_CHANNELS+1)*4;
-        
+
         for(integer i = 3; i>=0; i--)begin
-            modulator_registers_address[i+1] = 'h100 + 4*i;
+            modulator_registers_address[i] =  4*i;
         end
         for(integer i = 7; i>3; i--)begin
-            modulator_registers_address[i+1] = 'h100 + 4*(i+(N_PWM_CHANNELS-4));
+            modulator_registers_address[i] =  4*(i+(N_PWM_CHANNELS-4));
         end
     end
 
+
+    
+    reg [3:0] config_counter = 0;
+    reg chain_counter = 0;
+    reg operating_config_done = 0;
+    
+    typedef enum reg [2:0] {
+        management_idle = 0,
+        fixed_configuration_state = 1,
+        wait_fixed_write_end = 2,
+        operating_configuration_state = 3,
+        wait_operating_write_end = 4
+
+    } management_fsm_state;
+
+    management_fsm_state management_state = management_idle;
+
+    always @ (posedge clock) begin : management_fsm
+        if (~reset) begin
+        end else begin
+            case(management_state)
+                management_idle: begin
+                    done <= 0;
+                    
+                    if(configure)begin
+                        config_counter <= 0;
+                        management_state <= fixed_configuration_state;
+                    end
+
+                    if(start)begin
+                        management_state <= operating_configuration_state;
+                    end
+
+                    if(stop) begin 
+                        operating_config_done <= 0;
+                    end
+                end
+                fixed_configuration_state:begin
+                    if(write_request.ready)begin
+                        write_request.dest <= PWM_BASE_ADDR + (chain_counter+1)*'h100 + global_config_addr[config_counter];
+                        write_request.data <= global_config_data[config_counter];
+                        write_request.valid <= 1;
+                       
+                        if(config_counter==2)begin
+                            config_counter <= 0;
+                            if(chain_counter == 1)begin    
+                                chain_counter <= 0;
+                                management_state <= wait_fixed_write_end;
+                            end else begin
+                                chain_counter <= chain_counter +1;
+                            end
+                        end else begin
+                            config_counter <= config_counter+1;
+                            management_state <= fixed_configuration_state;
+                        end    
+                    end
+                end
+                wait_fixed_write_end:begin
+                    if(write_request.ready)begin
+                        done <= 1;
+                        write_request.valid <= 0;
+                        management_state <= management_idle;
+                    end      
+                end
+                operating_configuration_state:begin
+                    if(write_request.ready)begin
+                        write_request.dest <= PWM_BASE_ADDR + (chain_counter+1)*'h100 + dt_config_addr + config_counter*4;
+                        write_request.data <= deadtime;
+                        write_request.valid <= 1;
+                        if(config_counter==N_PWM_CHANNELS-1)begin
+                            config_counter <= 0;
+                            if(chain_counter == 1)begin    
+                                management_state <= wait_operating_write_end;
+                            end else begin    
+                                chain_counter <= chain_counter +1;
+                            end
+                        end else begin
+                            config_counter <= config_counter+1;
+                            management_state <= operating_configuration_state;
+                        end
+                    end
+                end
+                wait_operating_write_end:begin
+                    if(write_request.ready)begin
+                        operating_config_done <= 1;
+                        write_request.valid <= 0;
+                        chain_counter <= 0;
+                        management_state <= management_idle;
+                    end  
+                end
+            endcase
+
+        end
+    end
+    
+
+    localparam period_register_offset = (N_PWM_CHANNELS*3+1)*4;
+    localparam phase_shift_register_offset = (N_PWM_CHANNELS*3+2)*4;
 
     wire signed [16:0] s_period;
     wire signed [16:0] s_duty_1;
@@ -86,175 +194,157 @@ module dab_pre_modulation_processor #(
     assign s_duty_2 = $signed(duty_2);
 
 
+     
+    typedef enum reg [2:0] {
+        operating_idle = 0,
+        start_modulator_state = 1,
+        wait_configuration = 2,
+        update_period = 3,
+        update_phase_shift = 4,
+        update_modulator = 5,
+        wait_write_end = 6
+    } operating_fsm_state;
+
+    operating_fsm_state opeating_state = operating_idle;
+    operating_fsm_state next_state;
+    wire [15:0] inner_phase_shift;
+    assign inner_phase_shift = modulation_type ? phase_shift_2/2 : 0;
+
+    reg [15:0] phase_shifts_data [1:0] = '{0, 0};
+
     reg [31:0] modulator_on_config_register = 'h28;
     
-    reg start_needed = 0;
-    reg reset_counter = 0;
-    reg [3:0] config_counter;
-    
-    typedef enum reg [3:0] {
-        calc_idle_state = 0,
-        global_configuration_state = 1,
-        deadtime_configuration_state = 2,
-        calculate_modulation = 3,
-        start_modulator_state = 4,
-        write_strobe = 5,
-        update_modulator = 6
-    } fsm_state;
+    reg start_needed = 1;
 
-    fsm_state calculation_state;
-    fsm_state next_state;
-
+    reg latched_stop_request;
     // Determine the next state
-    always @ (posedge clock) begin : main_fsm
+    always @ (posedge clock) begin : operating_fsm
         if (~reset) begin
-            calculation_state <= calc_idle_state;
-            config_counter <= 0;
-            write_request.dest <= 0;
-            write_request.data <= 0;
-            write_request.valid <= 0;
-            start_needed <= 0;
-            modulator_status <= modulator_off;
+            modulator_status <= 0;
+            latched_stop_request <= 0;
         end else begin
-            modulator_registers_data[0] <=period;
+            if(stop)
+                latched_stop_request <= 1;
+            case (opeating_state)
+                operating_idle: begin
 
-            case (calculation_state)
-                calc_idle_state: begin
-                    done <= 0;
-                    write_request.valid <= 0;
-                    
-                    if(configure)begin
-                        config_counter <= 0;
-                        calculation_state <= global_configuration_state;
-                    end
-
-                    if(update && modulator_status == modulator_on)begin
-                        calculation_state <= calculate_modulation;
+                    if(update && modulator_status == 1)begin
+                        opeating_state <= update_period;
                     end
 
                     if(start) begin 
-                        start_needed <= 1;
-                        calculation_state <= calculate_modulation;
+                        opeating_state <= wait_configuration;
+                        start_needed <= 1;               
                     end
 
-                    if(stop) begin 
-                        modulator_status <= modulator_off;
+                    if(latched_stop_request) begin 
                         write_request.dest <= PWM_BASE_ADDR;
-                        write_request.data <= global_config_data[0];
+                        modulator_status <= 0;
+                        write_request.data <= 0;
                         write_request.valid <= 1;
+                        opeating_state <= wait_write_end;
+                        next_state <= operating_idle;
+                        latched_stop_request <= 0;
                     end
                 end
-                calculate_modulation:begin
-                    config_counter <= 0;
-                    if(start_needed) begin
-                        calculation_state <= deadtime_configuration_state;
-                    end else begin
-                        calculation_state <= update_modulator;
+                wait_configuration:begin
+                    if(operating_config_done)begin
+                        opeating_state <= update_period;
                     end
                 end
-                global_configuration_state:begin
-                    if(write_request.ready)begin
-                        write_request.dest <= PWM_BASE_ADDR + global_config_addr[config_counter];
-                        write_request.data <= global_config_data[config_counter];
-                        write_request.valid <= 1;
-                        if(config_counter==3)begin
-                            config_counter <= 0;
-                            done <= 1;
-                            calculation_state <= calc_idle_state;
-                        end else begin
-                            next_state <= global_configuration_state;
-                            calculation_state <= write_strobe;
-                        end    
-                    end
-                end
-                deadtime_configuration_state:begin
-                    if(write_request.ready)begin
-                        write_request.dest <= PWM_BASE_ADDR + dt_config_addr + config_counter*4;
-                        write_request.data <= deadtime;
-                        write_request.valid <= 1;
-                        if(config_counter==N_PWM_CHANNELS-1)begin
-                            reset_counter <= 1;
-                            next_state <= update_modulator;
-                            calculation_state <= write_strobe;
-                        end else begin
-                            next_state <= deadtime_configuration_state;
-                            calculation_state <= write_strobe;
-                        end    
-                    end
-                end
-                update_modulator:begin
-                    if(write_request.ready)begin
-                        write_request.dest <= PWM_BASE_ADDR + modulator_registers_address[config_counter];
-                        write_request.data <= modulator_registers_data[config_counter];
-                        write_request.valid <= 1;
-                        if(config_counter==8)begin
-                            config_counter <= 0;
-                            if(start_needed) begin
-                                reset_counter <= 1;
-                                next_state <= start_modulator_state;
-                                calculation_state <= write_strobe;
-                            end else
-                                calculation_state <= calc_idle_state;
-                        end else begin
-                            next_state <= update_modulator;
-                            calculation_state <= write_strobe;
-                        end    
-                    end
-                end
-                start_modulator_state:begin
+                start_modulator_state: begin
                     if(write_request.ready)begin
                         write_request.dest <= PWM_BASE_ADDR;
-                        modulator_status <= modulator_on;
+                        modulator_status <= 1;
                         write_request.data <= modulator_on_config_register;
                         write_request.valid <= 1;
                         start_needed <= 0;
-                        calculation_state <= calc_idle_state;
+                        opeating_state <= wait_write_end;
+                        next_state <= operating_idle;
+                    end
+                    
+                end
+                update_period: begin
+                    phase_shifts_data[1] = period/2;
+                    if(write_request.ready)begin
+                            write_request.data <= period;
+                            write_request.dest <= PWM_BASE_ADDR + period_register_offset + (chain_counter+1)*'h100;
+                            write_request.valid <= 1;
+                            if(chain_counter == 1) begin
+                                opeating_state <= wait_write_end;
+                                next_state <= update_phase_shift;
+                                chain_counter <= 0;
+                            end else begin
+                                chain_counter <= chain_counter +1;
+                            end
+                        end
+                end
+                update_phase_shift:begin
+                    if(write_request.ready)begin
+                        write_request.data <= phase_shifts_data[chain_counter];
+                        write_request.dest <= PWM_BASE_ADDR + phase_shift_register_offset + (chain_counter+1)*'h100;
+                        write_request.valid <= 1;
+                        if(chain_counter == 1) begin
+                            opeating_state <= wait_write_end;
+                            next_state <= update_modulator;
+                            chain_counter <= 0;
+                        end else begin
+                            chain_counter <= chain_counter +1;
+                        end
                     end
                 end
-                write_strobe:begin
-                    write_request.valid <= 0;
-                    if(~write_request.ready)begin   
-                        if(reset_counter)begin
-                            config_counter <= 0;
-                            reset_counter <= 0;
+                update_modulator: begin
+                    if(write_request.ready)begin
+                        if(chain_counter == 1)begin
+                            write_request.dest <= PWM_BASE_ADDR + modulator_registers_address[4+config_counter]+ (chain_counter+1)*'h100;
+                            write_request.data <= modulator_registers_data[4+config_counter];
                         end else begin
-                            config_counter <= config_counter+1;
+                            write_request.dest <= PWM_BASE_ADDR + modulator_registers_address[config_counter]+ (chain_counter+1)*'h100;
+                            write_request.data <= modulator_registers_data[config_counter];
                         end
                         
-                        calculation_state <= next_state;    
+                        
+                        write_request.valid <= 1;
+                        if(config_counter==3)begin
+                            config_counter <= 0;
+
+                            if(chain_counter == 1) begin
+                                if(start_needed) begin
+                                    next_state <= start_modulator_state;
+                                end else begin
+                                    next_state <= operating_idle;
+                                end
+                                opeating_state <= wait_write_end;
+                                chain_counter <= 0;
+                            end else begin
+                                chain_counter <= chain_counter +1;
+                            end
+                        end else begin
+                            config_counter <= config_counter + 1;
+                            opeating_state <= update_modulator;
+                        end    
                     end
+                end
+                wait_write_end:begin
+                    if(write_request.ready)begin
+                        write_request.valid <= 0;
+                        opeating_state <= next_state;
+                    end  
                 end
             endcase
 
-            if(calculation_state == calculate_modulation)begin
-                if(modulation_type == 0)begin
+            if(opeating_state == update_period)begin
+                    modulator_registers_data[0] <= s_period/2 - s_period/4 - inner_phase_shift;
+                    modulator_registers_data[1] <= s_period/2 - s_period/4 + inner_phase_shift;
 
-                    modulator_registers_data[1] <= s_period/2 - s_duty_1/2 - phase_shift_1/2;
-                    modulator_registers_data[2] <= s_period/2 - s_duty_1/2 - phase_shift_1/2;
+                    modulator_registers_data[2] <= s_period/2 + s_period/4 - inner_phase_shift;
+                    modulator_registers_data[3] <= s_period/2 + s_period/4 + inner_phase_shift;
 
-                    modulator_registers_data[5] <= s_period/2 + s_duty_1/2 - phase_shift_1/2;
-                    modulator_registers_data[6] <= s_period/2 + s_duty_1/2 - phase_shift_1/2;
+                    modulator_registers_data[4] <= s_period/2 - s_period/4 - inner_phase_shift;
+                    modulator_registers_data[5] <= s_period/2 - s_period/4 + inner_phase_shift;
 
-                    modulator_registers_data[3] <= s_period/2 - s_duty_1/2 + phase_shift_1/2;
-                    modulator_registers_data[4] <= s_period/2 - s_duty_1/2 + phase_shift_1/2;
-
-                    modulator_registers_data[7] <= s_period/2 + s_duty_1/2 + phase_shift_1/2;
-                    modulator_registers_data[8] <= s_period/2 + s_duty_1/2 + phase_shift_1/2;
-                    
-                end else if(modulation_type==1) begin
-
-                    modulator_registers_data[1] <= s_period/2 - s_duty_1/2 - phase_shift_1/2 - phase_shift_2/2;
-                    modulator_registers_data[5] <= s_period/2 + s_duty_1/2 - phase_shift_1/2 - phase_shift_2/2;
-
-                    modulator_registers_data[2] <= s_period/2 - s_duty_1/2 - phase_shift_1/2 + phase_shift_2/2;
-                    modulator_registers_data[6] <= s_period/2 + s_duty_1/2 - phase_shift_1/2 + phase_shift_2/2;
-
-                    modulator_registers_data[3] <= s_period/2 - s_duty_1/2 + phase_shift_1/2 - phase_shift_2/2;
-                    modulator_registers_data[7] <= s_period/2 + s_duty_1/2 + phase_shift_1/2 - phase_shift_2/2;
-
-                    modulator_registers_data[4] <= s_period/2 - s_duty_1/2 + phase_shift_1/2 + phase_shift_2/2;
-                    modulator_registers_data[8] <= s_period/2 + s_duty_1/2 + phase_shift_1/2 + phase_shift_2/2;
-                end
+                    modulator_registers_data[6] <= s_period/2 + s_period/4 - inner_phase_shift;
+                    modulator_registers_data[7] <= s_period/2 + s_period/4 + inner_phase_shift;
             end
         end
     end
