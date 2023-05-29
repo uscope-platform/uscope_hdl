@@ -26,6 +26,36 @@ module axis_to_axil (
     axi_lite.master axi_out
 );
 
+    axi_stream axis_write_buffered();
+    axi_stream axis_read_request_buffered();
+
+    axis_skid_buffer #(
+        .REGISTER_OUTPUT(0),
+        .LATCHING(0),
+        .DATA_WIDTH(32),
+        .DEST_WIDTH(32),
+        .USER_WIDTH(32)
+    ) write_skid_buffer (
+        .clock(clock),
+        .reset(reset),
+        .axis_in(axis_write),
+        .axis_out(axis_write_buffered)
+    );
+
+    axis_skid_buffer #(
+        .REGISTER_OUTPUT(0),
+        .LATCHING(0),
+        .DATA_WIDTH(32),
+        .DEST_WIDTH(32),
+        .USER_WIDTH(32)
+    ) read_req_skid_buffer (
+        .clock(clock),
+        .reset(reset),
+        .axis_in(axis_read_request),
+        .axis_out(axis_read_request_buffered)
+    );
+
+
 
     reg[31:0] latched_write_address;
     reg[31:0] latched_write_data;
@@ -37,8 +67,6 @@ module axis_to_axil (
         writer_wait_response = 3
     } writer_state;
 
-    assign axis_write.ready = writer_state == writer_idle;
-
     always_ff @(posedge clock) begin
         if(!reset)begin
             axi_out.WDATA <= 0;
@@ -47,7 +75,7 @@ module axis_to_axil (
             axi_out.AWVALID <= 0;
             axi_out.BREADY <= 1;
             axi_out.WSTRB <= 'hFF;
-
+            axis_write_buffered.ready <= 1;
             writer_state <= writer_idle;
         end else begin
             axi_out.BREADY <= 1;
@@ -55,21 +83,22 @@ module axis_to_axil (
             axi_out.WVALID <= 0;
             case (writer_state)
                 writer_idle:begin
-                    if(axis_write.valid)begin
+                    if(axis_write_buffered.valid)begin
+                        axis_write_buffered.ready <= 0;
                         if(axi_out.WREADY & axi_out.AWREADY) begin
-                            axi_out.AWADDR <= axis_write.dest;
+                            axi_out.AWADDR <= axis_write_buffered.dest;
                             axi_out.AWVALID <= 1;
-                            axi_out.WDATA <= axis_write.data;
+                            axi_out.WDATA <= axis_write_buffered.data;
                             axi_out.WVALID <= 1;
                             writer_state <= writer_wait_response;
                         end else if(axi_out.AWREADY) begin
-                            axi_out.AWADDR <= axis_write.dest;
-                            latched_write_data <= axis_write.data;
+                            axi_out.AWADDR <= axis_write_buffered.dest;
+                            latched_write_data <= axis_write_buffered.data;
                             axi_out.AWVALID <= 1;
                             writer_state <= writer_send_data;
                         end else begin
-                            latched_write_data <= axis_write.data;
-                            latched_write_address <= axis_write.dest;
+                            latched_write_data <= axis_write_buffered.data;
+                            latched_write_address <= axis_write_buffered.dest;
                             writer_state <= writer_send_address;
                         end
                     end
@@ -91,6 +120,7 @@ module axis_to_axil (
                 writer_wait_response:begin
                     if(axi_out.BVALID)begin
                         axi_out.BREADY <= 0;
+                        axis_write_buffered.ready <= 1;
                         writer_state <= writer_idle;
                     end
                 end
@@ -105,7 +135,7 @@ module axis_to_axil (
         reader_wait_data = 2
     } reader_state;
 
-    assign axis_read_request.ready = reader_state == reader_idle;
+    assign axis_read_request_buffered.ready = reader_state == reader_idle;
 
 
     reg[31:0] latched_read_address;
@@ -123,19 +153,19 @@ module axis_to_axil (
             axi_out.RREADY <= 0;
             case (reader_state)
                 reader_idle: begin
-                  if(axis_read_request.valid)begin
+                  if(axis_read_request_buffered.valid)begin
                         if(axi_out.ARREADY) begin
-                            axi_out.ARADDR <= axis_read_request.data;
+                            axi_out.ARADDR <= axis_read_request_buffered.data;
                             axi_out.ARVALID <= 1;
                             reader_state <= reader_wait_data;
                         end else begin
-                            latched_read_address <= axis_read_request.data;
+                            latched_read_address <= axis_read_request_buffered.data;
                             reader_state <= reader_send_address;
                         end
                   end  
                 end
                 reader_send_address: begin
-                    axi_out.ARADDR <= axis_read_request.data;
+                    axi_out.ARADDR <= axis_read_request_buffered.data;
                     axi_out.ARVALID <= 1;
                     reader_state <= reader_wait_data;
                 end
