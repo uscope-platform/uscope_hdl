@@ -77,12 +77,9 @@ module dab_pre_modulation_processor #(
     reg [31:0] modulator_registers_address [7:0];
 
     initial begin
-
         for(integer i = 3; i>=0; i--)begin
             modulator_registers_address[i] =  4*i;
-        end
-        for(integer i = 7; i>3; i--)begin
-            modulator_registers_address[i] =  4*(i+(N_PWM_CHANNELS-4));
+            modulator_registers_address[i+4] =  4*i;
         end
     end
 
@@ -188,10 +185,13 @@ module dab_pre_modulation_processor #(
     wire signed [16:0] s_period;
     wire signed [16:0] s_duty_1;
     wire signed [16:0] s_duty_2;
+    wire signed [16:0] s_phase_shift_1;
+
 
     assign s_period = $signed(period);
     assign s_duty_1 = $signed(duty_1);
     assign s_duty_2 = $signed(duty_2);
+    assign s_phase_shift_1 = $signed(phase_shift_1);
 
 
      
@@ -225,6 +225,8 @@ module dab_pre_modulation_processor #(
         end else begin
             if(stop)
                 latched_stop_request <= 1;
+
+        
             case (opeating_state)
                 operating_idle: begin
 
@@ -265,7 +267,7 @@ module dab_pre_modulation_processor #(
                     
                 end
                 update_period: begin
-                    phase_shifts_data[1] = period/2;
+                    phase_shifts_data[1] = period/2+s_phase_shift_1;
                     if(write_request.ready)begin
                             write_request.data <= period;
                             write_request.dest <= PWM_BASE_ADDR + period_register_offset + (chain_counter+1)*'h100;

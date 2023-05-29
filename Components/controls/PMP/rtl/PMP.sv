@@ -92,15 +92,13 @@ module pre_modulation_processor #(
     end
 
     wire modulation_status;
-    reg modulator_stop_request;
-    reg modulator_start_request;
     reg [1:0] modulation_type;
     reg [1:0] converter_type;
     reg [31:0] period;
     
     reg [15:0] modulation_parameters [N_PARAMETERS-1:0];
 
-    assign {modulator_stop_request, modulator_start_request,  converter_type, modulation_type} = cu_write_registers[0];
+    assign {converter_type, modulation_type} = cu_write_registers[0];
     assign period = cu_write_registers[1];
     
     genvar i;
@@ -109,17 +107,12 @@ module pre_modulation_processor #(
     end
     
 
-    assign cu_read_registers[0] = {modulator_stop_request, modulator_start_request, converter_type, modulation_type};
+    assign cu_read_registers[0] = {converter_type, modulation_type};
     assign cu_read_registers[1] = period;
     
     for(i = 0; i<N_PARAMETERS; i++)begin
         assign cu_read_registers[i+2] = modulation_parameters[i];
     end
-    
-    wire modulator_start, modulator_stop;
-
-    assign modulator_start = triggers[0] & modulator_start_request || external_start;
-    assign modulator_stop =  triggers[0] & ((~modulator_start_request & modulation_status)| modulator_stop_request) || external_stop;
 
     reg configuration_start;
 
@@ -184,8 +177,8 @@ module pre_modulation_processor #(
             ) dab_core (
                 .clock(clock),
                 .reset(reset),
-                .start(modulator_start),
-                .stop(modulator_stop),
+                .start(external_start),
+                .stop(external_stop),
                 .configure(configuration_start),
                 .update(triggers[4:1]),
                 .modulation_type(modulation_type),
@@ -203,8 +196,8 @@ module pre_modulation_processor #(
             ) vsi_core (
                 .clock(clock),
                 .reset(reset),
-                .start(modulator_start),
-                .stop(modulator_stop),
+                .start(external_start),
+                .stop(external_stop),
                 .configure(configuration_start),
                 .update(triggers[4:1]),
                 .period(period),
@@ -223,8 +216,8 @@ module pre_modulation_processor #(
             ) buck_core (
                 .clock(clock),
                 .reset(reset),
-                .start(modulator_start),
-                .stop(modulator_stop),
+                .start(external_start),
+                .stop(external_stop),
                 .configure(configuration_start),
                 .update(triggers[4:1]),
                 .period(period),
@@ -251,8 +244,8 @@ module pre_modulation_processor #(
             ) dab_pmp (
                 .clock(clock),
                 .reset(reset),
-                .start(modulator_start),
-                .stop(modulator_stop),
+                .start(external_start),
+                .stop(external_stop),
                 .configure(configuration_start),
                 .update(triggers[4:1]),
                 .modulation_type(modulation_type),
@@ -279,8 +272,8 @@ module pre_modulation_processor #(
             ) vsi_pmp (
                 .clock(clock),
                 .reset(reset),
-                .start(modulator_start),
-                .stop(modulator_stop),
+                .start(external_start),
+                .stop(external_stop),
                 .configure(configuration_start),
                 .update(triggers[4:1]),
                 .period(period),
@@ -310,8 +303,8 @@ module pre_modulation_processor #(
             ) buck_pmp (
                 .clock(clock),
                 .reset(reset),
-                .start(modulator_start),
-                .stop(modulator_stop),
+                .start(external_start),
+                .stop(external_stop),
                 .configure(configuration_start),
                 .update(triggers[4:1]),
                 .period(period),
