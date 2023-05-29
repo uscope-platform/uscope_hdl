@@ -267,7 +267,13 @@ module dab_pre_modulation_processor #(
                     
                 end
                 update_period: begin
-                    phase_shifts_data[1] = period/2+s_phase_shift_1;
+                    if(s_phase_shift_1>period/2)begin
+                        phase_shifts_data[1] = period;
+                    end else if(s_phase_shift_1<-(period/2))begin
+                        phase_shifts_data[1] = 0;
+                    end else begin
+                        phase_shifts_data[1] = period/2+s_phase_shift_1;
+                    end 
                     if(write_request.ready)begin
                             write_request.data <= period;
                             write_request.dest <= PWM_BASE_ADDR + period_register_offset + (chain_counter+1)*'h100;
