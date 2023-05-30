@@ -73,7 +73,6 @@ module ChainControlUnit #(
             counter_mode <= 0;
             counter_start_data <= 0;
             counter_stop_data <= 0;
-            timebase_shift <= 0;
         end else begin
             if(~counter_running) begin
 
