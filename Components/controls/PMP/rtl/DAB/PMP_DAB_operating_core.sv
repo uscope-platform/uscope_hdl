@@ -95,6 +95,13 @@ module PMP_DAB_operating_core #(
 
     reg latched_stop_request;
     // Determine the next state
+
+    wire signed [15:0] ps_sat_p;
+    wire signed [15:0] ps_sat_n;
+    
+    assign ps_sat_p = s_period/2;
+    assign ps_sat_n = -ps_sat_p;
+
     always @ (posedge clock) begin : operating_fsm
         if (~reset) begin
             modulator_status <= 0;
@@ -144,9 +151,9 @@ module PMP_DAB_operating_core #(
                     
                 end
                 update_period: begin
-                    if(s_phase_shift_1>period/2)begin
-                        phase_shifts_data[1] = period;
-                    end else if(s_phase_shift_1<-(period/2))begin
+                    if(s_phase_shift_1>ps_sat_p)begin
+                        phase_shifts_data[1] = ps_sat_p;
+                    end else if(s_phase_shift_1 < ps_sat_n)begin
                         phase_shifts_data[1] = 0;
                     end else begin
                         phase_shifts_data[1] = period/2+s_phase_shift_1;
