@@ -31,56 +31,56 @@ module axis_data_mover #(
     axi_stream.master data_out
 );
 
-reg mover_active;
-reg [$clog2(CHANNEL_NUMBER)-1:0] channel_sequencer;
+    reg mover_active;
+    reg [$clog2(CHANNEL_NUMBER)-1:0] channel_sequencer;
 
-enum reg [1:0] { 
-    idle = 0, 
-    read_source = 1,
-    wait_response = 2
-} sequencer_state;
+    enum reg [1:0] { 
+        idle = 0, 
+        read_source = 1,
+        wait_response = 2
+    } sequencer_state;
 
-always_ff @(posedge clock) begin
-    if(!reset) begin
-        data_response.ready <= 1;
-        data_out.valid <= 0;
-        data_request.data <= 0;
-        data_request.valid <= 0;
-        data_out.data <= 0;
-        data_out.dest <= 0;
-        channel_sequencer <= 0;
-        mover_active <= 0;
-        sequencer_state <= idle;
-    end else begin
-        data_out.valid <= 0;
-        data_request.valid <= 0; 
-        case (sequencer_state)
-            idle :begin
-                if(start) begin
-                    sequencer_state <= read_source;
-                end
-            end 
-            read_source: begin
-                data_request.data <= SOURCE_ADDR[channel_sequencer];
-                data_request.valid <= 1;  
-                sequencer_state <= wait_response;
-            end
-            wait_response: begin
-                if(data_response.valid)begin
-                    data_out.data <= data_response.data;
-                    data_out.dest <= TARGET_ADDR[channel_sequencer];
-                    data_out.valid <= data_response.valid;
-                    if(channel_sequencer == CHANNEL_NUMBER-1)begin
-                        channel_sequencer <= 0;
-                        sequencer_state <= idle;
-                    end else begin
-                        channel_sequencer <= channel_sequencer + 1;
+    always_ff @(posedge clock) begin
+        if(!reset) begin
+            data_response.ready <= 1;
+            data_out.valid <= 0;
+            data_request.data <= 0;
+            data_request.valid <= 0;
+            data_out.data <= 0;
+            data_out.dest <= 0;
+            channel_sequencer <= 0;
+            mover_active <= 0;
+            sequencer_state <= idle;
+        end else begin
+            data_out.valid <= 0;
+            data_request.valid <= 0; 
+            case (sequencer_state)
+                idle :begin
+                    if(start) begin
                         sequencer_state <= read_source;
                     end
+                end 
+                read_source: begin
+                    data_request.data <= SOURCE_ADDR[channel_sequencer];
+                    data_request.valid <= 1;  
+                    sequencer_state <= wait_response;
                 end
-            end
-        endcase
+                wait_response: begin
+                    if(data_response.valid)begin
+                        data_out.data <= data_response.data;
+                        data_out.dest <= TARGET_ADDR[channel_sequencer];
+                        data_out.valid <= data_response.valid;
+                        if(channel_sequencer == CHANNEL_NUMBER-1)begin
+                            channel_sequencer <= 0;
+                            sequencer_state <= idle;
+                        end else begin
+                            channel_sequencer <= channel_sequencer + 1;
+                            sequencer_state <= read_source;
+                        end
+                    end
+                end
+            endcase
+        end
     end
-end
 
 endmodule
