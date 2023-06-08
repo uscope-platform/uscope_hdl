@@ -151,13 +151,23 @@ module PMP_DAB_operating_core #(
                     
                 end
                 update_period: begin
-                    if(s_phase_shift_1>ps_sat_p)begin
-                        phase_shifts_data[1] = ps_sat_p;
-                    end else if(s_phase_shift_1 < ps_sat_n)begin
-                        phase_shifts_data[1] = 0;
-                    end else begin
-                        phase_shifts_data[1] = period/2+s_phase_shift_1;
-                    end 
+
+
+                        if(s_phase_shift_1>ps_sat_p)begin
+                            phase_shifts_data[1] = ps_sat_p;
+                        end else if(s_phase_shift_1 < ps_sat_n)begin
+                            phase_shifts_data[1] = 0;
+                        end else begin
+                            if(modulation_type == 2) begin
+                                phase_shifts_data[1] = period/2+duty_2;
+                            end else begin
+                                phase_shifts_data[1] = period/2+s_phase_shift_1;
+                            end
+                           
+                        end 
+
+                    
+                    
                     if(operating_write.ready)begin
                             operating_write.data <= period;
                             operating_write.dest <= PWM_BASE_ADDR + period_register_offset + (operating_chain_counter+1)*'h100;
