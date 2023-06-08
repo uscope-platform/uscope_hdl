@@ -35,7 +35,9 @@
         dataIn [31:0]:  register data write input
 */
 
-module Counter #(parameter COUNTER_WIDTH = 16)(
+module Counter #(
+    parameter COUNTER_WIDTH = 16
+)(
     input wire         clock,
     input wire         timebase,
     input wire         reset,

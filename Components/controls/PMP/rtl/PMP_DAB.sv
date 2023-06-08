@@ -81,7 +81,7 @@ module dab_pre_modulation_processor #(
 
 
     PMP_DAB_management_core #(
-        .PWM_BASE_ADDR(0),
+        .PWM_BASE_ADDR(PWM_BASE_ADDR),
         .N_PWM_CHANNELS(2)
     ) management_core (
         .clock(clock),

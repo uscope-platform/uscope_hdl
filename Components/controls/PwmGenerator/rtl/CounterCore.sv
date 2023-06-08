@@ -40,24 +40,29 @@ module counter_core #(
         count_out <= unregistered_count_out;
     end
     
+    reg [COUNTER_WIDTH:0] raw_shifted_counter;
+    reg [COUNTER_WIDTH:0] fast_raw_shifted_counter;
+
     always_comb begin
         if(fast_count)begin
-            if((fast_counter+shift)>=reload_value)begin
-                unregistered_count_out <= (fast_counter+shift)-reload_value; 
+            if(fast_raw_shifted_counter>=reload_value)begin
+                unregistered_count_out <= fast_raw_shifted_counter-reload_value; 
             end else begin
-                unregistered_count_out <= fast_counter+shift;
+                unregistered_count_out <= fast_raw_shifted_counter;
             end
         end else begin
-            if((count+shift)>=reload_value)begin
-                unregistered_count_out <= (count+shift)-reload_value; 
+            if(raw_shifted_counter>=reload_value)begin
+                unregistered_count_out <= raw_shifted_counter-reload_value; 
             end else begin
-                unregistered_count_out <= count+shift;
+                unregistered_count_out <= raw_shifted_counter;
             end
         end
     end
     
     // DIVIDED COUNTER
     always @(posedge clock) begin 
+        raw_shifted_counter <= count+shift;
+        fast_raw_shifted_counter <= fast_counter+shift;
         if (~reset)
             count <= {COUNTER_WIDTH{1'b0}};
         else if(enable) begin
