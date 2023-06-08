@@ -16,28 +16,48 @@
 `include "interfaces.svh"
 
 module TimebaseGenerator (
-    input wire       clockIn,
+    input wire       clock,
     input wire       reset,
     input wire       enable,
+    input wire       fast_count,
+    input wire       counter_status,
     input wire [2:0] dividerSetting,
     output reg       timebaseOut
 );
-    reg [4:0] timebases;
+    reg [5:0] timebases;
     reg count2;
     reg [1:0] count4;
     reg [2:0] count8;
     reg [3:0] count16;
     reg [4:0] count32;
     
-    always@(posedge clockIn) begin
-        if(~enable)begin
-            timebaseOut <=0;
+    reg selected_timebase;
+    reg [2:0] shadow_dividerSetting;
+    
+
+    always_comb begin
+        if(fast_count)begin
+            timebaseOut <= clock;
         end else begin
-            timebaseOut <= timebases[dividerSetting];
+            timebaseOut <= selected_timebase;
         end
     end
 
-    always @(posedge clockIn) begin
+
+    always@(posedge clock) begin
+        if(~counter_status)begin
+            shadow_dividerSetting <= dividerSetting;
+        end
+
+        timebases[0] <= 0;
+        if(~enable)begin
+            selected_timebase <=0;
+        end else begin
+            selected_timebase <= timebases[shadow_dividerSetting];
+        end
+    end
+
+    always @(posedge clock) begin
         if(~reset) begin
             // Clock/2 generation
             //update counters
@@ -57,33 +77,34 @@ module TimebaseGenerator (
 
     end
 
-    always@(posedge clockIn) begin
+    always@(posedge clock) begin
+        
         if (count2==1) begin
-            timebases[0]<=1'b1;
-        end else begin
-            timebases[0]<=1'b0;
-        end
-        if (count4==1) begin
             timebases[1]<=1'b1;
         end else begin
             timebases[1]<=1'b0;
         end
-        if (count8==1) begin
+        if (count4==1) begin
             timebases[2]<=1'b1;
         end else begin
             timebases[2]<=1'b0;
         end
-        // Clock/4 generation
-        if (count16==1) begin
+        if (count8==1) begin
             timebases[3]<=1'b1;
         end else begin
             timebases[3]<=1'b0;
         end
-        // Clock/8 generation
-        if (count32==1) begin
+        // Clock/4 generation
+        if (count16==1) begin
             timebases[4]<=1'b1;
         end else begin
             timebases[4]<=1'b0;
+        end
+        // Clock/8 generation
+        if (count32==1) begin
+            timebases[5]<=1'b1;
+        end else begin
+            timebases[5]<=1'b0;
         end
     end
 

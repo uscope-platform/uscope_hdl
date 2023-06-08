@@ -18,9 +18,10 @@
 module counter_core #(
     parameter COUNTER_WIDTH = 16
 )(
-    input wire clockIn,
+    input wire clock,
     input wire reset,
     input wire timebase,
+    input wire fast_count,
     input wire enable,
     input wire direction,
     input wire inhibit_load,
@@ -30,18 +31,33 @@ module counter_core #(
 );
 
     reg [COUNTER_WIDTH-1:0] count = {COUNTER_WIDTH{1'b0}};
+    reg [COUNTER_WIDTH-1:0] fast_counter = {COUNTER_WIDTH{1'b0}};
     
+    reg [COUNTER_WIDTH-1:0] unregistered_count_out;
 
+    // output register to improve timing
+    always @(posedge clock) begin 
+        count_out <= unregistered_count_out;
+    end
+    
     always_comb begin
-        if((count+shift)>=reload_value)begin
-            count_out <= (count+shift)-reload_value; 
+        if(fast_count)begin
+            if((fast_counter+shift)>=reload_value)begin
+                unregistered_count_out <= (fast_counter+shift)-reload_value; 
+            end else begin
+                unregistered_count_out <= fast_counter+shift;
+            end
         end else begin
-            count_out <= count+shift;
+            if((count+shift)>=reload_value)begin
+                unregistered_count_out <= (count+shift)-reload_value; 
+            end else begin
+                unregistered_count_out <= count+shift;
+            end
         end
     end
     
- 
-    always @(posedge clockIn) begin 
+    // DIVIDED COUNTER
+    always @(posedge clock) begin 
         if (~reset)
             count <= {COUNTER_WIDTH{1'b0}};
         else if(enable) begin
@@ -58,4 +74,21 @@ module counter_core #(
         end
     end
     
+
+    // FAST COUNTER
+    always @(posedge clock) begin 
+        if (~reset)
+            fast_counter <= {COUNTER_WIDTH{1'b0}};
+        else if(enable) begin
+            if (~direction)
+                fast_counter <= fast_counter + 1'b1;
+            else
+                fast_counter <= fast_counter - 1'b1;
+            if(fast_counter==reload_value & inhibit_load)
+                fast_counter <= 0;
+        end else begin
+            fast_counter <= 0;
+        end
+    end
+
 endmodule

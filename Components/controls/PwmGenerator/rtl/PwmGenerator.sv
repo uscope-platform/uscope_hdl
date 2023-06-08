@@ -57,17 +57,12 @@ module PwmGenerator #(
     end
 
 
-    always@(posedge clock)begin
-        if(~reset)begin
-            selected_timebase<=internal_timebase;
-        end else begin
-            if(ext_timebase_enable)
-                selected_timebase <= ext_timebase;
-            else
+    always_ff @(posedge clock ) begin
+        if(ext_timebase_enable)
+            selected_timebase <= ext_timebase;
+        else
             selected_timebase <= internal_timebase;
-        
-        end
-    end
+    end 
 
     typedef logic [31:0] addr_init_t [N_CHAINS+1];
     function addr_init_t ADDR_CALC();
@@ -116,10 +111,16 @@ module PwmGenerator #(
         .axi_in(internal_bus[N_CHAINS])
     );
 
+    wire fast_count;
+    assign fast_count = dividerSetting == 3'b0;
+
+
     TimebaseGenerator timebase_generator(
-        .clockIn(clock),
+        .clock(clock),
         .reset(reset),
+        .fast_count(fast_count),
         .enable(timebase_enable),
+        .counter_status(counter_run),
         .timebaseOut(internal_timebase),
         .dividerSetting(dividerSetting)
     );
@@ -135,6 +136,7 @@ module PwmGenerator #(
     
     end
 
+ 
     generate
         for( i = 0; i<N_CHAINS; i++)begin
             pwmChain #(
@@ -144,6 +146,7 @@ module PwmGenerator #(
                 .clock(clock),
                 .reset(reset),
                 .sync(sync),
+                .fast_count(fast_count),
                 .stop_request(stop_chain[i]),
                 .timebase(selected_timebase),
                 .external_counter_run(counter_run),

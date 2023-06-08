@@ -39,13 +39,14 @@ module Counter #(parameter COUNTER_WIDTH = 16)(
     input wire         clock,
     input wire         timebase,
     input wire         reset,
+    input wire         fast_count,
     input wire         run, 
     input wire  [COUNTER_WIDTH-1:0] shift,  
     input wire  [1:0]  mode,
     input wire         sync,
     input wire [COUNTER_WIDTH-1:0] counter_start_data,
     input wire [COUNTER_WIDTH-1:0] counter_stop_data,
-    output reg  [COUNTER_WIDTH-1:0] countOut,
+    output wire  [COUNTER_WIDTH-1:0] countOut,
     output reg         reload_compare
 );
 
@@ -54,6 +55,10 @@ module Counter #(parameter COUNTER_WIDTH = 16)(
     reg direction;         //0: up counting 1: down counting
     reg [COUNTER_WIDTH-1:0] cnt_stopValue;
 
+    reg  [COUNTER_WIDTH-1:0] fast_count_out = 0;
+    reg  [COUNTER_WIDTH-1:0] divided_count_out = 0;
+
+    assign countOut = fast_count ? fast_count_out : divided_count_out;
 
     always@(posedge clock)begin
         if(~reset) begin
@@ -66,28 +71,26 @@ module Counter #(parameter COUNTER_WIDTH = 16)(
         end
     end
 
+    
     always@(posedge clock) begin : output_logic
-        if(~reset) begin
-            countOut <= 0;
-        end else begin
-            if(counter_enable)begin
-                if(timebase) begin
-                    if(mode != 0) countOut <= counter + counter_start_data;
-                    else countOut <= counter_stop_data - counter;
-                end else begin
-                    countOut <= countOut;
-                end
-            end else begin
-                countOut <= countOut;
+            // divided logic
+            if(timebase) begin
+                if(mode != 0) divided_count_out <= counter + counter_start_data;
+                else divided_count_out <= counter_stop_data - counter;
             end
-        end
+            //fast logic
+            if(fast_count)begin
+                if(mode != 0) fast_count_out <= counter + counter_start_data;
+                else fast_count_out <= counter_stop_data - counter;
+            end 
     end
 
     counter_core #(
         .COUNTER_WIDTH(COUNTER_WIDTH)
     ) core (
-        .clockIn(clock),
+        .clock(clock),
         .timebase(timebase),
+        .fast_count(fast_count),
         .reset(reset & ~sync),
         .enable(counter_enable),
         .direction(direction),
