@@ -18,10 +18,13 @@
 module pwmChain #(
     parameter N_CHAINS=2,
     N_CHANNELS=4,
+    HR_ENABLE = "FALSE",
+    ENANCING_MODE = "DUTY",
     COUNTER_WIDTH=16
 )(
     input wire clock,
     input wire reset,
+    input wire [2:0] high_resolution_clock,
     input wire timebase,
     input wire fast_count,
     input wire external_counter_run,
@@ -39,13 +42,15 @@ module pwmChain #(
     wire [N_CHANNELS-1:0] compare_match_low;
     wire [N_CHANNELS-1:0] pin_out_a;
     wire [N_CHANNELS-1:0] pin_out_b;
+    wire [N_CHANNELS-1:0] dt_out_a;
+    wire [N_CHANNELS-1:0] dt_out_b;
     wire reload_compare;
 
     wire [2:0] counter_mode;
     wire [COUNTER_WIDTH-1:0] compare_tresholds [N_CHANNELS*2-1:0];
     wire [COUNTER_WIDTH-1:0] counter_start_data;
     wire [COUNTER_WIDTH-1:0] counter_stop_data;
-    wire [15:0] timebase_shift;
+    wire [COUNTER_WIDTH+3-1:0] timebase_shift;
     wire [1:0] output_enable [N_CHANNELS-1:0];
     wire [15:0] deadtime [N_CHANNELS-1:0];
     wire deadtime_enable [N_CHANNELS-1:0];
@@ -89,7 +94,7 @@ module pwmChain #(
         .reset(reset),
         .sync(sync),
         .fast_count(fast_count),
-        .shift(timebase_shift),
+        .shift(timebase_shift[15:0]),
         .timebase(timebase),
         .run(external_counter_run & ~stop_request),   
         .mode(counter_mode),
@@ -134,10 +139,33 @@ module pwmChain #(
             .deadTime(deadtime[i]),
             .in_a(pin_out_a[i]),
             .in_b(pin_out_b[i]),
-            .out_a(out_a[i]),
-            .out_b(out_b[i])
+            .out_a(dt_out_a[i]),
+            .out_b(dt_out_b[i])
         );
-        
+                
+        ResolutionEnhancer #(
+            .ENABLE(HR_ENABLE),
+            .ENANCING_MODE(ENANCING_MODE)
+        ) res_enhancer_a(
+            .clock(clock),
+            .high_resolution_clock(high_resolution_clock),
+            .reset(reset),
+            .in(dt_out_a[i]),
+            .count(timebase_shift[2:0]),
+            .out(out_a[i])
+        );
+            
+        ResolutionEnhancer #(
+            .ENABLE(HR_ENABLE),
+            .ENANCING_MODE(ENANCING_MODE)
+        ) res_enhancer_b(
+            .clock(clock),
+            .high_resolution_clock(high_resolution_clock),
+            .reset(reset),
+            .in(dt_out_b[i]),
+            .count(timebase_shift[2:0]),
+            .out(out_b[i])
+        );
     end
     endgenerate
     

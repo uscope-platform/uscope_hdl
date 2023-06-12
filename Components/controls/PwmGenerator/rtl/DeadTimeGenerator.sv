@@ -28,6 +28,7 @@ module DeadTimeGenerator #(
     output reg out_b
 );
 
+reg internal_out_a, internal_out_b;
 
 reg counter_enable;
 
@@ -50,6 +51,9 @@ timebase_shifter_core #(
 );
 
 always@(posedge clock)begin
+    out_a <= internal_out_a;
+    out_b <= internal_out_b;
+
     if(~reset)begin
         state <=0;
         counter_enable <=0;
@@ -100,31 +104,31 @@ end
 
 
 
-always@(*)begin
+always_comb begin
     if(~enable)begin
-        out_a <= in_a;
-        out_b <= in_b;
+        internal_out_a <= in_a;
+        internal_out_b <= in_b;
     end else begin
         case(state)
             IDLE_STATE:begin
-                out_a <=0;
-                out_b <=1;
+                internal_out_a <=0;
+                internal_out_b <=1;
             end
             FIRST_DEADTIME_STATE:begin
-                out_a <=0;
-                out_b <=0;
+                internal_out_a <=0;
+                internal_out_b <=0;
             end
             FIRST_OUT:begin
-                out_a <=1;
-                out_b <=0;
+                internal_out_a <=1;
+                internal_out_b <=0;
             end
             SECOND_DEADTIME_STATE:begin
-                out_a <=0;
-                out_b <=0;
+                internal_out_a <=0;
+                internal_out_b <=0;
             end
             default:begin
-                out_a <=0;
-                out_b <=1;
+                internal_out_a <=0;
+                internal_out_b <=1;
             end
         endcase
     end

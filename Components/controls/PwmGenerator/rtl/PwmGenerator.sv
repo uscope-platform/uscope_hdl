@@ -18,7 +18,9 @@
 
 module PwmGenerator #(
     parameter BASE_ADDRESS = 32'h43c00000, 
-    N_CHANNELS = 4, 
+    N_CHANNELS = 4,
+    HR_ENABLE = "FALSE",
+    ENANCING_MODE = "DUTY",
     COUNTER_WIDTH=16, 
     INITIAL_STOPPED_STATE = 0,
     N_CHAINS = 2,
@@ -26,6 +28,7 @@ module PwmGenerator #(
 )(
     input wire clock,
     input wire reset,
+    input wire [2:0] high_resolution_clock,
     input wire ext_timebase,
     input wire fault,
     output wire timebase,
@@ -141,9 +144,12 @@ module PwmGenerator #(
         for( i = 0; i<N_CHAINS; i++)begin
             pwmChain #(
                 .COUNTER_WIDTH(COUNTER_WIDTH),
-                .N_CHANNELS(N_CHANNELS)
+                .N_CHANNELS(N_CHANNELS),
+                .HR_ENABLE(HR_ENABLE),
+                .ENANCING_MODE(ENANCING_MODE)
             ) chain(
                 .clock(clock),
+                .high_resolution_clock(high_resolution_clock),
                 .reset(reset),
                 .sync(sync),
                 .fast_count(fast_count),
