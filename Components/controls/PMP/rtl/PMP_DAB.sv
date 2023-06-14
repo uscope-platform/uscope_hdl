@@ -67,6 +67,7 @@ module dab_pre_modulation_processor #(
     //           PARAMETER DECODING           //
     ////////////////////////////////////////////
 
+    wire operating_config_done;
 
     wire [15:0] duty_1;
     assign duty_1 = modulation_parameters[0];

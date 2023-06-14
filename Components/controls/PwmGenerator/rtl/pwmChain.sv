@@ -50,9 +50,9 @@ module pwmChain #(
     wire [COUNTER_WIDTH-1:0] compare_tresholds [N_CHANNELS*2-1:0];
     wire [COUNTER_WIDTH-1:0] counter_start_data;
     wire [COUNTER_WIDTH-1:0] counter_stop_data;
-    wire [COUNTER_WIDTH+3-1:0] timebase_shift;
+    wire [COUNTER_WIDTH-1:0] timebase_shift;
     wire [1:0] output_enable [N_CHANNELS-1:0];
-    wire [15:0] deadtime [N_CHANNELS-1:0];
+    wire [COUNTER_WIDTH-1:0] deadtime [N_CHANNELS-1:0];
     wire deadtime_enable [N_CHANNELS-1:0];
     reg  counter_stopped;
 
@@ -94,7 +94,7 @@ module pwmChain #(
         .reset(reset),
         .sync(sync),
         .fast_count(fast_count),
-        .shift(timebase_shift[15:0]),
+        .shift(timebase_shift),
         .timebase(timebase),
         .run(external_counter_run & ~stop_request),   
         .mode(counter_mode),
