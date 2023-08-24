@@ -78,8 +78,7 @@ module PwmGenerator #(
     localparam [31:0] AXI_ADDRESSES [N_CHAINS:0] = ADDR_CALC(); 
     
     localparam PRAGMA_MKFG_PARAMETRIZED_INTERCONNECT="axi_xbar";
-    localparam PRAGMA_MKFG_BUS_LAYOUT="[{\"name\": \"axi_xbar\",\"base\": \"BASE_ADDRESS\",\"offset\": \"0x100\",\"map\": [{\"len\":\"N_CHAINS\", \"mod\":\"pwmChain\"},{\"len\":\"1\", \"mod\":\"PwmControlUnit\"}]}]";
-    localparam PRAGMA_MKFG_BUS_ARRAY="internal_bus";
+    localparam PRAGMA_MKFG_BUS_LAYOUT="{\"name\": \"axi_xbar\",\"base\": \"BASE_ADDRESS\",\"offset\": \"0x100\",\"map\": [{\"len\":\"N_CHAINS\", \"if\":\"axi_in\", \"mod\":\"chain\"},{\"len\":\"1\", \"if\":\"axi_in\", \"mod\":\"pwm_cu\"}]}";
 
 
     axi_lite internal_bus[N_CHAINS+1]();
