@@ -20,7 +20,8 @@ module pwmChain #(
     N_CHANNELS=4,
     HR_ENABLE = "FALSE",
     ENANCING_MODE = "DUTY",
-    COUNTER_WIDTH=16
+    COUNTER_WIDTH=16,
+    PRAGMA_MKFG_MODULE_TOP = "pwmChain"
 )(
     input wire clock,
     input wire reset,

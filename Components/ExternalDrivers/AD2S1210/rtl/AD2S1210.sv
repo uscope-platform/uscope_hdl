@@ -15,7 +15,10 @@
 `timescale 10 ns / 1 ns
 `include "interfaces.svh"
 
-module ad2s1210 #(parameter BASE_ADDRESS = 32'h43c00000)(
+module ad2s1210 #(
+    parameter BASE_ADDRESS = 32'h43c00000,
+    PRAGMA_MKFG_MODULE_TOP = "ad2s1210"
+)(
     input wire clock,
     input wire reset,
     input wire read_angle,

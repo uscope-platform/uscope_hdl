@@ -106,133 +106,62 @@ endmodule
     /**
        {
         "name": "ChainControlUnit",
-        "type": "peripheral",
+        "type": "parametric_peripheral",
         "registers":[
             {
-                "name": "tresh_AL",
-                "offset": "0x0",
-                "description": "Comparator 0 treshold low",
+                "name": "tresh_$L",
+                "n_regs": ["N_CHANNELS"],
+                "description": "Comparator $ treshold low",
                 "direction": "RW"
             },
             {
-                "name": "tresh_Bl",
-                "offset": "0x4",
-                "description": "Comparator B treshold low",
+                "name": "tresh_$H",
+                "n_regs": ["N_CHANNELS"],
+                "description": "Comparator $ treshold high",
                 "direction": "RW"
             },
             {
-                "name": "tresh_CL",
-                "offset": "0x8",
-                "description": "Comparator C treshold low",
-                "direction": "RW"
-            },
-            {
-                "name": "tresh_DL",
-                "offset": "0xC",
-                "description": "Comparator D treshold low",
-                "direction": "RW"
-            },
-            {
-                "name": "tresh_AH",
-                "offset": "0x10",
-                "description": "Comparator A treshold high",
-                "direction": "RW"
-            },
-            {
-                "name": "tresh_BH",
-                "offset": "0x14",
-                "description": "Comparator B treshold high",
-                "direction": "RW"
-            },
-            {
-                "name": "tresh_CH",
-                "offset": "0x18",
-                "description": "Comparator C treshold high",
-                "direction": "RW"
-            },
-            {
-                "name": "tresh_DH",
-                "offset": "0x1C",
-                "description": "Comparator D treshold high",
-                "direction": "RW"
-            },
-            {
-                "name": "deadtime_A",
-                "offset": "0x20",
+                "name": "deadtime_$",
+                "n_regs": ["N_CHANNELS"],
                 "description": "Length of deadtime automatically inserted in pair A (if enabled)",
                 "direction": "RW"
             },
             {
-                "name": "deadtime_B",
-                "offset": "0x24",
-                "description": "Length of deadtime automatically inserted in pair B (if enabled)",
-                "direction": "RW"
-            },
-            {
-                "name": "deadtime_C",
-                "offset": "0x28",
-                "description": "Length of deadtime automatically inserted in pair C (if enabled)",
-                "direction": "RW"
-            },
-            {
-                "name": "deadtime_d",
-                "offset": "0x2c",
-                "description": "Length of deadtime automatically inserted in pair C (if enabled)",
-                "direction": "RW"
-            },
-            {
                 "name": "counter_start",
-                "offset": "0x30",
+                "n_regs": ["1"],
                 "description": "Start Value for the PWM generator",
                 "direction": "RW"
             },
             {
                 "name": "counter_stop",
-                "offset": "0x34",
-                "description": "Stop Value for the PWM generator counter",
+                "n_regs": ["1"],
+                "description": "Stop Value for the PWM generator",
                 "direction": "RW"
             },
             {
                 "name": "tb_shift",
-                "offset": "0x38",
+                "n_regs": ["1"],
                 "description": "Delay to be applied to the counter enable signal (to apply shift between the counters)",
                 "direction": "RW"
             },
             {
                 "name": "out_en",
-                "offset": "0x3C",
+                "n_regs": ["1"],
                 "description": "Output enable register",
                 "direction": "RW",
                 "fields":[
                     {
-                        "name":"out_a",
-                        "description": "enable output pair A of chain 0",
+                        "name":"out_$",
+                        "description": "enable output pair $",
                         "start_position": 0,
-                        "length": 2
-                    },
-                    {
-                        "name":"out_b",
-                        "description": "enable output pair B of chain 0",
-                        "start_position": 2,
-                        "length": 2
-                    },
-                    {
-                        "name":"out_c",
-                        "description": "enable output pair C of chain 0",
-                        "start_position": 4,
-                        "length": 2
-                    },
-                    {
-                        "name":"out_D",
-                        "description": "enable output pair d of chain 0",
-                        "start_position": 6,
-                        "length": 2
+                        "length": 2,
+                        "n_fields": ["N_CHANNELS"]
                     }
                 ]
             },
             {
                 "name": "dt_en",
-                "offset": "0x40",
+                "n_regs": ["1"],
                 "description": "Deadtime insertion enable register",
                 "direction": "RW",
                 "fields":[
@@ -240,42 +169,25 @@ endmodule
                         "name":"pair_a",
                         "description": "Enable deadtime insertion pair A of chain 0",
                         "start_position": 0,
-                        "length": 1
-                    },
-                    {
-                        "name":"pair_b",
-                        "description": "Enable deadtime insertion pair B of chain 0",
-                        "start_position": 1,
-                        "length": 1
-                    },
-                    {
-                        "name":"pair_c",
-                        "description": "Enable deadtime insertion pair C of chain 0",
-                        "start_position": 2,
-                        "length": 1
-                    },
-                    {
-                        "name":"pair_D",
-                        "description": "Enable deadtime insertion pair D of chain 0",
-                        "start_position": 3,
-                        "length": 1
+                        "length": 1,
+                        "n_fields": ["N_CHANNELS"]
                     }
                 ]
             },
             {
                 "name": "ctrl",
-                "offset": "0x44",
-                "description": "Chain 0 control register",
+                "n_regs": ["1"],
+                "description": "Chain control register",
                 "direction": "RW",
                 "fields":[
                     {
                         "name":"mode",
-                        "description": "Chain 0 counter mode",
+                        "description": "Chain counter mode",
                         "start_position": 0,
                         "length": 3
                     }
                 ]
             }
         ]
-       }  
+       }
     **/

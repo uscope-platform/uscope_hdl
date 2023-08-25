@@ -19,7 +19,8 @@
 module SPI #(
     SS_POLARITY_DEFAULT=0,
     N_CHANNELS=3,
-    OUTPUT_WIDTH=32
+    OUTPUT_WIDTH=32,
+    PRAGMA_MKFG_MODULE_TOP = "SPI"
 )(
     input logic clock,
     input logic reset,

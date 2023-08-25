@@ -196,7 +196,7 @@ module uScope_stream #(
     uScope #(
         .N_TRIGGERS(2),
         .DATA_WIDTH(24)
-    ) scope (
+    ) scope_internal (
         .clock(clock),
         .reset(reset),
         .dma_done(dma_done),

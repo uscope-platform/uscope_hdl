@@ -29,7 +29,8 @@ module AdcProcessing #(
     parameter [FLTER_TAP_WIDTH-1:0] FILTER_TAPS [MAX_FILTER_TAPS:0] = '{MAX_FILTER_TAPS+1{0}},
     LINEARIZER_SEGMENTS = 4,
     parameter [DATA_PATH_WIDTH-1:0] LINEARIZER_BOUNDS [N_CHANNELS-1:0][LINEARIZER_SEGMENTS-1:0] = '{default:0},
-    parameter [DATA_PATH_WIDTH:0] LINEARIZER_GAINS [N_CHANNELS-1:0][LINEARIZER_SEGMENTS-1:0] = '{default:0}
+    parameter [DATA_PATH_WIDTH:0] LINEARIZER_GAINS [N_CHANNELS-1:0][LINEARIZER_SEGMENTS-1:0] = '{default:0},
+    PRAGMA_MKFG_MODULE_TOP = "AdcProcessing"
 )(
     input  wire       clock,
     input  wire       reset,

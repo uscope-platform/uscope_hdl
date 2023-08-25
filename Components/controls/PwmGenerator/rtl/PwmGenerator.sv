@@ -24,7 +24,8 @@ module PwmGenerator #(
     COUNTER_WIDTH=16, 
     INITIAL_STOPPED_STATE = 0,
     N_CHAINS = 2,
-    N_PWM = N_CHAINS*N_CHANNELS*2
+    N_PWM = N_CHAINS*N_CHANNELS*2,
+    PRAGMA_MKFG_MODULE_TOP = "PwmGenerator"
 )(
     input wire clock,
     input wire reset,
