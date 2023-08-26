@@ -141,7 +141,7 @@ endmodule
             {
                 "name": "tb_shift",
                 "n_regs": ["1"],
-                "description": "Delay to be applied to the counter enable signal (to apply shift between the counters)",
+                "description": "Carrier phase shift",
                 "direction": "RW"
             },
             {
@@ -166,8 +166,8 @@ endmodule
                 "direction": "RW",
                 "fields":[
                     {
-                        "name":"pair_a",
-                        "description": "Enable deadtime insertion pair A of chain 0",
+                        "name":"pair_$",
+                        "description": "Enable deadtime insertion pair $",
                         "start_position": 0,
                         "length": 1,
                         "n_fields": ["N_CHANNELS"]
