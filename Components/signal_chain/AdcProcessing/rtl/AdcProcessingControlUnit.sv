@@ -60,6 +60,7 @@ module AdcProcessingControlUnit #(
     parameter [31:0] ZERO_IV [N_ZERO_IV-1:0] = '{N_ZERO_IV{32'h0}};
 	parameter [31:0] COMPARE_IV [N_COMPARE_REGS-1:0] = '{N_COMPARE_REGS{32'hffff0000}};
     parameter [31:0] IV [N_REGISTERS-1:0] = {ZERO_IV, COMPARE_IV};
+    
     axil_simple_register_cu #(
         .N_READ_REGISTERS(N_REGISTERS),
         .N_WRITE_REGISTERS(N_REGISTERS),
@@ -161,27 +162,30 @@ module AdcProcessingControlUnit #(
 endmodule
 
 
+
  /**
     {
         "name": "AdcProcessingControlUnit",
         "alias": "AdcProcessing",
-        "type": "peripheral",
+        "type": "parametric_peripheral",
         "registers":[
             {
                 "name": "cmp_low_f",
-                "offset": "0x0",
+                "n_regs": ["1"],
                 "description": "Low comparator threshold (falling when in normal mode)",
                 "direction": "RW",
                 "fields":[
                     {
                         "name":"fast",
                         "description": "Fast comparator treshold",
+                        "n_fields":["1"],
                         "start_position": 0,
                         "length": 16
                     },
                     {
                         "name":"slow",
                         "description": "Slow comparator threshold",
+                        "n_fields":["1"],
                         "start_position": 16,
                         "length": 16
                     }
@@ -189,7 +193,7 @@ endmodule
             },
             {
                 "name": "cmp_low_r",
-                "offset": "0x4",
+                "n_regs": ["1"],
                 "description": "Low and rising comparator threshold in normal mode",
                 "direction": "RW",
                 "fields":[
@@ -197,19 +201,21 @@ endmodule
                         "name":"fast",
                         "description": "Fast comparator treshold",
                         "start_position": 0,
+                        "n_fields":["1"],
                         "length": 16
                     },
                     {
                         "name":"slow",
                         "description": "Slow comparator threshold",
                         "start_position": 16,
+                        "n_fields":["1"],
                         "length": 16
                     }
                 ]
             },
             {
                 "name": "cmp_high_f",
-                "offset": "0x8",
+                "n_regs": ["1"],
                 "description": "high and falling comparator threshold in normal mode",
                 "direction": "RW",
                 "fields":[
@@ -217,19 +223,21 @@ endmodule
                         "name":"fast",
                         "description": "Fast comparator treshold",
                         "start_position": 0,
+                        "n_fields":["1"],
                         "length": 16
                     },
                     {
                         "name":"slow",
                         "description": "Slow comparator threshold",
                         "start_position": 16,
+                        "n_fields":["1"],
                         "length": 16
                     }
                 ]
             },
             {
                 "name": "cmp_h_r",
-                "offset": "0xc",
+                "n_regs": ["1"],
                 "description": "High comparator threshold (rising in normal mode)",
                 "direction": "RW",
                 "fields":[
@@ -237,33 +245,33 @@ endmodule
                         "name":"fast",
                         "description": "Fast comparator treshold",
                         "start_position": 0,
+                        "n_fields":["1"],
                         "length": 16
                     },
                     {
                         "name":"slow",
                         "description": "Slow comparator threshold",
                         "start_position": 16,
+                        "n_fields":["1"],
                         "length": 16
                     }
                 ]
             },
             {
-                "name": "cal_coeff",
-                "offset": "0x10",
-                "description": "Calibration coefficients",
-                "direction": "RW",
-                "fields":[
-                    {
-                        "name":"offset",
-                        "description": "Fast comparator treshold",
-                        "start_position": 16,
-                        "length": 16
-                    }
-                ]
+                "name": "offset_$",
+                "n_regs": ["N_CHANNELS"],
+                "description": "Offset calibration coefficient",
+                "direction": "RW"
+            },
+            {
+                "name": "shift_$",
+                "n_regs": ["N_SHIFT_REGS"],
+                "description": "Data shift calibration coefficient",
+                "direction": "RW"
             },
             {
                 "name": "control",
-                "offset": "0x14",
+                "n_regs": ["1"],
                 "description": "ADC post processing module control register",
                 "direction": "RW",
                 "fields":[
@@ -271,66 +279,79 @@ endmodule
                         "name":"shift_enable",
                         "description": "Enables calibration shifter",
                         "start_position": 0,
+                        "n_fields":["1"],
                         "length": 1
                     },
                     {
                         "name":"latch_mode",
                         "description": "Toggles comparators between normal and latching mode",
                         "start_position": 1,
+                        "n_fields":["1"],
                         "length": 2
                     },
                     {
                         "name":"clear_latch",
                         "description": "Clear comparators latch when in latching mode",
                         "start_position": 3,
+                        "n_fields":["1"],
                         "length": 2
                     },
                     {
                         "name":"clear_fault",
                         "description": "Clear sticky fault satus",
                         "start_position": 5,
+                        "n_fields":["1"],
                         "length": 1
                     },
                     {
                         "name":"fault_disable",
                         "description": "Disable fault generation",
                         "start_position": 6,
+                        "n_fields":["1"],
+                        "length": 1
+                    },
+                    {
+                        "name":"linearizer_enable",
+                        "description": "Enable data linearization",
+                        "start_position": 6,
+                        "n_fields":["1"],
                         "length": 1
                     },
                     {
                         "name":"fault_delay",
                         "description": "Amount of clock cycles a slow comparator must be active before triggering a fault",
                         "start_position": 8,
+                        "n_fields":["1"],
                         "length": 8
                     },
                     {
                         "name":"n_taps",
                         "description": "Number of active FIR filter taps",
-                        "start_position": 8,
+                        "start_position": 16,
+                        "n_fields":["1"],
                         "length": 8
                     },
                     {
                         "name":"decimation",
                         "description": "Decimation ratio between input and output data",
                         "start_position": 24,
+                        "n_fields":["1"],
                         "length": 8
                     }
                 ]
             },
             {
                 "name": "filter_tap_data",
-                "offset": "0x14",
-                "description": "FIR filter coefficient interface data",
-                "direction": "RW",
-                "fields":[]
+                "n_regs": ["1"],
+                "description": "Fir Filter tap data value",
+                "direction": "RW"
             },
             {
                 "name": "filter_tap_address",
-                "offset": "0x18",
-                "description": "FIR filter coefficient interface address",
-                "direction": "RW",
-                "fields":[]
+                "n_regs": ["1"],
+                "description": "Fir Filter tap address value",
+                "direction": "RW"
             }
         ]
     }   
-    **/
+ **/
