@@ -4,7 +4,7 @@
         "target_part":"xc7z020clg400",
         "synth_modules":[],
         "synth_tl": "AdcProcessing",
-        "sim_modules":[],
+        "sim_modules":["AdcProcessing_denoise_tb"],
         "sim_tl":"AdcProcessing_tb",
         "include_paths":[
             "Components/Common"

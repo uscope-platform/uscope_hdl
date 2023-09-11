@@ -17,6 +17,7 @@
 
 module AdcProcessingControlUnit #(
     STICKY_FAULT = 0,
+    DENOISING = 1'b0,
     DATA_PATH_WIDTH = 16,
     FLTER_TAP_WIDTH = 16,
     N_CHANNELS = 4
@@ -36,6 +37,10 @@ module AdcProcessingControlUnit #(
     output wire [DATA_PATH_WIDTH-1:0] shift [N_CHANNELS-1:0],
     output reg        shift_enable,
     output reg        fault,
+    //DENOISING
+    output wire denoise_enable,
+    output wire signed [DATA_PATH_WIDTH-1:0] denoise_tresh_p [N_CHANNELS-1:0],
+    output wire signed [DATA_PATH_WIDTH-1:0] denoise_tresh_n [N_CHANNELS-1:0],
     // FILTERING AND DECIMATION
     output reg [7:0]  decimation_ratio,
     output reg [7:0]  n_taps,
@@ -47,8 +52,16 @@ module AdcProcessingControlUnit #(
 
     parameter N_SHIFT_REGS = N_CHANNELS/8+1;
     parameter N_COMPARE_REGS = 4;
-    parameter N_REGISTERS = N_CHANNELS+N_COMPARE_REGS+N_SHIFT_REGS+3;
-    parameter TAP_ADDR_REG = N_CHANNELS+N_COMPARE_REGS+N_SHIFT_REGS+2;
+    parameter N_DENOISE_REGS = N_CHANNELS;
+    parameter N_OFFSET_REGS = N_CHANNELS;
+    
+
+    parameter CONTROL_REG = N_OFFSET_REGS+N_COMPARE_REGS+N_SHIFT_REGS+N_DENOISE_REGS;
+    parameter TAP_DATA_REG = CONTROL_REG+1;
+    parameter TAP_ADDR_REG = CONTROL_REG+2;
+
+
+    parameter N_REGISTERS = N_OFFSET_REGS+N_COMPARE_REGS+N_SHIFT_REGS+N_DENOISE_REGS+3;
 
     reg clear_fault, disable_fault;
     reg [7:0] slow_fault_threshold;
@@ -82,37 +95,44 @@ module AdcProcessingControlUnit #(
     generate
 
        
-        for(i = 0; i<4; i++)begin
+        for(i = 0; i<N_COMPARE_REGS; i++)begin
             assign comparator_thresholds[i] =  cu_write_registers[i][15:0];
             assign comparator_thresholds[i+4] =  cu_write_registers[i][31:16];
         end
 
 
-        for(i = 0; i<N_CHANNELS; i++)begin
+        for(i = 0; i<N_OFFSET_REGS; i++)begin
             assign offset[i] =  cu_write_registers[i+N_COMPARE_REGS][15:0];
         end
+        
         for(j = 0; j<N_SHIFT_REGS; j++)begin
             for(i = 0; i<8; i++)begin
                 if(i+j*8<N_CHANNELS)begin
-                    assign shift[i+j*8] = cu_write_registers[N_CHANNELS+N_COMPARE_REGS+j][i*4+3:i*4];
+                    assign shift[i+j*8] = cu_write_registers[N_OFFSET_REGS+N_COMPARE_REGS+j][i*4+3:i*4];
                 end
             end
         end
         
+        for(i = 0; i<N_DENOISE_REGS; i++)begin
+            assign denoise_tresh_p[i] =  cu_write_registers[N_OFFSET_REGS+N_COMPARE_REGS+N_SHIFT_REGS+i][15:0];
+            assign denoise_tresh_n[i] =  cu_write_registers[N_OFFSET_REGS+N_COMPARE_REGS+N_SHIFT_REGS+i][31:16];
+        end
     endgenerate
 
-    assign shift_enable         = cu_write_registers[N_CHANNELS+N_COMPARE_REGS+N_SHIFT_REGS][0];
-    assign latch_mode           = cu_write_registers[N_CHANNELS+N_COMPARE_REGS+N_SHIFT_REGS][2:1];
-    assign clear_latch          = cu_write_registers[N_CHANNELS+N_COMPARE_REGS+N_SHIFT_REGS][4:3];
-    assign clear_fault          = cu_write_registers[N_CHANNELS+N_COMPARE_REGS+N_SHIFT_REGS][5];
-    assign disable_fault        = cu_write_registers[N_CHANNELS+N_COMPARE_REGS+N_SHIFT_REGS][6];
-    assign linearizer_enable    = cu_write_registers[N_CHANNELS+N_COMPARE_REGS+N_SHIFT_REGS][7];
-    assign slow_fault_threshold = cu_write_registers[N_CHANNELS+N_COMPARE_REGS+N_SHIFT_REGS][15:8];
-    assign n_taps               = cu_write_registers[N_CHANNELS+N_COMPARE_REGS+N_SHIFT_REGS][23:16];
-    assign decimation_ratio     = cu_write_registers[N_CHANNELS+N_COMPARE_REGS+N_SHIFT_REGS][31:24];
+    assign denoise_enable = DENOISING;
+
+    assign shift_enable         = cu_write_registers[CONTROL_REG][0];
+    assign latch_mode           = cu_write_registers[CONTROL_REG][2:1];
+    assign clear_latch          = cu_write_registers[CONTROL_REG][4:3];
+    assign clear_fault          = cu_write_registers[CONTROL_REG][5];
+    assign disable_fault        = cu_write_registers[CONTROL_REG][6];
+    assign linearizer_enable    = cu_write_registers[CONTROL_REG][7];
+    assign slow_fault_threshold = cu_write_registers[CONTROL_REG][15:8];
+    assign n_taps               = cu_write_registers[CONTROL_REG][23:16];
+    assign decimation_ratio     = cu_write_registers[CONTROL_REG][31:24];
     
-    assign taps_data = cu_write_registers[N_CHANNELS+N_COMPARE_REGS+N_SHIFT_REGS+1];
-    assign taps_addr = cu_write_registers[N_CHANNELS+N_COMPARE_REGS+N_SHIFT_REGS+2];
+    assign taps_data = cu_write_registers[TAP_DATA_REG];
+    assign taps_addr = cu_write_registers[TAP_ADDR_REG];
 
     assign cu_read_registers = cu_write_registers;
     
@@ -129,7 +149,6 @@ module AdcProcessingControlUnit #(
                 arm_fault <= 1;
             end    
         end
-        
     end
 
     generate

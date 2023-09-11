@@ -19,6 +19,7 @@ module AdcProcessing #(
     parameter DATA_PATH_WIDTH = 16,
     FLTER_TAP_WIDTH = 16,
     DECIMATED = 1,
+    DENOISING = 0,
     ENABLE_AVERAGE = 0,
     AVERAGING_DIVISOR = 2,
     STICKY_FAULT = 0,
@@ -48,6 +49,9 @@ module AdcProcessing #(
     wire [1:0] trip_low;
     wire [7:0] decimation_ratio;
 
+    wire denoise_enable;
+    wire signed [DATA_PATH_WIDTH-1:0] denoise_tresh_p [N_CHANNELS-1:0];
+    wire signed [DATA_PATH_WIDTH-1:0] denoise_tresh_n [N_CHANNELS-1:0];
 
 
     wire signed [DATA_PATH_WIDTH-1:0] comparator_thresholds [0:7];
@@ -62,6 +66,7 @@ module AdcProcessing #(
 
     AdcProcessingControlUnit #(
         .STICKY_FAULT(STICKY_FAULT),
+        .DENOISING(DENOISING),
         .FLTER_TAP_WIDTH(FLTER_TAP_WIDTH),
         .DATA_PATH_WIDTH(DATA_PATH_WIDTH),
         .N_CHANNELS(N_CHANNELS)
@@ -82,6 +87,10 @@ module AdcProcessing #(
         .shift_enable(shift_enable),
         .fault(fault),
         .linearizer_enable(linearizer_enable),
+        // DENOISING
+        .denoise_enable(denoise_enable),
+        .denoise_tresh_p(denoise_tresh_p),
+        .denoise_tresh_n(denoise_tresh_n),
         // FILTERING AND DECIMATION
         .decimation_ratio(decimation_ratio),
         .n_taps(n_taps),
@@ -123,6 +132,23 @@ module AdcProcessing #(
 
     axi_stream #(
         .DATA_WIDTH(DATA_PATH_WIDTH)
+    ) denoise_out();
+
+    denoiser #(
+        .DATA_PATH_WIDTH(DATA_PATH_WIDTH),
+        .N_CHANNELS(N_CHANNELS)
+    )denoise(
+        .clock(clock),
+        .reset(reset),
+        .thresh_p(denoise_tresh_p),
+        .thresh_n(denoise_tresh_n),
+        .enable(denoise_enable),
+        .data_in(cal_out),
+        .data_out(denoise_out)
+    );
+
+    axi_stream #(
+        .DATA_WIDTH(DATA_PATH_WIDTH)
     ) lin_out();
 
     linearizer #(
@@ -135,7 +161,7 @@ module AdcProcessing #(
         .clock(clock),
         .reset(reset),
         .enable(linearizer_enable),
-        .data_in(cal_out),
+        .data_in(denoise_out),
         .data_out(lin_out)
     );
 
