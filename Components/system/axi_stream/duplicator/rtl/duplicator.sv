@@ -24,7 +24,7 @@ module axis_duplicator #(
 ) (
     input wire clock,
     axi_stream.slave in,
-    axi_stream.slave out[N_OUTPUTS]
+    axi_stream.master out[N_OUTPUTS]
 );
 
     genvar i;
