@@ -19,46 +19,42 @@
 
 
 module axis_duplicator #(
-    parameter buffer="FALSE"
+    parameter buffer="FALSE",
+    parameter N_OUTPUTS = 2
 ) (
     input wire clock,
     axi_stream.slave in,
-    axi_stream.master out_1,
-    axi_stream.master out_2
+    axi_stream.slave out[N_OUTPUTS]
 );
 
+    genvar i;
+    assign in.ready = out[0].ready;
 
     generate
         if(buffer == "TRUE")begin
-            always_ff @(posedge clock ) begin
-                out_1.data <= in.data;
-                out_1.dest <= in.dest;
-                out_1.user <= in.user;
-                out_1.valid <= in.valid;
-                out_1.tlast <= in.tlast;
-                
-
-                out_2.data <= in.data;
-                out_2.dest <= in.dest;
-                out_2.user <= in.user;
-                out_2.valid <= in.valid;
-                out_2.tlast <= in.tlast;    
+           
+           for(i = 0; i<N_OUTPUTS; i++) begin
+                always_ff @(posedge clock ) begin
+                    out[i].data <= in.data;
+                    out[i].dest <= in.dest;
+                    out[i].user <= in.user;
+                    out[i].valid <= in.valid;
+                    out[i].tlast <= in.tlast;
+                end  
             end
 
-            assign in.ready = out_1.ready;
         end else begin
-            assign out_1.data = in.data;
-            assign out_1.dest = in.dest;
-            assign out_1.user = in.user;
-            assign out_1.valid = in.valid;
-            assign out_1.tlast = in.tlast;
-            assign in.ready = out_1.ready;
+            for(i = 0; i<N_OUTPUTS; i++) begin
+                always_comb begin
+                    out[i].data <= in.data;
+                    out[i].dest <= in.dest;
+                    out[i].user <= in.user;
+                    out[i].valid <= in.valid;
+                    out[i].tlast <= in.tlast;
+                end  
+            end
 
-            assign out_2.data = in.data;
-            assign out_2.dest = in.dest;
-            assign out_2.user = in.user;
-            assign out_2.valid = in.valid;
-            assign out_2.tlast = in.tlast;
+
         end
     endgenerate
         
