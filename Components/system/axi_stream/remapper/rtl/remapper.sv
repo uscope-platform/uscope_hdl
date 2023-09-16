@@ -20,18 +20,20 @@
 
 module axis_remapper #(
     parameter DECOUPLE = "FALSE",
+    REGISTER_OUT="FALSE",
     REMAP="FALSE", 
     REMAP_TYPE = "DYNAMIC",
     REMAP_OFFSET = 0,
     INPUT_DATA_WIDTH = 16,
     OUTPUT_DATA_WIDTH = 16
     ) (
+    input wire clock,
     axi_stream.slave in,
     axi_stream.master out
 );
 
 
-
+    axi_stream #(.DATA_WIDTH(OUTPUT_DATA_WIDTH)) inner_out();
 
     generate
     
@@ -42,23 +44,41 @@ module axis_remapper #(
         if ((REMAP_TYPE != "DYNAMIC") && (REMAP_TYPE != "STATIC")) begin
             $error($sformatf("Illegal value for parameter REMAP_TYPE (%s), it must be either STATIC or DYNAMIC",REMAP_TYPE));
         end
+
+        if(REGISTER_OUT == "TRUE")begin
+            always_ff @( posedge clock ) begin
+                
+                out.data <= inner_out.data;
+                out.dest <= inner_out.dest;
+                out.valid <= inner_out.valid;
+                out.user <= inner_out.user;
+                out.tlast <= inner_out.tlast;
+            end
+        end else begin
+            assign out.data = inner_out.data;
+            assign out.dest = inner_out.dest;
+            assign out.valid = inner_out.valid;
+            assign out.user = inner_out.user;
+            assign out.tlast = inner_out.tlast;
+        end
+
+
     
         if(OUTPUT_DATA_WIDTH>INPUT_DATA_WIDTH)begin
-            assign out.data = {{OUTPUT_DATA_WIDTH-INPUT_DATA_WIDTH{in.data[INPUT_DATA_WIDTH-1]}},in.data};
+            assign inner_out.data = {{OUTPUT_DATA_WIDTH-INPUT_DATA_WIDTH{in.data[INPUT_DATA_WIDTH-1]}},in.data};
         end else begin
-            assign out.data = in.data;
+            assign inner_out.data = in.data;
         end
 
 
         if(REMAP == "TRUE")begin
             if(REMAP_TYPE == "DYNAMIC") begin 
-                assign out.dest = in.dest+REMAP_OFFSET;
+                assign inner_out.dest = in.dest+REMAP_OFFSET;
             end else if(REMAP_TYPE == "STATIC") begin
-                assign out.dest = REMAP_OFFSET;
+                assign inner_out.dest = REMAP_OFFSET;
             end
         end else begin
-
-            assign out.dest = in.dest;
+            assign inner_out.dest = in.dest;
         end
 
         if(DECOUPLE == "FALSE") begin
@@ -67,8 +87,8 @@ module axis_remapper #(
     endgenerate
     
 
-    assign out.user = in.user;
-    assign out.valid = in.valid;
-    assign out.tlast = in.tlast;
+    assign inner_out.user = in.user;
+    assign inner_out.valid = in.valid;
+    assign inner_out.tlast = in.tlast;
     
 endmodule
