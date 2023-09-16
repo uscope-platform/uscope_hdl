@@ -31,7 +31,8 @@ module AdcProcessing #(
     LINEARIZER_SEGMENTS = 4,
     parameter [DATA_PATH_WIDTH-1:0] LINEARIZER_BOUNDS [N_CHANNELS-1:0][LINEARIZER_SEGMENTS-1:0] = '{default:0},
     parameter [DATA_PATH_WIDTH:0] LINEARIZER_GAINS [N_CHANNELS-1:0][LINEARIZER_SEGMENTS-1:0] = '{default:0},
-    PRAGMA_MKFG_MODULE_TOP = "AdcProcessing"
+    PRAGMA_MKFG_MODULE_TOP = "AdcProcessing",
+    parameter PRAGMA_MKFG_DATAPOINT_NAMES = "" 
 )(
     input  wire       clock,
     input  wire       reset,
@@ -41,6 +42,13 @@ module AdcProcessing #(
     axi_lite.slave    axi_in,
     output reg        fault
 );
+
+
+    initial begin
+        $display("--------------------------------------------------------------");
+        $display("%s", PRAGMA_MKFG_DATAPOINT_NAMES);
+        $display("--------------------------------------------------------------");
+    end
 
     wire shift_enable;
     wire [1:0] latch_mode;

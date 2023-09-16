@@ -21,7 +21,8 @@ module axis_data_mover #(
     ADDRESS_WIDTH = 32,
     CHANNEL_NUMBER=1,
     parameter [ADDRESS_WIDTH-1:0] SOURCE_ADDR [CHANNEL_NUMBER-1:0] = '{CHANNEL_NUMBER{{ADDRESS_WIDTH{1'b0}}}},
-    parameter [ADDRESS_WIDTH-1:0] TARGET_ADDR [CHANNEL_NUMBER-1:0] = '{CHANNEL_NUMBER{{ADDRESS_WIDTH{1'b0}}}}
+    parameter [ADDRESS_WIDTH-1:0] TARGET_ADDR [CHANNEL_NUMBER-1:0] = '{CHANNEL_NUMBER{{ADDRESS_WIDTH{1'b0}}}},
+    parameter PRAGMA_MKFG_DATAPOINT_NAMES = "" 
 )(
     input wire clock,
     input wire reset,
