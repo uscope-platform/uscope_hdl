@@ -176,13 +176,13 @@ module AdcProcessing #(
     assign fast_data_out.data = lin_out.data;
     assign fast_data_out.valid = lin_out.valid;
     assign fast_data_out.dest = lin_out.dest;
-
+    
     generate
         if(DECIMATED==0)begin
-            assign filtered_data_out.data = fast_data_out.data;
-            assign filtered_data_out.valid = fast_data_out.valid;
-            assign filtered_data_out.dest = fast_data_out.dest;
-            assign fast_data_out.ready = filtered_data_out.ready;
+            assign filtered_data_out.data = lin_out.data;
+            assign filtered_data_out.valid = lin_out.valid;
+            assign filtered_data_out.dest = lin_out.dest;
+            assign lin_out.ready = filtered_data_out.ready;
 
         end else if(DECIMATED==1)begin
             
