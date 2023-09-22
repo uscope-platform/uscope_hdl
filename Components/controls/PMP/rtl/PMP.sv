@@ -354,57 +354,94 @@ endmodule
     /**
        {
         "name": "pre_modulation_processor",
-        "type": "peripheral",
+        "type": "variant_peripheral",
+        "variant_parameter":"CONVERTER_SELECTION",
         "registers":[
             {
                 "name": "control",
-                "offset": "0x0",
+                "n_regs": ["1"],
                 "description": "Control register",
                 "direction": "RW",
                 "fields": [
                     {
                         "name":"mod_type",
                         "description": "Modulation type",
+                        "n_fields":["1"],
                         "start_position": 0,
                         "length": 2
                     }, 
                     {
                         "name":"conv_type",
                         "description": "Converter type",
+                        "n_fields":["1"],
                         "start_position": 2,
                         "length": 2
                     }
-                ]
+                ],
+                "variants":["DAB", "VSI", "BUCK", "DYNAMIC"]
             },
             {
                 "name": "period",
-                "offset": "0x4",
+                "n_regs": ["1"],
                 "description": "Period of the output waveform",
-                "direction": "RW"
+                "direction": "RW",
+                "variants":["DAB", "VSI", "BUCK", "DYNAMIC"]
             },
             {
                 "name": "duty_1",
-                "offset": "0x8",
+                "n_regs": ["1"],
                 "description": "Duty cycle of the primary waveform",
-                "direction": "RW"
+                "direction": "RW",
+                "variants":["DAB"]
             },
             {
                 "name": "duty_2",
-                "offset": "0xc",
+                "n_regs": ["1"],
                 "description": "Duty cycle of the secondary waveform",
-                "direction": "RW"
+                "direction": "RW",
+                "variants":["DAB"]
             },
             {
                 "name": "phase_shift_1",
-                "offset": "0x10",
+                "n_regs": ["1"],
                 "description": "First phase shift parameter",
-                "direction": "RW"
+                "direction": "RW",
+                "variants":["DAB"]
             },
             {
                 "name": "phase_shift_2",
-                "offset": "0x14",
+                "n_regs": ["1"],
                 "description": "Second phase shift parameter",
-                "direction": "RW"
+                "direction": "RW",
+                "variants":["DAB"]
+            },
+            {
+                "name": "deadime",
+                "n_regs": ["1"],
+                "description": "Deadtime",
+                "direction": "RW",
+                "variants":["DAB"]
+            },
+            {
+                "name": "duty",
+                "n_regs": ["1"],
+                "description": "Output duty cycle",
+                "direction": "RW",
+                "variants":["BUCK"]
+            },
+            {
+                "name": "deadtime",
+                "n_regs": ["1"],
+                "description": "Deadtime between high and low side for buck converter",
+                "direction": "RW",
+                "variants":["BUCK"]
+            },
+            {
+                "name": "ps_$",
+                "n_regs": ["N_CHAINS"],
+                "description": "Carrier shift of phase $",
+                "direction": "RW",
+                "variants":["BUCK"]
             }
         ]
        }  
