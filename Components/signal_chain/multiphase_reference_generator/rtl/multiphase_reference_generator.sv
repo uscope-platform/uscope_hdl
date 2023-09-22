@@ -81,6 +81,18 @@ module multiphase_reference_generator #(
         .counter_out(emulator_tb)
     );
 
+    wire samplple_tb;
+
+    enable_generator_core  #(
+        .COUNTER_WIDTH(16)
+    )sampling_divider(
+        .clock(clock),
+        .reset(reset),
+        .gen_enable_in(emulate_angle),
+        .period(20),
+        .enable_out(samplple_tb)
+    );
+
 
     always_ff @(posedge clock)begin
         if(~reset)begin
@@ -88,12 +100,8 @@ module multiphase_reference_generator #(
             emulated_phase.data <= 0;
             emulated_phase.valid <= 0;
         end else begin
-            if(phase.valid)begin
-                emulated_phase.data <= emulator_counter;
-                emulated_phase.valid <= 1;
-            end else begin
-                emulated_phase.valid <= 0;
-            end
+            emulated_phase.data <= emulator_counter;
+            emulated_phase.valid <= samplple_tb;
             if(emulator_tb == 1) begin
                 emulator_counter <= emulator_counter + emulation_phase_advance;
             end
