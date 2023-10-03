@@ -16,7 +16,9 @@
 `timescale 10ns / 1ns
 `include "interfaces.svh"
 
-module fCore(
+module fCore #(
+    parameter PRAGMA_MKFG_MODULE_TOP = "fCore"
+)(
     input wire clock,
     input wire axi_clock,
     input wire reset,

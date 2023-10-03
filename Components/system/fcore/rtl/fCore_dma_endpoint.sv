@@ -219,6 +219,7 @@ endmodule
     {
         "name": "fCore_dma_endpoint",
         "type": "peripheral",
+        "alias": "fCore",
         "registers":[
             {
                 "name": "n_channel",
