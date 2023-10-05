@@ -19,7 +19,10 @@
 
 
 module axis_constant #(
-    parameter CONSTANT_WIDTH = 32
+    parameter CONSTANT_WIDTH = 32,
+    parameter PRAGMA_MKFG_PROXY = "FALSE",
+    parameter PRAGMA_MKFG_PROXY_TL = "",
+    parameter PRAGMA_MKFG_PROXY_IF = "proxy_if"
 )(
     input wire        clock,
     input wire        reset,
