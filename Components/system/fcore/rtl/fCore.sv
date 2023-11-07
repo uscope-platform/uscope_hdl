@@ -17,7 +17,24 @@
 `include "interfaces.svh"
 
 module fCore #(
-    parameter PRAGMA_MKFG_MODULE_TOP = "fCore"
+    parameter PRAGMA_MKFG_MODULE_TOP = "fCore",
+    parameter SIM_CONFIG = "FALSE",
+    parameter FAST_DEBUG = "TRUE",
+    parameter INIT_FILE = "init.mem",
+    parameter DMA_BASE_ADDRESS = 32'h43c00000,
+    parameter INSTRUCTION_STORE_SIZE = 4096,
+    parameter INSTRUCTION_WIDTH = 32,
+    parameter DATAPATH_WIDTH = 32,
+    parameter ALU_OPCODE_WIDTH = 5,
+    parameter OPCODE_WIDTH = 5,
+    parameter REGISTER_FILE_DEPTH = 64,
+    parameter RECIPROCAL_PRESENT = 0,
+    parameter BITMANIP_IMPLEMENTED = 0,
+    parameter LOGIC_IMPLEMENTED = 1,
+    parameter EFI_IMPLEMENTED = 0,
+    parameter FULL_COMPARE = 1,
+    parameter TRANSLATION_TABLE_INIT = "TRANSPARENT",
+    parameter MAX_CHANNELS = 4
 )(
     input wire clock,
     input wire axi_clock,
@@ -36,24 +53,9 @@ module fCore #(
     axi_stream.master axis_dma_read_response
 );
 
-    parameter SIM_CONFIG = "FALSE";
-    parameter FAST_DEBUG = "TRUE";
-    parameter INIT_FILE = "init.mem";
-    parameter DMA_BASE_ADDRESS = 32'h43c00000;
-    parameter INSTRUCTION_STORE_SIZE = 4096;
-    parameter INSTRUCTION_WIDTH = 32;
-    parameter DATAPATH_WIDTH = 32;
-    parameter ALU_OPCODE_WIDTH = 5;
-    parameter OPCODE_WIDTH = 5;
-    parameter REGISTER_FILE_DEPTH = 64;
-    parameter RECIPROCAL_PRESENT = 0;
-    parameter BITMANIP_IMPLEMENTED = 0;
-    parameter LOGIC_IMPLEMENTED = 1;
-    parameter EFI_IMPLEMENTED = 0;
-    parameter FULL_COMPARE = 1;
-    parameter TRANSLATION_TABLE_INIT = "TRANSPARENT";
+   
+   
     // Maximum number of supported channels
-    parameter MAX_CHANNELS = 4;
 
     // Width of the instruction address
     localparam ADDR_WIDTH = $clog2(INSTRUCTION_STORE_SIZE);

@@ -289,6 +289,28 @@ endmodule
                 "direction": "RW"
             },
             {
+                "name": "denoise_tresh_$",
+                "n_regs": ["N_CHANNELS"],
+                "description": "denoiser tresholds",
+                "direction": "RW",
+                "fields":[
+                     {
+                        "name":"positive",
+                        "description": "Positive difference limit",
+                        "start_position": 0,
+                        "n_fields":["1"],
+                        "length": 16
+                    },
+                    {
+                        "name":"negative",
+                        "description": "Negative difference limit",
+                        "start_position": 16,
+                        "n_fields":["1"],
+                        "length": 16
+                    }
+                ]
+            },
+            {
                 "name": "control",
                 "n_regs": ["1"],
                 "description": "ADC post processing module control register",
