@@ -20,7 +20,7 @@ module buck_pre_modulation_processor  #(
     PWM_BASE_ADDR = 0,
     N_PHASES = 4,
     N_PWM_CHANNELS = 1,
-    N_PARAMETERS = N_PHASES+2
+    N_PARAMETERS = N_PHASES*2+2
 )(
     input wire clock,
     input wire reset,
@@ -73,6 +73,8 @@ module buck_pre_modulation_processor  #(
     assign deadtime = modulation_parameters[1];
     wire [15:0] phase_shifts[N_PHASES-1:0];
     assign phase_shifts[N_PHASES-1:0] = modulation_parameters[N_PHASES+1:2];
+    wire [15:0] duty_adjust[N_PHASES-1:0];
+    assign duty_adjust[N_PHASES-1:0] = modulation_parameters[N_PARAMETERS-1:N_PHASES+2];
  
 
     PMP_buck_management_core #(
@@ -105,6 +107,7 @@ module buck_pre_modulation_processor  #(
         .period(period),
         .phase_shifts(phase_shifts),
         .duty(duty),
+        .duty_adjust(duty_adjust),
         .modulator_status(modulator_status),
         .operating_write(operating_write)
     );

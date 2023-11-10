@@ -442,6 +442,13 @@ endmodule
                 "description": "Carrier shift of phase $",
                 "direction": "RW",
                 "variants":["BUCK"]
+            },
+            {
+                "name": "d_adj_$",
+                "n_regs": ["N_CHAINS"],
+                "description": "Duty cycle adjust for phase $",
+                "direction": "RW",
+                "variants":["BUCK"]
             }
         ]
        }  
