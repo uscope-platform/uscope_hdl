@@ -40,36 +40,3 @@ package fcore_isa;
     parameter BSEL = 25;
     parameter LXOR = 26;
 endpackage
-
-typedef enum logic [4:0] { 
-    NOP = fcore_isa::NOP,
-    ADD = fcore_isa::ADD,
-    SUB = fcore_isa::SUB,
-    MUL = fcore_isa::MUL,
-    ITF = fcore_isa::ITF,
-    FTI = fcore_isa::FTI,
-    LDC = fcore_isa::LDC,
-    LDR = fcore_isa::LDR,
-    BGT = fcore_isa::BGT,
-    BLE = fcore_isa::BLE,
-    BEQ = fcore_isa::BEQ,
-    BNE = fcore_isa::BNE,
-    STOP = fcore_isa::STOP,
-    LAND = fcore_isa::LAND,
-    LOR = fcore_isa::LOR,
-    LNOT = fcore_isa::LNOT,
-    SATP = fcore_isa::SATP,
-    SATN = fcore_isa::SATN,
-    REC = fcore_isa::REC,
-    POPCNT = fcore_isa::POPCNT,
-    ABS = fcore_isa::ABS,
-    EFI = fcore_isa::EFI,
-    BSET = fcore_isa::BSET,
-    BSEL = fcore_isa::BSEL,
-    LXOR = fcore_isa::LXOR,
-    RESERVED_0 = 27,
-    RESERVED_1 = 28,
-    RESERVED_2 = 29,
-    RESERVED_3 = 30,
-    RESERVED_4 = 31
- } fcore_operations;

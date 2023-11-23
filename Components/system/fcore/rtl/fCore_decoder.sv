@@ -42,7 +42,7 @@ module fCore_decoder #(
     axi_stream.master operation_if
     );
 
-    fcore_operations current_operation;
+    //fcore_operations current_operation;
 
     wire [OPCODE_WIDTH-1:0] opcode;
     assign opcode = instruction_stream.data[OPCODE_WIDTH-1:0];
@@ -86,7 +86,7 @@ module fCore_decoder #(
         operation_if.valid <= 0;
         if(enable)begin
             exec_opcode <= opcode;
-            $cast(current_operation, opcode);
+            //$cast(current_operation, opcode);
             case(opcode)
                 fcore_isa::ADD: begin
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
