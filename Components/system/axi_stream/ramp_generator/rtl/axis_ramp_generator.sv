@@ -23,7 +23,7 @@ module axis_ramp_generator #(
 ) (
     input wire        clock,
     input wire        reset,
-    axi_stream.master const_out,
+    axi_stream.master ramp_out,
     axi_lite.slave axil
 );
 
@@ -97,11 +97,11 @@ module axis_ramp_generator #(
 
     always_ff @(posedge clock) begin
         if (~reset) begin
-            const_out.valid <= 0;
-            const_out.data <= 0;
-            const_out.dest <= 0;
+            ramp_out.valid <= 0;
+            ramp_out.data <= 0;
+            ramp_out.dest <= 0;
         end else begin
-            const_out.valid <= 0;
+            ramp_out.valid <= 0;
             if(trigger_axis_write)begin
                 if(prev_stop_value != stop_value)begin
                     ramp_in_progress <= 1;
@@ -110,15 +110,15 @@ module axis_ramp_generator #(
                 end
             end
             if(timebase & ramp_in_progress)begin
-                if(const_out.ready) begin
+                if(ramp_out.ready) begin
                     if(stop_condition)begin
-                        const_out.data <= shadow_stop_value;
+                        ramp_out.data <= shadow_stop_value;
                     end else begin
-                        const_out.data <= const_in_progress;
+                        ramp_out.data <= const_in_progress;
                     end
                     
-                    const_out.dest <= constant_dest;
-                    const_out.valid <= 1;
+                    ramp_out.dest <= constant_dest;
+                    ramp_out.valid <= 1;
                     if(ramp_direction) begin
                         const_in_progress <= const_in_progress + ramp_increment;
                     end else begin

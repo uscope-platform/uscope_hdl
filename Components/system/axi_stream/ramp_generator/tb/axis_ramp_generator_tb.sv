@@ -37,7 +37,7 @@ module axis_ramp_generator_tb();
     ) UUT(
         .clock(clk),
         .reset(reset),
-        .const_out(out),
+        .ramp_out(out),
         .axil(axil)
     );
 
