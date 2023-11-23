@@ -218,8 +218,14 @@ package reg_maps;
         int forced_sequencing = 'h14;
     } dab_sequencer;
 
+    struct { 
+        int stop_value = 0;
+        int dest = 'h4;
+        int inc = 'h8;
+        int tb_div = 'hc;
+        int ramp_bypass = 'h10;
+    } ramp_generator;
 
-    
     
 endpackage
 

@@ -29,10 +29,11 @@ module axis_ramp_generator #(
 
 
     localparam ADDITIONAL_BITS = 32 - OUTPUT_WIDTH;
-    localparam N_REGISTERS = 4;
+    localparam N_REGISTERS = 5;
 
 
     wire trigger_axis_write;
+    wire ramp_bypass;
     reg [31:0] cu_write_registers [N_REGISTERS-1:0];
     reg [31:0] cu_read_registers [N_REGISTERS-1:0];
 
@@ -41,7 +42,7 @@ module axis_ramp_generator #(
         .N_READ_REGISTERS(N_REGISTERS),
         .N_WRITE_REGISTERS(N_REGISTERS),
         .REGISTERS_WIDTH(32),
-        .ADDRESS_MASK('hf),
+        .ADDRESS_MASK('h1f),
         .N_TRIGGER_REGISTERS(1),
         .TRIGGER_REGISTERS_IDX({0})
     ) CU (
@@ -63,11 +64,13 @@ module axis_ramp_generator #(
     assign constant_dest = cu_write_registers[1];
     assign ramp_increment = cu_write_registers[2];
     assign ramp_tb_divisor = cu_write_registers[3];
+    assign ramp_bypass = cu_write_registers[4][0];
 
     assign cu_read_registers[0] = {{ADDITIONAL_BITS{1'b0}}, stop_value};
     assign cu_read_registers[1] = {{ADDITIONAL_BITS{1'b0}}, constant_dest};
     assign cu_read_registers[2] = {{ADDITIONAL_BITS{1'b0}}, ramp_increment};
     assign cu_read_registers[3] = {{ADDITIONAL_BITS{1'b0}}, ramp_tb_divisor};
+    assign cu_read_registers[4] = ramp_bypass;
 
     
     wire div_tb, timebase;
@@ -103,10 +106,18 @@ module axis_ramp_generator #(
         end else begin
             ramp_out.valid <= 0;
             if(trigger_axis_write)begin
+                
                 if(prev_stop_value != stop_value)begin
-                    ramp_in_progress <= 1;
-                    shadow_stop_value<= stop_value;
-                    const_in_progress <= prev_stop_value;
+                    if(ramp_bypass)begin
+                        ramp_out.data <= stop_value;
+                        ramp_out.dest <= constant_dest;
+                        ramp_out.valid <= 1;           
+                        prev_stop_value <= stop_value;         
+                    end else begin
+                        ramp_in_progress <= 1;
+                        shadow_stop_value<= stop_value;
+                        const_in_progress <= prev_stop_value;
+                    end
                 end
             end
             if(timebase & ramp_in_progress)begin
@@ -167,6 +178,13 @@ endmodule
                 "name": "tb_div",
                 "offset": "0xC",
                 "description": "Divisor used to derive the ramp increment timebase from the clock",
+                "direction": "RW"
+                
+            },
+            {
+                "name": "ramp_bypass",
+                "offset": "0x10",
+                "description": "A write an output bypassing the ramp (for initialization and debug purposes)",
                 "direction": "RW"
                 
             }

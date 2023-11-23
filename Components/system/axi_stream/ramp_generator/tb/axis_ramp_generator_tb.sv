@@ -71,6 +71,13 @@ module axis_ramp_generator_tb();
         #1 axil_bfm.write('h43c0000C, 'h3);
         #1 axil_bfm.write('h43c00000, 200);
 
+
+        #6500;
+
+
+        #1 axil_bfm.write('h43c00010, 'h1);
+        #1 axil_bfm.write('h43c00000, 2200);
+
     end
 
 endmodule
