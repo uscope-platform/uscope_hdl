@@ -23,13 +23,14 @@ module axis_ramp_generator #(
 ) (
     input wire        clock,
     input wire        reset,
+    input wire sync,
     axi_stream.master ramp_out,
     axi_lite.slave axil
 );
 
 
     localparam ADDITIONAL_BITS = 32 - OUTPUT_WIDTH;
-    localparam N_REGISTERS = 5;
+    localparam N_REGISTERS = 4;
 
 
     wire trigger_axis_write;
@@ -58,94 +59,111 @@ module axis_ramp_generator #(
     reg [OUTPUT_WIDTH-1:0] stop_value;
     reg [31:0] constant_dest;
     reg [OUTPUT_WIDTH-1:0] ramp_increment;
-    reg [OUTPUT_WIDTH-1:0] ramp_tb_divisor;
 
     assign stop_value = cu_write_registers[0];
     assign constant_dest = cu_write_registers[1];
     assign ramp_increment = cu_write_registers[2];
-    assign ramp_tb_divisor = cu_write_registers[3];
-    assign ramp_bypass = cu_write_registers[4][0];
+    assign ramp_bypass = cu_write_registers[3][0];
 
     assign cu_read_registers[0] = {{ADDITIONAL_BITS{1'b0}}, stop_value};
     assign cu_read_registers[1] = {{ADDITIONAL_BITS{1'b0}}, constant_dest};
     assign cu_read_registers[2] = {{ADDITIONAL_BITS{1'b0}}, ramp_increment};
-    assign cu_read_registers[3] = {{ADDITIONAL_BITS{1'b0}}, ramp_tb_divisor};
-    assign cu_read_registers[4] = ramp_bypass;
+    assign cu_read_registers[3] = ramp_bypass;
 
-    
-    wire div_tb, timebase;
-    assign timebase = ramp_tb_divisor<2 ? clock: div_tb;
-
-    enable_generator_core #(
-        .COUNTER_WIDTH(16)
-    )tb_gen(
-        .clock(clock),
-        .reset(reset),
-        .gen_enable_in(1),
-        .period(ramp_tb_divisor),
-        .enable_out(div_tb)
-    );
 
     wire ramp_direction;
     assign ramp_direction = prev_stop_value < shadow_stop_value;
 
     wire stop_condition; 
-    assign stop_condition = ramp_direction ? const_in_progress >= shadow_stop_value :const_in_progress <= shadow_stop_value;
+    assign stop_condition = ramp_direction ? next_output >= shadow_stop_value : next_output <= shadow_stop_value;
 
-    reg ramp_in_progress = 0;
     reg[OUTPUT_WIDTH-1:0] prev_stop_value = 0;
     reg[OUTPUT_WIDTH-1:0] shadow_stop_value = 0;
 
-    reg [OUTPUT_WIDTH-1:0] const_in_progress;
+    reg [OUTPUT_WIDTH-1:0] const_in_progress = 0;
+
+    axi_stream inner_ramp();
+
+
+
+    enum logic [1:0]  { 
+        rg_idle = 0,
+        rg_in_progress = 1,
+        rg_wait_sync = 2
+    } ramp_generator_state = rg_idle;
+
+    assign inner_ramp.dest = constant_dest;
 
     always_ff @(posedge clock) begin
-        if (~reset) begin
-            ramp_out.valid <= 0;
-            ramp_out.data <= 0;
-            ramp_out.dest <= 0;
-        end else begin
-            ramp_out.valid <= 0;
-            if(trigger_axis_write)begin
-                
-                if(prev_stop_value != stop_value)begin
-                    if(ramp_bypass)begin
-                        ramp_out.data <= stop_value;
-                        ramp_out.dest <= constant_dest;
-                        ramp_out.valid <= 1;           
-                        prev_stop_value <= stop_value;         
-                    end else begin
-                        ramp_in_progress <= 1;
-                        shadow_stop_value<= stop_value;
-                        const_in_progress <= prev_stop_value;
-                    end
-                end
+
+        inner_ramp.valid <= 0;
+        case(ramp_generator_state)
+        rg_idle:begin
+            if(trigger_axis_write & ~ramp_bypass)begin
+                shadow_stop_value<= stop_value;
+                ramp_generator_state <= rg_in_progress;
+                const_in_progress <= prev_stop_value;
+            end else if(trigger_axis_write && ramp_bypass) begin
+                inner_ramp.data  <= stop_value;
+                inner_ramp.valid <= 1;
             end
-            if(timebase & ramp_in_progress)begin
-                if(ramp_out.ready) begin
-                    if(stop_condition)begin
-                        ramp_out.data <= shadow_stop_value;
-                    end else begin
-                        ramp_out.data <= const_in_progress;
-                    end
-                    
-                    ramp_out.dest <= constant_dest;
-                    ramp_out.valid <= 1;
-                    if(ramp_direction) begin
-                        const_in_progress <= const_in_progress + ramp_increment;
-                    end else begin
-                        const_in_progress <= const_in_progress - ramp_increment;
-                    end
-                    
+        end
+        rg_in_progress:begin
+            if(sync & inner_ramp.ready)begin
+
+                inner_ramp.data <= next_output;
+                inner_ramp.valid <= 1;
+                
+                if(stop_condition) begin
+                    ramp_generator_state <= rg_idle;
+                    prev_stop_value <= shadow_stop_value;
                 end 
+                const_in_progress <= next_output;
+            end else begin
+                ramp_generator_state <= rg_wait_sync;
+            end
+        end
+        rg_wait_sync:begin
+            if(sync & inner_ramp.ready) begin
+
+                inner_ramp.data <= next_output;
+                inner_ramp.valid <= 1;
 
                 if(stop_condition) begin
-                    ramp_in_progress <= 0;
+                    ramp_generator_state <= rg_idle;
                     prev_stop_value <= shadow_stop_value;
+                end else begin
+                    ramp_generator_state <= rg_in_progress;
                 end
+                const_in_progress <= next_output;
+
+            end
+        end
+        endcase
+    end
+
+    reg [15:0] next_output;
+    
+    always_comb begin
+        if(stop_condition)begin
+            next_output <= shadow_stop_value;
+        end else begin
+            if(ramp_direction)begin
+                next_output <= const_in_progress + ramp_increment;
+            end else begin
+                next_output <= const_in_progress - ramp_increment;
             end
         end
     end
 
+    axis_skid_buffer #(
+        .REGISTER_OUTPUT(0)
+    ) skid_b(
+        .clock(clock),
+        .reset(reset),
+        .axis_in(inner_ramp),
+        .axis_out(ramp_out)
+    );
 
 
 endmodule
@@ -175,15 +193,8 @@ endmodule
                 "direction": "RW"
             },
             {
-                "name": "tb_div",
-                "offset": "0xC",
-                "description": "Divisor used to derive the ramp increment timebase from the clock",
-                "direction": "RW"
-                
-            },
-            {
                 "name": "ramp_bypass",
-                "offset": "0x10",
+                "offset": "0xC",
                 "description": "A write an output bypassing the ramp (for initialization and debug purposes)",
                 "direction": "RW"
                 

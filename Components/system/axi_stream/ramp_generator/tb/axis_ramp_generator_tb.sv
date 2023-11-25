@@ -31,12 +31,23 @@ module axis_ramp_generator_tb();
     initial clk = 0; 
     always #0.5 clk = ~clk; 
 
+    reg sync = 0;
+    initial begin
+        #8.5;
+        forever begin
+            #5 sync = 1;
+            #1 sync = 0;
+            #4;
+        end
+    end
+    
 
     axis_ramp_generator #( 
         .OUTPUT_WIDTH(16)
     ) UUT(
         .clock(clk),
         .reset(reset),
+        .sync(sync),
         .ramp_out(out),
         .axil(axil)
     );
@@ -44,6 +55,14 @@ module axis_ramp_generator_tb();
 
     initial begin
         out.ready = 1;
+        #22.5;
+        forever begin
+            #24 out.ready = 1;
+            #65 out.ready = 0;
+        end
+    end
+
+    initial begin
         axil_bfm = new(axil, 1);
         reset <=1'h1;
         #1 reset <=1'h0;
@@ -53,29 +72,26 @@ module axis_ramp_generator_tb();
 
         #1 axil_bfm.write('h43c00004, 'h44);
         #1 axil_bfm.write('h43c00008, 'h2);
-        #1 axil_bfm.write('h43c0000C, 'h2);
         #1 axil_bfm.write('h43c00000, 1001);
 
-        #1500;
+        #15000;
 
         #1 axil_bfm.write('h43c00004, 'h22);
         #1 axil_bfm.write('h43c00008, 'h1);
-        #1 axil_bfm.write('h43c0000C, 'h0);
         #1 axil_bfm.write('h43c00000, 2000);
 
-        #1200;
+        #15000;
 
 
         #1 axil_bfm.write('h43c00004, 'h22);
         #1 axil_bfm.write('h43c00008, 'h1);
-        #1 axil_bfm.write('h43c0000C, 'h3);
         #1 axil_bfm.write('h43c00000, 200);
 
 
-        #6500;
+        #65000;
 
 
-        #1 axil_bfm.write('h43c00010, 'h1);
+        #1 axil_bfm.write('h43c0000C, 'h1);
         #1 axil_bfm.write('h43c00000, 2200);
 
     end
