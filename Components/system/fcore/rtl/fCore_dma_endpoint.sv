@@ -22,7 +22,8 @@ module fCore_dma_endpoint #(
     DATAPATH_WIDTH = 20,
     REG_ADDR_WIDTH = 8,
     REGISTER_FILE_DEPTH = 64,
-    TRANSLATION_TABLE_INIT = "TRANSPARENT"
+    TRANSLATION_TABLE_INIT = "TRANSPARENT",
+    TRANSLATION_TABLE_INIT_FILE = ""
 )(
     input wire clock,
     input wire reset,
@@ -63,6 +64,12 @@ module fCore_dma_endpoint #(
 
     reg [31:0] translation_table [REGISTER_FILE_DEPTH-1:0];
     reg [$clog2(REGISTER_FILE_DEPTH)-1:0] translation_table_address;
+
+    initial begin
+        if(TRANSLATION_TABLE_INIT == "FILE") begin
+            $readmemh(TRANSLATION_TABLE_INIT_FILE, translation_table);
+        end
+    end
 
 
     always_ff @(posedge clock) begin

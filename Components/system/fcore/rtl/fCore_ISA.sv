@@ -39,4 +39,5 @@ package fcore_isa;
     parameter BSET = 22;
     parameter BSEL = 25;
     parameter LXOR = 26;
+    parameter CSEL = 27;
 endpackage

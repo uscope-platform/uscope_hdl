@@ -25,7 +25,8 @@ module fCore_FP_ALU #(
     RECIPROCAL_PRESENT=0,
     BITMANIP_IMPLEMENTED = 0,
     LOGIC_IMPLEMENTED = 0,
-    FULL_COMPARE = 1
+    FULL_COMPARE = 1,
+    CONDITIONAL_SELECT_IMPLEMENTED = 1
 )(
     input wire clock,
     input wire reset,
@@ -344,7 +345,8 @@ module fCore_FP_ALU #(
 
     fCore_compare_unit #(
         .FULL_COMPARE(FULL_COMPARE),
-        .PIPELINE_DEPTH(PIPELINE_DEPTH)
+        .PIPELINE_DEPTH(PIPELINE_DEPTH),
+        .CONDITIONAL_SELECT_IMPLEMENTED(CONDITIONAL_SELECT_IMPLEMENTED)
     )compare_unit(
         .clock(clock),
         .reset(reset),

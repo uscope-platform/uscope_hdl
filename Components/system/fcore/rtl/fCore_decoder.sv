@@ -182,6 +182,18 @@ module fCore_decoder #(
                     operation_if.data <= 'b101100;
                     operation_if.valid <= 1;
                 end
+                fcore_isa::CSEL::begin
+                    operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
+                    operand_a_if.user <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
+                    operand_a_if.valid <= 1;
+                    operand_b_if.dest <= operand_b+(2**REG_ADDR_WIDTH*channel_address);
+                    operand_b_if.user <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
+                    operand_b_if.valid <= 1;
+                    operand_c_if.dest <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
+                    operand_c_if.valid <= 1; 
+                    operation_if.data <= 'b000001;
+                    operation_if.valid <= 1;
+                end
                 fcore_isa::POPCNT:begin
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= operand_b+(2**REG_ADDR_WIDTH*channel_address);
