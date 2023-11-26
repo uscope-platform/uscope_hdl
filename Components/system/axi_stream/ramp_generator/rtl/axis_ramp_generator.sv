@@ -70,21 +70,24 @@ module axis_ramp_generator #(
     assign cu_read_registers[2] = {{ADDITIONAL_BITS{1'b0}}, ramp_increment};
     assign cu_read_registers[3] = ramp_bypass;
 
+    reg [OUTPUT_WIDTH-1:0] const_in_progress = 0;
+
 
     wire ramp_direction;
     assign ramp_direction = prev_stop_value < shadow_stop_value;
 
     wire stop_condition; 
-    assign stop_condition = ramp_direction ? next_output >= shadow_stop_value : next_output <= shadow_stop_value;
+    assign stop_condition = ramp_direction ? const_in_progress >= shadow_stop_value : const_in_progress <= shadow_stop_value;
 
     reg[OUTPUT_WIDTH-1:0] prev_stop_value = 0;
     reg[OUTPUT_WIDTH-1:0] shadow_stop_value = 0;
 
-    reg [OUTPUT_WIDTH-1:0] const_in_progress = 0;
-
     axi_stream inner_ramp();
 
 
+    wire [15:0] selected_data;
+    assign selected_data = stop_condition ? shadow_stop_value: const_in_progress; 
+    
 
     enum logic [1:0]  { 
         rg_idle = 0,
@@ -111,14 +114,18 @@ module axis_ramp_generator #(
         rg_in_progress:begin
             if(sync & inner_ramp.ready)begin
 
-                inner_ramp.data <= next_output;
+                inner_ramp.data <= selected_data;
                 inner_ramp.valid <= 1;
                 
                 if(stop_condition) begin
                     ramp_generator_state <= rg_idle;
                     prev_stop_value <= shadow_stop_value;
                 end 
-                const_in_progress <= next_output;
+                if(ramp_direction)begin
+                    const_in_progress <= const_in_progress + ramp_increment;
+                end else begin
+                    const_in_progress <= const_in_progress - ramp_increment;
+                end
             end else begin
                 ramp_generator_state <= rg_wait_sync;
             end
@@ -126,7 +133,7 @@ module axis_ramp_generator #(
         rg_wait_sync:begin
             if(sync & inner_ramp.ready) begin
 
-                inner_ramp.data <= next_output;
+                inner_ramp.data <= selected_data;
                 inner_ramp.valid <= 1;
 
                 if(stop_condition) begin
@@ -135,26 +142,18 @@ module axis_ramp_generator #(
                 end else begin
                     ramp_generator_state <= rg_in_progress;
                 end
-                const_in_progress <= next_output;
+
+                if(ramp_direction)begin
+                    const_in_progress <= const_in_progress + ramp_increment;
+                end else begin
+                    const_in_progress <= const_in_progress - ramp_increment;
+                end
 
             end
         end
         endcase
     end
 
-    reg [15:0] next_output;
-    
-    always_comb begin
-        if(stop_condition)begin
-            next_output <= shadow_stop_value;
-        end else begin
-            if(ramp_direction)begin
-                next_output <= const_in_progress + ramp_increment;
-            end else begin
-                next_output <= const_in_progress - ramp_increment;
-            end
-        end
-    end
 
     axis_skid_buffer #(
         .REGISTER_OUTPUT(0)
