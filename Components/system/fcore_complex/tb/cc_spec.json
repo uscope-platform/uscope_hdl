@@ -1,0 +1,14 @@
+{
+    "input_file":"f_core_in.c",
+    "output":{
+        "file":"fCore.mem",
+        "format":"mem"
+    },
+    "force":true,
+    "dma_io":{
+        "in_0":{"type":"input","address":17},
+        "in_1":{"type":"input","address":19},
+        "out_0":{"type":"output", "address":1},
+        "out_1":{"type":"output", "address":2}
+    }
+}
