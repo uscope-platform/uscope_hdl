@@ -96,6 +96,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+`include "interfaces.svh"
+
 module	axi_xbar_inner #(
         parameter integer C_AXI_DATA_WIDTH = 32,
         parameter integer C_AXI_ADDR_WIDTH = 32,
@@ -124,82 +126,10 @@ module	axi_xbar_inner #(
         // LGMAXBURST: Specifies the log based two of the maximum
         parameter	LGMAXBURST = 3
     ) (
-        input	wire	S_AXI_ACLK,
-        input	wire	S_AXI_ARESETN,
-        input	wire	[NM*C_AXI_ID_WIDTH-1:0]		S_AXI_AWID,
-        input	wire	[NM*C_AXI_ADDR_WIDTH-1:0]	S_AXI_AWADDR,
-        input	wire	[NM*8-1:0]			S_AXI_AWLEN,
-        input	wire	[NM*3-1:0]			S_AXI_AWSIZE,
-        input	wire	[NM*2-1:0]			S_AXI_AWBURST,
-        input	wire	[NM-1:0]			S_AXI_AWLOCK,
-        input	wire	[NM*4-1:0]			S_AXI_AWCACHE,
-        input	wire	[NM*3-1:0]			S_AXI_AWPROT,
-        input	wire	[NM*4-1:0]			S_AXI_AWQOS,
-        input	wire	[NM-1:0]			S_AXI_AWVALID,
-        output	wire	[NM-1:0]			S_AXI_AWREADY,
-        input	wire	[NM*C_AXI_DATA_WIDTH-1:0]	S_AXI_WDATA,
-        input	wire	[NM*C_AXI_DATA_WIDTH/8-1:0]	S_AXI_WSTRB,
-        input	wire	[NM-1:0]			S_AXI_WLAST,
-        input	wire	[NM-1:0]			S_AXI_WVALID,
-        output	wire	[NM-1:0]			S_AXI_WREADY,
-        output	wire	[NM*C_AXI_ID_WIDTH-1:0]		S_AXI_BID,
-        output	wire	[NM*2-1:0]			S_AXI_BRESP,
-        output	wire	[NM-1:0]			S_AXI_BVALID,
-        input	wire	[NM-1:0]			S_AXI_BREADY,
-        input	wire	[NM*C_AXI_ID_WIDTH-1:0]		S_AXI_ARID,
-        input	wire	[NM*C_AXI_ADDR_WIDTH-1:0]	S_AXI_ARADDR,
-        input	wire	[NM*8-1:0]			S_AXI_ARLEN,
-        input	wire	[NM*3-1:0]			S_AXI_ARSIZE,
-        input	wire	[NM*2-1:0]			S_AXI_ARBURST,
-        input	wire	[NM-1:0]			S_AXI_ARLOCK,
-        input	wire	[NM*4-1:0]			S_AXI_ARCACHE,
-        input	wire	[NM*3-1:0]			S_AXI_ARPROT,
-        input	wire	[NM*4-1:0]			S_AXI_ARQOS,
-        input	wire	[NM-1:0]			S_AXI_ARVALID,
-        output	wire	[NM-1:0]			S_AXI_ARREADY,
-        output	wire	[NM*C_AXI_ID_WIDTH-1:0]		S_AXI_RID,
-        output	wire	[NM*C_AXI_DATA_WIDTH-1:0]	S_AXI_RDATA,
-        output	wire	[NM*2-1:0]			S_AXI_RRESP,
-        output	wire	[NM-1:0]			S_AXI_RLAST,
-        output	wire	[NM-1:0]			S_AXI_RVALID,
-        input	wire	[NM-1:0]			S_AXI_RREADY,
-        output	wire	[NS*C_AXI_ID_WIDTH-1:0]		M_AXI_AWID,
-        output	wire	[NS*C_AXI_ADDR_WIDTH-1:0]	M_AXI_AWADDR,
-        output	wire	[NS*8-1:0]			M_AXI_AWLEN,
-        output	wire	[NS*3-1:0]			M_AXI_AWSIZE,
-        output	wire	[NS*2-1:0]			M_AXI_AWBURST,
-        output	wire	[NS-1:0]			M_AXI_AWLOCK,
-        output	wire	[NS*4-1:0]			M_AXI_AWCACHE,
-        output	wire	[NS*3-1:0]			M_AXI_AWPROT,
-        output	wire	[NS*4-1:0]			M_AXI_AWQOS,
-        output	wire	[NS-1:0]			M_AXI_AWVALID,
-        input	wire	[NS-1:0]			M_AXI_AWREADY,
-        output	wire	[NS*C_AXI_DATA_WIDTH-1:0]	M_AXI_WDATA,
-        output	wire	[NS*C_AXI_DATA_WIDTH/8-1:0]	M_AXI_WSTRB,
-        output	wire	[NS-1:0]			M_AXI_WLAST,
-        output	wire	[NS-1:0]			M_AXI_WVALID,
-        input	wire	[NS-1:0]			M_AXI_WREADY,
-        input	wire	[NS*C_AXI_ID_WIDTH-1:0]		M_AXI_BID,
-        input	wire	[NS*2-1:0]			M_AXI_BRESP,
-        input	wire	[NS-1:0]			M_AXI_BVALID,
-        output	wire	[NS-1:0]			M_AXI_BREADY,
-        output	wire	[NS*C_AXI_ID_WIDTH-1:0]		M_AXI_ARID,
-        output	wire	[NS*C_AXI_ADDR_WIDTH-1:0]	M_AXI_ARADDR,
-        output	wire	[NS*8-1:0]			M_AXI_ARLEN,
-        output	wire	[NS*3-1:0]			M_AXI_ARSIZE,
-        output	wire	[NS*2-1:0]			M_AXI_ARBURST,
-        output	wire	[NS-1:0]			M_AXI_ARLOCK,
-        output	wire	[NS*4-1:0]			M_AXI_ARCACHE,
-        output	wire	[NS*4-1:0]			M_AXI_ARQOS,
-        output	wire	[NS*3-1:0]			M_AXI_ARPROT,
-        output	wire	[NS-1:0]			M_AXI_ARVALID,
-        input	wire	[NS-1:0]			M_AXI_ARREADY,
-        input	wire	[NS*C_AXI_ID_WIDTH-1:0]		M_AXI_RID,
-        input	wire	[NS*C_AXI_DATA_WIDTH-1:0]	M_AXI_RDATA,
-        input	wire	[NS*2-1:0]			M_AXI_RRESP,
-        input	wire	[NS-1:0]			M_AXI_RLAST,
-        input	wire	[NS-1:0]			M_AXI_RVALID,
-        output	wire	[NS-1:0]			M_AXI_RREADY
+        input	wire	clock,
+        input	wire	reset,
+        AXI.slave slaves [NM-1:0],
+        AXI.master masters [NS-1:0]
 	);
 
     // Local parameters, derived from those above
@@ -312,35 +242,20 @@ module	axi_xbar_inner #(
     wire	[3-1:0]		skd_arprot			[0:NM-1];
     wire	[4-1:0]		skd_arqos			[0:NM-1];
 
-    // Verilator lint_off UNUSED
-    reg	[NSFULL-1:0]	m_axi_awvalid;
-    reg	[NSFULL-1:0]	m_axi_awready;
-    reg	[IW-1:0]	m_axi_awid	[0:NSFULL-1];
-    reg	[7:0]		m_axi_awlen	[0:NSFULL-1];
-
-    reg	[NSFULL-1:0]	m_axi_wvalid;
     reg	[NSFULL-1:0]	m_axi_wready;
-    reg	[NSFULL-1:0]	m_axi_bvalid;
-    reg	[NSFULL-1:0]	m_axi_bready;
+    wire	[NSFULL-1:0]	m_axi_bvalid;
     // Verilator lint_on  UNUSED
-    reg	[1:0]		m_axi_bresp	[0:NSFULL-1];
-    reg	[IW-1:0]	m_axi_bid	[0:NSFULL-1];
+    wire	[1:0]		m_axi_bresp	[0:NSFULL-1];
+    wire	[IW-1:0]	m_axi_bid	[0:NSFULL-1];
 
-    // Verilator lint_off UNUSED
-    reg	[NSFULL-1:0]	m_axi_arvalid;
-    reg	[7:0]		m_axi_arlen	[0:NSFULL-1];
-    reg	[IW-1:0]	m_axi_arid	[0:NSFULL-1];
-    reg	[NSFULL-1:0]	m_axi_arready;
     // Verilator lint_on  UNUSED
-    reg	[NSFULL-1:0]	m_axi_rvalid;
-    // Verilator lint_off UNUSED
-    reg	[NSFULL-1:0]	m_axi_rready;
+    wire	[NSFULL-1:0]	m_axi_rvalid;
     // Verilator lint_on  UNUSED
     //
-    reg	[IW-1:0]	m_axi_rid	[0:NSFULL-1];
-    reg	[DW-1:0]	m_axi_rdata	[0:NSFULL-1];
-    reg	[NSFULL-1:0]	m_axi_rlast;
-    reg	[2-1:0]		m_axi_rresp	[0:NSFULL-1];
+    wire	[IW-1:0]	m_axi_rid	[0:NSFULL-1];
+    wire	[DW-1:0]	m_axi_rdata	[0:NSFULL-1];
+    wire	[NSFULL-1:0]	m_axi_rlast;
+    wire	[2-1:0]		m_axi_rresp	[0:NSFULL-1];
 
     reg	[NM-1:0]	slave_awaccepts;
     reg	[NM-1:0]	slave_waccepts;
@@ -353,79 +268,41 @@ module	axi_xbar_inner #(
 
     reg	[NSFULL-1:0]	slave_awready, slave_wready, slave_arready;
 
-    // m_axi_* convenience signals (write side)
-    always @(*) begin
-        m_axi_awvalid = -1;
-        m_axi_awready = -1;
-        m_axi_wvalid = -1;
-        m_axi_wready = -1;
-        m_axi_bvalid = 0;
-        m_axi_bready = -1;
 
-        m_axi_awvalid[NS-1:0] = M_AXI_AWVALID;
-        m_axi_awready[NS-1:0] = M_AXI_AWREADY;
-        m_axi_wvalid[NS-1:0]  = M_AXI_WVALID;
-        m_axi_wready[NS-1:0]  = M_AXI_WREADY;
-        m_axi_bvalid[NS-1:0]  = M_AXI_BVALID;
-        m_axi_bready[NS-1:0]  = M_AXI_BREADY;
 
-        for(iM=0; iM<NS; iM=iM+1) begin
-            m_axi_awid[iM]   = M_AXI_AWID[   iM*IW +: IW];
-            m_axi_awlen[iM]  = M_AXI_AWLEN[  iM* 8 +:  8];
+    generate
+        for(M = 0; M<NS; M = M+1)begin
+            assign m_axi_bvalid[M] = masters[M].BVALID;
+            assign m_axi_bresp[M] = masters[M].BRESP;
+            assign m_axi_bid[M] = masters[M].BID;
+            assign m_axi_rid[M] = masters[M].RID;
+            assign m_axi_rdata[M] = masters[M].RDATA;
+            assign m_axi_rresp[M] = masters[M].RRESP;
+            assign m_axi_rlast[M] = masters[M].RLAST;
+            assign m_axi_rvalid[M]  = masters[M].RVALID;
 
-            m_axi_bid[iM]   = M_AXI_BID[iM* IW +:  IW];
-            m_axi_bresp[iM] = M_AXI_BRESP[iM* 2 +:  2];
 
-            m_axi_rid[iM]   = M_AXI_RID[  iM*IW +: IW];
-            m_axi_rdata[iM] = M_AXI_RDATA[iM*DW +: DW];
-            m_axi_rresp[iM] = M_AXI_RRESP[iM* 2 +:  2];
-            m_axi_rlast[iM] = M_AXI_RLAST[iM];
+            assign slave_awready[M] = (~masters[M].AWVALID | masters[M].AWREADY);
+            assign slave_wready[M]  = (~masters[M].WVALID  | masters[M].WREADY);
+            assign slave_arready[M] = (~masters[M].ARVALID | masters[M].ARREADY);
         end
-        for(iM=NS; iM<NSFULL; iM=iM+1) begin
-            m_axi_awid[iM]   = 0;
-            m_axi_awlen[iM]  = 0;
+        for(M = NS; M<NSFULL; M = M+1)begin
+            assign m_axi_bvalid[M] = 0;
+            assign m_axi_bresp[M] = INTERCONNECT_ERROR;
+            assign m_axi_bid[M] = 0;
+            assign m_axi_rid[M] = 0;
+            assign m_axi_rdata[M] = 0;
+            assign m_axi_rresp[M] = INTERCONNECT_ERROR;
+            assign m_axi_rlast[M] = 1;
+            assign m_axi_rvalid[M] = 0;
 
-            m_axi_bresp[iM] = INTERCONNECT_ERROR;
-            m_axi_bid[iM]   = 0;
-
-            m_axi_rid[iM]   = 0;
-            m_axi_rdata[iM] = 0;
-            m_axi_rresp[iM] = INTERCONNECT_ERROR;
-            m_axi_rlast[iM] = 1;
+            assign slave_awready[M] = 1;
+            assign slave_wready[M]  = 1;
+            assign slave_arready[M] = 1;
         end
-    end
+    endgenerate
 
-	// m_axi_* convenience signals (read side)
-	always @(*) begin
-        m_axi_arvalid = 0;
-        m_axi_arready = 0;
-        m_axi_rvalid = 0;
-        m_axi_rready = 0;
-        for(iM=0; iM<NS; iM=iM+1) begin
-            m_axi_arlen[iM] = M_AXI_ARLEN[iM* 8 +:  8];
-            m_axi_arid[iM]  = M_AXI_ARID[ iM*IW +: IW];
-        end
-        for(iM=NS; iM<NSFULL; iM=iM+1) begin
-            m_axi_arlen[iM] = 0;
-            m_axi_arid[iM]  = 0;
-        end
 
-        m_axi_arvalid[NS-1:0] = M_AXI_ARVALID;
-        m_axi_arready[NS-1:0] = M_AXI_ARREADY;
-        m_axi_rvalid[NS-1:0]  = M_AXI_RVALID;
-        m_axi_rready[NS-1:0]  = M_AXI_RREADY;
-    end
-
-    // slave_*ready convenience signals
-    always @(*) begin
-        slave_awready = -1;
-        slave_wready  = -1;
-        slave_arready = -1;
-        //
-        slave_awready[NS-1:0] = (~M_AXI_AWVALID | M_AXI_AWREADY);
-        slave_wready[NS-1:0]  = (~M_AXI_WVALID | M_AXI_WREADY);
-        slave_arready[NS-1:0] = (~M_AXI_ARVALID | M_AXI_ARREADY);
-    end
 
     ////////////////////////////////////////////////////////////////////////
     // Process our incoming signals: AW*, W*, and AR*
@@ -436,76 +313,103 @@ module	axi_xbar_inner #(
         for(N=0; N<NM; N=N+1) begin : W1_DECODE_WRITE_REQUEST
             wire [NS:0] wdecode;
 
-            // awskid, the skid buffer for the incoming AW* channel
-            axil_skid_buffer #(
-                .DATA_WIDTH(IW+AW+8+3+2+1+4+3+4),
-                .REGISTER_OUTPUT(OPT_SKID_INPUT)
-            ) awskid(
-                .clock(S_AXI_ACLK),
-                .reset(!S_AXI_ARESETN),
-                .in_valid(S_AXI_AWVALID[N]),
-                .in_ready(S_AXI_AWREADY[N]),
-                .in_data({ 
-                    S_AXI_AWID[N*IW +: IW], S_AXI_AWADDR[N*AW +: AW],
-                    S_AXI_AWLEN[N*8 +: 8], S_AXI_AWSIZE[N*3 +: 3],
-                    S_AXI_AWBURST[N*2 +: 2], S_AXI_AWLOCK[N],
-                    S_AXI_AWCACHE[N*4 +: 4], S_AXI_AWPROT[N*3 +: 3],
-                    S_AXI_AWQOS[N*4 +: 4]
-                }),
+
+            axi_w_addr_skid_buffer #(
+                .REGISTER_OUTPUT(OPT_SKID_INPUT),
+                .ADDR_WIDTH(AW),
+                .ID_WIDTH(IW)
+            ) awskid (
+                .clock(clock),
+                .reset(reset),
+                .in_valid(slaves[N].AWVALID),
+                .in_ready(slaves[N].AWREADY),
+                .in_id(slaves[N].AWID),
+                .in_addr(slaves[N].AWADDR),
+                .in_len(slaves[N].AWLEN),
+                .in_size(slaves[N].AWSIZE),
+                .in_burst(slaves[N].AWBURST),
+                .in_lock(slaves[N].AWLOCK),
+                .in_cache(slaves[N].AWCACHE),
+                .in_prot(slaves[N].AWPROT),
+                .in_qos(slaves[N].AWQOS),
+                                    
                 .out_valid(skd_awvalid[N]),
                 .out_ready(!skd_awstall[N]),
-                .out_data({ 
-                    skd_awid[N], skd_awaddr[N], skd_awlen[N],
-                    skd_awsize[N], skd_awburst[N], skd_awlock[N],
-                    skd_awcache[N], skd_awprot[N], skd_awqos[N] 
-                })
+
+                .out_id(skd_awid[N]),
+                .out_addr(skd_awaddr[N]),
+                .out_len(skd_awlen[N]),
+                .out_size(skd_awsize[N]),
+                .out_burst(skd_awburst[N]),
+                .out_lock(skd_awlock[N]),
+                .out_cache(skd_awcache[N]),
+                .out_prot(skd_awprot[N]),
+                .out_qos(skd_awqos[N])
             );
 
             // wraddr, decode the write channel's address request to a
             // particular slave index
 
-            address_decoder #(
+
+
+        axi_address_decoder #(
                 .AW(AW),
-                .DW(IW+8+3+2+1+4+3+4),
+                .IW(IW),
                 .NS(NS),
                 .SLAVE_ADDR(SLAVE_ADDR),
                 .SLAVE_MASK(SLAVE_MASK),
-                .OPT_REGISTERED(OPT_BUFFER_DECODER)
-            ) wraddr (
-                .clock(S_AXI_ACLK),
-                .reset(!S_AXI_ARESETN),
+                .OPT_REGISTERED(OPT_BUFFER_DECODER),
+                .OPT_LOWPOWER(OPT_LOWPOWER)
+        ) rdaddr (
+                .clock(clock),
+                .reset(!reset),
                 .i_valid(skd_awvalid[N]),
                 .o_stall(skd_awstall[N]),
                 .i_addr(skd_awaddr[N]),
-                .i_data({ skd_awid[N],
-                    skd_awlen[N], skd_awsize[N], skd_awburst[N],
-                    skd_awlock[N], skd_awcache[N], skd_awprot[N],
-                    skd_awqos[N] }),
-                .o_valid(dcd_awvalid[N]),
-                .i_stall(!dcd_awvalid[N]||!slave_awaccepts[N]),
-                .o_decode(wdecode),
-                .o_addr(m_awaddr[N]),
-                .o_data({ m_awid[N], m_awlen[N], m_awsize[N],
-                    m_awburst[N], m_awlock[N], m_awcache[N],
-                    m_awprot[N], m_awqos[N]})
-            );
+            .i_id(skd_awid[N]),
+            .i_len(skd_awlen[N]),
+            .i_size(skd_awsize[N]),
+            .i_burst(skd_awburst[N]),
+            .i_lock(skd_awlock[N]),
+            .i_cache(skd_awcache[N]),
+            .i_prot(skd_awprot[N]),
+            .i_qos(skd_awqos[N]),
+            .o_valid(dcd_awvalid[N]),
+            .i_stall(!dcd_awvalid[N] || !slave_awaccepts[N]),
+            .o_decode(wdecode),
+            .o_addr(m_awaddr[N]),
+            .o_id(m_awid[N]),
+            .o_len(m_awlen[N]),
+            .o_size(m_awsize[N]),
+            .o_burst(m_awburst[N]),
+            .o_lock(m_awlock[N]),
+            .o_cache(m_awcache[N]),
+            .o_prot(m_awprot[N]),
+            .o_qos(m_awqos[N])
+        );
 
 
-            // wskid, the skid buffer for the incoming W* channel
-            axil_skid_buffer #(
-                .DATA_WIDTH(DW+DW/8+1),
-                .REGISTER_OUTPUT(OPT_SKID_INPUT || OPT_BUFFER_DECODER)
-            ) wskid(
-                .clock(S_AXI_ACLK),
-                .reset(!S_AXI_ARESETN),
-                .in_valid(S_AXI_WVALID[N]),
-                .in_ready(S_AXI_WREADY[N]),
-                .in_data({S_AXI_WDATA[N*DW +: DW], S_AXI_WSTRB[N*DW/8 +: DW/8], S_AXI_WLAST[N]}),
+            axi_w_data_skid_buffer #(
+                .REGISTER_OUTPUT(OPT_SKID_INPUT || OPT_BUFFER_DECODER),
+                .DATA_WIDTH(DW)
+            )wskid (
+                .clock(clock),
+                .reset(reset),
+                .in_valid(slaves[N].WVALID),
+                .in_ready(slaves[N].WREADY),
+                .in_data(slaves[N].WDATA),
+                .in_strb(slaves[N].WSTRB),
+                .in_last(slaves[N].WLAST),
+                
                 .out_valid(m_wvalid[N]),
                 .out_ready(slave_waccepts[N]),
-                .out_data({ m_wdata[N], m_wstrb[N], m_wlast[N] })
-            );
 
+                .out_data(m_wdata[N]),
+                .out_strb(m_wstrb[N]),
+                .out_last(m_wlast[N])
+
+            );
+            
             // slave_awaccepts
             always @(*) begin
                 slave_awaccepts[N] = 1'b1;
@@ -580,52 +484,74 @@ module	axi_xbar_inner #(
         reg		r_arvalid;
         wire	[NS:0]	rdecode;
 
-        // arskid
-        axil_skid_buffer #(
-            .DATA_WIDTH(IW+AW+8+3+2+1+4+3+4),
-            .REGISTER_OUTPUT(OPT_SKID_INPUT)
-        ) wskid(
-            .clock(S_AXI_ACLK),
-            .reset(!S_AXI_ARESETN),
-            .in_valid(S_AXI_ARVALID[N]),
-            .in_ready(S_AXI_ARREADY[N]),
-            .in_data({ S_AXI_ARID[N*IW +: IW], S_AXI_ARADDR[N*AW +: AW],
-                S_AXI_ARLEN[N*8 +: 8], S_AXI_ARSIZE[N*3 +: 3],
-                S_AXI_ARBURST[N*2 +: 2], S_AXI_ARLOCK[N],
-                S_AXI_ARCACHE[N*4 +: 4], S_AXI_ARPROT[N*3 +: 3],
-                S_AXI_ARQOS[N*4 +: 4] }),
+        axi_w_addr_skid_buffer #(
+            .REGISTER_OUTPUT(OPT_SKID_INPUT),
+            .ADDR_WIDTH(AW),
+            .ID_WIDTH(IW)
+        ) arskid (
+            .clock(clock),
+            .reset(reset),
+            .in_valid(slaves[N].ARVALID),
+            .in_ready(slaves[N].ARREADY),
+            .in_id(slaves[N].ARID),
+            .in_addr(slaves[N].ARADDR),
+            .in_len(slaves[N].ARLEN),
+            .in_size(slaves[N].ARSIZE),
+            .in_burst(slaves[N].ARBURST),
+            .in_lock(slaves[N].ARLOCK),
+            .in_cache(slaves[N].ARCACHE),
+            .in_prot(slaves[N].ARPROT),
+            .in_qos(slaves[N].ARQOS),
+                                
             .out_valid(skd_arvalid[N]),
             .out_ready(!skd_arstall[N]),
-            .out_data({ skd_arid[N], skd_araddr[N], skd_arlen[N],
-                skd_arsize[N], skd_arburst[N], skd_arlock[N],
-                skd_arcache[N], skd_arprot[N], skd_arqos[N] })
+
+            .out_id(skd_arid[N]),
+            .out_addr(skd_araddr[N]),
+            .out_len(skd_arlen[N]),
+            .out_size(skd_arsize[N]),
+            .out_burst(skd_arburst[N]),
+            .out_lock(skd_arlock[N]),
+            .out_cache(skd_arcache[N]),
+            .out_prot(skd_arprot[N]),
+            .out_qos(skd_arqos[N])
         );
 
 
-        address_decoder #(
-            .AW(AW),
-            .DW(IW+8+3+2+1+4+3+4),
-            .NS(NS),
-            .SLAVE_ADDR(SLAVE_ADDR),
-            .SLAVE_MASK(SLAVE_MASK),
-            .OPT_REGISTERED(OPT_BUFFER_DECODER)
+        axi_address_decoder #(
+                .AW(AW),
+                .IW(IW),
+                .NS(NS),
+                .SLAVE_ADDR(SLAVE_ADDR),
+                .SLAVE_MASK(SLAVE_MASK),
+                .OPT_REGISTERED(OPT_BUFFER_DECODER),
+                .OPT_LOWPOWER(OPT_LOWPOWER)
         ) rdaddr (
-            .clock(S_AXI_ACLK),
-            .reset(!S_AXI_ARESETN),
+            .clock(clock),
+            .reset(!reset),
             .i_valid(skd_arvalid[N]),
             .o_stall(skd_arstall[N]),
             .i_addr(skd_araddr[N]),
-            .i_data({ skd_arid[N],
-                skd_arlen[N], skd_arsize[N], skd_arburst[N],
-                skd_arlock[N], skd_arcache[N], skd_arprot[N],
-                skd_arqos[N] }),
+            .i_id(skd_arid[N]),
+            .i_len(skd_arlen[N]),
+            .i_size(skd_arsize[N]),
+            .i_burst(skd_arburst[N]),
+            .i_lock(skd_arlock[N]),
+            .i_cache(skd_arcache[N]),
+            .i_prot(skd_arprot[N]),
+            .i_qos(skd_arqos[N]),
             .o_valid(dcd_arvalid[N]),
             .i_stall(!m_arvalid[N] || !slave_raccepts[N]),
             .o_decode(rdecode),
             .o_addr(m_araddr[N]),
-            .o_data({ m_arid[N], m_arlen[N], m_arsize[N],
-                    m_arburst[N], m_arlock[N], m_arcache[N],
-                    m_arprot[N], m_arqos[N]})
+            .o_id(m_arid[N]),
+            .o_len(m_arlen[N]),
+            .o_size(m_arsize[N]),
+            .o_burst(m_arburst[N]),
+            .o_lock(m_arlock[N]),
+            .o_cache(m_arcache[N]),
+            .o_prot(m_arprot[N]),
+            .o_qos(m_arqos[N])
         );
 
 
@@ -764,8 +690,8 @@ module	axi_xbar_inner #(
 
                 initial	r_linger = 0;
                 initial	linger_counter = 0;
-                always @(posedge S_AXI_ACLK)
-                if (!S_AXI_ARESETN || wgrant[N][NS])
+                always @(posedge clock)
+                if (!reset || wgrant[N][NS])
                 begin
                     r_linger <= 0;
                     linger_counter <= 0;
@@ -796,8 +722,8 @@ module	axi_xbar_inner #(
             // WRITE GRANT ALLOCATION
             initial	wgrant[N]  = 0;
             initial	mwgrant[N] = 0;
-            always @(posedge S_AXI_ACLK)
-            if (!S_AXI_ARESETN) begin
+            always @(posedge clock)
+            if (!reset) begin
                 wgrant[N]  <= 0;
                 mwgrant[N] <= 0;
             end else if (!stay_on_channel)begin
@@ -822,7 +748,7 @@ module	axi_xbar_inner #(
 
             // Now for mwindex
             initial	r_mwindex = 0;
-            always @(posedge S_AXI_ACLK)
+            always @(posedge clock)
             if (!stay_on_channel && requested_channel_is_available)
                 r_mwindex <= requested_index;
 
@@ -881,8 +807,8 @@ module	axi_xbar_inner #(
                 initial	linger = 0;
                 initial	linger_counter = 0;
 
-                always @(posedge S_AXI_ACLK)
-                if (!S_AXI_ARESETN || rgrant[N][NS]) begin
+                always @(posedge clock)
+                if (!reset || rgrant[N][NS]) begin
                     linger <= 0;
                     linger_counter <= 0;
                 end else if (!mrempty[N] || rskd_valid[N]) begin
@@ -915,8 +841,8 @@ module	axi_xbar_inner #(
             // READ GRANT ALLOCATION
             initial	rgrant[N]  = 0;
             initial	mrgrant[N] = 0;
-            always @(posedge S_AXI_ACLK)
-            if (!S_AXI_ARESETN) begin
+            always @(posedge clock)
+            if (!reset) begin
                 rgrant[N]  <= 0;
                 mrgrant[N] <= 0;
             end else if (!stay_on_channel) begin
@@ -939,7 +865,7 @@ module	axi_xbar_inner #(
             end
 
             initial	r_mrindex = 0;
-            always @(posedge S_AXI_ACLK)
+            always @(posedge clock)
             if (!stay_on_channel && requested_channel_is_available)
                 r_mrindex <= requested_index;
 
@@ -969,7 +895,7 @@ module	axi_xbar_inner #(
                         reqwindex = reqwindex | iN[LGNM-1:0];
                 end
 
-                always @(posedge S_AXI_ACLK)
+                always @(posedge clock)
                 if (!swgrant[M])
                     r_swindex <= reqwindex;
 
@@ -1001,7 +927,7 @@ module	axi_xbar_inner #(
                         reqrindex = reqrindex | iN[LGNM-1:0];
                 end
 
-                always @(posedge S_AXI_ACLK)
+                always @(posedge clock)
                 if (!srgrant[M])
                     r_srindex <= reqrindex;
 
@@ -1072,11 +998,11 @@ module	axi_xbar_inner #(
                 awaccepts = slave_awaccepts[swindex[M]];
 
             always @(*)
-                sawstall= (M_AXI_AWVALID[M]&& !M_AXI_AWREADY[M]);
+                sawstall= (masters[M].AWVALID && !masters[M].AWREADY);
 
             initial	axi_awvalid = 0;
-            always @(posedge  S_AXI_ACLK)
-            if (!S_AXI_ARESETN || !swgrant[M])
+            always @(posedge  clock)
+            if (!reset || !swgrant[M])
                 axi_awvalid <= 0;
             else if (!sawstall) begin
                 axi_awvalid <= m_awvalid[swindex[M]] &&(awaccepts);
@@ -1091,8 +1017,8 @@ module	axi_xbar_inner #(
             initial	axi_awcache = 0;
             initial	axi_awprot  = 0;
             initial	axi_awqos   = 0;
-            always @(posedge  S_AXI_ACLK)
-            if (OPT_LOWPOWER && (!S_AXI_ARESETN || !swgrant[M])) begin
+            always @(posedge  clock)
+            if (OPT_LOWPOWER && (!reset || !swgrant[M])) begin
                 // Under the OPT_LOWPOWER option, we clear all signals
                 // we aren't using
                 axi_awid    <= 0;
@@ -1132,11 +1058,11 @@ module	axi_xbar_inner #(
 
             // Control the slave's W* channel
             always @(*)
-                swstall = (M_AXI_WVALID[M] && !M_AXI_WREADY[M]);
+                swstall = (masters[M].WVALID && !masters[M].WREADY);
 
             initial	axi_wvalid = 0;
-            always @(posedge S_AXI_ACLK)
-            if (!S_AXI_ARESETN || !swgrant[M])
+            always @(posedge clock)
+            if (!reset || !swgrant[M])
                 axi_wvalid <= 0;
             else if (!swstall) begin
                 axi_wvalid <= (m_wvalid[swindex[M]])
@@ -1146,8 +1072,8 @@ module	axi_xbar_inner #(
             initial axi_wdata  = 0;
             initial axi_wstrb  = 0;
             initial axi_wlast  = 0;
-            always @(posedge S_AXI_ACLK)
-            if (OPT_LOWPOWER && !S_AXI_ARESETN) begin
+            always @(posedge clock)
+            if (OPT_LOWPOWER && !reset) begin
                 axi_wdata  <= 0;
                 axi_wstrb  <= 0;
                 axi_wlast  <= 0;
@@ -1177,25 +1103,25 @@ module	axi_xbar_inner #(
                 axi_bready = bskd_ready[swindex[M]];
 
             // Combinatorial assigns
-            assign	M_AXI_AWVALID[M]          = axi_awvalid;
-            assign	M_AXI_AWID[   M*IW +: IW] = axi_awid;
-            assign	M_AXI_AWADDR[ M*AW +: AW] = axi_awaddr;
-            assign	M_AXI_AWLEN[  M* 8 +:  8] = axi_awlen;
-            assign	M_AXI_AWSIZE[ M* 3 +:  3] = axi_awsize;
-            assign	M_AXI_AWBURST[M* 2 +:  2] = axi_awburst;
-            assign	M_AXI_AWLOCK[ M]          = axi_awlock;
-            assign	M_AXI_AWCACHE[M* 4 +:  4] = axi_awcache;
-            assign	M_AXI_AWPROT[ M* 3 +:  3] = axi_awprot;
-            assign	M_AXI_AWQOS[  M* 4 +:  4] = axi_awqos;
+            assign	masters[M].AWVALID          = axi_awvalid;
+            assign	masters[M].AWID = axi_awid;
+            assign	masters[M].AWADDR = axi_awaddr;
+            assign	masters[M].AWLEN = axi_awlen;
+            assign	masters[M].AWSIZE = axi_awsize;
+            assign	masters[M].AWBURST = axi_awburst;
+            assign	masters[M].AWLOCK         = axi_awlock;
+            assign	masters[M].AWCACHE = axi_awcache;
+            assign	masters[M].AWPROT = axi_awprot;
+            assign	masters[M].AWQOS = axi_awqos;
             //
             //
-            assign	M_AXI_WVALID[M]             = axi_wvalid;
-            assign	M_AXI_WDATA[M*DW +: DW]     = axi_wdata;
-            assign	M_AXI_WSTRB[M*DW/8 +: DW/8] = axi_wstrb;
-            assign	M_AXI_WLAST[M]              = axi_wlast;
+            assign	masters[M].WVALID             = axi_wvalid;
+            assign	masters[M].WDATA     = axi_wdata;
+            assign	masters[M].WSTRB = axi_wstrb;
+            assign	masters[M].WLAST              = axi_wlast;
             //
             //
-            assign	M_AXI_BREADY[M]             = axi_bready;
+            assign	masters[M].BREADY             = axi_bready;
             
         end 
     endgenerate
@@ -1218,15 +1144,15 @@ module	axi_xbar_inner #(
             reg				arstall;
 
             always @(*)
-                arstall= axi_arvalid && !M_AXI_ARREADY[M];
+                arstall= axi_arvalid && !masters[M].ARREADY;
 
             initial	axi_arvalid = 0;
-            always @(posedge  S_AXI_ACLK)
-            if (!S_AXI_ARESETN || !srgrant[M])
+            always @(posedge  clock)
+            if (!reset || !srgrant[M])
                 axi_arvalid <= 0;
             else if (!arstall)
                 axi_arvalid <= m_arvalid[srindex[M]] && slave_raccepts[srindex[M]];
-            else if (M_AXI_ARREADY[M])
+            else if (masters[M].ARREADY)
                 axi_arvalid <= 0;
 
             initial axi_arid    = 0;
@@ -1238,8 +1164,8 @@ module	axi_xbar_inner #(
             initial axi_arcache = 0;
             initial axi_arprot  = 0;
             initial axi_arqos   = 0;
-            always @(posedge  S_AXI_ACLK)
-            if (OPT_LOWPOWER && (!S_AXI_ARESETN || !srgrant[M])) begin
+            always @(posedge  clock)
+            if (OPT_LOWPOWER && (!reset || !srgrant[M])) begin
                 axi_arid    <= 0;
                 axi_araddr  <= 0;
                 axi_arlen   <= 0;
@@ -1281,18 +1207,18 @@ module	axi_xbar_inner #(
                 axi_rready = rskd_ready[srindex[M]];
 
             //
-            assign	M_AXI_ARVALID[M]          = axi_arvalid;
-            assign	M_AXI_ARID[   M*IW +: IW] = axi_arid;
-            assign	M_AXI_ARADDR[ M*AW +: AW] = axi_araddr;
-            assign	M_AXI_ARLEN[  M* 8 +:  8] = axi_arlen;
-            assign	M_AXI_ARSIZE[ M* 3 +:  3] = axi_arsize;
-            assign	M_AXI_ARBURST[M* 2 +:  2] = axi_arburst;
-            assign	M_AXI_ARLOCK[ M]          = axi_arlock;
-            assign	M_AXI_ARCACHE[M* 4 +:  4] = axi_arcache;
-            assign	M_AXI_ARPROT[ M* 3 +:  3] = axi_arprot;
-            assign	M_AXI_ARQOS[  M* 4 +:  4] = axi_arqos;
+            assign	masters[M].ARVALID          = axi_arvalid;
+            assign	masters[M].ARID = axi_arid;
+            assign	masters[M].ARADDR = axi_araddr;
+            assign	masters[M].ARLEN = axi_arlen;
+            assign	masters[M].ARSIZE = axi_arsize;
+            assign	masters[M].ARBURST = axi_arburst;
+            assign	masters[M].ARLOCK          = axi_arlock;
+            assign	masters[M].ARCACHE = axi_arcache;
+            assign	masters[M].ARPROT = axi_arprot;
+            assign	masters[M].ARQOS = axi_arqos;
             //
-            assign	M_AXI_RREADY[M]          = axi_rready;
+            assign	masters[M].RREADY        = axi_rready;
             //
         end 
     endgenerate
@@ -1309,8 +1235,8 @@ module	axi_xbar_inner #(
 
             // Write error (no slave selected) state machine
             initial	berr_valid[N] = 0;
-            always @(posedge S_AXI_ACLK)
-            if (!S_AXI_ARESETN)
+            always @(posedge clock)
+            if (!reset)
                 berr_valid[N] <= 0;
             else if (wgrant[N][NS] && m_wvalid[N] && m_wlast[N]
                     && slave_waccepts[N])
@@ -1324,7 +1250,7 @@ module	axi_xbar_inner #(
             else
                 bskd_valid[N] = mwgrant[N]&&m_axi_bvalid[mwindex[N]];
 
-            always @(posedge S_AXI_ACLK)
+            always @(posedge clock)
             if (m_awvalid[N] && slave_awaccepts[N])
                 berr_id[N] <= m_awid[N];
 
@@ -1338,20 +1264,24 @@ module	axi_xbar_inner #(
                 i_axi_bresp = m_axi_bresp[mwindex[N]];
             end
 
-            // bskid, the B* channel skid buffer
-            axil_skid_buffer #(
-                .DATA_WIDTH(IW+2),
-                .REGISTER_OUTPUT(1)
-            ) bskid(
-                .clock(S_AXI_ACLK),
-                .reset(!S_AXI_ARESETN),
-                .in_valid(bskd_valid[N]),
-                .in_ready(bskd_ready[N]),
-                .in_data({ i_axi_bid, i_axi_bresp }),
-                .out_valid(S_AXI_BVALID[N]),
-                .out_ready(S_AXI_BREADY[N]),
-                .out_data({ S_AXI_BID[N*IW +: IW], S_AXI_BRESP[N*2 +: 2] })
-            );
+
+        axi_w_resp_skid_buffer #(
+            .ID_WIDTH(IW),
+            .REGISTER_OUTPUT(1)
+        ) bskid (
+            .clock(clock),
+            .reset(reset),
+            .in_valid(bskd_valid[N]),
+            .in_ready(bskd_ready[N]),
+            .in_id(i_axi_bid),
+            .in_resp(i_axi_bresp),
+            .out_valid(slaves[N].BVALID),
+            .out_ready(slaves[N].BREADY),
+            .out_id(slaves[N].BID),
+            .out_resp(slaves[N].BRESP)
+
+        );
+
 
         end
     endgenerate
@@ -1384,20 +1314,30 @@ module	axi_xbar_inner #(
                 i_axi_rresp = m_axi_rresp[mrindex[N]];
             end
 
-            // rskid, the outgoing read skid buffer
-            axil_skid_buffer #(
-                .DATA_WIDTH(IW+DW+1+2),
-                .REGISTER_OUTPUT(1)
-            ) rskid(
-                .clock(S_AXI_ACLK),
-                .reset(!S_AXI_ARESETN),
+
+            axi_r_data_skid_buffer #(
+                .REGISTER_OUTPUT(1),
+                .DATA_WIDTH(DW),
+                .ID_WIDTH(IW)
+            ) rskid (
+                .clock(clock),
+                .reset(reset),
                 .in_valid(rskd_valid[N]),
                 .in_ready(rskd_ready[N]),
-                .in_data({ i_axi_rid, i_axi_rdata, rskd_rlast[N], i_axi_rresp }),
-                .out_valid(S_AXI_RVALID[N]),
-                .out_ready(S_AXI_RREADY[N]),
-                .out_data({ S_AXI_RID[N*IW +: IW], S_AXI_RDATA[N*DW +: DW], S_AXI_RLAST[N], S_AXI_RRESP[N*2 +: 2] })
+                .in_data(i_axi_rdata),
+                .in_id(i_axi_rid),
+                .in_last(rskd_rlast[N]),
+                .in_rresp(i_axi_rresp),
+                .out_valid(slaves[N].RVALID),
+                .out_ready(slaves[N].RREADY),
+                .out_data(slaves[N].RDATA),
+                .out_id(slaves[N].RID),
+                .out_last(slaves[N].RLAST),
+                .out_rresp(slaves[N].RRESP)
+
             );
+
+          
 
         end 
     endgenerate
@@ -1417,8 +1357,8 @@ module	axi_xbar_inner #(
             initial	awpending    = 0;
             initial	mwempty[N]   = 1;
             initial	mwfull[N]    = 0;
-            always @(posedge S_AXI_ACLK)
-            if (!S_AXI_ARESETN) begin
+            always @(posedge clock)
+            if (!reset) begin
                 awpending     <= 0;
                 mwempty[N]    <= 1;
                 mwfull[N]     <= 0;
@@ -1443,8 +1383,8 @@ module	axi_xbar_inner #(
             // r_wdata_expected and wdata_expected  
             initial	r_wdata_expected = 0;
             initial	wpending = 0;
-            always @(posedge S_AXI_ACLK)
-            if (!S_AXI_ARESETN) begin
+            always @(posedge clock)
+            if (!reset) begin
                 r_wdata_expected <= 0;
                 wpending <= 0;
             end else case ({(m_awvalid[N] && slave_awaccepts[N]),
@@ -1474,8 +1414,8 @@ module	axi_xbar_inner #(
             initial	rpending     = 0;
             initial	mrempty[N]   = 1;
             initial	mrfull[N]    = 0;
-            always @(posedge S_AXI_ACLK)
-            if (!S_AXI_ARESETN) begin
+            always @(posedge clock)
+            if (!reset) begin
                 rpending  <= 0;
                 mrempty[N]<= 1;
                 mrfull[N] <= 0;
@@ -1501,8 +1441,8 @@ module	axi_xbar_inner #(
             initial	rerr_outstanding[N] = 0;
             initial	rerr_last[N] = 0;
             initial	rerr_none[N] = 1;
-            always @(posedge S_AXI_ACLK)
-            if (!S_AXI_ARESETN) begin
+            always @(posedge clock)
+            if (!reset) begin
                 rerr_outstanding[N] <= 0;
                 rerr_last[N] <= 0;
                 rerr_none[N] <= 1;
@@ -1523,8 +1463,8 @@ module	axi_xbar_inner #(
             // error.  It's used when generating a read response to a
             // non-existent slave.
             initial	rerr_id[N] = 0;
-            always @(posedge S_AXI_ACLK)
-            if (!S_AXI_ARESETN && OPT_LOWPOWER)
+            always @(posedge clock)
+            if (!reset && OPT_LOWPOWER)
                 rerr_id[N] <= 0;
             else if (m_arvalid[N] && slave_raccepts[N]) begin
                 if (rrequest[N][NS] || !OPT_LOWPOWER)

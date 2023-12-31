@@ -18,30 +18,48 @@
 `ifndef AXI_FULL_BFM_SV
 `define AXI_FULL_BFM_SV
 
+class axi_full_bfm #(int ID_WIDTH = 1,int USER_WIDTH = 1, int DATA_WIDTH = 32, int ADDR_WIDTH = 12);
 
-class axi_full_bfm;
-
-    virtual AXI.master bus;
+    virtual AXI #(ID_WIDTH, USER_WIDTH, DATA_WIDTH, ADDR_WIDTH) bus;
     integer clock_period;
 
-
-    function new (virtual AXI.master test_bus, integer period);
+    function new (virtual AXI #(ID_WIDTH, USER_WIDTH, DATA_WIDTH, ADDR_WIDTH) test_bus, integer period);
         begin
             this.bus = test_bus;
 
+            this.bus.ARID <= 0;
+            this.bus.ARUSER <= 0;
+            this.bus.ARREGION <= 0;
+            this.bus.ARQOS <= 0;
+            this.bus.ARLOCK <= 0;
+            this.bus.ARCACHE <= 0;
+            this.bus.ARPROT <= 0;
             this.bus.ARADDR <= 0;
             this.bus.ARVALID <= 0;
+            this.bus.ARLEN <= 1;
+            this.bus.ARBURST <= 0;
+            this.bus.AWSIZE <= 4;
+            
 
+            this.bus.AWID <= 0;
+            this.bus.AWUSER <= 0;
+            this.bus.AWREGION <= 0;
+            this.bus.AWQOS <= 0;
+            this.bus.AWLOCK <= 0;
+            this.bus.AWCACHE <= 0;
             this.bus.AWPROT <= 0;
-            this.bus.ARPROT <= 0;
-
             this.bus.AWADDR <= 0;
             this.bus.AWVALID <= 0;
+            this.bus.AWLEN <= 1;
+            this.bus.AWBURST <= 0;
+            this.bus.ARSIZE <= 4;
 
             this.bus.BREADY <= 0;
             this.bus.RREADY <= 0;
 
             this.bus.WDATA <= 0;
+            this.bus.WLAST <= 0;
+            this.bus.WUSER <= 0;
             this.bus.WVALID <= 0;
             this.bus.WSTRB <= 0;
 
@@ -53,6 +71,7 @@ class axi_full_bfm;
 
         this.bus.AWADDR <= address;
         this.bus.AWVALID <= 1;
+        this.bus.WLAST <= 1;
         #1;
         this.bus.AWVALID <= 0;
         this.bus.WDATA <= data;
@@ -61,7 +80,7 @@ class axi_full_bfm;
         
         #1;
         this.bus.BREADY <= 1;
-
+        this.bus.WLAST <= 0;
         this.bus.WVALID <= 0;
 
         this.bus.AWADDR <= 0;
