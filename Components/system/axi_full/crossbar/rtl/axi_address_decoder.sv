@@ -76,13 +76,13 @@ module axi_address_decoder #(
         output reg o_stall,
         input wire [AW-1:0] i_addr,
         input wire [IW-1:0] i_id,
-        input wire [DW-1:0] i_len,
-        input wire [DW-1:0] i_size,
-        input wire [DW-1:0] i_burst,
-        input wire [DW-1:0] i_lock,
-        input wire [DW-1:0] i_cache,
-        input wire [DW-1:0] i_prot,
-        input wire [DW-1:0] i_qos,
+        input wire [7:0] i_len,
+        input wire [2:0] i_size,
+        input wire [1:0] i_burst,
+        input wire i_lock,
+        input wire [3:0] i_cache,
+        input wire [2:0] i_prot,
+        input wire [3:0] i_qos,
         output reg o_valid,
         input wire i_stall,
         output wire [NS:0] o_decode,
@@ -91,7 +91,7 @@ module axi_address_decoder #(
         output reg [7:0] o_len,
         output reg [2:0] o_size,
         output reg [1:0] o_burst,
-        output reg [1:0] o_lock,
+        output reg o_lock,
         output reg [3:0] o_cache,
         output reg [2:0] o_prot,
         output reg [3:0] o_qos
@@ -126,7 +126,7 @@ module axi_address_decoder #(
     reg [1:0] int_o_burst;
     assign o_burst = int_o_burst;
 
-    reg [1:0] int_o_lock;
+    reg int_o_lock;
     assign o_lock = int_o_lock;
 
     reg [3:0] int_o_cache;
@@ -228,7 +228,7 @@ module axi_address_decoder #(
 
             // int_o_valid
             always_ff @(posedge clock) begin
-                if (reset) begin
+                if (!reset) begin
                     int_o_valid <= 0;
                 end else if (!o_stall) begin
                     int_o_valid <= i_valid;
@@ -238,7 +238,7 @@ module axi_address_decoder #(
 
             // int_o_addr, int_o_data
             always_ff @(posedge clock) begin
-                if (reset && OPT_LOWPOWER) begin
+                if (!reset && OPT_LOWPOWER) begin
                     int_o_addr   <= 0;
                     int_o_id     <= 0;
                     int_o_len    <= 0;
@@ -274,7 +274,7 @@ module axi_address_decoder #(
 
             // int_o_decode
             always_ff @(posedge clock) begin
-                if (reset) begin
+                if (!reset) begin
                     int_o_decode <= 0;
                 end else if ((!int_o_valid || !i_stall) && (i_valid || !OPT_LOWPOWER)) begin
                     int_o_decode <= request;

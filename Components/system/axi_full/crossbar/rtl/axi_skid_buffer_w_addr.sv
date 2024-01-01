@@ -27,7 +27,7 @@ module axi_w_addr_skid_buffer #(
     input wire [7:0] in_len,
     input wire [2:0] in_size,
     input wire [1:0] in_burst,
-    input wire [1:0] in_lock,
+    input wire in_lock,
     input wire [3:0] in_cache,
     input wire [2:0] in_prot,
     input wire [3:0] in_qos,
@@ -40,7 +40,7 @@ module axi_w_addr_skid_buffer #(
     output reg [7:0] out_len,
     output reg [2:0] out_size,
     output reg [1:0] out_burst,
-    output reg [1:0] out_lock,
+    output reg out_lock,
     output reg [3:0] out_cache,
     output reg [2:0] out_prot,
     output reg [3:0] out_qos
