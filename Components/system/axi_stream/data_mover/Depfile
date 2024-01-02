@@ -1,10 +1,10 @@
 {
     "general":{
-        "project_name":"AXI_stream_datamover",
+        "project_name":"data moved",
         "target_part":"xc7z020clg400",
-        "synth_modules":[],
+        "synth_modules":["axis_dynamic_data_mover"],
         "synth_tl": "axis_data_mover",
-        "sim_modules":[],
+        "sim_modules":["axis_dynamic_data_mover_tb"],
         "sim_tl":"axis_data_mover_tb",
         "include_paths":[
             "Components/Common"

@@ -123,3 +123,5 @@ Components/system/fcore_complex/fcore_complex/
 Components/system/axi_full/crossbar/axi_xbar/
 
 Components/controls/programmable_sequencer/programmable sequence/
+
+Components/system/axi_stream/data_mover/data moved/
