@@ -28,7 +28,7 @@ module programmable_sequencer #(
     axi_lite.slave axi_in
 );
 
-    parameter N_REGISTERS = 50;
+    parameter N_REGISTERS = MAX_STEPS+3;
 
     reg [31:0] cu_write_registers [N_REGISTERS-1:0];
     reg [31:0] cu_read_registers [N_REGISTERS-1:0];
