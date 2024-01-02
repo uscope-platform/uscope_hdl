@@ -121,3 +121,5 @@ Components/system/axi_stream/ramp_generator/axis_ramp_generator/
 Components/system/fcore_complex/fcore_complex/
 
 Components/system/axi_full/crossbar/axi_xbar/
+
+Components/controls/programmable_sequencer/programmable sequence/
