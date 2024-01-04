@@ -15,12 +15,12 @@
 `timescale 10 ns / 100 ps
 `include "interfaces.svh"
 
-module Zynq_axis_wrapper #(
+module zynqmp_PS_wrapper #(
     parameter FCORE_PRESENT = 0
 ) (
-    output wire IO_clock,
-    output wire Logic_Clock,
-    output wire [0:0]Reset,
+    output wire io_clock,
+    output wire logic_clock,
+    output wire [0:0]reset,
     axi_lite.slave dma_axi,
     axi_lite.master axi_out,
     AXI.master fcore_axi,
@@ -28,28 +28,6 @@ module Zynq_axis_wrapper #(
     output wire dma_done
   );
 
-    // DUMMY CONNECTIONS
-    wire [14:0]DDR_addr;
-    wire [2:0]DDR_ba;
-    wire DDR_cas_n;
-    wire DDR_ck_n;
-    wire DDR_ck_p;
-    wire DDR_cke;
-    wire DDR_cs_n;
-    wire [3:0]DDR_dm;
-    wire [31:0]DDR_dq;
-    wire [3:0]DDR_dqs_n;
-    wire [3:0]DDR_dqs_p;
-    wire DDR_odt;
-    wire DDR_ras_n;
-    wire DDR_reset_n;
-    wire DDR_we_n;
-    wire FIXED_IO_ddr_vrn;
-    wire FIXED_IO_ddr_vrp;
-    wire [53:0]FIXED_IO_mio;
-    wire FIXED_IO_ps_clk;
-    wire FIXED_IO_ps_porb;
-    wire FIXED_IO_ps_srstb;
 
     AXI term();
 
@@ -57,13 +35,16 @@ module Zynq_axis_wrapper #(
         
         if(FCORE_PRESENT == 0)begin
             axi_terminator terminator(
-                .clock(Logic_Clock),
-                .reset(Reset),
+                .clock(logic_clock),
+                .reset(reset),
                 .axi(term)
             );
 
 
             ps PS (
+                .IO_clock(io_clock),
+                .Logic_Clock(logic_clock),
+                .reset(reset),
                 .axi_out_araddr(axi_out.ARADDR),
                 .axi_out_arprot(axi_out.ARPROT),
                 .axi_out_arready(axi_out.ARREADY),
@@ -83,30 +64,6 @@ module Zynq_axis_wrapper #(
                 .axi_out_wready(axi_out.WREADY),
                 .axi_out_wstrb(axi_out.WSTRB),
                 .axi_out_wvalid(axi_out.WVALID),
-                .DDR_addr(DDR_addr),
-                .DDR_ba(DDR_ba),
-                .DDR_cas_n(DDR_cas_n),
-                .DDR_ck_n(DDR_ck_n),
-                .DDR_ck_p(DDR_ck_p),
-                .DDR_cke(DDR_cke),
-                .DDR_cs_n(DDR_cs_n),
-                .DDR_dm(DDR_dm),
-                .DDR_dq(DDR_dq),
-                .DDR_dqs_n(DDR_dqs_n),
-                .DDR_dqs_p(DDR_dqs_p),
-                .DDR_odt(DDR_odt),
-                .DDR_ras_n(DDR_ras_n),
-                .DDR_reset_n(DDR_reset_n),
-                .DDR_we_n(DDR_we_n),
-                .FIXED_IO_ddr_vrn(FIXED_IO_ddr_vrn),
-                .FIXED_IO_ddr_vrp(FIXED_IO_ddr_vrp),
-                .FIXED_IO_mio(FIXED_IO_mio),
-                .FIXED_IO_ps_clk(FIXED_IO_ps_clk),
-                .FIXED_IO_ps_porb(FIXED_IO_ps_porb),
-                .FIXED_IO_ps_srstb(FIXED_IO_ps_srstb),
-                .IO_clock(IO_clock),
-                .Logic_Clock(Logic_Clock),
-                .Reset(Reset),
                 .dma_control_araddr(dma_axi.ARADDR),
                 .dma_control_arready(dma_axi.ARREADY),
                 .dma_control_arvalid(dma_axi.ARVALID),
@@ -158,6 +115,9 @@ module Zynq_axis_wrapper #(
         end else begin
             
         ps PS (
+            .IO_clock(io_clock),
+            .Logic_Clock(logic_clock),
+            .reset(reset),
             .axi_out_araddr(axi_out.ARADDR),
             .axi_out_arprot(axi_out.ARPROT),
             .axi_out_arready(axi_out.ARREADY),
@@ -177,30 +137,6 @@ module Zynq_axis_wrapper #(
             .axi_out_wready(axi_out.WREADY),
             .axi_out_wstrb(axi_out.WSTRB),
             .axi_out_wvalid(axi_out.WVALID),
-            .DDR_addr(DDR_addr),
-            .DDR_ba(DDR_ba),
-            .DDR_cas_n(DDR_cas_n),
-            .DDR_ck_n(DDR_ck_n),
-            .DDR_ck_p(DDR_ck_p),
-            .DDR_cke(DDR_cke),
-            .DDR_cs_n(DDR_cs_n),
-            .DDR_dm(DDR_dm),
-            .DDR_dq(DDR_dq),
-            .DDR_dqs_n(DDR_dqs_n),
-            .DDR_dqs_p(DDR_dqs_p),
-            .DDR_odt(DDR_odt),
-            .DDR_ras_n(DDR_ras_n),
-            .DDR_reset_n(DDR_reset_n),
-            .DDR_we_n(DDR_we_n),
-            .FIXED_IO_ddr_vrn(FIXED_IO_ddr_vrn),
-            .FIXED_IO_ddr_vrp(FIXED_IO_ddr_vrp),
-            .FIXED_IO_mio(FIXED_IO_mio),
-            .FIXED_IO_ps_clk(FIXED_IO_ps_clk),
-            .FIXED_IO_ps_porb(FIXED_IO_ps_porb),
-            .FIXED_IO_ps_srstb(FIXED_IO_ps_srstb),
-            .IO_clock(IO_clock),
-            .Logic_Clock(Logic_Clock),
-            .Reset(Reset),
             .dma_control_araddr(dma_axi.ARADDR),
             .dma_control_arready(dma_axi.ARREADY),
             .dma_control_arvalid(dma_axi.ARVALID),

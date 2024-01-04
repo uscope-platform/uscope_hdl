@@ -58,9 +58,9 @@ module axis_dynamic_data_mover #(
     assign n_active_channels = cu_write_registers[0];
     genvar n;
     generate
-        for(n = 0; n<N_REGISTERS; n=n+1)begin
-            assign source_addr[n] = cu_write_registers[n+1][15:0];
-            assign target_addr[n] = cu_write_registers[n+1][31:16];
+        for(n = 1; n<N_REGISTERS; n=n+1)begin
+            assign source_addr[n] = cu_write_registers[n][15:0];
+            assign target_addr[n] = cu_write_registers[n][31:16];
         end
     endgenerate
 
