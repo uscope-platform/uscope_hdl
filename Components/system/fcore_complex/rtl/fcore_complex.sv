@@ -40,7 +40,8 @@ module fcore_complex #(
     parameter [MOVER_ADDRESS_WIDTH-1:0] MOVER_SOURCE_ADDR [MOVER_CHANNEL_NUMBER-1:0] = '{MOVER_CHANNEL_NUMBER{{MOVER_ADDRESS_WIDTH{1'b0}}}},
     parameter [MOVER_ADDRESS_WIDTH-1:0] MOVER_TARGET_ADDR [MOVER_CHANNEL_NUMBER-1:0] = '{MOVER_CHANNEL_NUMBER{{MOVER_ADDRESS_WIDTH{1'b0}}}},
     parameter PRAGMA_MKFG_DATAPOINT_NAMES = "",
-    parameter EFI_TYPE = "NONE"
+    parameter EFI_TYPE = "NONE",
+    parameter AXI_ADDR_WIDTH = 32
 )(
     input wire core_clock,
     input wire interface_clock,
@@ -90,12 +91,12 @@ module fcore_complex #(
         end
     endgenerate
 
-    axi_lite fcore_axi();
-    axi_lite dma_axi();
+    axi_lite #(.ADDR_WIDTH(AXI_ADDR_WIDTH)) fcore_axi();
+    axi_lite #(.ADDR_WIDTH(AXI_ADDR_WIDTH)) dma_axi();
 
     axil_crossbar_interface #(
         .DATA_WIDTH(32),
-        .ADDR_WIDTH(32),
+        .ADDR_WIDTH(AXI_ADDR_WIDTH),
         .NM(1),
         .NS(2),
         .SLAVE_ADDR('{DMA_BASE_ADDRESS,DMA_BASE_ADDRESS + 'h1000}),

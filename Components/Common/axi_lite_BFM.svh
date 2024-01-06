@@ -19,13 +19,13 @@
 `define AXI_LITE_BFM_SV
 
 
-class axi_lite_BFM;
+class axi_lite_BFM #(DATA_WIDTH = 32, ADDR_WIDTH = 32, INTERFACE_NAME = "IF");
 
-    virtual axi_lite.master bus;
+    virtual axi_lite #(DATA_WIDTH, ADDR_WIDTH, INTERFACE_NAME) bus;
     integer clock_period;
 
 
-    function new (virtual axi_lite.master test_bus, integer period);
+    function new (virtual axi_lite #(DATA_WIDTH, ADDR_WIDTH, INTERFACE_NAME) test_bus, integer period);
         begin
             this.bus = test_bus;
 
@@ -49,7 +49,7 @@ class axi_lite_BFM;
         end
     endfunction
 
-    task write(input logic [31:0] address, input logic [31:0] data);
+    task write(input logic [ADDR_WIDTH-1:0] address, input logic [DATA_WIDTH-1:0] data);
 
         this.bus.AWADDR <= address;
         this.bus.AWVALID <= 1;
@@ -71,7 +71,7 @@ class axi_lite_BFM;
         #1;
     endtask
 
-    task  read(input logic [31:0] address, output logic [31:0] data);
+    task  read(input logic [ADDR_WIDTH-1:0] address, output logic [DATA_WIDTH-1:0] data);
         this.bus.ARADDR <= address;
         this.bus.ARVALID <= 1;
         this.bus.RREADY <= 1;

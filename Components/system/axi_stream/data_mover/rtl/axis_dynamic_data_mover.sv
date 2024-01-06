@@ -40,13 +40,15 @@ module axis_dynamic_data_mover #(
     wire [15:0] target_addr [MAX_CHANNELS-1:0];
     reg [$clog2(MAX_CHANNELS)-1:0] n_active_channels;
 
+    localparam [31:0] INIT_VAL [N_REGISTERS-1:0] = {default:0};
+    
 
     axil_simple_register_cu #(
         .N_READ_REGISTERS(N_REGISTERS),
         .N_WRITE_REGISTERS(N_REGISTERS),
         .REGISTERS_WIDTH(32),
         .ADDRESS_MASK('hfff),
-        .INITIAL_OUTPUT_VALUES('{N_REGISTERS{32'b0}})
+        .INITIAL_OUTPUT_VALUES()
     ) CU (
         .clock(clock),
         .reset(reset),
@@ -54,6 +56,8 @@ module axis_dynamic_data_mover #(
         .output_registers(cu_write_registers),
         .axil(axi_in)
     );
+
+    assign cu_read_registers = cu_write_registers;
     
     assign n_active_channels = cu_write_registers[0];
     genvar n;
@@ -118,3 +122,43 @@ module axis_dynamic_data_mover #(
     end
 
 endmodule
+
+
+
+ /**
+    {
+        "name": "axis_dynamic_data_mover",
+        "alias": "axis_dynamic_data_mover",
+        "type": "parametric_peripheral",
+        "registers":[
+            {
+                "name": "n_channels",
+                "n_regs": ["1"],
+                "description": "number of active DMA channels",
+                "direction": "RW"
+            },    
+            {
+                "name": "addr_$",
+                "n_regs": ["MAX_STEPS"],
+                "description": "This register selects source and target address for channel $",
+                "direction": "RW",
+                "fields":[
+                     {
+                        "name":"src",
+                        "description": "Source address",
+                        "n_fields":["1"],
+                        "start_position": 0,
+                        "length": 16
+                    },
+                    {
+                        "name":"burst_mode",
+                        "description": "Destination address",
+                        "start_position": 15,
+                        "n_fields":["1"],
+                        "length": 15
+                    }
+                ]
+            }
+        ]
+    }   
+ **/

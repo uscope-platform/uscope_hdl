@@ -34,12 +34,14 @@ module programmable_sequencer #(
     reg [31:0] cu_read_registers [N_REGISTERS-1:0];
     
 
+    localparam [31:0] INIT_VAL [N_REGISTERS-1:0] = {default:0};
+    
     axil_simple_register_cu #(
         .N_READ_REGISTERS(N_REGISTERS),
         .N_WRITE_REGISTERS(N_REGISTERS),
         .REGISTERS_WIDTH(32),
         .ADDRESS_MASK('hfff),
-        .INITIAL_OUTPUT_VALUES('{N_REGISTERS{32'b0}})
+        .INITIAL_OUTPUT_VALUES(INIT_VAL)
     ) CU (
         .clock(clock),
         .reset(reset),
@@ -47,6 +49,8 @@ module programmable_sequencer #(
         .output_registers(cu_write_registers),
         .axil(axi_in)
     );
+
+    assign cu_read_registers = cu_write_registers;
 
     wire [15:0] timebase_divider;
     wire burst_mode;
@@ -126,3 +130,54 @@ module programmable_sequencer #(
     end
 
 endmodule
+
+
+ /**
+    {
+        "name": "programmable_sequencer",
+        "alias": "programmable_sequencer",
+        "type": "parametric_peripheral",
+        "registers":[
+            {
+                "name": "control",
+                "n_regs": ["1"],
+                "description": "Sequencer control register",
+                "direction": "RW",
+                "fields":[
+                     {
+                        "name":"n_steps",
+                        "description": "number of steps in the sequence",
+                        "n_fields":["1"],
+                        "start_position": 0,
+                        "length": 8
+                    },
+                    {
+                        "name":"burst_mode",
+                        "description": "Enable burst mode (one sequence per trigger)",
+                        "start_position": 8,
+                        "n_fields":["1"],
+                        "length": 1
+                    }
+                ]
+            },
+            {
+                "name": "reserved",
+                "n_regs": ["1"],
+                "description": "Reserved register, Do not use",
+                "direction": "RW"
+            },
+            {
+                "name": "step_delay",
+                "n_regs": ["1"],
+                "description": "Additional delay between sequence steps",
+                "direction": "RW"
+            },            
+            {
+                "name": "step_$",
+                "n_regs": ["MAX_STEPS"],
+                "description": "This register selects which sequencer output is active for step # $",
+                "direction": "RW"
+            }
+        ]
+    }   
+ **/
