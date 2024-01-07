@@ -40,7 +40,7 @@ module axis_dynamic_data_mover #(
     wire [15:0] target_addr [MAX_CHANNELS-1:0];
     reg [$clog2(MAX_CHANNELS)-1:0] n_active_channels;
 
-    localparam [31:0] INIT_VAL [N_REGISTERS-1:0] = {default:0};
+    localparam [31:0] INIT_VAL [N_REGISTERS-1:0] = '{default:0};
     
 
     axil_simple_register_cu #(
@@ -48,7 +48,7 @@ module axis_dynamic_data_mover #(
         .N_WRITE_REGISTERS(N_REGISTERS),
         .REGISTERS_WIDTH(32),
         .ADDRESS_MASK('hfff),
-        .INITIAL_OUTPUT_VALUES()
+        .INITIAL_OUTPUT_VALUES(INIT_VAL)
     ) CU (
         .clock(clock),
         .reset(reset),

@@ -34,7 +34,7 @@ module programmable_sequencer #(
     reg [31:0] cu_read_registers [N_REGISTERS-1:0];
     
 
-    localparam [31:0] INIT_VAL [N_REGISTERS-1:0] = {default:0};
+    localparam [31:0] INIT_VAL [N_REGISTERS-1:0] = '{default:0};
     
     axil_simple_register_cu #(
         .N_READ_REGISTERS(N_REGISTERS),
