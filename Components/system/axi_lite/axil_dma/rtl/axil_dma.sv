@@ -1,4 +1,4 @@
-// Copyright 2021 Filippo Savi
+// Copyright 2023 Filippo Savi
 // Author: Filippo Savi <filssavi@gmail.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
 `include "interfaces.svh"
 
 module axil_dma #(
+    parameter ADDR_WIDTH = 32,
     parameter MAX_TRANSFER_SIZE = 65536
 )(
     input wire clock,
@@ -25,19 +26,22 @@ module axil_dma #(
     input wire enable,
     axi_lite.slave axi_in,
     axi_stream.slave data_in,
-    axi_lite.master axi_out
+    axi_lite.master axi_out,
+    output reg dma_done
 );
 
 
-    reg [31:0] cu_write_registers [2:0];
-    reg [31:0] cu_read_registers [2:0];
+    reg [31:0] cu_write_registers [3:0];
+    reg [31:0] cu_read_registers [3:0];
   
+    parameter [31:0] IV [3:0] = '{4{'h0}};
+
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(3),
-        .N_WRITE_REGISTERS(3),
+        .N_READ_REGISTERS(4),
+        .N_WRITE_REGISTERS(4),
         .REGISTERS_WIDTH(32),
         .ADDRESS_MASK('hff),
-        .INITIAL_OUTPUT_VALUES('{3{'h0}})
+        .INITIAL_OUTPUT_VALUES(IV)
     ) CU (
         .clock(clock),
         .reset(reset),
@@ -46,16 +50,20 @@ module axil_dma #(
         .axil(axi_in)
     );
 
-    reg [31:0] target_base;
+    reg [63:0] target_base;
     reg [31:0] transfer_size;
 
 
-    assign target_base = cu_write_registers[0];
+    assign target_base[31:0] = cu_write_registers[0];
+    assign target_base[63:32] = cu_write_registers[3];
     assign transfer_size = cu_write_registers[1];
 
-    assign cu_read_registers[0] = target_base;
+
+    assign cu_read_registers[0] = target_base[31:0];
+    assign cu_read_registers[3] = target_base[63:32];
     assign cu_read_registers[1] = transfer_size;
     assign cu_read_registers[2] = 0;
+    
 
 
     wire dma_start;
@@ -87,7 +95,7 @@ module axil_dma #(
     reg[31:0] latched_write_address;
     reg[31:0] latched_write_data;
 
-    wire [31:0] current_target_address;
+    wire [ADDR_WIDTH-1:0] current_target_address;
     assign current_target_address = target_base + progress_counter*4;
 
     always_ff @(posedge clock) begin
@@ -105,7 +113,7 @@ module axil_dma #(
             axi_out.RREADY <= 1;
             axi_out.BREADY <= 1;
             buffered_data.ready <= 0;
-
+            dma_done <= 0;
             writer_state <= writer_idle;
         end else begin
             axi_out.BREADY <= 1;
@@ -165,3 +173,37 @@ module axil_dma #(
     end
 
 endmodule
+
+
+    /**
+       {
+        "name": "axil_dma",
+        "type": "peripheral",
+        "registers":[
+            {
+                "name": "target_base_l",
+                "offset": "0x0",
+                "description": "Least significant bytes of the nase address for the target memmory area",
+                "direction": "RW"        
+            },
+            {
+                "name": "transfer_size",
+                "offset": "0x4",
+                "description": "Size of the dma buffer to transfer",
+                "direction": "RW"
+            },
+            {
+                "name": "reserved",
+                "offset": "0x8",
+                "description": "Reserved register do not use",
+                "direction": "RW"
+            },
+            {
+                "name": "target_base_h",
+                "offset": "0xc",
+                "description": "Most significant bytes of the nase address for the target memmory area",
+                "direction": "RW"
+            }
+        ]
+       }  
+    **/
