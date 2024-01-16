@@ -19,6 +19,7 @@
 module tlast_generator_sv(
     input wire clock,
     input wire reset, 
+    input wire disable,
     input wire [15:0] period,
     output wire [15:0] current_sample,
     //input AXI stream
@@ -37,7 +38,11 @@ module tlast_generator_sv(
             data_out.valid <= 0;
             tlast_counter <= 0;
         end else begin
-            data_out.valid <= data_in.valid;
+            if(disable)begin
+                data_out.valid <= 0;
+            end else begin
+                data_out.valid <= data_in.valid;
+            end
             data_out.data <= data_in.data;
             data_out.dest <= data_in.dest;
 

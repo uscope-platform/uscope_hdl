@@ -39,10 +39,6 @@ module uScope_dma #(
     
     axi_stream #(
         .DATA_WIDTH(DATA_WIDTH)
-    ) combined_inhibited();
-    
-    axi_stream #(
-        .DATA_WIDTH(DATA_WIDTH)
     ) combined_tlast();
    
     reg dma_enable;
@@ -122,24 +118,14 @@ module uScope_dma #(
         .stream_in(stream_in),
         .stream_out(combined)
     );
-
-    always_comb begin
-        combined_inhibited.data <= combined.data;
-        combined.ready <= combined_inhibited.ready;
-        if(capture_inhibit)begin
-            combined_inhibited.valid <= 0;
-        end else begin
-            combined_inhibited.valid <= combined.valid;
-        end
-    end
-
         
     tlast_generator_sv tlast_gen(
         .clock(clock),
         .reset(reset), 
         .period(tlast_period),
+        .disable(capture_inhibit),
         .current_sample(current_sample),
-        .data_in(combined_inhibited),
+        .data_in(combined),
         .data_out(combined_tlast)
     );
 
