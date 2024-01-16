@@ -16,7 +16,7 @@
 `timescale 10ns / 1ns
 `include "interfaces.svh"
 
-module axis_fifo_xpm #(parameter DATA_WIDTH = 32, DEST_WIDTH=16, USER_WIDTH = 32, FIFO_DEPTH = 16)(
+module axis_fifo_xpm #(parameter DATA_WIDTH = 32, DEST_WIDTH=16, USER_WIDTH = 32, FIFO_DEPTH = 16, SIM_ASSERT_CHK=1)(
     input wire clock,
     input wire reset,
     axi_stream.slave in,
@@ -27,7 +27,7 @@ module axis_fifo_xpm #(parameter DATA_WIDTH = 32, DEST_WIDTH=16, USER_WIDTH = 32
    xpm_fifo_axis #(
       .FIFO_DEPTH(FIFO_DEPTH),
       .PACKET_FIFO("false"),
-      .SIM_ASSERT_CHK(1),
+      .SIM_ASSERT_CHK(SIM_ASSERT_CHK),
       .TDATA_WIDTH(DATA_WIDTH),
       .TDEST_WIDTH(DEST_WIDTH),
       .TUSER_WIDTH(USER_WIDTH),
