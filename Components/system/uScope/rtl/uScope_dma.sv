@@ -1,4 +1,4 @@
-// Copyright 2021 University of Nottingham Ningbo China
+// Copyright 2024 Filippo Savi
 // Author: Filippo Savi <filssavi@gmail.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -133,18 +133,14 @@ module uScope_dma #(
         end
     end
 
-    tlast_generator tlast_gen(
+        
+    tlast_generator_sv tlast_gen(
         .clock(clock),
         .reset(reset), 
         .period(tlast_period),
-        .in_valid(combined_inhibited.valid),
-        .in_data(combined_inhibited.data),
-        .in_ready(combined_inhibited.ready),
-        .out_valid(combined_tlast.valid),
-        .out_data(combined_tlast.data),
-        .out_tlast(combined_tlast.tlast),
-        .out_ready(combined_tlast.ready),
-        .current_sample(current_sample)
+        .current_sample(current_sample),
+        .data_in(combined_inhibited),
+        .data_out(combined_tlast)
     );
 
     axi_dma #(

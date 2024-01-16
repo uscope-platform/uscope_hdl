@@ -1,4 +1,4 @@
-// Copyright 2021 Filippo Savi
+// Copyright 2024 Filippo Savi
 // Author: Filippo Savi <filssavi@gmail.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
