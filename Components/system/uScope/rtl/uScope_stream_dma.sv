@@ -19,6 +19,7 @@
 module uScope_stream #(
     N_TRIGGERS = 1,
     BASE_ADDRESS = 0,
+    DATA_WIDTH = 32,
     ADDR_WIDTH = 32,
     DEST_WIDTH = 8,
     MAX_TRANSFER_SIZE = 8192
@@ -45,7 +46,7 @@ module uScope_stream #(
     axi_lite #(.INTERFACE_NAME("USCOPE TIMEBASE")) timebase_axi();
 
     axil_crossbar_interface #(
-        .DATA_WIDTH(32),
+        .DATA_WIDTH(DATA_WIDTH),
         .ADDR_WIDTH(32),
         .NM(1),
         .NS(3),
@@ -101,7 +102,7 @@ module uScope_stream #(
     axi_stream scope_in[8]();
 
     axi_stream_extractor #(
-        .DATA_WIDTH(24),
+        .DATA_WIDTH(DATA_WIDTH),
         .REGISTERED(0)
     ) extractor_0(
         .clock(clock),
@@ -112,7 +113,7 @@ module uScope_stream #(
     );
 
     axi_stream_extractor #(
-        .DATA_WIDTH(24),
+        .DATA_WIDTH(DATA_WIDTH),
         .REGISTERED(0)
     ) extractor_1(
         .clock(clock),
@@ -123,7 +124,7 @@ module uScope_stream #(
     );
 
     axi_stream_extractor #(
-        .DATA_WIDTH(24),
+        .DATA_WIDTH(DATA_WIDTH),
         .REGISTERED(0)
     ) extractor_2(
         .clock(clock),
@@ -134,7 +135,7 @@ module uScope_stream #(
     );
 
     axi_stream_extractor #(
-        .DATA_WIDTH(24),
+        .DATA_WIDTH(DATA_WIDTH),
         .REGISTERED(0)
     ) extractor_3(
         .clock(clock),
@@ -145,7 +146,7 @@ module uScope_stream #(
     );
 
     axi_stream_extractor #(
-        .DATA_WIDTH(24),
+        .DATA_WIDTH(DATA_WIDTH),
         .REGISTERED(0)
     ) extractor_4(
         .clock(clock),
@@ -156,7 +157,7 @@ module uScope_stream #(
     );
 
     axi_stream_extractor #(
-        .DATA_WIDTH(24),
+        .DATA_WIDTH(DATA_WIDTH),
         .REGISTERED(0)
     ) extractor_5(
         .clock(clock),
@@ -197,8 +198,7 @@ module uScope_stream #(
 
     uScope_dma #(
         .N_TRIGGERS(2),
-        .DATA_WIDTH(32),
-        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH),
         .DEST_WIDTH(DEST_WIDTH),
         .N_STREAMS(8),
         .MAX_TRANSFER_SIZE(MAX_TRANSFER_SIZE)

@@ -18,7 +18,6 @@
 module uScope_dma #(
     N_TRIGGERS = 16,
     DATA_WIDTH = 32,
-    ADDR_WIDTH = 32,
     DEST_WIDTH = 8,
     N_STREAMS = 6,
     MAX_TRANSFER_SIZE = 8192
@@ -48,6 +47,9 @@ module uScope_dma #(
    
     reg dma_enable;
     wire capture_inhibit;
+
+    reg [63:0] dma_base_addr;
+
     reg [31:0] tlast_period;
     reg [31:0] dma_buffer_base;
     wire [15:0] current_sample;
@@ -78,16 +80,20 @@ module uScope_dma #(
 
     assign tlast_period = cu_write_registers[0];
     assign dma_enable = cu_write_registers[1];
-    assign selected_trigger = cu_write_registers[3];
-    assign capture_ack = cu_write_registers[4][0];
-    assign trigger_position = cu_write_registers[5];
+    assign dma_base_addr[31:0] = cu_write_registers[2];
+    assign dma_base_addr[63:32] = cu_write_registers[3];
+    assign selected_trigger = cu_write_registers[4];
+    assign capture_ack = cu_write_registers[5][0];
+    assign trigger_position = cu_write_registers[6];
 
 
     assign cu_read_registers[0] = tlast_period;
     assign cu_read_registers[1] = dma_enable;
-    assign cu_read_registers[3] = selected_trigger;
-    assign cu_read_registers[4] = {31'b0, capture_ack};
-    assign cu_read_registers[5] = {16'b0, trigger_position};
+    assign cu_read_registers[2] = dma_base_addr[31:0];
+    assign cu_read_registers[3] = dma_base_addr[63:32];
+    assign cu_read_registers[4] = selected_trigger;
+    assign cu_read_registers[5] = {31'b0, capture_ack};
+    assign cu_read_registers[6] = {16'b0, trigger_position};
 
 
     trigger_hub #(
@@ -142,14 +148,14 @@ module uScope_dma #(
     );
 
     axi_dma #(
-        .ADDR_WIDTH(ADDR_WIDTH),
+        .ADDR_WIDTH(64),
         .DEST_WIDTH(DEST_WIDTH),
         .MAX_TRANSFER_SIZE(MAX_TRANSFER_SIZE)
     )dma_engine(
         .clock(clock),
         .reset(reset),
         .enable(dma_enable),
-        .axi_in(),
+        .base_addr(dma_base_addr),
         .data_in(combined_tlast),
         .axi_out(out),
         .dma_done(dma_done)
