@@ -19,6 +19,7 @@
 
 module axi_dma #(
     parameter ADDR_WIDTH = 32,
+    parameter DEST_WIDTH = 8,
     parameter MAX_TRANSFER_SIZE = 65536
 )(
     input wire clock,
@@ -69,10 +70,11 @@ module axi_dma #(
     wire dma_start;
     assign dma_start = data_in.tlast;
 
-    axi_stream buffered_data();
+    axi_stream #(.DEST_WIDTH(DEST_WIDTH)) buffered_data();
 
     axis_fifo_xpm #(
         .SIM_ASSERT_CHK(0),
+        .DEST_WIDTH(DEST_WIDTH),
         .DATA_WIDTH(32),
         .FIFO_DEPTH(8192)
     ) dma_fifo(
@@ -84,8 +86,8 @@ module axi_dma #(
 
     enum reg [2:0] {
         writer_idle = 0,
-        writer_dma_send = 1,
-        writer_send_address = 2,
+        writer_read_LSB = 1,
+        writer_dma_send = 2,
         writer_send_data = 3,
         writer_wait_response = 4
     } writer_state;
@@ -93,16 +95,17 @@ module axi_dma #(
 
     reg [$clog2(MAX_TRANSFER_SIZE)-1:0] progress_counter = 0;
     wire dma_end_condition;
-    assign dma_end_condition = progress_counter == (transfer_size-1);
+    assign dma_end_condition = progress_counter == transfer_size-2;
    
-    reg[31:0] latched_write_address;
-    reg[31:0] latched_write_data;
 
     wire [ADDR_WIDTH-1:0] current_target_address;
     assign current_target_address = target_base + progress_counter*8;
 
 
+    reg [63:0] axi_low_word = 0;
+    reg [63:0] axi_high_word = 0;
 
+    assign axi_out.WDATA  = {axi_high_word, axi_low_word};
 
     always_ff @(posedge clock) begin
         if(~reset)begin
@@ -118,12 +121,12 @@ module axi_dma #(
             axi_out.AWCACHE <= 0;
             axi_out.AWBURST <= 0;
             axi_out.AWLOCK <= 0;
-            axi_out.AWSIZE <= 'b011;
+            axi_out.AWSIZE <= 'b100;
 
 
             axi_out.WVALID <= 0;
-            axi_out.WDATA <= 0;
-            axi_out.WSTRB <= 'hFF;
+            
+            axi_out.WSTRB <= 'hFFFF;
             axi_out.WUSER <= 0;
             axi_out.WLAST <= 1;
 
@@ -155,35 +158,21 @@ module axi_dma #(
                     if(dma_start)begin
                         buffered_data.ready <= 1;
                         progress_counter <= 0;
-                        writer_state <= writer_dma_send;
+                        writer_state <= writer_read_LSB;
                     end
+                end
+                writer_read_LSB:begin
+                    writer_state <= writer_dma_send;
+                    axi_low_word[31:0] <= buffered_data.data;
+                    axi_low_word[63:32] <= buffered_data.dest;
                 end
                 writer_dma_send:begin
                     buffered_data.ready <= 0;
                     if(axi_out.WREADY & axi_out.AWREADY) begin
                         axi_out.AWADDR <= current_target_address;
                         axi_out.AWVALID <= 1;
-                        axi_out.WDATA[31:0] <= buffered_data.data;
-                        axi_out.WDATA[63:32] <= progress_counter;
-                        axi_out.WVALID <= 1;
-                        writer_state <= writer_wait_response;
-                    end else if(axi_out.AWREADY) begin
-                        axi_out.AWADDR <= current_target_address;
-                        latched_write_data <= buffered_data.data;
-                        axi_out.AWVALID <= 1;
-                        writer_state <= writer_send_data;
-                    end
-                end
-                writer_send_address:begin
-                    if(axi_out.AWREADY) begin
-                        axi_out.AWADDR <= latched_write_address;
-                        axi_out.AWVALID <= 1;
-                        writer_state <= writer_send_data;
-                    end
-                end
-                writer_send_data:begin
-                    if(axi_out.WREADY) begin
-                        axi_out.WDATA <= latched_write_data;
+                        axi_high_word[31:0] <= buffered_data.data;
+                        axi_high_word[63:32] <= {{(32-DEST_WIDTH){1'b0}}, buffered_data.dest[DEST_WIDTH-1:0]};
                         axi_out.WVALID <= 1;
                         writer_state <= writer_wait_response;
                     end
@@ -195,9 +184,9 @@ module axi_dma #(
                             writer_state <= writer_idle;
                             dma_done <= 1;
                         end else begin
-                            writer_state <= writer_dma_send;
+                            writer_state <= writer_read_LSB;
                             buffered_data.ready <= 1;
-                            progress_counter <= progress_counter + 1;
+                            progress_counter <= progress_counter + 2;
                         end                       
                     end
                 end

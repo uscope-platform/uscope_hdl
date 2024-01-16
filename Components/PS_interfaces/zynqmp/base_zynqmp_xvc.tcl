@@ -18,25 +18,6 @@ variable script_folder
 set script_folder [_tcl::get_script_folder]
 
 ################################################################
-# Check if script is running in correct Vivado version.
-################################################################
-set scripts_vivado_version 2023.2
-set current_vivado_version [version -short]
-
-if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
-   puts ""
-   if { [string compare $scripts_vivado_version $current_vivado_version] > 0 } {
-      catch {common::send_gid_msg -ssname BD::TCL -id 2042 -severity "ERROR" " This script was generated using Vivado <$scripts_vivado_version> and is being run in <$current_vivado_version> of Vivado. Sourcing the script failed since it was created with a future version of Vivado."}
-
-   } else {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2041 -severity "ERROR" "This script was generated using Vivado <$scripts_vivado_version> and is being run in <$current_vivado_version> of Vivado. Please run the script in Vivado <$scripts_vivado_version> then open the design in Vivado <$current_vivado_version>. Upgrade the design by running \"Tools => Report => Report IP Status...\", then run write_bd_tcl to create an updated script."}
-
-   }
-
-   return 1
-}
-
-################################################################
 # START
 ################################################################
 
@@ -225,27 +206,27 @@ proc create_root_design { parentCell } {
 
   set scope_data [ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:aximm_rtl:1.0 scope_data ]
   set_property -dict [ list \
-   CONFIG.ADDR_WIDTH {36} \
+   CONFIG.ADDR_WIDTH {49} \
    CONFIG.ARUSER_WIDTH {0} \
    CONFIG.AWUSER_WIDTH {0} \
    CONFIG.BUSER_WIDTH {0} \
-   CONFIG.DATA_WIDTH {32} \
+   CONFIG.DATA_WIDTH {128} \
    CONFIG.HAS_BRESP {1} \
-   CONFIG.HAS_BURST {0} \
-   CONFIG.HAS_CACHE {0} \
-   CONFIG.HAS_LOCK {0} \
-   CONFIG.HAS_PROT {0} \
-   CONFIG.HAS_QOS {0} \
-   CONFIG.HAS_REGION {0} \
-   CONFIG.HAS_RRESP {0} \
-   CONFIG.HAS_WSTRB {0} \
-   CONFIG.ID_WIDTH {0} \
+   CONFIG.HAS_BURST {1} \
+   CONFIG.HAS_CACHE {1} \
+   CONFIG.HAS_LOCK {1} \
+   CONFIG.HAS_PROT {1} \
+   CONFIG.HAS_QOS {1} \
+   CONFIG.HAS_REGION {1} \
+   CONFIG.HAS_RRESP {1} \
+   CONFIG.HAS_WSTRB {1} \
+   CONFIG.ID_WIDTH {2} \
    CONFIG.MAX_BURST_LENGTH {1} \
    CONFIG.NUM_READ_OUTSTANDING {16} \
    CONFIG.NUM_READ_THREADS {1} \
    CONFIG.NUM_WRITE_OUTSTANDING {16} \
    CONFIG.NUM_WRITE_THREADS {1} \
-   CONFIG.PROTOCOL {AXI4LITE} \
+   CONFIG.PROTOCOL {AXI4} \
    CONFIG.READ_WRITE_MODE {WRITE_ONLY} \
    CONFIG.RUSER_BITS_PER_BYTE {0} \
    CONFIG.RUSER_WIDTH {0} \
@@ -630,7 +611,7 @@ Port;FD4A0000;FD4AFFFF;1|FPD;DPDMA;FD4C0000;FD4CFFFF;1|FPD;DDR_XMPU5_CFG;FD05000
     CONFIG.PSU__QSPI__PERIPHERAL__ENABLE {1} \
     CONFIG.PSU__QSPI__PERIPHERAL__IO {MIO 0 .. 5} \
     CONFIG.PSU__QSPI__PERIPHERAL__MODE {Single} \
-    CONFIG.PSU__SAXIGP2__DATA_WIDTH {32} \
+    CONFIG.PSU__SAXIGP2__DATA_WIDTH {128} \
     CONFIG.PSU__SD0_COHERENCY {0} \
     CONFIG.PSU__SD0_ROUTE_THROUGH_FPD {0} \
     CONFIG.PSU__SD0__CLK_200_SDR_OTAP_DLY {0x3} \
@@ -698,17 +679,17 @@ Port;FD4A0000;FD4AFFFF;1|FPD;DPDMA;FD4C0000;FD4CFFFF;1|FPD;DDR_XMPU5_CFG;FD05000
 
 
   # Create interface connections
-  connect_bd_intf_net -intf_net S00_AXI_0_1 [get_bd_intf_ports scope_data] [get_bd_intf_pins axi_interconnect_0/S00_AXI]
   connect_bd_intf_net -intf_net axi_interconnect_0_M00_AXI [get_bd_intf_pins axi_interconnect_0/M00_AXI] [get_bd_intf_pins zynq_ultra_ps_e_0/S_AXI_HP0_FPD]
   connect_bd_intf_net -intf_net axi_mem_intercon_M00_AXI [get_bd_intf_pins axi_mem_intercon/M00_AXI] [get_bd_intf_ports axi_out]
   connect_bd_intf_net -intf_net axi_smc_M00_AXI [get_bd_intf_pins axi_smc/M00_AXI] [get_bd_intf_ports fCore]
+  connect_bd_intf_net -intf_net scope_data_1 [get_bd_intf_ports scope_data] [get_bd_intf_pins axi_interconnect_0/S00_AXI]
   connect_bd_intf_net -intf_net zynq_ultra_ps_e_0_M_AXI_HPM0_FPD [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM0_FPD] [get_bd_intf_pins axi_mem_intercon/S00_AXI]
   connect_bd_intf_net -intf_net zynq_ultra_ps_e_0_M_AXI_HPM1_FPD [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM1_FPD] [get_bd_intf_pins axi_smc/S00_AXI]
 
   # Create port connections
   connect_bd_net -net pl_ps_irq0_0_1 [get_bd_ports dma_done] [get_bd_pins zynq_ultra_ps_e_0/pl_ps_irq0]
-  connect_bd_net -net rst_ps8_0_99M_peripheral_aresetn [get_bd_pins rst_ps8_0_99M/peripheral_aresetn] [get_bd_ports reset] [get_bd_pins axi_interconnect_0/ARESETN] [get_bd_pins axi_interconnect_0/S00_ARESETN] [get_bd_pins axi_interconnect_0/M00_ARESETN] [get_bd_pins axi_mem_intercon/ARESETN] [get_bd_pins axi_mem_intercon/S00_ARESETN] [get_bd_pins axi_mem_intercon/M00_ARESETN] [get_bd_pins axi_smc/aresetn]
-  connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm1_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/saxihp0_fpd_aclk] [get_bd_ports logic_clock] [get_bd_pins axi_interconnect_0/ACLK] [get_bd_pins axi_interconnect_0/S00_ACLK] [get_bd_pins axi_interconnect_0/M00_ACLK] [get_bd_pins axi_mem_intercon/ACLK] [get_bd_pins axi_mem_intercon/S00_ACLK] [get_bd_pins axi_mem_intercon/M00_ACLK] [get_bd_pins axi_smc/aclk] [get_bd_pins rst_ps8_0_99M/slowest_sync_clk]
+  connect_bd_net -net rst_ps8_0_99M_peripheral_aresetn [get_bd_pins rst_ps8_0_99M/peripheral_aresetn] [get_bd_ports reset] [get_bd_pins axi_mem_intercon/ARESETN] [get_bd_pins axi_mem_intercon/S00_ARESETN] [get_bd_pins axi_mem_intercon/M00_ARESETN] [get_bd_pins axi_smc/aresetn] [get_bd_pins axi_interconnect_0/ARESETN] [get_bd_pins axi_interconnect_0/M00_ARESETN] [get_bd_pins axi_interconnect_0/S00_ARESETN]
+  connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm1_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/saxihp0_fpd_aclk] [get_bd_ports logic_clock] [get_bd_pins axi_mem_intercon/ACLK] [get_bd_pins axi_mem_intercon/S00_ACLK] [get_bd_pins axi_mem_intercon/M00_ACLK] [get_bd_pins axi_smc/aclk] [get_bd_pins rst_ps8_0_99M/slowest_sync_clk] [get_bd_pins axi_interconnect_0/ACLK] [get_bd_pins axi_interconnect_0/M00_ACLK] [get_bd_pins axi_interconnect_0/S00_ACLK]
   connect_bd_net -net zynq_ultra_ps_e_0_pl_clk1 [get_bd_pins zynq_ultra_ps_e_0/pl_clk1] [get_bd_ports IO_clock]
   connect_bd_net -net zynq_ultra_ps_e_0_pl_resetn0 [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0] [get_bd_pins rst_ps8_0_99M/ext_reset_in]
 
@@ -724,7 +705,6 @@ Port;FD4A0000;FD4AFFFF;1|FPD;DPDMA;FD4C0000;FD4CFFFF;1|FPD;DDR_XMPU5_CFG;FD05000
   # Restore current instance
   current_bd_instance $oldCurInst
 
-  validate_bd_design
   save_bd_design
 }
 # End of create_root_design()
@@ -736,4 +716,6 @@ Port;FD4A0000;FD4AFFFF;1|FPD;DPDMA;FD4C0000;FD4CFFFF;1|FPD;DDR_XMPU5_CFG;FD05000
 
 create_root_design ""
 
+
+common::send_gid_msg -ssname BD::TCL -id 2053 -severity "WARNING" "This Tcl script was generated from a block design that has not been validated. It is possible that design <$design_name> may result in errors during validation."
 

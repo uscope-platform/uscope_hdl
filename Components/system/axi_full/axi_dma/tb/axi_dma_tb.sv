@@ -30,24 +30,29 @@ module axi_dma_tb();
     axi_lite axi_in();
     AXI #(
         .ID_WIDTH(2),
-        .DATA_WIDTH(64),
-        .ADDR_WIDTH(36)
+        .DATA_WIDTH(128),
+        .ADDR_WIDTH(49)
     ) axi_out();
-    axi_stream data_in();
+    axi_stream #(
+        .DEST_WIDTH(12)
+    ) data_in();
 
     event config_done;
 
     axi_lite_BFM axil_bfm;
 
     axi_dma_vip_bd_axi_vip_0_0_slv_mem_t slv_agent;
-
-    axi_dma UUT(
+    wire dma_done;
+    axi_dma #(
+        .DEST_WIDTH(12)
+    )UUT(
         .clock(clk),
         .reset(reset), 
         .enable(1),
         .axi_in(axi_in),
         .data_in(data_in),
-        .axi_out(axi_out)
+        .axi_out(axi_out),
+        .dma_done(dma_done)
     );
 
     axi_dma_vip_bd_wrapper VIP(
@@ -61,13 +66,17 @@ module axi_dma_tb();
         #0.5 clk = 1'b0;
         #0.5;
     end
-    event dma_done;
+
+    reg [31:0] data_prog = 0;
+    event restart_data_gen;
     initial begin 
         reset <=1'h0;
         data_in.initialize();
         slv_agent = new("slave vip agent",axi_dma_tb.VIP.vip_bd_i.axi_vip_0.inst.IF);
         slv_agent.set_verbosity(400);
         slv_agent.start_slave();
+        slv_agent.mem_model.set_bresp_delay(19);
+        slv_agent.mem_model.set_bresp_delay_policy(XIL_AXI_MEMORY_DELAY_NOADJUST_FIXED);
 
         //TESTS
         #30.5 reset <=1'h1;
@@ -77,30 +86,48 @@ module axi_dma_tb();
         data_in.tlast <= 0;
 
         @(config_done);
-        for (integer i = 0; i <121; i = i+1 ) begin
-            data_in.data <= i;
-            data_in.valid <= 1;
-            if(i==120)begin
-                data_in.tlast <= 1;
-            end else begin
-                data_in.tlast <= 0;
+        forever begin
+            for (integer i = 0; i <1024; i = i+1 ) begin
+                data_in.data <= i;
+                data_in.dest <= i+1000;
+                data_in.valid <= 1;
+                if(i==1023)begin
+                    data_in.tlast <= 1;
+                end else begin
+                    data_in.tlast <= 0;
+                end
+                data_prog <= data_prog + 1;
+                #1;
             end
-            #1;
+            data_in.valid <= 0;
+            data_in.tlast <= 0;
+            @(restart_data_gen);
+            #30;
         end
-        data_in.valid <= 0;
-        data_in.tlast <= 0;
+
     end
 
-
+    
     initial begin 
         axil_bfm = new(axi_in, 1);
 
         #50;
         axil_bfm.write(0, 'h3f000000);
-        axil_bfm.write('h04, 120);
+        axil_bfm.write('h04, 1024);
         
         ->config_done;
     end
 
+    reg [31:0] axi_high_data;
+    reg [31:0] axi_high_dest;
+    reg [31:0] axi_low_data;
+    reg [31:0] axi_low_dest;
+    always_ff @(posedge axi_out.WVALID) begin
+        {axi_high_dest, axi_high_data, axi_low_dest, axi_low_data} <= axi_out.WDATA;
+    end
+
+    always_ff @(posedge dma_done) begin
+        ->restart_data_gen;
+    end
 
 endmodule
