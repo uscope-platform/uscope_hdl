@@ -23,8 +23,8 @@ module zynqmp_PS_wrapper #(
     output wire [0:0]reset,
     axi_lite.master axi_out,
     AXI.master fcore_axi,
-    axi_lite.slave scope,
-    output wire dma_done
+    AXI.slave scope,
+    input wire dma_done
   );
 
 
@@ -42,7 +42,7 @@ module zynqmp_PS_wrapper #(
 
             ps PS (
                 .IO_clock(io_clock),
-                .Logic_Clock(logic_clock),
+                .logic_clock(logic_clock),
                 .reset(reset),
                 .axi_out_araddr(axi_out.ARADDR),
                 .axi_out_arprot(axi_out.ARPROT),
@@ -105,7 +105,7 @@ module zynqmp_PS_wrapper #(
             
         ps PS (
             .IO_clock(io_clock),
-            .Logic_Clock(logic_clock),
+            .logic_clock(logic_clock),
             .reset(reset),
             .axi_out_araddr(axi_out.ARADDR),
             .axi_out_arprot(axi_out.ARPROT),
@@ -152,14 +152,24 @@ module zynqmp_PS_wrapper #(
             .fCore_wstrb(fcore_axi.WSTRB),
             .fCore_wvalid(fcore_axi.WVALID),
             .scope_data_awaddr(scope.AWADDR),
+            .scope_data_awburst(scope.AWBURST),
+            .scope_data_awcache(scope.AWCACHE),
+            .scope_data_awid(scope.AWID),
+            .scope_data_awlen(scope.AWLEN),
+            .scope_data_awlock(scope.AWLOCK),
+            .scope_data_awqos(scope.AWQOS),
             .scope_data_awprot(scope.AWPROT),
             .scope_data_awready(scope.AWREADY),
             .scope_data_awvalid(scope.AWVALID),
+            .scope_data_awregion(scope.AWREGION),
+            .scope_data_awsize(scope.AWSIZE),
+            .scope_data_bid(scope.BID),
             .scope_data_bready(scope.BREADY),
             .scope_data_bresp(scope.BRESP),
             .scope_data_bvalid(scope.BVALID),
             .scope_data_wdata(scope.WDATA),
             .scope_data_wready(scope.WREADY),
+            .scope_data_wlast(scope.WLAST),
             .scope_data_wstrb(scope.WSTRB),
             .scope_data_wvalid(scope.WVALID),
             .dma_done(dma_done)

@@ -125,3 +125,5 @@ Components/system/axi_full/crossbar/axi_xbar/
 Components/controls/programmable_sequencer/programmable sequence/
 
 Components/system/axi_stream/data_mover/data moved/
+
+Components/system/axi_full/axi_dma/axi_dma/
