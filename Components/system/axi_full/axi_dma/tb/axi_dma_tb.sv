@@ -27,7 +27,6 @@ module axi_dma_tb();
     reg clk;
     reg reset = 0;
     
-    axi_lite axi_in();
     AXI #(
         .ID_WIDTH(2),
         .DATA_WIDTH(128),
@@ -37,9 +36,6 @@ module axi_dma_tb();
         .DEST_WIDTH(12)
     ) data_in();
 
-    event config_done;
-
-    axi_lite_BFM axil_bfm;
 
     axi_dma_vip_bd_axi_vip_0_0_slv_mem_t slv_agent;
     wire dma_done;
@@ -49,7 +45,7 @@ module axi_dma_tb();
         .clock(clk),
         .reset(reset), 
         .enable(1),
-        .axi_in(axi_in),
+        .dma_base_addr('h3f000000)
         .data_in(data_in),
         .axi_out(axi_out),
         .dma_done(dma_done)
@@ -85,7 +81,7 @@ module axi_dma_tb();
         data_in.valid <= 0;
         data_in.tlast <= 0;
 
-        @(config_done);
+        #70;
         forever begin
             for (integer i = 0; i <1024; i = i+1 ) begin
                 data_in.data <= i;
@@ -107,16 +103,6 @@ module axi_dma_tb();
 
     end
 
-    
-    initial begin 
-        axil_bfm = new(axi_in, 1);
-
-        #50;
-        axil_bfm.write(0, 'h3f000000);
-        axil_bfm.write('h04, 1024);
-        
-        ->config_done;
-    end
 
     reg [31:0] axi_high_data;
     reg [31:0] axi_high_dest;

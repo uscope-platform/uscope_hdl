@@ -25,46 +25,11 @@ module axi_dma #(
     input wire clock,
     input wire reset,
     input wire enable,
-    axi_lite.slave axi_in,
+    input wire [63:0] dma_base_addr,
     axi_stream.slave data_in,
     AXI.master axi_out,
     output reg dma_done
 );
-
-
-    reg [31:0] cu_write_registers [3:0];
-    reg [31:0] cu_read_registers [3:0];
-  
-    parameter [31:0] IV [3:0] = '{4{'h0}};
-
-    axil_simple_register_cu #(
-        .N_READ_REGISTERS(4),
-        .N_WRITE_REGISTERS(4),
-        .REGISTERS_WIDTH(32),
-        .ADDRESS_MASK('hff),
-        .INITIAL_OUTPUT_VALUES(IV)
-    ) CU (
-        .clock(clock),
-        .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
-        .axil(axi_in)
-    );
-
-    reg [63:0] target_base;
-
-
-    assign target_base[31:0] = cu_write_registers[0];
-    assign target_base[63:32] = cu_write_registers[3];
-
-
-    assign cu_read_registers[0] = target_base[31:0];
-    assign cu_read_registers[3] = target_base[63:32];
-    assign cu_read_registers[1] = 0;
-    assign cu_read_registers[2] = 0;
-    
-
-
 
     axi_stream #(.DEST_WIDTH(DEST_WIDTH)) buffered_data();
 
@@ -101,6 +66,8 @@ module axi_dma #(
         end
     end
 
+
+    reg [63:0] target_base;
 
     reg [$clog2(MAX_TRANSFER_SIZE)-1:0] packet_length = 0;
 
@@ -168,6 +135,7 @@ module axi_dma #(
             case (writer_state)
                 writer_idle:begin
                     if(data_in.tlast)begin
+                        target_base <= dma_base_addr;
                         packet_length <= (fifo_level+1);
                         buffered_data.ready <= 1;
                         progress_counter <= 0;
@@ -208,37 +176,3 @@ module axi_dma #(
     end
 
 endmodule
-
-
-    /**
-       {
-        "name": "axil_dma",
-        "type": "peripheral",
-        "registers":[
-            {
-                "name": "target_base_l",
-                "offset": "0x0",
-                "description": "Least significant bytes of the nase address for the target memmory area",
-                "direction": "RW"        
-            },
-            {
-                "name": "reserved",
-                "offset": "0x4",
-                "description": "Reserved register do not use",
-                "direction": "RW"
-            },
-            {
-                "name": "reserved",
-                "offset": "0x8",
-                "description": "Reserved register do not use",
-                "direction": "RW"
-            },
-            {
-                "name": "target_base_h",
-                "offset": "0xc",
-                "description": "Most significant bytes of the nase address for the target memmory area",
-                "direction": "RW"
-            }
-        ]
-       }  
-    **/
