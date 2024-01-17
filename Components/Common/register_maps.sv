@@ -226,6 +226,16 @@ package reg_maps;
         int ramp_bypass = 'h10;
     } ramp_generator_regs;
 
+    struct { 
+        int buffer_size = 0;
+        int enable = 'h4;
+        int buffer_addr_low = 'h8;
+        int buffer_addr_high = 'hc;
+        int selected_trigger = 'h10;
+        int capture_ack = 'h14;
+        int trigger_position = 'h18;
+    } uscope_regs;
+
     
 endpackage
 

@@ -123,7 +123,7 @@ module uScope_dma #(
         .clock(clock),
         .reset(reset), 
         .period(tlast_period),
-        .disable(capture_inhibit),
+        .disable_gen(capture_inhibit),
         .current_sample(current_sample),
         .data_in(combined),
         .data_out(combined_tlast)
@@ -137,7 +137,7 @@ module uScope_dma #(
         .clock(clock),
         .reset(reset),
         .enable(dma_enable),
-        .base_addr(dma_base_addr),
+        .dma_base_addr(dma_base_addr),
         .data_in(combined_tlast),
         .axi_out(out),
         .dma_done(dma_done)
@@ -158,32 +158,38 @@ endmodule
                 "direction": "RW"
             },
             {
-                "name": "buffer_addr",
+                "name": "enable",
                 "offset": "0x4",
                 "description": "Address of the first word in memory of the data buffer",
                 "direction": "RW"
             },
             {
-                "name": "enable",
+                "name": "buffer_addr_low",
                 "offset": "0x8",
                 "description": "Writing 1 to this register enables the scope",
                 "direction": "RW"  
             },
             {
-                "name": "selected_trigger",
+                "name": "buffer_addr_high",
                 "offset": "0xC",
+                "description": "Writing 1 to this register enables the scope",
+                "direction": "RW"  
+            },
+            {
+                "name": "selected_trigger",
+                "offset": "0x10",
                 "description": "Writing an address to this register triggers the related signal",
                 "direction": "RW"  
             },
             {
                 "name": "capture_ack",
-                "offset": "0x10",
+                "offset": "0x14",
                 "description": "Acknowledge the last captured trigger",
                 "direction": "RW"  
             },
             {
                 "name": "trigger_position",
-                "offset": "0x14",
+                "offset": "0x18",
                 "description": "Position of the trigger in the capture window",
                 "direction": "RW"  
             }
