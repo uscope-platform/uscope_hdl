@@ -52,31 +52,29 @@ module axi_dma #(
     );
 
     reg [63:0] target_base;
-    reg [31:0] transfer_size;
 
 
     assign target_base[31:0] = cu_write_registers[0];
     assign target_base[63:32] = cu_write_registers[3];
-    assign transfer_size = cu_write_registers[1];
 
 
     assign cu_read_registers[0] = target_base[31:0];
     assign cu_read_registers[3] = target_base[63:32];
-    assign cu_read_registers[1] = transfer_size;
+    assign cu_read_registers[1] = 0;
     assign cu_read_registers[2] = 0;
     
 
 
-    wire dma_start;
-    assign dma_start = data_in.tlast;
 
     axi_stream #(.DEST_WIDTH(DEST_WIDTH)) buffered_data();
+
+    localparam FIFO_DEPTH = 8192;
 
     axis_fifo_xpm #(
         .SIM_ASSERT_CHK(0),
         .DEST_WIDTH(DEST_WIDTH),
         .DATA_WIDTH(32),
-        .FIFO_DEPTH(8192)
+        .FIFO_DEPTH(FIFO_DEPTH)
     ) dma_fifo(
         .clock(clock),
         .reset(reset),
@@ -91,11 +89,25 @@ module axi_dma #(
         writer_send_data = 3,
         writer_wait_response = 4
     } writer_state;
+    
+
+    reg [$clog2(MAX_TRANSFER_SIZE)-1:0] fifo_level = 0;
+    always_ff @(posedge clock) begin
+        if(data_in.valid & !buffered_data.ready) begin
+            fifo_level <= fifo_level + 1;
+        end
+        if(!data_in.valid & buffered_data.ready) begin
+            fifo_level <= fifo_level - 1;
+        end
+    end
+
+
+    reg [$clog2(MAX_TRANSFER_SIZE)-1:0] packet_length = 0;
 
 
     reg [$clog2(MAX_TRANSFER_SIZE)-1:0] progress_counter = 0;
     wire dma_end_condition;
-    assign dma_end_condition = progress_counter == transfer_size-2;
+    assign dma_end_condition = progress_counter == packet_length-2;
    
 
     wire [ADDR_WIDTH-1:0] current_target_address;
@@ -155,7 +167,8 @@ module axi_dma #(
             dma_done <= 0;
             case (writer_state)
                 writer_idle:begin
-                    if(dma_start)begin
+                    if(data_in.tlast)begin
+                        packet_length <= (fifo_level+1);
                         buffered_data.ready <= 1;
                         progress_counter <= 0;
                         writer_state <= writer_read_LSB;
@@ -209,9 +222,9 @@ endmodule
                 "direction": "RW"        
             },
             {
-                "name": "transfer_size",
+                "name": "reserved",
                 "offset": "0x4",
-                "description": "Size of the dma buffer to transfer",
+                "description": "Reserved register do not use",
                 "direction": "RW"
             },
             {

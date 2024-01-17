@@ -18,14 +18,14 @@
 
 
 module axi_dma_traffic_gen #(
-    parameter BACKOFF_DELAY = 128,
-    DATA_SEQUENCE_LENGHT = 1024
+    parameter BACKOFF_DELAY = 128
 )(
     input wire        clock,
     input wire        reset,
     input wire        enable,
     input wire        trigger,
     input wire        dma_done,
+    input wire [31:0] packet_length,
     axi_stream.master  data_out
 );
 
@@ -66,7 +66,7 @@ module axi_dma_traffic_gen #(
                     data_gen_ctr <= data_gen_ctr + 1;
                     data_out.valid <= 1;
                     delay_counter <= 0;
-                    if(data_gen_ctr == DATA_SEQUENCE_LENGHT-1)begin
+                    if(data_gen_ctr == packet_length-1)begin
                         sequencer_state <= wait_dma_done;
                         delay_counter <=0;
                         data_out.tlast <= 1;
