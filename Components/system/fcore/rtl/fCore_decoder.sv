@@ -182,7 +182,7 @@ module fCore_decoder #(
                     operation_if.data <= 'b101100;
                     operation_if.valid <= 1;
                 end
-                fcore_isa::CSEL::begin
+                fcore_isa::CSEL: begin
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
