@@ -41,13 +41,13 @@ module uScope_stream #(
     wire [7:0] addr_5;
     wire [7:0] addr_6;
 
-    axi_lite #(.INTERFACE_NAME("MUX CONTROLLER")) mux_ctrl_axi();
-    axi_lite #(.INTERFACE_NAME("TRIGGER CONTROLLER")) uscope_axi();
-    axi_lite #(.INTERFACE_NAME("USCOPE TIMEBASE")) timebase_axi();
+    axi_lite #(.INTERFACE_NAME("MUX CONTROLLER"), .ADDR_WIDTH(ADDR_WIDTH)) mux_ctrl_axi();
+    axi_lite #(.INTERFACE_NAME("TRIGGER CONTROLLER"), .ADDR_WIDTH(ADDR_WIDTH)) uscope_axi();
+    axi_lite #(.INTERFACE_NAME("USCOPE TIMEBASE"), .ADDR_WIDTH(ADDR_WIDTH)) timebase_axi();
 
     axil_crossbar_interface #(
         .DATA_WIDTH(DATA_WIDTH),
-        .ADDR_WIDTH(32),
+        .ADDR_WIDTH(ADDR_WIDTH),
         .NM(1),
         .NS(3),
         .SLAVE_ADDR('{
@@ -181,10 +181,10 @@ module uScope_stream #(
         .axil(timebase_axi)
     );
 
-    axi_stream scope_in_sync[8]();
+    axi_stream scope_in_sync[6]();
     generate
         genvar i;
-        for(i = 0; i<8; i++)begin
+        for(i = 0; i<6; i++)begin
             axis_sync_repeater ch_synchronizer (
                 .clock(clock),
                 .reset(reset),
@@ -200,7 +200,7 @@ module uScope_stream #(
         .N_TRIGGERS(2),
         .DATA_WIDTH(DATA_WIDTH),
         .DEST_WIDTH(DEST_WIDTH),
-        .N_STREAMS(8),
+        .N_STREAMS(6),
         .MAX_TRANSFER_SIZE(MAX_TRANSFER_SIZE)
     )scope_internal (
         .clock(clock),

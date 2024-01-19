@@ -60,7 +60,7 @@ module axis_skid_buffer #(
     reg	[DATA_WIDTH-1:0] data_buffer = 0;
     reg	[DATA_WIDTH-1:0] dest_buffer = 0;
     reg	[DATA_WIDTH-1:0] user_buffer = 0;
-    reg tlast_buffer;
+    reg tlast_buffer = 0;
     // manage buffer
     always_ff @(posedge clock) begin
         if (~reset) begin
@@ -119,6 +119,9 @@ module axis_skid_buffer #(
             always_ff @(posedge clock) begin
                 if (~reset) begin
                     axis_out.data <= 0;
+                    axis_out.dest <= 0; 
+                    axis_out.user <= 0;
+                    axis_out.tlast <= 0;
                 end else if (!axis_out.valid || axis_out.ready) begin
                     if (input_skidding) begin
                         axis_out.data <= data_buffer;

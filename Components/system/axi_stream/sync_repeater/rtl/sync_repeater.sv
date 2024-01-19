@@ -19,7 +19,11 @@
 `include "interfaces.svh"
 
 
-module axis_sync_repeater #(parameter DATA_WIDTH= 32, DEST_WIDTH = 8, USER_WIDTH = 8)(
+module axis_sync_repeater #(
+    parameter DATA_WIDTH= 32, 
+    DEST_WIDTH = 8,
+    USER_WIDTH = 8
+)(
     input wire        clock,
     input wire        reset,
     input wire        sync,
@@ -55,7 +59,7 @@ module axis_sync_repeater #(parameter DATA_WIDTH= 32, DEST_WIDTH = 8, USER_WIDTH
                 out.dest <= registered_stream.dest;
                 out.user <= registered_stream.user;
                 out.tlast <= registered_stream.tlast;
-                out.valid <= 1;
+                out.valid <= registered_stream.valid;
             end
         end
     end

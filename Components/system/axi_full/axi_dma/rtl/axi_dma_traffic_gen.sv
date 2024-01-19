@@ -18,7 +18,9 @@
 
 
 module axi_dma_traffic_gen #(
-    parameter BACKOFF_DELAY = 128
+    parameter BACKOFF_DELAY = 128,
+    parameter DEST_START = 1,
+    parameter N_DEST = 6
 )(
     input wire        clock,
     input wire        reset,
@@ -30,8 +32,10 @@ module axi_dma_traffic_gen #(
 );
 
 
-    (* keep="true" *) reg [15:0] data_gen_ctr;
-    reg [15:0] delay_counter;
+    reg [7:0] dest_counter = DEST_START;
+    reg [15:0] data_gen_ctr;
+    reg [15:0] delay_counter = 0;
+
     reg trigger_del;
 
     enum logic [2:0]{
@@ -62,7 +66,7 @@ module axi_dma_traffic_gen #(
                 end
                 ctr_advance:begin
                     data_out.data <= data_gen_ctr;
-                    data_out.dest <= data_gen_ctr;
+                    data_out.dest <= dest_counter;
                     data_gen_ctr <= data_gen_ctr + 1;
                     data_out.valid <= 1;
                     delay_counter <= 0;
@@ -92,6 +96,11 @@ module axi_dma_traffic_gen #(
                 backoff:begin
                     if(delay_counter == BACKOFF_DELAY-1)begin
                         sequencer_state <= idle;
+                        if(dest_counter==(DEST_START+N_DEST-1))begin
+                            dest_counter <= DEST_START;
+                        end else begin
+                            dest_counter <= dest_counter + 1;
+                        end
                     end else begin
                         delay_counter <= delay_counter + 1;
                     end

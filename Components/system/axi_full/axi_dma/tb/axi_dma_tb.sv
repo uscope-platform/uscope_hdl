@@ -45,7 +45,7 @@ module axi_dma_tb();
         .clock(clk),
         .reset(reset), 
         .enable(1),
-        .dma_base_addr('h3f000000)
+        .dma_base_addr('h3f000000),
         .data_in(data_in),
         .axi_out(axi_out),
         .dma_done(dma_done)

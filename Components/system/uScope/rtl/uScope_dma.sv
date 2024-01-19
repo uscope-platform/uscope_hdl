@@ -47,7 +47,6 @@ module uScope_dma #(
     reg [63:0] dma_base_addr;
 
     reg [31:0] tlast_period;
-    reg [31:0] dma_buffer_base;
     wire [15:0] current_sample;
 
     wire trigger;
@@ -148,7 +147,7 @@ endmodule
 
     /**
        {
-        "name": "uScope",
+        "name": "uScope_dma",
         "type": "peripheral",
         "registers":[
             {
