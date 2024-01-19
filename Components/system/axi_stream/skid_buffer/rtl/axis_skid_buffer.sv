@@ -33,6 +33,7 @@ module axis_skid_buffer #(
 
     wire input_data_available;
     assign input_data_available = axis_in.valid && axis_in.ready;
+
     wire output_stalled;
     assign output_stalled = axis_out.valid && !axis_out.ready;
 
@@ -104,17 +105,14 @@ module axis_skid_buffer #(
             
         end else begin
             // Register our outputs
-            reg	registerd_valid = 0;
+            wire out_valid;
+            assign out_valid = reset && (axis_in.valid || input_skidding);
     
             always_ff @(posedge clock) begin
-                if (~reset) begin
-                    registerd_valid <= 0;
-                end if (!axis_out.valid || axis_out.ready) begin
-                    registerd_valid <= (axis_in.valid || input_skidding); 
-                end
+                axis_out.valid <= out_valid;
             end
             
-            assign	axis_out.valid = registerd_valid;
+            
     
             always_ff @(posedge clock) begin
                 if (~reset) begin
