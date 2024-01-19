@@ -1,0 +1,30 @@
+{
+    "general":{
+        "project_name":"axi_to_axil",
+        "target_part":"xc7z020clg400",
+        "synth_modules":[],
+        "synth_tl": "axi_to_axil",
+        "sim_modules":[],
+        "sim_tl":"axi_to_axil_tb",
+        "include_paths":[
+            "Components/Common"
+        ]
+    },
+    "scripts":[
+        {
+            "name":"set_properties.tcl",
+            "type": "tcl",
+            "arguments":[]
+        }, 
+        {
+            "name":"axi_to_axil_VIP_bd.tcl",
+            "type": "tcl",
+            "arguments":[]
+        }
+    ],
+    "excluded_modules":[
+        "axi_to_axil_vip_bd"
+    ],
+    "constraints": [
+    ]
+}
