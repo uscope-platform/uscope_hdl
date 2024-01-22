@@ -16,7 +16,7 @@
 `include "interfaces.svh"
 
 
-module uScope_stream #(
+module uScope_stream_dma #(
     N_TRIGGERS = 1,
     BASE_ADDRESS = 0,
     DATA_WIDTH = 32,

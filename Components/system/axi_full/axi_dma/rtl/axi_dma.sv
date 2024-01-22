@@ -20,6 +20,7 @@
 module axi_dma #(
     parameter ADDR_WIDTH = 32,
     parameter DEST_WIDTH = 8,
+    parameter OUTPUT_AXI_WIDTH = 128,
     parameter MAX_TRANSFER_SIZE = 65536
 )(
     input wire clock,
@@ -34,6 +35,8 @@ module axi_dma #(
     axi_stream #(.DEST_WIDTH(DEST_WIDTH)) buffered_data();
 
     localparam FIFO_DEPTH = 8192;
+
+    localparam ADDRESS_INCREMENT = OUTPUT_AXI_WIDTH == 128 ? 8 : 4;
 
     axis_fifo_xpm #(
         .SIM_ASSERT_CHK(0),
@@ -83,8 +86,13 @@ module axi_dma #(
 
     reg [63:0] axi_low_word = 0;
     reg [63:0] axi_high_word = 0;
-
-    assign axi_out.WDATA  = {axi_high_word, axi_low_word};
+    generate
+        if(OUTPUT_AXI_WIDTH==128) begin
+            assign axi_out.WDATA  = {axi_high_word, axi_low_word};
+        end else begin
+            assign axi_out.WDATA  = axi_high_word;
+        end
+    endgenerate
 
     always_ff @(posedge clock) begin
         if(~reset)begin
@@ -100,12 +108,12 @@ module axi_dma #(
             axi_out.AWCACHE <= 0;
             axi_out.AWBURST <= 0;
             axi_out.AWLOCK <= 0;
-            axi_out.AWSIZE <= 'b100;
+            axi_out.AWSIZE <= OUTPUT_AXI_WIDTH==128 ? 'b100 : 'b11;
 
 
             axi_out.WVALID <= 0;
             
-            axi_out.WSTRB <= 'hFFFF;
+            axi_out.WSTRB <= OUTPUT_AXI_WIDTH==128 ? 'hFFFF : 'hFF;
             axi_out.WUSER <= 0;
             axi_out.WLAST <= 1;
 
@@ -139,7 +147,11 @@ module axi_dma #(
                         packet_length <= (fifo_level+1);
                         buffered_data.ready <= 1;
                         progress_counter <= 0;
-                        writer_state <= writer_read_LSB;
+                        if(OUTPUT_AXI_WIDTH==128) begin
+                            writer_state <= writer_read_LSB;
+                        end else begin
+                            writer_state <= writer_dma_send;
+                        end
                     end
                 end
                 writer_read_LSB:begin
@@ -165,9 +177,14 @@ module axi_dma #(
                             writer_state <= writer_idle;
                             dma_done <= 1;
                         end else begin
-                            writer_state <= writer_read_LSB;
+                            if(OUTPUT_AXI_WIDTH==128) begin  
+                                writer_state <= writer_read_LSB;
+                                progress_counter <= progress_counter + 2;
+                            end else begin
+                                progress_counter <= progress_counter + 1;
+                                writer_state <= writer_dma_send;
+                            end
                             buffered_data.ready <= 1;
-                            progress_counter <= progress_counter + 2;
                         end                       
                     end
                 end
