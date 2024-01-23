@@ -20,6 +20,7 @@ module uScope_dma #(
     DATA_WIDTH = 32,
     DEST_WIDTH = 8,
     N_STREAMS = 6,
+    OUTPUT_AXI_WIDTH = 128,
     MAX_TRANSFER_SIZE = 8192
 )(
     input wire clock,
@@ -130,6 +131,7 @@ module uScope_dma #(
 
     axi_dma #(
         .ADDR_WIDTH(64),
+        .OUTPUT_AXI_WIDTH(OUTPUT_AXI_WIDTH),
         .DEST_WIDTH(DEST_WIDTH),
         .MAX_TRANSFER_SIZE(MAX_TRANSFER_SIZE)
     )dma_engine(

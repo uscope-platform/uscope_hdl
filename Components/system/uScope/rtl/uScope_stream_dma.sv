@@ -21,6 +21,7 @@ module uScope_stream_dma #(
     BASE_ADDRESS = 0,
     DATA_WIDTH = 32,
     ADDR_WIDTH = 32,
+    OUTPUT_AXI_WIDTH = 128,
     DEST_WIDTH = 8,
     MAX_TRANSFER_SIZE = 8192
 ) (
@@ -201,6 +202,7 @@ module uScope_stream_dma #(
         .DATA_WIDTH(DATA_WIDTH),
         .DEST_WIDTH(DEST_WIDTH),
         .N_STREAMS(6),
+        .OUTPUT_AXI_WIDTH(OUTPUT_AXI_WIDTH),
         .MAX_TRANSFER_SIZE(MAX_TRANSFER_SIZE)
     )scope_internal (
         .clock(clock),
@@ -218,7 +220,7 @@ module uScope_stream_dma #(
 endmodule
 /**
     {
-        "name": "uScope_stream",
+        "name": "uScope_stream_dma",
         "type": "peripheral",
         "registers":[
             {
