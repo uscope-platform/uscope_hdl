@@ -21,7 +21,7 @@ module uScope_dma #(
     DEST_WIDTH = 8,
     N_STREAMS = 6,
     OUTPUT_AXI_WIDTH = 128,
-    MAX_TRANSFER_SIZE = 8192
+    CHANNEL_SAMPLES = 1024
 )(
     input wire clock,
     input wire reset,
@@ -31,8 +31,6 @@ module uScope_dma #(
     AXI.master out,
     axi_lite.slave axi_in
 );
-
-    localparam CHANNEL_BUFFER_SIZE = 1024; 
 
     axi_stream #(
         .DATA_WIDTH(DATA_WIDTH)
@@ -129,11 +127,14 @@ module uScope_dma #(
         .data_out(combined_tlast)
     );
 
+    // CALCULATE THE MINIMUM POWER OF TWO NUMBER OF ROWS FOR THE BUFFER FIFO FOR EFFICIENT IMPLEMENTATION
+    localparam IDEAL_BUFFER_SIZE = 1<<$clog2(CHANNEL_SAMPLES*N_STREAMS);
+
     axi_dma #(
         .ADDR_WIDTH(64),
         .OUTPUT_AXI_WIDTH(OUTPUT_AXI_WIDTH),
         .DEST_WIDTH(DEST_WIDTH),
-        .MAX_TRANSFER_SIZE(MAX_TRANSFER_SIZE)
+        .MAX_TRANSFER_SIZE(IDEAL_BUFFER_SIZE)
     )dma_engine(
         .clock(clock),
         .reset(reset),

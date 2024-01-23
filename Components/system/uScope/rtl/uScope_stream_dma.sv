@@ -24,7 +24,7 @@ module uScope_stream_dma #(
     ADDR_WIDTH = 32,
     OUTPUT_AXI_WIDTH = 128,
     DEST_WIDTH = 8,
-    MAX_TRANSFER_SIZE = 8192
+    CHANNEL_SAMPLES = 1024
 ) (
     input wire clock,
     input wire reset,
@@ -35,8 +35,6 @@ module uScope_stream_dma #(
     AXI.master scope_out,
     axi_stream.slave data_in
 );
-
-    
 
     wire [7:0] addr[N_CHANNELS-1:0];
 
@@ -146,7 +144,7 @@ module uScope_stream_dma #(
         .DEST_WIDTH(DEST_WIDTH),
         .N_STREAMS(N_CHANNELS),
         .OUTPUT_AXI_WIDTH(OUTPUT_AXI_WIDTH),
-        .MAX_TRANSFER_SIZE(MAX_TRANSFER_SIZE)
+        .CHANNEL_SAMPLES(CHANNEL_SAMPLES)
     )scope_internal (
         .clock(clock),
         .reset(reset),
