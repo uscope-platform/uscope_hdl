@@ -34,15 +34,13 @@ module axi_dma #(
 
     axi_stream #(.DEST_WIDTH(DEST_WIDTH)) buffered_data();
 
-    localparam FIFO_DEPTH = 8192;
-
     localparam ADDRESS_INCREMENT = OUTPUT_AXI_WIDTH == 128 ? 8 : 4;
 
     axis_fifo_xpm #(
         .SIM_ASSERT_CHK(0),
         .DEST_WIDTH(DEST_WIDTH),
         .DATA_WIDTH(32),
-        .FIFO_DEPTH(FIFO_DEPTH)
+        .FIFO_DEPTH(MAX_TRANSFER_SIZE)
     ) dma_fifo(
         .clock(clock),
         .reset(reset),
@@ -59,7 +57,7 @@ module axi_dma #(
     } writer_state;
     
 
-    reg [$clog2(MAX_TRANSFER_SIZE)-1:0] fifo_level = 0;
+    reg [$clog2(MAX_TRANSFER_SIZE):0] fifo_level = 0;
     always_ff @(posedge clock) begin
         if(data_in.valid & !buffered_data.ready) begin
             fifo_level <= fifo_level + 1;
@@ -72,10 +70,10 @@ module axi_dma #(
 
     reg [63:0] target_base;
 
-    reg [$clog2(MAX_TRANSFER_SIZE)-1:0] packet_length = 0;
+    reg [$clog2(MAX_TRANSFER_SIZE):0] packet_length = 0;
 
 
-    reg [$clog2(MAX_TRANSFER_SIZE)-1:0] progress_counter = 0;
+    reg [$clog2(MAX_TRANSFER_SIZE):0] progress_counter = 0;
    
 
     wire [ADDR_WIDTH-1:0] current_target_address;
