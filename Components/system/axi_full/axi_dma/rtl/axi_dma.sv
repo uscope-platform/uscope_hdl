@@ -76,8 +76,6 @@ module axi_dma #(
 
 
     reg [$clog2(MAX_TRANSFER_SIZE)-1:0] progress_counter = 0;
-    wire dma_end_condition;
-    assign dma_end_condition = progress_counter == packet_length-2;
    
 
     wire [ADDR_WIDTH-1:0] current_target_address;
@@ -86,11 +84,17 @@ module axi_dma #(
 
     reg [63:0] axi_low_word = 0;
     reg [63:0] axi_high_word = 0;
+
+
+    wire dma_end_condition;
+
     generate
         if(OUTPUT_AXI_WIDTH==128) begin
             assign axi_out.WDATA  = {axi_high_word, axi_low_word};
+            assign dma_end_condition = progress_counter == packet_length-2;
         end else begin
             assign axi_out.WDATA  = axi_high_word;
+            assign dma_end_condition = progress_counter == packet_length-1;
         end
     endgenerate
 
