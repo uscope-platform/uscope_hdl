@@ -18,6 +18,7 @@
 
 module uScope_stream_dma #(
     N_TRIGGERS = 1,
+    N_CHANNELS = 6,
     BASE_ADDRESS = 0,
     DATA_WIDTH = 32,
     ADDR_WIDTH = 32,
@@ -35,12 +36,9 @@ module uScope_stream_dma #(
     axi_stream.slave data_in
 );
 
-    wire [7:0] addr_1;
-    wire [7:0] addr_2;
-    wire [7:0] addr_3;
-    wire [7:0] addr_4;
-    wire [7:0] addr_5;
-    wire [7:0] addr_6;
+    
+
+    wire [7:0] addr[N_CHANNELS-1:0];
 
     axi_lite #(.INTERFACE_NAME("MUX CONTROLLER"), .ADDR_WIDTH(ADDR_WIDTH)) mux_ctrl_axi();
     axi_lite #(.INTERFACE_NAME("TRIGGER CONTROLLER"), .ADDR_WIDTH(ADDR_WIDTH)) uscope_axi();
@@ -69,13 +67,13 @@ module uScope_stream_dma #(
     );
 
 
-    reg [31:0] cu_write_registers [6:0];
-    reg [31:0] cu_read_registers [6:0];
-    localparam [31:0] VARIABLE_INITIAL_VALUES [6:0] = '{7{1'b0}};
+    reg [31:0] cu_write_registers [N_CHANNELS:0];
+    reg [31:0] cu_read_registers [N_CHANNELS:0];
+    localparam [31:0] VARIABLE_INITIAL_VALUES [N_CHANNELS:0] = '{(N_CHANNELS+1){1'b0}};
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(7),
-        .N_WRITE_REGISTERS(7),
+        .N_READ_REGISTERS(N_CHANNELS+1),
+        .N_WRITE_REGISTERS(N_CHANNELS+1),
         .INITIAL_OUTPUT_VALUES(VARIABLE_INITIAL_VALUES),
         .REGISTERS_WIDTH(32),
         .ADDRESS_MASK('hff)
@@ -89,84 +87,11 @@ module uScope_stream_dma #(
 
     wire external_capture_enable;
     assign external_capture_enable = cu_write_registers[0][24];
-    assign addr_1 = cu_write_registers[1];
-    assign addr_2 = cu_write_registers[2];
-    assign addr_3 = cu_write_registers[3];
-    assign addr_4 = cu_write_registers[4];
-    assign addr_5 = cu_write_registers[5];
-    assign addr_6 = cu_write_registers[6];
-    
 
     assign cu_read_registers = cu_write_registers;
 
 
-    axi_stream scope_in[8]();
-
-    axi_stream_extractor #(
-        .DATA_WIDTH(DATA_WIDTH),
-        .REGISTERED(0)
-    ) extractor_0(
-        .clock(clock),
-        .selector(addr_1),
-        .out_dest(0),
-        .stream_in(data_in),
-        .stream_out(scope_in[0])
-    );
-
-    axi_stream_extractor #(
-        .DATA_WIDTH(DATA_WIDTH),
-        .REGISTERED(0)
-    ) extractor_1(
-        .clock(clock),
-        .selector(addr_2),
-        .out_dest(1),
-        .stream_in(data_in),
-        .stream_out(scope_in[1])
-    );
-
-    axi_stream_extractor #(
-        .DATA_WIDTH(DATA_WIDTH),
-        .REGISTERED(0)
-    ) extractor_2(
-        .clock(clock),
-        .selector(addr_3),
-        .out_dest(2),
-        .stream_in(data_in),
-        .stream_out(scope_in[2])
-    );
-
-    axi_stream_extractor #(
-        .DATA_WIDTH(DATA_WIDTH),
-        .REGISTERED(0)
-    ) extractor_3(
-        .clock(clock),
-        .selector(addr_4),
-        .out_dest(3),
-        .stream_in(data_in),
-        .stream_out(scope_in[3])
-    );
-
-    axi_stream_extractor #(
-        .DATA_WIDTH(DATA_WIDTH),
-        .REGISTERED(0)
-    ) extractor_4(
-        .clock(clock),
-        .selector(addr_5),
-        .out_dest(4),
-        .stream_in(data_in),
-        .stream_out(scope_in[4])
-    );
-
-    axi_stream_extractor #(
-        .DATA_WIDTH(DATA_WIDTH),
-        .REGISTERED(0)
-    ) extractor_5(
-        .clock(clock),
-        .selector(addr_6),
-        .out_dest(5),
-        .stream_in(data_in),
-        .stream_out(scope_in[5])
-    );
+    axi_stream scope_in[N_CHANNELS]();
 
     wire sample_scope;
 
@@ -182,10 +107,28 @@ module uScope_stream_dma #(
         .axil(timebase_axi)
     );
 
-    axi_stream scope_in_sync[6]();
+    axi_stream scope_in_sync[N_CHANNELS]();
+    wire [N_CHANNELS-1:0] unrolled_sync_ready;
+    assign data_in.ready = &unrolled_sync_ready;
+
     generate
         genvar i;
-        for(i = 0; i<6; i++)begin
+        for(i = 0; i<N_CHANNELS; i++)begin
+            assign addr[i] = cu_write_registers[i+1];
+            assign unrolled_sync_ready[i] = scope_in_sync[i].ready;
+
+            axi_stream_extractor #(
+                .DATA_WIDTH(DATA_WIDTH),
+                .REGISTERED(0)
+            ) extractor (
+                .clock(clock),
+                .selector(addr[i]),
+                .out_dest(i),
+                .stream_in(data_in),
+                .stream_out(scope_in[i])
+            );
+
+
             axis_sync_repeater ch_synchronizer (
                 .clock(clock),
                 .reset(reset),
@@ -201,7 +144,7 @@ module uScope_stream_dma #(
         .N_TRIGGERS(2),
         .DATA_WIDTH(DATA_WIDTH),
         .DEST_WIDTH(DEST_WIDTH),
-        .N_STREAMS(6),
+        .N_STREAMS(N_CHANNELS),
         .OUTPUT_AXI_WIDTH(OUTPUT_AXI_WIDTH),
         .MAX_TRANSFER_SIZE(MAX_TRANSFER_SIZE)
     )scope_internal (
@@ -214,8 +157,6 @@ module uScope_stream_dma #(
         .dma_done(dma_done)
     );
 
-
-    assign data_in.ready = scope_in_sync[0].ready & scope_in_sync[1].ready & scope_in_sync[2].ready & scope_in_sync[3].ready & scope_in_sync[4].ready & scope_in_sync[5].ready;
 
 endmodule
 /**
