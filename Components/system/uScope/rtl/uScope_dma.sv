@@ -32,6 +32,8 @@ module uScope_dma #(
     axi_lite.slave axi_in
 );
 
+    localparam TRANSFER_SIZE = CHANNEL_SAMPLES*N_STREAMS;
+
     axi_stream #(
         .DATA_WIDTH(DATA_WIDTH)
     ) combined();
@@ -45,7 +47,6 @@ module uScope_dma #(
 
     reg [63:0] dma_base_addr;
 
-    reg [31:0] tlast_period;
     wire [15:0] current_sample;
 
     wire trigger;
@@ -72,7 +73,6 @@ module uScope_dma #(
     reg capture_ack;
     reg [15:0] trigger_position;
 
-    assign tlast_period = cu_write_registers[0];
     assign dma_enable = cu_write_registers[1];
     assign dma_base_addr[31:0] = cu_write_registers[2];
     assign dma_base_addr[63:32] = cu_write_registers[3];
@@ -81,7 +81,7 @@ module uScope_dma #(
     assign trigger_position = cu_write_registers[6];
 
 
-    assign cu_read_registers[0] = tlast_period;
+    assign cu_read_registers[0] = TRANSFER_SIZE;
     assign cu_read_registers[1] = dma_enable;
     assign cu_read_registers[2] = dma_base_addr[31:0];
     assign cu_read_registers[3] = dma_base_addr[63:32];
@@ -120,7 +120,7 @@ module uScope_dma #(
     tlast_generator_sv tlast_gen(
         .clock(clock),
         .reset(reset), 
-        .period(tlast_period),
+        .period(TRANSFER_SIZE),
         .disable_gen(capture_inhibit),
         .current_sample(current_sample),
         .data_in(combined),
@@ -128,7 +128,7 @@ module uScope_dma #(
     );
 
     // CALCULATE THE MINIMUM POWER OF TWO NUMBER OF ROWS FOR THE BUFFER FIFO FOR EFFICIENT IMPLEMENTATION
-    localparam IDEAL_BUFFER_SIZE = 1<<$clog2(CHANNEL_SAMPLES*N_STREAMS);
+    localparam IDEAL_BUFFER_SIZE = 1<<$clog2(TRANSFER_SIZE);
 
     axi_dma #(
         .ADDR_WIDTH(64),
