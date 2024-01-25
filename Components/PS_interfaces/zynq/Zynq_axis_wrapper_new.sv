@@ -15,7 +15,7 @@
 `timescale 10 ns / 100 ps
 `include "interfaces.svh"
 
-module zynqmp_PS_wrapper_new #(
+module zynq_PS_wrapper_new #(
     parameter FCORE_PRESENT = 0
 ) (
     output wire io_clock,
