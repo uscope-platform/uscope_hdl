@@ -19,6 +19,7 @@
 
 module uscope_data_gen #(
     parameter BACKOFF_DELAY = 128,
+    parameter OUTPUIT_BIAS = 0,
     parameter DEST_START = 1,
     parameter N_DEST = 6
 )(
@@ -65,7 +66,7 @@ module uscope_data_gen #(
                     end
                 end
                 ctr_advance:begin
-                    data_out.data <= data_gen_ctr + 2000*dest_counter;
+                    data_out.data <= OUTPUIT_BIAS + data_gen_ctr + 2000*(dest_counter - DEST_START);
                     data_out.user <= get_axis_metadata(16, 1, 0);
                     data_out.dest <= dest_counter;
                     data_gen_ctr <= data_gen_ctr + 1;
