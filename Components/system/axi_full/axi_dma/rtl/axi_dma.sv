@@ -32,7 +32,7 @@ module axi_dma #(
     output reg dma_done
 );
 
-    axi_stream #(.DEST_WIDTH(DEST_WIDTH)) buffered_data();
+    axi_stream #(.DEST_WIDTH(DEST_WIDTH), .USER_WIDTH(16)) buffered_data();
 
     localparam ADDRESS_INCREMENT = OUTPUT_AXI_WIDTH == 128 ? 8 : 4;
 

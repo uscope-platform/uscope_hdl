@@ -89,8 +89,6 @@ module uScope_stream_dma #(
     assign cu_read_registers = cu_write_registers;
 
 
-    axi_stream scope_in[N_CHANNELS]();
-
     wire sample_scope;
 
     enable_generator #(
@@ -105,7 +103,8 @@ module uScope_stream_dma #(
         .axil(timebase_axi)
     );
 
-    axi_stream scope_in_sync[N_CHANNELS]();
+    axi_stream #(.USER_WIDTH(16)) scope_in[N_CHANNELS]();
+    axi_stream #(.USER_WIDTH(16)) scope_in_sync[N_CHANNELS]();
     wire [N_CHANNELS-1:0] unrolled_sync_ready;
     assign data_in.ready = &unrolled_sync_ready;
 

@@ -66,7 +66,7 @@ module uscope_data_gen #(
                 end
                 ctr_advance:begin
                     data_out.data <= data_gen_ctr + 2000*dest_counter;
-                    data_out.user <= {0,0,4'h8};
+                    data_out.user <= get_axis_metadata(16, 1, 0);
                     data_out.dest <= dest_counter;
                     data_gen_ctr <= data_gen_ctr + 1;
                     data_out.valid <= 1;

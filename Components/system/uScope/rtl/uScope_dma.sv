@@ -35,11 +35,13 @@ module uScope_dma #(
     localparam TRANSFER_SIZE = CHANNEL_SAMPLES*N_STREAMS;
 
     axi_stream #(
-        .DATA_WIDTH(DATA_WIDTH)
+        .DATA_WIDTH(DATA_WIDTH),
+        .USER_WIDTH(16)
     ) combined();
     
     axi_stream #(
-        .DATA_WIDTH(DATA_WIDTH)
+        .DATA_WIDTH(DATA_WIDTH),
+        .USER_WIDTH(16)
     ) combined_tlast();
    
     reg dma_enable;
