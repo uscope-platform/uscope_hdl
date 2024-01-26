@@ -41,7 +41,8 @@ module fcore_complex #(
     parameter [MOVER_ADDRESS_WIDTH-1:0] MOVER_TARGET_ADDR [MOVER_CHANNEL_NUMBER-1:0] = '{MOVER_CHANNEL_NUMBER{{MOVER_ADDRESS_WIDTH{1'b0}}}},
     parameter PRAGMA_MKFG_DATAPOINT_NAMES = "",
     parameter EFI_TYPE = "NONE",
-    parameter AXI_ADDR_WIDTH = 32
+    parameter AXI_ADDR_WIDTH = 32,
+    parameter N_CONSTANTS = 3
 )(
     input wire core_clock,
     input wire interface_clock,
@@ -49,6 +50,8 @@ module fcore_complex #(
     input wire interface_reset,
     input wire start,
     output reg done,
+    input wire constant_capture_mode,
+    input wire constant_trigger,
     axi_lite.slave control_axi,
     AXI.slave fcore_rom,
     axi_stream.slave core_dma_in,
@@ -93,21 +96,57 @@ module fcore_complex #(
 
     axi_lite #(.ADDR_WIDTH(AXI_ADDR_WIDTH)) fcore_axi();
     axi_lite #(.ADDR_WIDTH(AXI_ADDR_WIDTH)) dma_axi();
+    axi_lite #(.ADDR_WIDTH(AXI_ADDR_WIDTH)) constant_axi()[N_CONSTANTS];
 
+    axi_stream constant_out()[N_CONSTANTS];
+
+    localparam N_AXI_SLAVES = 2 + N_CONSTANTS;
+
+    localparam [AXI_ADDR_WIDTH-1:0] AXI_ADDRESSES [N_AXI_SLAVES-1:0] = '{
+        DMA_BASE_ADDRESS,
+        DMA_BASE_ADDRESS + 'h1000,
+        DMA_BASE_ADDRESS + 'h2000,
+        DMA_BASE_ADDRESS + 'h3000,
+        DMA_BASE_ADDRESS + 'h4000
+        };
+    
     axil_crossbar_interface #(
         .DATA_WIDTH(32),
         .ADDR_WIDTH(AXI_ADDR_WIDTH),
         .NM(1),
-        .NS(2),
-        .SLAVE_ADDR('{DMA_BASE_ADDRESS,DMA_BASE_ADDRESS + 'h1000}),
-        .SLAVE_MASK('{2{32'hf000}})
+        .NS(N_AXI_SLAVES),
+        .SLAVE_ADDR(AXI_ADDRESSES),
+        .SLAVE_MASK('{N_AXI_SLAVES{32'hf000}})
     ) control_interconnect (
         .clock(core_clock),
         .reset(core_reset),
         .slaves('{control_axi}),
-        .masters({fcore_axi, dma_axi})
+        .masters({constant_axi, fcore_axi, dma_axi})
     );
 
+
+    for(n = 0; n<N_CONSTANTS; n=n+1)begin
+        axis_constant constant (
+            .clock(clock),
+            .reset(reset),
+            .sync(~constant_capture_mode | constant_trigger),
+            .const_out(constant_out[n]),
+            .axil(constant_axi[n])
+        );
+    end
+
+    axi_stream merged_out();
+
+    axi_stream_combiner #(
+        .INPUT_DATA_WIDTH(32),
+        .OUTPUT_DATA_WIDTH(32),
+        .N_STREAMS(N_CONSTANTS+1)
+    )constants_combiner(
+        .clock(clock),
+        .reset(reset),
+        .stream_in('{constant_out, core_dma_in}),
+        .stream_out(merged_out)
+    );
 
     fCore #(
         .PRAGMA_MKFG_MODULE_TOP(PRAGMA_MKFG_MODULE_TOP),
@@ -136,7 +175,7 @@ module fcore_complex #(
         .reset_axi(interface_reset),
         .run(start),
         .done(done),
-        .axis_dma_write(core_dma_in),
+        .axis_dma_write(merged_out),
         .axis_dma_read_request(axis_dma_read_req),
         .axis_dma_read_response(axis_dma_read_resp),
         .efi_arguments(efi_arguments),
