@@ -67,7 +67,7 @@ class axi_full_bfm #(int ID_WIDTH = 1,int USER_WIDTH = 1, int DATA_WIDTH = 32, i
         end
     endfunction
 
-    task write(input logic [31:0] address, input logic [31:0] data);
+    task write(input logic [ADDR_WIDTH-1:0] address, input logic [DATA_WIDTH-1:0] data);
 
         this.bus.AWADDR <= address;
         this.bus.AWVALID <= 1;
@@ -90,7 +90,7 @@ class axi_full_bfm #(int ID_WIDTH = 1,int USER_WIDTH = 1, int DATA_WIDTH = 32, i
         #1;
     endtask
 
-    task  read(input logic [31:0] address, output logic [31:0] data);
+    task  read(input logic [ADDR_WIDTH-1:0] address, output logic [DATA_WIDTH-1:0] data);
         this.bus.ARADDR <= address;
         this.bus.ARVALID <= 1;
         this.bus.RREADY <= 1;

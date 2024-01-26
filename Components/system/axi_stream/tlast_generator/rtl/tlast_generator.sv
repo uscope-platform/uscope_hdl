@@ -45,6 +45,7 @@ module tlast_generator_sv(
             end
             data_out.data <= data_in.data;
             data_out.dest <= data_in.dest;
+            data_out.user <= data_in.user;
 
             if(data_in.valid)begin
                 if(tlast_counter==period-1)begin

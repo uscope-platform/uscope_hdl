@@ -159,7 +159,7 @@ module axi_dma #(
                 writer_read_LSB:begin
                     writer_state <= writer_dma_send;
                     axi_low_word[31:0] <= buffered_data.data;
-                    axi_low_word[63:32] <= buffered_data.dest;
+                    axi_low_word[63:32] <= {buffered_data.user[15:0],buffered_data.dest[15:0]};
                 end
                 writer_dma_send:begin
                     buffered_data.ready <= 0;
@@ -167,7 +167,7 @@ module axi_dma #(
                         axi_out.AWADDR <= current_target_address;
                         axi_out.AWVALID <= 1;
                         axi_high_word[31:0] <= buffered_data.data;
-                        axi_high_word[63:32] <= {{(32-DEST_WIDTH){1'b0}}, buffered_data.dest[DEST_WIDTH-1:0]};
+                        axi_high_word[63:32] <= {buffered_data.user[15:0], buffered_data.dest[15:0]};
                         axi_out.WVALID <= 1;
                         writer_state <= writer_wait_response;
                     end
