@@ -36,6 +36,7 @@ module fcore_complex_tb();
     localparam TT_INIT_FILE = "/home/fils/git/uscope_hdl/public/Components/system/fcore_complex/tb/fCore_iomap.mem";
 
     reg core_start = 0;
+    reg trigger_constant = 0;
     wire core_done;
 
     axis_BFM dma_in_bfm;
@@ -43,8 +44,6 @@ module fcore_complex_tb();
     axi_stream dma_out();
 
     AXI dummy_rom();
-    axi_stream dummy_efi_args();
-    axi_stream dummy_efi_res();
 
     fcore_complex #(
         .INIT_FILE(CORE_PROGRAM),
@@ -61,8 +60,8 @@ module fcore_complex_tb();
         .interface_reset(reset),
         .start(core_start),
         .done(core_done),
-        .efi_arguments(dummy_efi_args),
-        .efi_results(dummy_efi_res),
+        .constant_capture_mode(1),
+        .constant_trigger(trigger_constant),
         .control_axi(axi_master),
         .fcore_rom(dummy_rom),
         .core_dma_in(dma_in),
@@ -122,6 +121,19 @@ module fcore_complex_tb();
             assert (out_1 == check_i_1) 
             else $fatal("add result error, expected %d, got %d", check_1, out_1);
         end
+    end
+
+    initial begin
+        #300;
+        #10 axil_bfm.write('h43c02000 + reg_maps::axis_constant_regs.dest, 43);
+        #10 axil_bfm.write('h43c03000 + reg_maps::axis_constant_regs.dest, 44);
+        #10 axil_bfm.write('h43c04000 + reg_maps::axis_constant_regs.dest, 45);
+
+        #10 axil_bfm.write('h43c02000 + reg_maps::axis_constant_regs.low, 'hBEBE);
+        #10 axil_bfm.write('h43c03000 + reg_maps::axis_constant_regs.low, 'hCAFE);
+        #10 axil_bfm.write('h43c04000 + reg_maps::axis_constant_regs.low, 'hBEEF);
+        #200 trigger_constant = 1;
+        #1 trigger_constant = 0;
     end
 
 endmodule

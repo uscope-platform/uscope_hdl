@@ -96,18 +96,18 @@ module fcore_complex #(
 
     axi_lite #(.ADDR_WIDTH(AXI_ADDR_WIDTH)) fcore_axi();
     axi_lite #(.ADDR_WIDTH(AXI_ADDR_WIDTH)) dma_axi();
-    axi_lite #(.ADDR_WIDTH(AXI_ADDR_WIDTH)) constant_axi()[N_CONSTANTS];
+    axi_lite #(.ADDR_WIDTH(AXI_ADDR_WIDTH)) constant_axi[N_CONSTANTS]();
 
-    axi_stream constant_out()[N_CONSTANTS];
+    axi_stream constant_out[N_CONSTANTS]();
 
     localparam N_AXI_SLAVES = 2 + N_CONSTANTS;
 
     localparam [AXI_ADDR_WIDTH-1:0] AXI_ADDRESSES [N_AXI_SLAVES-1:0] = '{
-        DMA_BASE_ADDRESS,
-        DMA_BASE_ADDRESS + 'h1000,
-        DMA_BASE_ADDRESS + 'h2000,
+        DMA_BASE_ADDRESS + 'h4000,
         DMA_BASE_ADDRESS + 'h3000,
-        DMA_BASE_ADDRESS + 'h4000
+        DMA_BASE_ADDRESS + 'h2000,
+        DMA_BASE_ADDRESS + 'h1000,
+        DMA_BASE_ADDRESS
         };
     
     axil_crossbar_interface #(
@@ -121,14 +121,15 @@ module fcore_complex #(
         .clock(core_clock),
         .reset(core_reset),
         .slaves('{control_axi}),
-        .masters({constant_axi, fcore_axi, dma_axi})
+        .masters({constant_axi, dma_axi, fcore_axi})
     );
 
-
+    genvar n;
+    
     for(n = 0; n<N_CONSTANTS; n=n+1)begin
         axis_constant constant (
-            .clock(clock),
-            .reset(reset),
+            .clock(core_clock),
+            .reset(core_reset),
             .sync(~constant_capture_mode | constant_trigger),
             .const_out(constant_out[n]),
             .axil(constant_axi[n])
@@ -142,8 +143,8 @@ module fcore_complex #(
         .OUTPUT_DATA_WIDTH(32),
         .N_STREAMS(N_CONSTANTS+1)
     )constants_combiner(
-        .clock(clock),
-        .reset(reset),
+        .clock(core_clock),
+        .reset(core_reset),
         .stream_in('{constant_out, core_dma_in}),
         .stream_out(merged_out)
     );
