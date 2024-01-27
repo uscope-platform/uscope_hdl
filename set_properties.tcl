@@ -1,5 +1,3 @@
-set_property part xc7z020clg400-1 [current_project]
-
 set_property -name "default_lib" -value "xil_defaultlib" -objects $obj
 set_property -name "enable_vhdl_2008" -value "1" -objects $obj
 set_property -name "ip_cache_permissions" -value "read write" -objects $obj
