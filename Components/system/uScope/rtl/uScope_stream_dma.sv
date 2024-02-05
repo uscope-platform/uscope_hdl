@@ -19,7 +19,7 @@
 module uScope_stream_dma #(
     N_TRIGGERS = 1,
     N_CHANNELS = 6,
-    BASE_ADDRESS = 0,
+    SCOPE_BASE_ADDRESS = 0,
     DATA_WIDTH = 32,
     ADDR_WIDTH = 32,
     OUTPUT_AXI_WIDTH = 128,
@@ -48,9 +48,9 @@ module uScope_stream_dma #(
         .NM(1),
         .NS(3),
         .SLAVE_ADDR('{
-            BASE_ADDRESS, 
-            BASE_ADDRESS + 'h100,
-            BASE_ADDRESS + 'h200
+            SCOPE_BASE_ADDRESS, 
+            SCOPE_BASE_ADDRESS + 'h100,
+            SCOPE_BASE_ADDRESS + 'h200
         }),
         .SLAVE_MASK('{3{32'h0f00}})
     ) axi_xbar (
