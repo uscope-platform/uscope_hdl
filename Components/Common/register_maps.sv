@@ -236,6 +236,14 @@ package reg_maps;
         int trigger_position = 'h18;
     } uscope_regs;
 
-    
+    struct { 
+        int control = 0;
+        int tb_divider = 'h4;
+        int step_delay = 'h8;
+        int order_0 = 'hC;
+        int order_1 = 'h10;
+        int order_2 = 'h14;
+    } prog_sequencer_3_regs;
+
 endpackage
 

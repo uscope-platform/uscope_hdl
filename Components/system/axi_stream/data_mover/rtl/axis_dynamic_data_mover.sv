@@ -19,7 +19,8 @@
 module axis_dynamic_data_mover #(
     parameter DATA_WIDTH = 32,
     MAX_CHANNELS=1,
-    parameter PRAGMA_MKFG_DATAPOINT_NAMES = "" 
+    parameter PRAGMA_MKFG_DATAPOINT_NAMES = "",
+    parameter OUTPUT_USER = get_axis_metadata(32, 0, 1)
 )(
     input wire clock,
     input wire reset,
@@ -63,8 +64,8 @@ module axis_dynamic_data_mover #(
     genvar n;
     generate
         for(n = 1; n<N_REGISTERS; n=n+1)begin
-            assign source_addr[n] = cu_write_registers[n][15:0];
-            assign target_addr[n] = cu_write_registers[n][31:16];
+            assign source_addr[n-1] = cu_write_registers[n][15:0];
+            assign target_addr[n-1] = cu_write_registers[n][31:16];
         end
     endgenerate
 
@@ -85,6 +86,7 @@ module axis_dynamic_data_mover #(
             data_request.data <= 0;
             data_request.valid <= 0;
             data_out.data <= 0;
+            data_out.user <= OUTPUT_USER;
             data_out.dest <= 0;
             channel_sequencer <= 0;
             mover_active <= 0;
