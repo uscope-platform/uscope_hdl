@@ -72,9 +72,6 @@ module programmable_sequencer #(
         end
     endgenerate
 
-    wire sequencer_timebase;
-    assign sequencer_timebase = clock;
-
     enum reg [2:0] {
         s_idle = 0,
         s_start_step = 1,
@@ -108,22 +105,20 @@ module programmable_sequencer #(
                 end
             end
             s_inter_step_delay:begin
-                if(sequencer_timebase)begin
-                    if(stepping_counter == stepping_delay) begin
-                        if(current_step == n_steps-1)begin
-                            current_step <= 0;
-                            if(burst_mode) begin
-                                sequencer_state <= s_idle;
-                            end else begin
-                            sequencer_state <= s_start_step;
-                            end
+                if(stepping_counter == stepping_delay) begin
+                    if(current_step == n_steps-1)begin
+                        current_step <= 0;
+                        if(burst_mode) begin
+                            sequencer_state <= s_idle;
                         end else begin
-                            current_step <= current_step + 1;
-                            sequencer_state <= s_start_step;
+                        sequencer_state <= s_start_step;
                         end
                     end else begin
-                        stepping_counter <= stepping_counter + 1;
+                        current_step <= current_step + 1;
+                        sequencer_state <= s_start_step;
                     end
+                end else begin
+                    stepping_counter <= stepping_counter + 1;
                 end
             end
         endcase
