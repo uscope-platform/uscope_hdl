@@ -50,7 +50,6 @@ module fcore_complex #(
     input wire interface_reset,
     input wire start,
     output reg done,
-    input wire constant_capture_mode,
     input wire constant_trigger,
     axi_lite.slave control_axi,
     AXI.slave fcore_rom,
@@ -99,6 +98,8 @@ module fcore_complex #(
     axi_lite #(.ADDR_WIDTH(AXI_ADDR_WIDTH)) constant_axi[N_CONSTANTS]();
 
     axi_stream constant_out[N_CONSTANTS]();
+    axi_stream repeated_constant[N_CONSTANTS]();
+
 
     localparam N_AXI_SLAVES = 2 + N_CONSTANTS;
 
@@ -130,12 +131,22 @@ module fcore_complex #(
         axis_constant constant (
             .clock(core_clock),
             .reset(core_reset),
-            .sync(~constant_capture_mode | constant_trigger),
+            .sync(1),
             .const_out(constant_out[n]),
             .axil(constant_axi[n])
         );
-    end
 
+        axis_sync_repeater #(
+            .HOLD_VALID(1)
+        ) repeater(
+            .clock(core_clock),
+            .reset(core_reset),
+            .sync(constant_trigger),
+            .in(constant_out[n]),
+            .out(repeated_constant[n])
+        );
+    end
+        
     axi_stream merged_out();
 
     axi_stream_combiner #(
@@ -145,7 +156,7 @@ module fcore_complex #(
     )constants_combiner(
         .clock(core_clock),
         .reset(core_reset),
-        .stream_in('{constant_out, core_dma_in}),
+        .stream_in('{repeated_constant, core_dma_in}),
         .stream_out(merged_out)
     );
 
