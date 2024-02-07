@@ -72,6 +72,10 @@ module fCore #(
     
     // Size of the register file
     localparam REG_FILE_SIZE = REGISTER_FILE_DEPTH*MAX_CHANNELS;
+
+
+    // Size of the register file
+    localparam PIPELINE_DEPTH = RECIPROCAL_PRESENT == 1 ? 8 : 5;
     ///////////////////////////////
     //        PIPELINE           //
     ///////////////////////////////
@@ -221,7 +225,8 @@ module fCore #(
         .RECIPROCAL_PRESENT(RECIPROCAL_PRESENT),
         .BITMANIP_IMPLEMENTED(BITMANIP_IMPLEMENTED),
         .LOGIC_IMPLEMENTED(LOGIC_IMPLEMENTED),
-        .FULL_COMPARE(FULL_COMPARE)
+        .FULL_COMPARE(FULL_COMPARE),
+        .PIPELINE_DEPTH(PIPELINE_DEPTH)
     )executor(
         .clock(clock),
         .reset(reset),
