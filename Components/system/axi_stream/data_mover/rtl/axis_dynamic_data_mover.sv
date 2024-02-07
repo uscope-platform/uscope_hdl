@@ -25,6 +25,7 @@ module axis_dynamic_data_mover #(
     input wire clock,
     input wire reset,
     input wire start,
+    output reg done,
     axi_stream.master data_request,
     axi_stream.slave data_response,
     axi_stream.master data_out,
@@ -96,6 +97,7 @@ module axis_dynamic_data_mover #(
             data_request.valid <= 0; 
             case (sequencer_state)
                 idle :begin
+                    done <= 0;
                     if(start) begin
                         sequencer_state <= read_source;
                     end
@@ -112,6 +114,7 @@ module axis_dynamic_data_mover #(
                         data_out.valid <= data_response.valid;
                         if(channel_sequencer == n_active_channels-1)begin
                             channel_sequencer <= 0;
+                            done <= 1;
                             sequencer_state <= idle;
                         end else begin
                             channel_sequencer <= channel_sequencer + 1;

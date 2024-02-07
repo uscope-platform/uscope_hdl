@@ -30,7 +30,7 @@ module fcore_complex #(
     parameter RECIPROCAL_PRESENT = 0,
     parameter BITMANIP_IMPLEMENTED = 0,
     parameter LOGIC_IMPLEMENTED = 1,
-    parameter EFI_IMPLEMENTED = 0,
+    parameter EFI_IMPLEMENTED = 1,
     parameter CONDITIONAL_SELECT_IMPLEMENTED = 1,
     parameter FULL_COMPARE = 1,
     parameter TRANSLATION_TABLE_INIT = "TRANSPARENT",
@@ -65,10 +65,8 @@ module fcore_complex #(
 
     generate
         if(EFI_TYPE == "NONE")begin
-            parameter EFI_IMPLEMENTED = 0;
             
         end else if(EFI_TYPE == "TRIG") begin
-            parameter EFI_IMPLEMENTED = 1;
 
             efi_trig efi_trig_unit(
                 .clock(core_clock),
@@ -77,7 +75,6 @@ module fcore_complex #(
                 .efi_results(efi_results)
             );
         end else if(EFI_TYPE == "SORT") begin
-            parameter EFI_IMPLEMENTED = 1;
 
             efi_sorter #(
                 .MAX_SORT_LENGTH(256)
@@ -104,9 +101,9 @@ module fcore_complex #(
     localparam N_AXI_SLAVES = 2 + N_CONSTANTS;
 
     localparam [AXI_ADDR_WIDTH-1:0] AXI_ADDRESSES [N_AXI_SLAVES-1:0] = '{
-        DMA_BASE_ADDRESS + 'h4000,
-        DMA_BASE_ADDRESS + 'h3000,
         DMA_BASE_ADDRESS + 'h2000,
+        DMA_BASE_ADDRESS + 'h3000,
+        DMA_BASE_ADDRESS + 'h4000,
         DMA_BASE_ADDRESS + 'h1000,
         DMA_BASE_ADDRESS
         };
@@ -141,7 +138,7 @@ module fcore_complex #(
         ) repeater(
             .clock(core_clock),
             .reset(core_reset),
-            .sync(constant_trigger),
+            .sync(start),
             .in(constant_out[n]),
             .out(repeated_constant[n])
         );
@@ -159,6 +156,57 @@ module fcore_complex #(
         .stream_in('{repeated_constant, core_dma_in}),
         .stream_out(merged_out)
     );
+
+    enum reg [1:0] {
+        wait_constants = 0,
+        idle = 1, 
+        wait_input_transfer_start = 2,
+        wait_input_transfer_end = 3 
+    } input_fsm = wait_constants;
+
+    wire core_done;
+    reg wait_inputs, start_core;
+    always_ff @(posedge core_clock)begin
+        case (input_fsm)
+            wait_constants:begin
+                start_core <= start;
+                wait_inputs <= 0;
+                if(constant_out[0].valid | constant_out[1].valid | constant_out[2].valid)begin
+                    input_fsm <= idle;
+                end
+            end
+            idle: begin
+                start_core <= 0;
+                wait_inputs <= 0;
+                if(start)begin
+                    input_fsm <= wait_input_transfer_start;
+                end
+            end
+            wait_input_transfer_start: begin
+                if(merged_out.valid == 0)begin
+                    input_fsm <= wait_input_transfer_end;
+                end
+            end
+            wait_input_transfer_end: begin
+                 if(merged_out.valid != 0)begin
+                    start_core <= 1;
+                    input_fsm <= idle;
+                end
+            end
+        endcase
+        
+        if(~wait_inputs)begin
+            if(start)begin
+                
+            end
+        end else begin
+            if(merged_out.valid == 0)begin
+                start_core <= 1;
+                wait_inputs <= 0;
+            end 
+        end
+    end
+
 
     fCore #(
         .PRAGMA_MKFG_MODULE_TOP(PRAGMA_MKFG_MODULE_TOP),
@@ -185,8 +233,8 @@ module fcore_complex #(
         .axi_clock(interface_clock),
         .reset(core_reset),
         .reset_axi(interface_reset),
-        .run(start),
-        .done(done),
+        .run(start_core),
+        .done(core_done),
         .axis_dma_write(merged_out),
         .axis_dma_read_request(axis_dma_read_req),
         .axis_dma_read_response(axis_dma_read_resp),
@@ -204,11 +252,12 @@ module fcore_complex #(
     )dma (
         .clock(core_clock),
         .reset(core_reset),
-        .start(done),
+        .start(core_done),
         .data_request(axis_dma_read_req),
         .data_response(axis_dma_read_resp),
         .data_out(core_dma_out),
-        .axi_in(dma_axi)
+        .axi_in(dma_axi),
+        .done(done)
     );
     
 endmodule
