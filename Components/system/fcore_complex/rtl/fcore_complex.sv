@@ -165,46 +165,35 @@ module fcore_complex #(
     } input_fsm = wait_constants;
 
     wire core_done;
-    reg wait_inputs, start_core;
+    
+    reg start_core;
+
     always_ff @(posedge core_clock)begin
         case (input_fsm)
             wait_constants:begin
                 start_core <= start;
-                wait_inputs <= 0;
                 if(constant_out[0].valid | constant_out[1].valid | constant_out[2].valid)begin
                     input_fsm <= idle;
                 end
             end
             idle: begin
                 start_core <= 0;
-                wait_inputs <= 0;
                 if(start)begin
                     input_fsm <= wait_input_transfer_start;
                 end
             end
             wait_input_transfer_start: begin
-                if(merged_out.valid == 0)begin
+                if(merged_out.valid == 1)begin
                     input_fsm <= wait_input_transfer_end;
                 end
             end
             wait_input_transfer_end: begin
-                 if(merged_out.valid != 0)begin
+                 if(merged_out.valid == 0)begin
                     start_core <= 1;
                     input_fsm <= idle;
                 end
             end
         endcase
-        
-        if(~wait_inputs)begin
-            if(start)begin
-                
-            end
-        end else begin
-            if(merged_out.valid == 0)begin
-                start_core <= 1;
-                wait_inputs <= 0;
-            end 
-        end
     end
 
 
