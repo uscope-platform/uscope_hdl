@@ -45,6 +45,19 @@ module axis_sync_repeater #(
         .axis_out(registered_stream)
     );
 
+    reg wait_init = 0;
+
+    always_ff@(posedge clock)begin
+        if(~reset)begin
+            wait_init <= 0;
+        end else begin
+            if(registered_stream.valid)begin
+                wait_init <= 1;
+            end
+        end
+    end
+    
+
     assign registered_stream.ready = out.ready;
     always_ff@(posedge clock)begin
         if(~reset)begin
@@ -55,7 +68,7 @@ module axis_sync_repeater #(
             out.tlast <= 0;
         end else begin
             out.valid <= 0;
-            if(sync)begin
+            if(sync & wait_init)begin
                 out.data <= registered_stream.data;
                 out.dest <= registered_stream.dest;
                 out.user <= registered_stream.user;
