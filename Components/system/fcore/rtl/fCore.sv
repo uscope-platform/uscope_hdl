@@ -88,6 +88,8 @@ module fCore #(
     
     axi_stream operand_c();
     axi_stream operand_c_dly();
+
+    axi_stream iommu_control();
     
     axi_stream #(
         .DATA_WIDTH(8)
@@ -144,8 +146,7 @@ module fCore #(
         .dma_enable(dma_enable),
         .done(done),
         .fault(fault),
-        .instruction_stream(instruction_stream),
-        .io_mapping(io_mapping)
+        .instruction_stream(instruction_stream)
     );
 
     fCore_decoder #(
@@ -311,6 +312,7 @@ module fCore #(
         .enable_bus_read(dma_enable),
         .dma_read_addr(program_counter),
         .dma_read_data_w(instruction_w),
+        .iommu_control(io_mapping),
         .axi(axi)
     );
     

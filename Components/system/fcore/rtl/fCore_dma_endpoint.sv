@@ -23,7 +23,8 @@ module fCore_dma_endpoint #(
     REG_ADDR_WIDTH = 8,
     REGISTER_FILE_DEPTH = 64,
     TRANSLATION_TABLE_INIT = "TRANSPARENT",
-    TRANSLATION_TABLE_INIT_FILE = ""
+    TRANSLATION_TABLE_INIT_FILE = "",
+    RAW_AXI_ACCESS = 1
 )(
     input wire clock,
     input wire reset,
@@ -104,7 +105,11 @@ module fCore_dma_endpoint #(
                 reg_dma_write.dest <= 0;
                 reg_dma_write.data <= 0;
             end else begin
-                if(translation_table[axis_dma_write.dest] != 0) begin
+                if(RAW_AXI_ACCESS == 1) begin
+                    reg_dma_write.dest <= axi_write_data.dest;
+                    reg_dma_write.data <= axi_write_data.data;
+                    reg_dma_write.valid <= 1;
+                end else if(translation_table[axis_dma_write.dest] != 0) begin
                     reg_dma_write.dest <= translation_table[axi_write_data.dest];
                     reg_dma_write.data <= axi_write_data.data;
                     reg_dma_write.valid <= 1;   

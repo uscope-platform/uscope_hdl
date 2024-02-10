@@ -28,8 +28,13 @@ module istore_memory #(parameter DATA_WIDTH_A=32, DATA_WIDTH_B=64, parameter ADD
 );
 
   reg [DATA_WIDTH_A-1:0] ram [2**ADDR_WIDTH-1:0];
- 
+
     integer ram_index;
+    initial begin
+        for (ram_index = 0; ram_index < 2**ADDR_WIDTH; ram_index = ram_index + 1)
+            ram[ram_index] = {DATA_WIDTH_A{1'b0}};
+    end
+
     generate
         if(FAST_DEBUG=="TRUE")begin
             always@(posedge clock_out)begin
@@ -38,12 +43,7 @@ module istore_memory #(parameter DATA_WIDTH_A=32, DATA_WIDTH_B=64, parameter ADD
                     $readmemh(INIT_FILE, ram);
                 end
             end
-        end else begin
-            initial begin
-                for (ram_index = 0; ram_index < 2**ADDR_WIDTH; ram_index = ram_index + 1)
-                    ram[ram_index] = {DATA_WIDTH_A{1'b0}};
-            end
-        end
+        end 
     endgenerate
 
 

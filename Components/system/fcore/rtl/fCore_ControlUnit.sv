@@ -35,7 +35,6 @@ module fCore_ControlUnit #(
     input wire [$clog2(MAX_CHANNELS)-1:0] n_channels,
     output reg [PC_WIDTH-1: 0] program_counter,
     output reg [INSTRUCTION_WIDTH-1:0] load_data,
-    axi_stream.master io_mapping,
     output reg decoder_enable,
     output reg dma_enable,
     output reg done,
@@ -85,8 +84,6 @@ module fCore_ControlUnit #(
                 program_counter <= 0;
                 channel_counter <= 0;
                 decoder_enable <= 0;
-                io_mapping.valid <= 0;
-                io_mapping.data<= 0;
                 efi_start <= 0;
                 done <= 0;
                 dma_enable <= 1;
@@ -106,10 +103,7 @@ module fCore_ControlUnit #(
                 if(wide_instruction_in[31:0] == 'hC) begin
                     state <= RUN;
                     decoder_enable <= 1;
-                    io_mapping.valid <= 0;
                 end else begin
-                    io_mapping.data <= wide_instruction_in[31:0];
-                    io_mapping.valid <= 1;
                     program_counter <= program_counter+1;
                 end
             end
