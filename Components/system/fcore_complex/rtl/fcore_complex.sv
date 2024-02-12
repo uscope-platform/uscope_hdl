@@ -32,7 +32,7 @@ module fcore_complex #(
     parameter LOGIC_IMPLEMENTED = 1,
     parameter EFI_IMPLEMENTED = 1,
     parameter CONDITIONAL_SELECT_IMPLEMENTED = 1,
-    parameter FULL_COMPARE = 1,
+    parameter FULL_COMPARE = 0,
     parameter TRANSLATION_TABLE_INIT = "TRANSPARENT",
     parameter MAX_CHANNELS = 4,
     parameter MOVER_ADDRESS_WIDTH = 32,

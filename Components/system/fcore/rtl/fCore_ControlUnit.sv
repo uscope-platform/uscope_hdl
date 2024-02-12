@@ -42,6 +42,9 @@ module fCore_ControlUnit #(
     axi_stream.master instruction_stream
     );
 
+
+    localparam [INSTRUCTION_WIDTH-1:0] SECTION_SEPARATOR = {{(INSTRUCTION_WIDTH-8){1'b0}}, {8'hc}};
+
     reg [$clog2(MAX_CHANNELS)-1:0] channel_counter;
 
     reg [$clog2(MAX_CHANNELS)-1:0] ch_addr;
@@ -69,8 +72,7 @@ module fCore_ControlUnit #(
     reg [PC_WIDTH-1: 0] pc_delay;
 
     enum reg [2:0] {IDLE = 0,
-                    SEC_METADATA = 1,
-                    SEC_IO_MAPPING = 2,
+                    WAIT_LOAD = 1,
                     RUN = 3,
                     EFI_CALL = 4,
                     FAULT = 5
@@ -89,23 +91,11 @@ module fCore_ControlUnit #(
                 dma_enable <= 1;
                 if(run) begin
                     dma_enable <= 0;
-                    state <= SEC_METADATA;
+                    state <= WAIT_LOAD;
                 end
             end
-            SEC_METADATA:begin
-                if(wide_instruction_in[31:0] == 'hC) begin
-                    state <= SEC_IO_MAPPING;
-                end 
-                dma_enable <= 0;
-                program_counter <= program_counter+1;
-            end
-            SEC_IO_MAPPING:begin
-                if(wide_instruction_in[31:0] == 'hC) begin
-                    state <= RUN;
-                    decoder_enable <= 1;
-                end else begin
-                    program_counter <= program_counter+1;
-                end
+            WAIT_LOAD:begin
+                state <= RUN;
             end
             RUN:begin  
                 dma_enable <= 0;

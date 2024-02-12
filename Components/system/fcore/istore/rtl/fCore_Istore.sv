@@ -18,6 +18,7 @@
 module fCore_Istore # (
         parameter integer DATA_WIDTH = 32,
         parameter integer MEM_DEPTH = 4096,
+        parameter ADDR_WIDTH = $clog2(MEM_DEPTH),
         parameter FAST_DEBUG = "TRUE",
         parameter INIT_FILE = "init.mem"
     )(
@@ -26,14 +27,13 @@ module fCore_Istore # (
         input wire reset_in,
         input wire reset_out,
         input wire enable_bus_read,
-        input wire [$clog2(MEM_DEPTH)-1:0] dma_read_addr,
+        input wire [ADDR_WIDTH-1:0] dma_read_addr,
         output reg [2*DATA_WIDTH-1:0] dma_read_data_w,
         axi_stream.master iommu_control,
         AXI.slave axi
     );
     
     localparam [DATA_WIDTH-1:0] SECTION_SEPARATOR = {{(DATA_WIDTH-8){1'b0}}, {8'hc}};
-    localparam ADDR_WIDTH = $clog2(MEM_DEPTH);
   
     wire [DATA_WIDTH-1:0] write_data;
     wire [2*DATA_WIDTH-1:0] read_data;
@@ -57,8 +57,11 @@ module fCore_Istore # (
 
     assign dma_read_data_w = read_data;
 
+    wire [ADDR_WIDTH-1:0] core_read_address;
+    assign core_read_address = header_counter + dma_read_addr;
+
     istore_memory #(
-        .ADDR_WIDTH($clog2(MEM_DEPTH)),
+        .ADDR_WIDTH(ADDR_WIDTH),
         .INIT_FILE(INIT_FILE),
         .FAST_DEBUG(FAST_DEBUG)
     ) memory_block(
@@ -68,9 +71,11 @@ module fCore_Istore # (
         .data_a(write_data),
         .data_b(read_data),
         .addr_a(write_address),
-        .addr_b( enable_bus_read ? write_address : dma_read_addr),
+        .addr_b( enable_bus_read ? write_address : core_read_address),
         .we_a(write_enable)
     );
+
+    reg [31:0] header_counter = 0;
 
     enum reg [2:0] {
         metadata_section = 0,
@@ -86,6 +91,9 @@ module fCore_Istore # (
                 if(write_data == SECTION_SEPARATOR)begin
                     write_watcher <= io_map_section;
                 end
+                if(write_data != 0)begin
+                    header_counter++;
+                end
             end
             io_map_section:begin
                 if(write_data == SECTION_SEPARATOR)begin
@@ -94,6 +102,7 @@ module fCore_Istore # (
                     iommu_control.data <= write_data;
                     iommu_control.valid <= 1;
                 end
+                header_counter++;
             end
             program_section: begin
                 if(write_data == SECTION_SEPARATOR)begin
