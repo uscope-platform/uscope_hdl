@@ -301,7 +301,6 @@ module fCore #(
     fCore_Istore #(
         .DATA_WIDTH(INSTRUCTION_WIDTH),
         .MEM_DEPTH(INSTRUCTION_STORE_SIZE),
-        .REGISTERED("TRUE"),
         .FAST_DEBUG(FAST_DEBUG),
         .INIT_FILE(INIT_FILE)
     ) store(
