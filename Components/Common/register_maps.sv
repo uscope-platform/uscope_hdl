@@ -245,5 +245,15 @@ package reg_maps;
         int order_2 = 'h14;
     } prog_sequencer_3_regs;
 
+    struct { 
+        int control = 0;
+        int ch_1 = 'h4;
+        int ch_2 = 'h8;
+        int ch_3 = 'hC;
+        int ch_4 = 'h10;
+        int ch_5 = 'h14;
+        int ch_6 = 'h18;
+    } uscope_mux;
+
 endpackage
 
