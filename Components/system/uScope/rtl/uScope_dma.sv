@@ -18,6 +18,7 @@
 module uScope_dma #(
     N_TRIGGERS = 16,
     DATA_WIDTH = 32,
+    USER_WIDTH = 16,
     DEST_WIDTH = 8,
     N_STREAMS = 6,
     OUTPUT_AXI_WIDTH = 128,
@@ -36,12 +37,12 @@ module uScope_dma #(
 
     axi_stream #(
         .DATA_WIDTH(DATA_WIDTH),
-        .USER_WIDTH(16)
+        .USER_WIDTH(USER_WIDTH)
     ) combined();
     
     axi_stream #(
         .DATA_WIDTH(DATA_WIDTH),
-        .USER_WIDTH(16)
+        .USER_WIDTH(USER_WIDTH)
     ) combined_tlast();
    
     reg dma_enable;
@@ -107,10 +108,12 @@ module uScope_dma #(
         .trigger_out(trigger_out)
     );
 
-    axi_stream_combiner_ub #(
+
+    axi_stream_combiner #(
         .INPUT_DATA_WIDTH(DATA_WIDTH), 
         .OUTPUT_DATA_WIDTH(DATA_WIDTH), 
         .DEST_WIDTH(DEST_WIDTH),
+        .USER_WIDTH(USER_WIDTH),
         .N_STREAMS(N_STREAMS)
     )combiner(
         .clock(clock),
