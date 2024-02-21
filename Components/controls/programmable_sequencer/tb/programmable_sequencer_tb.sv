@@ -61,16 +61,25 @@ module programmable_sequencer_tb();
         #50;
         #2 axil_bfm.write('h0, 'h108);
         #2 axil_bfm.write('h4, 0);
-        #2 axil_bfm.write('h8, 4); 
+        #2 axil_bfm.write('h8, 0); 
 
-        #2 axil_bfm.write('hC,  4); 
-        #2 axil_bfm.write('h10, 3); 
-        #2 axil_bfm.write('h14, 5); 
-        #2 axil_bfm.write('h18, 2); 
-        #2 axil_bfm.write('h1C, 6); 
-        #2 axil_bfm.write('h20, 1); 
-        #2 axil_bfm.write('h24, 7); 
-        #2 axil_bfm.write('h28, 0); 
+        #2 axil_bfm.write('hC,  0); 
+        #2 axil_bfm.write('h10, 1); 
+        #2 axil_bfm.write('h14, 2); 
+        #2 axil_bfm.write('h18, 3); 
+        #2 axil_bfm.write('h1C, 4); 
+        #2 axil_bfm.write('h20, 5); 
+        #2 axil_bfm.write('h24, 6); 
+        #2 axil_bfm.write('h28, 7); 
+
+        #2 axil_bfm.write('h2C, 0); 
+        #2 axil_bfm.write('h30, 2); 
+        #2 axil_bfm.write('h34, 4); 
+        #2 axil_bfm.write('h38, 0); 
+        #2 axil_bfm.write('h3C, 2); 
+        #2 axil_bfm.write('h40, 4); 
+        #2 axil_bfm.write('h44, 0); 
+        #2 axil_bfm.write('h48, 2); 
 
         #20 enable <= 1;
         #5 enable <= 0;
@@ -81,7 +90,7 @@ module programmable_sequencer_tb();
     end
     
     reg in_step = 0;
-    reg [2:0] step_duration = 0;
+    reg [15:0] step_duration = 0;
     always_ff@(posedge clk) begin
         step_done <= 0;
         if(|start_step)begin
@@ -90,7 +99,7 @@ module programmable_sequencer_tb();
         end
 
         if(in_step)begin
-            if(step_duration == 5) begin
+            if(step_duration == 35) begin
                 step_done <= 'hFF;
                 step_duration <= 0;
                 in_step <= 0;

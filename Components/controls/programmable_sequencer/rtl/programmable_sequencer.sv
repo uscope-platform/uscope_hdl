@@ -18,6 +18,7 @@
 
 module programmable_sequencer #(
     MAX_STEPS = 5,
+    SKIPPING_COUNTER_WIDTH=5,
     COUNTER_WIDTH = 16
 )(
     input wire clock,
@@ -28,7 +29,7 @@ module programmable_sequencer #(
     axi_lite.slave axi_in
 );
 
-    parameter N_REGISTERS = MAX_STEPS+3;
+    parameter N_REGISTERS = 2*MAX_STEPS+3;
 
     reg [31:0] cu_write_registers [N_REGISTERS-1:0];
     reg [31:0] cu_read_registers [N_REGISTERS-1:0];
@@ -56,9 +57,9 @@ module programmable_sequencer #(
     wire burst_mode;
     wire [7:0] n_steps;
     wire [15:0] sequence_ordering[MAX_STEPS-1:0];
-
     wire [15:0] stepping_delay;
-
+    wire [SKIPPING_COUNTER_WIDTH-1:0] pulse_skipping_setting [MAX_STEPS-1:0];
+    
     assign n_steps = cu_write_registers[0][7:0];
     assign burst_mode = cu_write_registers[0][8];
     assign timebase_divider = cu_write_registers[1];
@@ -69,8 +70,12 @@ module programmable_sequencer #(
     generate
         for(n=0; n<MAX_STEPS; n = n+1)begin
             assign sequence_ordering[n] = cu_write_registers[3+n];
+            assign pulse_skipping_setting[n] = cu_write_registers[3+MAX_STEPS+n];
         end
     endgenerate
+
+    reg [SKIPPING_COUNTER_WIDTH-1:0] pulse_skipping_counters [MAX_STEPS-1:0] = '{default:0};
+
 
     enum reg [2:0] {
         s_idle = 0,
@@ -83,20 +88,31 @@ module programmable_sequencer #(
     reg [7:0] current_step;
     reg [15:0] stepping_counter = 0;
 
+    wire [SKIPPING_COUNTER_WIDTH-1:0] skipping_target;
+    assign skipping_target = pulse_skipping_setting[current_step] != 0 ? (pulse_skipping_setting[current_step] - 1) : 0;
+
     always_ff @(posedge clock) begin
         case (sequencer_state)
             s_idle:begin
                 current_step <= 0;
                 step_start <= 0;
                 stepping_counter <= 0;
+                pulse_skipping_counters = '{MAX_STEPS{0}};
+
                 if(enable) begin
                     sequencer_state <= s_start_step;
                 end
             end
             s_start_step: begin
-                step_start[sequence_ordering[current_step]] <= 1;
-                sequencer_state <= s_wait_done;
                 stepping_counter <= 0;
+                if(pulse_skipping_counters[current_step] == skipping_target)begin
+                    step_start[sequence_ordering[current_step]] <= 1;
+                    pulse_skipping_counters[current_step] <= 0;
+                    sequencer_state <= s_wait_done;
+                end else begin
+                    pulse_skipping_counters[current_step] <= pulse_skipping_counters[current_step]+1;
+                    sequencer_state <= s_inter_step_delay;
+                end
             end
             s_wait_done: begin
                 step_start <= 0;
