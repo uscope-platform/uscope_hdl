@@ -100,7 +100,7 @@ module fCore_ControlUnit #(
             RUN:begin  
                 dma_enable <= 0;
                 decoder_enable <= 1;
-                if(opcode == fcore_isa::EFI & EFI_IMPLEMENTED==1)begin
+                if(opcode == fcore_isa::EFI & EFI_IMPLEMENTED==1 & ~load_blanking)begin
                     state <= EFI_CALL;
                     efi_start <= 1;
                 end else if((channel_counter == n_channels-1) | (opcode == fcore_isa::LDC) & ~load_blanking)begin

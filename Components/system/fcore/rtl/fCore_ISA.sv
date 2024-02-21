@@ -14,30 +14,30 @@
 // limitations under the License.
 
 package fcore_isa;
-    parameter NOP = 0;
-    parameter ADD = 1;
-    parameter SUB = 2;
-    parameter MUL = 3; 
-    parameter ITF = 4;
-    parameter FTI = 5;
-    parameter LDC = 6;
-    parameter LDR = 7;
-    parameter BGT = 8;
-    parameter BLE = 9;
-    parameter BEQ = 10;
-    parameter BNE = 11;
-    parameter STOP = 12;
-    parameter LAND = 13;
-    parameter LOR = 14;
-    parameter LNOT = 15;
-    parameter SATP = 16;
-    parameter SATN = 17;
-    parameter REC = 18;
-    parameter POPCNT = 19;
-    parameter ABS = 20;
-    parameter EFI = 21;
-    parameter BSET = 22;
-    parameter BSEL = 25;
-    parameter LXOR = 26;
-    parameter CSEL = 27;
+    parameter NOP = 0;    // 0x0
+    parameter ADD = 1;    // 0x1
+    parameter SUB = 2;    // 0x2
+    parameter MUL = 3;    // 0x3
+    parameter ITF = 4;    // 0x4
+    parameter FTI = 5;    // 0x5
+    parameter LDC = 6;    // 0x6
+    parameter LDR = 7;    // 0x7
+    parameter BGT = 8;    // 0x8
+    parameter BLE = 9;    // 0x9
+    parameter BEQ = 10;   // 0xa
+    parameter BNE = 11;   // 0xb
+    parameter STOP = 12;  // 0xc
+    parameter LAND = 13;  // 0xd
+    parameter LOR = 14;   // 0xe
+    parameter LNOT = 15;  // 0xf
+    parameter SATP = 16;  // 0x10
+    parameter SATN = 17;  // 0x11
+    parameter REC = 18;   // 0x12
+    parameter POPCNT = 19;// 0x13
+    parameter ABS = 20;   // 0x14
+    parameter EFI = 21;   // 0x15
+    parameter BSET = 22;  // 0x16
+    parameter BSEL = 25;  // 0x19
+    parameter LXOR = 26;  // 0x1a
+    parameter CSEL = 27;  // 0x1b
 endpackage
