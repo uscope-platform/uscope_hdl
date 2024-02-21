@@ -34,7 +34,7 @@ module axis_data_mover_tb();
     ultra_buffer #(
         .DATA_WIDTH(32),
         .USER_WIDTH(16),
-        .DEST_WIDTH(16),
+        .DEST_WIDTH(16)
     )UUT(
         .clock(clock),
         .reset(reset),

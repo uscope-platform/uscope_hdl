@@ -95,7 +95,6 @@ always @(posedge clock) begin
         stopped: begin
             
         end 
-        default: 
     endcase
 end
 		
