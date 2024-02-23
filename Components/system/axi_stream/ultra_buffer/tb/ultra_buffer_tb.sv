@@ -16,7 +16,7 @@
 `timescale 10ns / 1ns
 `include "interfaces.svh"
 
-module axis_data_mover_tb();
+module ultra_buffer_tb();
 
 
 
@@ -30,35 +30,51 @@ module axis_data_mover_tb();
     initial clock = 0; 
     always #0.5 clock = ~clock; 
 
-
+    reg trigger = 0;
+    wire full;
     ultra_buffer #(
-        .DATA_WIDTH(32),
-        .USER_WIDTH(16),
-        .DEST_WIDTH(16)
+        .ADDRESS_WIDTH(5)
     )UUT(
         .clock(clock),
         .reset(reset),
         .enable(1),
+        .trigger(trigger),
+        .trigger_point(17),
+        .full(full),
         .in(stream_in),
         .out(stream_out)
     );
 
+    event config_done;
+
     initial begin
-        stream_out.ready <= 1;
         reset <=1'h1;
         #1 reset <=1'h0;
         //TESTS
         #5.5 reset <=1'h1;
-    end
+        #10;
+        ->config_done;
+        #500 trigger <= 1;
+        #1 trigger <= 0;
+    end 
 
+    reg [15:0] data_ctr = 0;
 
-    always@(posedge clk) begin
-        stream_in.valid <= 1;
-        stream_in.data <= $urandom();
-        stream_in.dest <= $urandom()%5;
-        stream_in.user <= 'h28;
-        #1 stream_in.valid <= 0;
-        #3;
+    initial begin
+        stream_in.valid <= 0;
+        stream_in.data <= 0;
+        stream_in.dest <= 0;
+        stream_in.user <= 0;
+        @(config_done);
+        forever begin
+            stream_in.valid <= 1;
+            stream_in.data <= data_ctr;
+            stream_in.dest <= 5;
+            stream_in.user <= 'h28;
+            data_ctr <= data_ctr + 1;
+            #1 stream_in.valid <= 0;
+            #3;
+        end
     end
 
 endmodule

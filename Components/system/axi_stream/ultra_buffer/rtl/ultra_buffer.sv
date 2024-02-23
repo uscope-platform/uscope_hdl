@@ -16,22 +16,22 @@
 `timescale 10ns / 1ns
 `include "interfaces.svh"
 
-module ultra_buffer #(parameter DATA_WIDTH = 32,USER_WIDTH = 32, DEST_WIDTH = 32, FIFO_DEPTH = 16)(
+module ultra_buffer #(parameter ADDRESS_WIDTH=12)(
     input wire clock,
     input wire reset,
     input wire enable,
     input wire trigger,
     input wire [11:0] trigger_point,
+    output reg full,
     axi_stream.slave in,
     axi_stream.master out
 );
 
-localparam ADDRESS_WIDTH = 12;
 localparam MEMORY_DEPTH = (1<<ADDRESS_WIDTH);
 localparam DATA_WIDTH = 72;
 parameter N_PIPE = 3;   // Number of pipeline Registers
 
-reg [ADDRESS_WIDTH-1:0] write_address;     // Write Address
+wire [ADDRESS_WIDTH-1:0] write_address;     // Write Address
 reg [ADDRESS_WIDTH-1:0]  read_address;     // Read  Address
 
 
@@ -40,11 +40,10 @@ reg [DATA_WIDTH-1:0] ring_buffer[MEMORY_DEPTH-1:0];        // Memory Declaration
 
 reg [DATA_WIDTH-1:0] output_reg;   
 
-reg en_pipeline[N_PIPE:0];
 reg [DATA_WIDTH-1:0] output_pipeline[N_PIPE-1:0];    // Pipelines for memory
 
 always @ (posedge clock)begin
-    if(in.valid) begin
+    if(in.valid && (state == pre_trigger || state == acquisition)) begin
         ring_buffer[write_address] <= {in.data, in.dest, in.user};
     end
     
@@ -58,43 +57,84 @@ always @ (posedge clock) begin
 end    
 
 always @ (posedge clock) begin
-    for (i = 0; i < N_PIPE-1; i = i+1)begin
+    for (integer i = 0; i < N_PIPE-1; i = i+1)begin
         output_pipeline[i+1] <= output_pipeline[i];
     end
 end      
 
-always @ (posedge clock) begin
-    {out.data, out.dest, out.user} <= output_pipeline[N_PIPE-1];
-end
+assign write_address = mem_counter;
 
 
-enum reg [1:0] { 
+enum reg [2:0] { 
     pre_trigger = 0,
     acquisition = 1,
-    stopped = 2
+    wait_output = 2,
+    fill_read_pipeline = 3,
+    readout = 4,
+    empty_pipeline = 5
 } state = pre_trigger;
 
-reg [11:0] mem_counter = 0;
-reg [11:0] final_address;
+reg [ADDRESS_WIDTH-1:0] mem_counter = 0;
+reg [ADDRESS_WIDTH-1:0] initial_address = 0;
+reg [ADDRESS_WIDTH-1:0] final_address = 0;
+reg[3:0] fill_ctr;
 always @(posedge clock) begin
     case (state)
         pre_trigger: begin
+            full <= 0;
+            out.valid <= 0;
             if(trigger)begin
                 state <= acquisition;
-                final_address <= mem_counter + MEMORY_DEPTH;
+                initial_address <= mem_counter - trigger_point;
             end
-            mem_counter <= mem_counter + 1;
-        end
-        acquisition: begin
-            if(mem_counter == final_address) begin
-                state <= stopped;
-            end else begin
-                mem_counter<= mem_counter +1;
+            if(in.valid)begin
+                mem_counter <= mem_counter + 1;
             end
-        end
-        stopped: begin
-            
         end 
+        acquisition: begin
+            if(in.valid)begin
+                if(mem_counter == initial_address-1) begin
+                    state <= wait_output;
+                    full <= 1;
+                end else begin
+                    mem_counter<= mem_counter +1;
+                end
+            end
+
+        end
+        wait_output: begin
+            if(out.ready)begin
+                full <= 0;
+                read_address <= initial_address;
+                fill_ctr <= 0;
+                state <= fill_read_pipeline;
+            end
+        end 
+        fill_read_pipeline:begin
+            if(fill_ctr == N_PIPE)begin
+                state <= readout;
+            end else begin
+                fill_ctr <= fill_ctr + 1;
+            end
+            read_address <= read_address + 1;
+        end
+        readout: begin
+            if(read_address == initial_address-1)begin
+                state <= empty_pipeline;
+            end
+            {out.data, out.dest, out.user} <= output_pipeline[N_PIPE-1];
+            out.valid <= 1;
+            read_address <= read_address + 1;
+        end
+        empty_pipeline:begin
+             if(fill_ctr == N_PIPE*2)begin
+                state <= pre_trigger;
+            end else begin
+                fill_ctr <= fill_ctr + 1;
+            end
+            out.valid <= 1;
+            {out.data, out.dest, out.user} <= output_pipeline[N_PIPE-1];
+        end
     endcase
 end
 		

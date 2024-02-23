@@ -1,11 +1,11 @@
 {
     "general":{
-        "project_name":"prioritised_fifo",
+        "project_name":"ultra_buffer",
         "target_part":"xc7z020clg400",
         "synth_modules":[],
-        "synth_tl": "prioritised_fifo",
+        "synth_tl": "ultra_buffer",
         "sim_modules":[],
-        "sim_tl":"prioritised_fifo_tb",
+        "sim_tl":"ultra_buffer_tb",
         "include_paths":[
             "Components/Common"
         ]
