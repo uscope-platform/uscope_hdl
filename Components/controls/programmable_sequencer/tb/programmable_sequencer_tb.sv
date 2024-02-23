@@ -33,6 +33,7 @@ module programmable_sequencer_tb();
 
 
     wire [7:0] start_step;
+    wire [7:0] skipped_starts;
     reg [7:0] step_done = 0;
     reg enable = 0;
 
@@ -45,7 +46,8 @@ module programmable_sequencer_tb();
         .enable(enable),
         .step_done(step_done),
         .step_start(start_step),
-        .axi_in(axi_master)
+        .skipped_starts(skipped_starts)
+,        .axi_in(axi_master)
     );
 
 
@@ -60,26 +62,36 @@ module programmable_sequencer_tb();
 
         #50;
         #2 axil_bfm.write('h0, 'h108);
+
         #2 axil_bfm.write('h4, 0);
         #2 axil_bfm.write('h8, 0); 
 
         #2 axil_bfm.write('hC,  0); 
-        #2 axil_bfm.write('h10, 1); 
-        #2 axil_bfm.write('h14, 2); 
-        #2 axil_bfm.write('h18, 3); 
-        #2 axil_bfm.write('h1C, 4); 
-        #2 axil_bfm.write('h20, 5); 
-        #2 axil_bfm.write('h24, 6); 
-        #2 axil_bfm.write('h28, 7); 
+        #2 axil_bfm.write('h10, 0);
 
-        #2 axil_bfm.write('h2C, 0); 
+        #2 axil_bfm.write('h14, 1); 
+        #2 axil_bfm.write('h18, 2); 
+
+        #2 axil_bfm.write('h1c, 2); 
+        #2 axil_bfm.write('h20, 4); 
+
+        #2 axil_bfm.write('h24, 3); 
+        #2 axil_bfm.write('h28, 0); 
+
+        #2 axil_bfm.write('h2C, 4); 
         #2 axil_bfm.write('h30, 2); 
-        #2 axil_bfm.write('h34, 4); 
-        #2 axil_bfm.write('h38, 0); 
-        #2 axil_bfm.write('h3C, 2); 
-        #2 axil_bfm.write('h40, 4); 
-        #2 axil_bfm.write('h44, 0); 
+
+        #2 axil_bfm.write('h34, 5);
+        #2 axil_bfm.write('h38, 4); 
+
+        #2 axil_bfm.write('h3c, 6); 
+        #2 axil_bfm.write('h40, 0); 
+
+        #2 axil_bfm.write('h44, 7); 
         #2 axil_bfm.write('h48, 2); 
+
+
+
 
         #20 enable <= 1;
         #5 enable <= 0;
@@ -93,7 +105,7 @@ module programmable_sequencer_tb();
     reg [15:0] step_duration = 0;
     always_ff@(posedge clk) begin
         step_done <= 0;
-        if(|start_step)begin
+        if(|start_step || |skipped_starts)begin
             in_step <= 1;
             step_duration<= 1;
         end
@@ -108,5 +120,9 @@ module programmable_sequencer_tb();
             end
         end 
     end
+
+    wire test_1, test_2;
+    assign test_1 = start_step[1] || skipped_starts[1];
+    assign test_2 = start_step[2] || skipped_starts[2];
 
 endmodule

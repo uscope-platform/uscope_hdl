@@ -20,11 +20,13 @@ module axis_dynamic_data_mover #(
     parameter DATA_WIDTH = 32,
     MAX_CHANNELS=1,
     parameter PRAGMA_MKFG_DATAPOINT_NAMES = "",
-    parameter OUTPUT_USER = get_axis_metadata(32, 0, 1)
+    parameter OUTPUT_USER = get_axis_metadata(32, 0, 1),
+    REPEAT_MODE = 0
 )(
     input wire clock,
     input wire reset,
     input wire start,
+    input wire repeat_outputs,
     output reg done,
     axi_stream.master data_request,
     axi_stream.slave data_response,
@@ -70,14 +72,18 @@ module axis_dynamic_data_mover #(
         end
     endgenerate
 
+    reg [DATA_WIDTH-1:0] data_buffers [$clog2(MAX_CHANNELS)-1:0];
+
 
     reg mover_active;
     reg [$clog2(MAX_CHANNELS)-1:0] channel_sequencer;
 
-    enum reg [1:0] { 
+    enum reg [2:0] { 
         idle = 0, 
         read_source = 1,
-        wait_response = 2
+        wait_response = 2,
+        send_buffered_data = 3,
+        wait_ready = 4
     } sequencer_state;
 
     always_ff @(posedge clock) begin
@@ -101,6 +107,9 @@ module axis_dynamic_data_mover #(
                     if(start) begin
                         sequencer_state <= read_source;
                     end
+                    if(REPEAT_MODE==1 && repeat_outputs)begin
+                        sequencer_state <= send_buffered_data;
+                    end
                 end 
                 read_source: begin
                     data_request.data <= source_addr[channel_sequencer];
@@ -120,6 +129,25 @@ module axis_dynamic_data_mover #(
                             channel_sequencer <= channel_sequencer + 1;
                             sequencer_state <= read_source;
                         end
+                    end
+                end
+                send_buffered_data:begin
+                        data_out.data <= data_buffers[channel_sequencer];
+                        data_out.dest <= target_addr[channel_sequencer];
+                        data_out.valid <= 1;
+                        if(channel_sequencer == n_active_channels-1)begin
+                            channel_sequencer <= 0;
+                            done <= 1;
+                            sequencer_state <= idle;
+                        end else begin
+                            channel_sequencer <= channel_sequencer + 1;
+                            sequencer_state <= wait_ready;
+                        end
+                end
+                wait_ready:begin
+                    data_out.valid <= 0;
+                    if(data_out.ready)begin
+                        sequencer_state <= send_buffered_data;
                     end
                 end
             endcase

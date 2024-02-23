@@ -42,15 +42,16 @@ module fcore_complex #(
     parameter PRAGMA_MKFG_DATAPOINT_NAMES = "",
     parameter EFI_TYPE = "NONE",
     parameter AXI_ADDR_WIDTH = 32,
-    parameter N_CONSTANTS = 3
+    parameter N_CONSTANTS = 3,
+    parameter REPEAT_MODE = 0
 )(
     input wire core_clock,
     input wire interface_clock,
     input wire core_reset,
     input wire interface_reset,
     input wire start,
+    input wire repeat_outputs,
     output reg done,
-    input wire constant_trigger,
     axi_lite.slave control_axi,
     AXI.slave fcore_rom,
     axi_stream.slave core_dma_in,
@@ -237,16 +238,18 @@ module fcore_complex #(
     axis_dynamic_data_mover #(
         .DATA_WIDTH(32),
         .MAX_CHANNELS(MOVER_CHANNEL_NUMBER),
-        .PRAGMA_MKFG_DATAPOINT_NAMES(PRAGMA_MKFG_DATAPOINT_NAMES) 
+        .PRAGMA_MKFG_DATAPOINT_NAMES(PRAGMA_MKFG_DATAPOINT_NAMES),
+        .REPEAT_MODE(REPEAT_MODE)
     )dma (
         .clock(core_clock),
         .reset(core_reset),
         .start(core_done),
+        .repeat_outputs(repeat_outputs),
         .data_request(axis_dma_read_req),
         .data_response(axis_dma_read_resp),
         .data_out(core_dma_out),
         .axi_in(dma_axi),
         .done(done)
     );
-    
+
 endmodule

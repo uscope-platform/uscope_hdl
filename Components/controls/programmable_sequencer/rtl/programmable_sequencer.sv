@@ -26,6 +26,7 @@ module programmable_sequencer #(
     input wire enable,
     input wire [MAX_STEPS-1:0] step_done,
     output reg [MAX_STEPS-1:0] step_start,
+    output reg [MAX_STEPS-1:0] skipped_starts,
     axi_lite.slave axi_in
 );
 
@@ -69,8 +70,8 @@ module programmable_sequencer #(
 
     generate
         for(n=0; n<MAX_STEPS; n = n+1)begin
-            assign sequence_ordering[n] = cu_write_registers[3+n];
-            assign pulse_skipping_setting[n] = cu_write_registers[3+MAX_STEPS+n];
+            assign sequence_ordering[n] = cu_write_registers[3+n*2];
+            assign pulse_skipping_setting[n] = cu_write_registers[3+n*2+1];
         end
     endgenerate
 
@@ -108,14 +109,15 @@ module programmable_sequencer #(
                 if(pulse_skipping_counters[current_step] == skipping_target)begin
                     step_start[sequence_ordering[current_step]] <= 1;
                     pulse_skipping_counters[current_step] <= 0;
-                    sequencer_state <= s_wait_done;
                 end else begin
+                    skipped_starts[sequence_ordering[current_step]] <= 1;
                     pulse_skipping_counters[current_step] <= pulse_skipping_counters[current_step]+1;
-                    sequencer_state <= s_inter_step_delay;
                 end
+                sequencer_state <= s_wait_done;
             end
             s_wait_done: begin
                 step_start <= 0;
+                skipped_starts <= 0;
                 if(step_done[sequence_ordering[current_step]])begin
                     sequencer_state <= s_inter_step_delay;
                 end

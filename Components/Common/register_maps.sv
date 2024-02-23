@@ -241,8 +241,11 @@ package reg_maps;
         int tb_divider = 'h4;
         int step_delay = 'h8;
         int order_0 = 'hC;
-        int order_1 = 'h10;
-        int order_2 = 'h14;
+        int pulse_skipping_0 = 'h10;
+        int order_1 = 'h14;
+        int pulse_skipping_1 = 'h18;
+        int order_2 = 'h1c;
+        int pulse_skipping_2 = 'h20;
     } prog_sequencer_3_regs;
 
     struct { 
