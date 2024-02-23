@@ -72,7 +72,7 @@ module axis_dynamic_data_mover #(
         end
     endgenerate
 
-    reg [DATA_WIDTH-1:0] data_buffers [$clog2(MAX_CHANNELS)-1:0];
+    reg [DATA_WIDTH-1:0] data_buffers [MAX_CHANNELS-1:0];
 
 
     reg mover_active;
@@ -119,6 +119,7 @@ module axis_dynamic_data_mover #(
                 wait_response: begin
                     if(data_response.valid)begin
                         data_out.data <= data_response.data;
+                        data_buffers[channel_sequencer] <= data_response.data;
                         data_out.dest <= target_addr[channel_sequencer];
                         data_out.valid <= data_response.valid;
                         if(channel_sequencer == n_active_channels-1)begin
