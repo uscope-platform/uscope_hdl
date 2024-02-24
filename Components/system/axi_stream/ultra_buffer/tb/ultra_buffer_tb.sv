@@ -33,7 +33,7 @@ module ultra_buffer_tb();
     reg trigger = 0;
     wire full;
     ultra_buffer #(
-        .ADDRESS_WIDTH(5)
+        .ADDRESS_WIDTH(12)
     )UUT(
         .clock(clock),
         .reset(reset),
@@ -45,6 +45,21 @@ module ultra_buffer_tb();
         .out(stream_out)
     );
 
+    AXI scope();
+    axi_dma #(
+        .ADDR_WIDTH(64),
+        .OUTPUT_AXI_WIDTH(128),
+        .DEST_WIDTH(16),
+        .MAX_TRANSFER_SIZE(4096)
+    )dma_engine(
+        .clock(clock),
+        .reset(reset),
+        .enable(1),
+        .dma_base_addr(0),
+        .data_in(stream_out),
+        .axi_out(scope),
+        .dma_done(dma_done)
+    );
     event config_done;
 
     initial begin
@@ -54,8 +69,11 @@ module ultra_buffer_tb();
         #5.5 reset <=1'h1;
         #10;
         ->config_done;
-        #500 trigger <= 1;
-        #1 trigger <= 0;
+        forever begin
+            #500 trigger <= 1;
+            #1 trigger <= 0;
+            @(dma_done);
+        end
     end 
 
     reg [15:0] data_ctr = 0;
@@ -67,6 +85,7 @@ module ultra_buffer_tb();
         stream_in.user <= 0;
         @(config_done);
         forever begin
+            wait(stream_in.ready == 1);
             stream_in.valid <= 1;
             stream_in.data <= data_ctr;
             stream_in.dest <= 5;
@@ -76,5 +95,6 @@ module ultra_buffer_tb();
             #3;
         end
     end
+
 
 endmodule
