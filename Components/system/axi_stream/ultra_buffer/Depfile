@@ -15,9 +15,15 @@
             "name":"set_properties.tcl",
             "type": "tcl",
             "arguments":[]
+        }, 
+        {
+            "name":"ub_dma_VIP_bd.tcl",
+            "type": "tcl",
+            "arguments":[]
         }
     ],
     "excluded_modules":[
+        "ub_dma_vip_bd"
     ],
     "constraints": []
 }
