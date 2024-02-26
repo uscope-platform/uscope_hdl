@@ -28,7 +28,6 @@ module ultra_buffer_tb();
     axi_stream stream_in();
     axi_stream stream_out();
 
-    ub_dma_vip_bd_axi_vip_0_0_slv_mem_t slv_agent;
 
     //clock generation
     initial clock = 0; 
@@ -53,38 +52,11 @@ module ultra_buffer_tb();
         .out(stream_out)
     );
 
-    AXI #(.ID_WIDTH(2), .ADDR_WIDTH(49), .DATA_WIDTH(128)) scope();
-
-    axi_dma #(
-        .ADDR_WIDTH(64),
-        .OUTPUT_AXI_WIDTH(128),
-        .DEST_WIDTH(16),
-        .MAX_TRANSFER_SIZE(4096)
-    )dma_engine(
-        .clock(clock),
-        .reset(reset),
-        .enable(1),
-        .dma_base_addr(0),
-        .data_in(stream_out),
-        .axi_out(scope),
-        .dma_done(dma_done)
-    );
-
-    ub_dma_vip_bd_wrapper PS_AXI_VIP(
-        .clock(clock),
-        .reset(reset),
-        .axi_in(scope)
-    );
+    
 
     event config_done;
 
     initial begin
-        slv_agent = new("slave vip agent",ultra_buffer_tb.PS_AXI_VIP.vip_bd_i.axi_vip_0.inst.IF);
-        slv_agent.set_verbosity(400);
-        slv_agent.start_slave();
-        slv_agent.mem_model.set_bresp_delay(19);
-        slv_agent.mem_model.set_bresp_delay_policy(XIL_AXI_MEMORY_DELAY_NOADJUST_FIXED);
-
         reset <=1'h1;
         #1 reset <=1'h0;
         //TESTS
@@ -94,7 +66,7 @@ module ultra_buffer_tb();
         forever begin
             #500 trigger <= 1;
             #1 trigger <= 0;
-            @(dma_done);
+            #30000;
         end
     end 
 
@@ -117,6 +89,16 @@ module ultra_buffer_tb();
             #3;
         end
     end
+    
 
+    initial begin
+    
+        stream_out.ready <= 1;
+        #0.5;
+        #18000;
+        stream_out.ready <= 0;
+        # 5;
+        stream_out.ready <= 1;
+    end
 
 endmodule
