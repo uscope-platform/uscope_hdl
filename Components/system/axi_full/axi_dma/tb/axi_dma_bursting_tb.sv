@@ -29,20 +29,20 @@ module axi_dma_bursting_tb();
     
     AXI #(
         .ID_WIDTH(2),
-        .DATA_WIDTH(64),
+        .DATA_WIDTH(128),
         .ADDR_WIDTH(49)
     ) axi_out();
 
     axi_stream #(
         .USER_WIDTH(16),
         .DEST_WIDTH(16),
-        .DATA_WIDTH(64)
+        .DATA_WIDTH(32)
     ) data_in();
 
     axi_stream #(
         .USER_WIDTH(16),
         .DEST_WIDTH(16),
-        .DATA_WIDTH(64)
+        .DATA_WIDTH(32)
     ) data_in_buf();
 
 
@@ -53,7 +53,7 @@ module axi_dma_bursting_tb();
 
     ultra_buffer #(
         .ADDRESS_WIDTH(12),
-        .IN_DATA_WIDTH(32),
+        .DATA_WIDTH(32),
         .DEST_WIDTH(16), 
         .USER_WIDTH(16)
     )buffer(
@@ -117,6 +117,7 @@ module axi_dma_bursting_tb();
                 data_in.valid <= 0;
                 wait(data_in.ready==1);
                 data_in.data <= i;
+                data_in.user <= 'h28;
                 data_in.dest <= i+1000;
                 data_in.valid <= 1;
                 data_in.tlast <= 0;

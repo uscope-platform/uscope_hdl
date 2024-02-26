@@ -4,7 +4,9 @@
         "target_part":"xc7z020clg400",
         "synth_modules":[],
         "synth_tl": "axi_dma",
-        "sim_modules":[],
+        "sim_modules":[
+            "axi_dma_bursting_tb"
+        ],
         "sim_tl":"axi_dma_tb",
         "include_paths":[
             "Components/Common"

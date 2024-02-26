@@ -34,9 +34,18 @@ module axi_dma_bursting #(
     output reg dma_done
 );
 
-    axi_stream #(.DEST_WIDTH(DEST_WIDTH), .USER_WIDTH(16)) upsized_data();
+    axi_stream #(.DEST_WIDTH(DEST_WIDTH), .USER_WIDTH(16), .DATA_WIDTH(OUTPUT_AXI_WIDTH)) upsized_data();
+    axi_stream #(.DEST_WIDTH(DEST_WIDTH), .USER_WIDTH(16), .DATA_WIDTH(64)) upsizer_in();
 
     localparam ADDRESS_INCREMENT = 8;
+
+
+    assign upsizer_in.data = {data_in.user[15:0], data_in.dest[15:0], data_in.data[31:0]};
+    assign upsizer_in.dest = 0;
+    assign upsizer_in.valid = data_in.valid;
+    assign upsizer_in.user = 0;
+    assign upsizer_in.tlast = 0;
+    assign data_in.ready = upsizer_in.ready;
 
     upsizer#(
         .INPUT_WIDTH(64),
@@ -46,7 +55,7 @@ module axi_dma_bursting #(
     ) data_upsizer(
         .clock(clock),
         .reset(reset),
-        .data_in(data_in),
+        .data_in(upsizer_in),
         .data_out(upsized_data)
     );
 
@@ -136,13 +145,15 @@ module axi_dma_bursting #(
                     end
                 end
                 writer_dma_send:begin
-                    upsized_data.ready <= 0;
-                    if(axi_out.WREADY & axi_out.AWREADY & upsized_data.valid) begin
-                        axi_out.AWADDR <= current_target_address;
-                        axi_out.WDATA <= upsized_data.data;
-                        axi_out.WVALID <= 1;
-                        axi_out.AWVALID <= 1;
-                        writer_state <= writer_wait_response;
+                    if(upsized_data.valid) begin
+                        upsized_data.ready <= 0;
+                        if(axi_out.WREADY & axi_out.AWREADY)begin
+                            axi_out.AWADDR <= current_target_address;
+                            axi_out.WDATA <= upsized_data.data;
+                            axi_out.WVALID <= 1;
+                            axi_out.AWVALID <= 1;
+                            writer_state <= writer_wait_response;
+                        end
                     end
                 end
                 writer_wait_response:begin
