@@ -30,7 +30,6 @@ module uScope_stream_dma #(
     input wire reset,
     input wire sampling_clock,
     output wire dma_done,
-    output wire [N_TRIGGERS-1:0] triggers,
     axi_lite.slave axi_in,
     AXI.master scope_out,
     axi_stream.slave data_in
@@ -139,7 +138,7 @@ module uScope_stream_dma #(
     endgenerate
     
 
-    uScope_dma #(
+    uScope_dma_v3 #(
         .N_TRIGGERS(2),
         .DATA_WIDTH(DATA_WIDTH),
         .DEST_WIDTH(DEST_WIDTH),
@@ -149,7 +148,6 @@ module uScope_stream_dma #(
     )scope_internal (
         .clock(clock),
         .reset(reset),
-        .trigger_out(triggers),
         .stream_in(scope_in_sync),
         .out(scope_out),
         .axi_in(uscope_axi),

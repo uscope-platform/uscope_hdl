@@ -19,7 +19,7 @@
 
 module uscope_data_gen #(
     parameter BACKOFF_DELAY = 128,
-    parameter OUTPUIT_BIAS = 0,
+    parameter OUTPUT_BIAS = 0,
     parameter DEST_START = 1,
     parameter N_DEST = 6,
     parameter DATA_TYPE="INTEGER"
@@ -27,6 +27,7 @@ module uscope_data_gen #(
     input wire        clock,
     input wire        reset,
     input wire        enable,
+    input wire        timebase,
     input wire        trigger,
     input wire        dma_done,
     input wire [31:0] packet_length,
@@ -50,15 +51,15 @@ module uscope_data_gen #(
                 assign selected_data = float_data[float_ctr];
                 assign selected_user = get_axis_metadata(32, 0, 1);
             end else begin
-                assign selected_data = OUTPUIT_BIAS + data_gen_ctr + 2000*(dest_counter - DEST_START);
+                assign selected_data = OUTPUT_BIAS + data_gen_ctr + 2000*(dest_counter - DEST_START);
                 assign selected_user = get_axis_metadata(16, 1, 0);
             end
     endgenerate
 
     enum logic [2:0]{
         idle = 0,
-        ctr_advance = 1,
-        delay = 2,
+        wait_tb = 1,
+        ctr_advance = 2, 
         wait_dma_done = 3,
         backoff = 4
     } sequencer_state = idle;
@@ -72,12 +73,17 @@ module uscope_data_gen #(
             data_out.tlast <= 0;
             sequencer_state <= idle;
         end else begin
-            data_out.valid <= 0;
             case(sequencer_state)
                 idle:begin
                     data_out.tlast <= 0;
                     data_gen_ctr <= 0;
                     if(enable || ( trigger & !trigger_del )) begin
+                        sequencer_state <= wait_tb;
+                    end
+                end
+                wait_tb:begin
+                    data_out.valid <= 0;
+                    if(timebase)begin
                         sequencer_state <= ctr_advance;
                     end
                 end
@@ -104,19 +110,11 @@ module uscope_data_gen #(
                             dest_counter <= dest_counter + 1;
                         end
                     end else begin
-                        sequencer_state <= delay;
-                    end
-                end
-                delay:begin
-                    data_out.data <= 0;
-                    if(delay_counter ==5)begin
-                        delay_counter <= 0;
-                        sequencer_state <= ctr_advance;
-                    end else begin
-                        delay_counter <= delay_counter + 1;
+                        sequencer_state <= wait_tb;
                     end
                 end
                 wait_dma_done:begin
+                    data_out.valid <= 0;
                     data_out.tlast <= 0;
                     if(dma_done)begin
                         sequencer_state <= backoff;

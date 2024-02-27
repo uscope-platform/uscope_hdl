@@ -227,14 +227,14 @@ package reg_maps;
     } ramp_generator_regs;
 
     struct { 
-        int buffer_size = 0;
-        int enable = 'h4;
+        int trigger_mode = 0;
+        int trigger_level = 'h4;
         int buffer_addr_low = 'h8;
         int buffer_addr_high = 'hc;
-        int selected_trigger = 'h10;
-        int capture_ack = 'h14;
-        int trigger_position = 'h18;
+        int channel_selector = 'h10;
+        int trigger_point = 'h14;
     } uscope_regs;
+
 
     struct { 
         int control = 0;

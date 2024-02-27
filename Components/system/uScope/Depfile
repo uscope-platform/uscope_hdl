@@ -3,7 +3,7 @@
         "project_name":"uscope",
         "target_part":"xc7z020clg400",
         "synth_modules":[],
-        "synth_tl": "uScope",
+        "synth_tl": "uScope_stream_dma",
         "sim_modules":[],
         "sim_tl":"uScope_tb",
         "include_paths":[

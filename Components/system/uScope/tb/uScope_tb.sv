@@ -62,7 +62,7 @@ module uScope_tb();
 
     localparam BASE_ADDRESS = 'h43C00000;
 
-    uScope UUT (
+    uScope_stream_dma UUT (
         .clock(clk),
         .reset(reset),
         .dma_done(dma_done),

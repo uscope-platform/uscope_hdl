@@ -164,7 +164,5 @@ module axi_dma_bursting_tb();
     end
 
 
-    reg [31:0] verific_data [6143:0] = 0;
 
-    always@
 endmodule
