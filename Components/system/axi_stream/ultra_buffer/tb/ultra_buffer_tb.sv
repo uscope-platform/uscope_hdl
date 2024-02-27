@@ -16,10 +16,6 @@
 `timescale 10ns / 1ns
 `include "interfaces.svh"
 
-import axi_vip_pkg::*;
-import ub_dma_vip_bd_axi_vip_0_0_pkg::*;
-
-
 module ultra_buffer_tb();
 
     reg  clock, reset, start;
@@ -37,7 +33,7 @@ module ultra_buffer_tb();
     wire full;
 
     ultra_buffer #(
-        .ADDRESS_WIDTH(12),
+        .ADDRESS_WIDTH(13),
         .IN_DATA_WIDTH(32),
         .DEST_WIDTH(16),
         .USER_WIDTH(16)
@@ -45,8 +41,9 @@ module ultra_buffer_tb();
         .clock(clock),
         .reset(reset),
         .enable(1),
+        .packet_length(6144),
         .trigger(trigger),
-        .trigger_point(17),
+        .trigger_point(300),
         .full(full),
         .in(stream_in),
         .out(stream_out)
@@ -66,7 +63,7 @@ module ultra_buffer_tb();
         forever begin
             #500 trigger <= 1;
             #1 trigger <= 0;
-            #30000;
+            #35000;
         end
     end 
 

@@ -31,7 +31,7 @@ localparam DATA_WIDTH = 72;
 
 
 (* ram_style = "ultra" *)
-reg [DATA_WIDTH-1:0] ring_buffer[MEMORY_DEPTH-1:0];        // Memory Declaration
+reg [DATA_WIDTH-1:0] ring_buffer[MEMORY_DEPTH-1:0] =  '{default:0};        // Memory Declaration
    
 
 always @ (posedge clock)begin

@@ -16,11 +16,12 @@
 `timescale 10ns / 1ns
 `include "interfaces.svh"
 
-module ultra_buffer #(parameter ADDRESS_WIDTH=12, DATA_WIDTH=32, DEST_WIDTH=16, USER_WIDTH=16)(
+module ultra_buffer #(parameter ADDRESS_WIDTH=13, DATA_WIDTH=32, DEST_WIDTH=16, USER_WIDTH=16)(
     input wire clock,
     input wire reset,
     input wire enable,
     input wire trigger,
+    input wire [ADDRESS_WIDTH-1:0] packet_length,
     input wire [11:0] trigger_point,
     output reg full,
     axi_stream.slave in,
@@ -96,8 +97,11 @@ module ultra_buffer #(parameter ADDRESS_WIDTH=12, DATA_WIDTH=32, DEST_WIDTH=16, 
 
     reg [ADDRESS_WIDTH-1:0] initial_address = 0;
 
+    wire[ADDRESS_WIDTH-1:0] unused_buffer_length;
+    assign unused_buffer_length= (MEMORY_DEPTH-packet_length);
+
     wire [ADDRESS_WIDTH-1:0] final_aquisition;
-    assign final_aquisition = initial_address-1;
+    assign final_aquisition = initial_address-unused_buffer_length-1;
 
     always @(posedge clock) begin
         case (state)
