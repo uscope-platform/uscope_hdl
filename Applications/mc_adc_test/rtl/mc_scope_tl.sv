@@ -179,7 +179,7 @@ module mc_scope_tl #(parameter BASE_ADDRESS = 'h43c00000)(
         
     end
     
-    uScope #(
+    uScope_dma #(
         .BASE_ADDRESS('h43c00100)
     ) scope (
         .clock(clock),

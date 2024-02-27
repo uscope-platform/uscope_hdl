@@ -52,7 +52,7 @@ module axi_dma_bursting_tb();
     reg trigger = 0;
 
     ultra_buffer #(
-        .ADDRESS_WIDTH(12),
+        .ADDRESS_WIDTH(13),
         .DATA_WIDTH(32),
         .DEST_WIDTH(16), 
         .USER_WIDTH(16)
@@ -60,6 +60,7 @@ module axi_dma_bursting_tb();
         .clock(clk),
         .reset(reset),
         .enable(1),
+        .packet_length(6144),
         .trigger(trigger),
         .trigger_point(5),
         .full(buffer_full),
@@ -75,7 +76,7 @@ module axi_dma_bursting_tb();
         .reset(reset), 
         .buffer_full(buffer_full),
         .dma_base_addr('h3f000000),
-        .packet_length(4096),
+        .packet_length(6144),
         .data_in(data_in_buf),
         .axi_out(axi_out),
         .dma_done(dma_done)
@@ -114,7 +115,7 @@ module axi_dma_bursting_tb();
 
         #70;
         forever begin
-            for (integer i = 0; i <6000; i = i+1 ) begin
+            for (integer i = 0; i <18000; i = i+1 ) begin
                 data_in.valid <= 0;
                 wait(data_in.ready==1);
                 data_in.data <= i;
@@ -135,6 +136,9 @@ module axi_dma_bursting_tb();
     initial begin
         #350 trigger = 1;
         #1 trigger = 0;
+        #20000 trigger = 1;
+        #1 trigger = 0;
+        
     end
 
 
@@ -160,4 +164,7 @@ module axi_dma_bursting_tb();
     end
 
 
+    reg [31:0] verific_data [6143:0] = 0;
+
+    always@
 endmodule
