@@ -29,20 +29,20 @@ module axi_dma_tb();
     
     AXI #(
         .ID_WIDTH(2),
-        .DATA_WIDTH(64),
+        .DATA_WIDTH(128),
         .ADDR_WIDTH(49)
     ) axi_out();
 
     axi_stream #(
-        .DEST_WIDTH(12)
+        .DEST_WIDTH(16)
     ) data_in();
 
 
     axi_dma_vip_bd_axi_vip_0_0_slv_mem_t slv_agent;
     wire dma_done;
     axi_dma #(
-        .DEST_WIDTH(12),
-        .OUTPUT_AXI_WIDTH(64)
+        .DEST_WIDTH(16),
+        .OUTPUT_AXI_WIDTH(128)
     )UUT(
         .clock(clk),
         .reset(reset), 
@@ -85,11 +85,11 @@ module axi_dma_tb();
 
         #70;
         forever begin
-            for (integer i = 0; i <1024; i = i+1 ) begin
+            for (integer i = 0; i <4096; i = i+1 ) begin
                 data_in.data <= i;
                 data_in.dest <= i+1000;
                 data_in.valid <= 1;
-                if(i==1023)begin
+                if(i==4095)begin
                     data_in.tlast <= 1;
                 end else begin
                     data_in.tlast <= 0;

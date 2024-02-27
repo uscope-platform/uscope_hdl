@@ -61,9 +61,9 @@ module axi_dma_bursting #(
 
     enum reg [2:0] {
         writer_idle = 0,
-        writer_read_LSB = 1,
+        writer_start_burst = 1,
         writer_dma_send = 2,
-        writer_send_data = 3,
+        writer_wait_ready = 3,
         writer_wait_response = 4
     } writer_state;
 
@@ -71,23 +71,23 @@ module axi_dma_bursting #(
     reg [63:0] target_base;
 
 
-
-    reg [$clog2(MAX_TRANSFER_SIZE):0] progress_counter = 0;
+    reg [$clog2(MAX_TRANSFER_SIZE):0] burst_counter = 0;
    
 
     wire [ADDR_WIDTH-1:0] current_target_address;
-    assign current_target_address = target_base + progress_counter*8;
-
-
-    reg [63:0] axi_low_word = 0;
-    reg [63:0] axi_high_word = 0;
+    
+    // the address is calculated by taking the overall base address and adding the burst offset on top.
+    // to calculate the burst offset the burst counter is multiplied by 16 bytes in a beat and 16 beats in a burst
+    assign current_target_address = target_base + burst_counter*16*16; 
 
 
     wire dma_end_condition;
 
     generate
-        assign dma_end_condition = progress_counter == packet_length-2;
+        assign dma_end_condition = burst_counter == packet_length/(2*16)-1;
     endgenerate
+
+    reg [3:0] beats_counter = 0;
 
     always_ff @(posedge clock) begin
         if(~reset)begin
@@ -110,7 +110,7 @@ module axi_dma_bursting #(
             
             axi_out.WSTRB <= 'hFFFF;
             axi_out.WUSER <= 0;
-            axi_out.WLAST <= 1;
+            axi_out.WLAST <= 0;
 
             axi_out.ARID <= 2;
             axi_out.ARLEN <= 0;
@@ -133,38 +133,61 @@ module axi_dma_bursting #(
         end else begin
             axi_out.BREADY <= 1;
             axi_out.AWVALID <= 0;
-            axi_out.WVALID <= 0;
             dma_done <= 0;
             case (writer_state)
                 writer_idle:begin
+                        burst_counter <= 0;
+                        beats_counter <= 0;
                     if(buffer_full)begin
                         target_base <= dma_base_addr;
-                        upsized_data.ready <= 1;
-                        progress_counter <= 0;
-                        writer_state <= writer_dma_send;
+                        writer_state <= writer_start_burst;
                     end
+                end
+                writer_start_burst:begin
+                    if(axi_out.AWREADY)begin
+                        upsized_data.ready <= 1;
+                        beats_counter <= 0;
+                        writer_state <= writer_dma_send;
+                        axi_out.AWADDR <= current_target_address;
+                        axi_out.AWVALID <= 1;
+                        axi_out.AWBURST <= 1;
+                        axi_out.WLAST <= 0;
+                        axi_out.AWLEN = 15;
+                    end
+
                 end
                 writer_dma_send:begin
                     if(upsized_data.valid) begin
-                        upsized_data.ready <= 0;
-                        if(axi_out.WREADY & axi_out.AWREADY)begin
-                            axi_out.AWADDR <= current_target_address;
-                            axi_out.WDATA <= upsized_data.data;
-                            axi_out.WVALID <= 1;
-                            axi_out.AWVALID <= 1;
+                        if(beats_counter== 15)begin
+                            axi_out.WLAST <= 1;
                             writer_state <= writer_wait_response;
+                            upsized_data.ready <= 0;    
+                        end else begin
+                            writer_state <= writer_wait_ready;
+                            upsized_data.ready <= 0; 
+                            beats_counter <= beats_counter + 1;
                         end
+                        axi_out.WDATA <= upsized_data.data;
+                        axi_out.WVALID <= 1;
                     end
                 end
+                writer_wait_ready:begin
+                    axi_out.WVALID <= 0;
+                     if(axi_out.WREADY)begin
+                        writer_state <= writer_dma_send;
+                        upsized_data.ready <= 1;
+                     end
+                end
                 writer_wait_response:begin
+                    axi_out.WVALID <= 0;
                     if(axi_out.BVALID)begin
                         axi_out.BREADY <= 0;
                         if(dma_end_condition)begin
                             writer_state <= writer_idle;
                             dma_done <= 1;
                         end else begin
-                            writer_state <= writer_dma_send;
-                            progress_counter <= progress_counter + 2;
+                            writer_state <= writer_start_burst;
+                            burst_counter <= burst_counter + 1;
                             upsized_data.ready <= 1;
                         end                       
                     end

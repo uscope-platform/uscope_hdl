@@ -75,7 +75,7 @@ module axi_dma_bursting_tb();
         .reset(reset), 
         .buffer_full(buffer_full),
         .dma_base_addr('h3f000000),
-        .packet_length(1024),
+        .packet_length(4096),
         .data_in(data_in_buf),
         .axi_out(axi_out),
         .dma_done(dma_done)
@@ -102,6 +102,7 @@ module axi_dma_bursting_tb();
         slv_agent.set_verbosity(400);
         slv_agent.start_slave();
         slv_agent.mem_model.set_bresp_delay(19);
+        slv_agent.mem_model.set_inter_beat_gap(0);
         slv_agent.mem_model.set_bresp_delay_policy(XIL_AXI_MEMORY_DELAY_NOADJUST_FIXED);
 
         //TESTS
