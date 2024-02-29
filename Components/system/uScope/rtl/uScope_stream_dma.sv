@@ -138,7 +138,7 @@ module uScope_stream_dma #(
     endgenerate
     
 
-    uScope_dma_v3 #(
+    uScope_dma #(
         .N_TRIGGERS(2),
         .DATA_WIDTH(DATA_WIDTH),
         .DEST_WIDTH(DEST_WIDTH),

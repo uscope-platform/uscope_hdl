@@ -35,9 +35,6 @@ module uscope_data_gen #(
 );
 
 
-    reg [31:0] float_data[8:0] = '{'hc0900000, 'hc0600000, 'hc0200000, 'hbfc00000, 'h3f000000, 'h3fc00000, 'h40200000, 'h40600000, 'h40900000};
-    reg [15:0] float_ctr = 0;
-
     reg [7:0] dest_counter = DEST_START;
     reg [15:0] data_gen_ctr;
     reg [15:0] delay_counter = 0;
@@ -46,15 +43,9 @@ module uscope_data_gen #(
 
     wire [31:0] selected_data;
     wire [15:0] selected_user;
-    generate
-            if(DATA_TYPE=="FLOAT")begin
-                assign selected_data = float_data[float_ctr];
-                assign selected_user = get_axis_metadata(32, 0, 1);
-            end else begin
-                assign selected_data = OUTPUT_BIAS + data_gen_ctr + 2000*(dest_counter - DEST_START);
-                assign selected_user = get_axis_metadata(16, 1, 0);
-            end
-    endgenerate
+    
+    assign selected_data = OUTPUT_BIAS + data_gen_ctr + 2000*(dest_counter - DEST_START);
+    assign selected_user = get_axis_metadata(16, 1, 0);
 
     enum logic [2:0]{
         idle = 0,
@@ -88,33 +79,40 @@ module uscope_data_gen #(
                     end
                 end
                 ctr_advance:begin
+
+                    if(dest_counter==(DEST_START+N_DEST-1))begin
+                        dest_counter <= DEST_START;
+                        sequencer_state <= wait_dma_done;
+                        data_out.tlast <= 1;
+                        data_gen_ctr <= data_gen_ctr + 1;
+                    end else begin
+                        dest_counter <= dest_counter + 1;
+                    end
+
+                    if(dest_counter==(DEST_START+N_DEST-1))begin
+                       if(data_gen_ctr == packet_length-1) begin
+                            sequencer_state <= wait_dma_done;
+                       end else begin
+                            sequencer_state <=wait_tb;
+                       end
+                       
+                            
+                    end else begin
+
+                    end
+
+
                     data_out.data <= selected_data;
                     data_out.user <= selected_user;
                     data_out.dest <= dest_counter;
-                    data_gen_ctr <= data_gen_ctr + 1;
-                    if(float_ctr == 8)begin
-                        float_ctr <= 0;
-                    end else begin
-                        float_ctr <= float_ctr + 1;
-                    end
+
                     data_out.valid <= 1;
-                    delay_counter <= 0;
-                    if(data_gen_ctr == packet_length-1)begin
-                        if(dest_counter==(DEST_START+N_DEST-1))begin
-                            dest_counter <= DEST_START;
-                            sequencer_state <= wait_dma_done;
-                            delay_counter <=0;
-                            data_out.tlast <= 1;
-                        end else begin
-                            data_gen_ctr <= 0;
-                            dest_counter <= dest_counter + 1;
-                        end
-                    end else begin
-                        sequencer_state <= wait_tb;
-                    end
+                    
                 end
                 wait_dma_done:begin
                     data_out.valid <= 0;
+                    delay_counter <= 0;
+                    data_gen_ctr <= 0;
                     data_out.tlast <= 0;
                     if(dma_done)begin
                         sequencer_state <= backoff;

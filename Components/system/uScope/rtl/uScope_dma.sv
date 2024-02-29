@@ -27,179 +27,100 @@ module uScope_dma #(
     input wire clock,
     input wire reset,
     output wire dma_done,
-    output wire [N_TRIGGERS-1:0] trigger_out,
     axi_stream.slave stream_in[N_STREAMS],
     AXI.master out,
     axi_lite.slave axi_in
 );
 
     localparam TRANSFER_SIZE = CHANNEL_SAMPLES*N_STREAMS;
-
+    
     axi_stream #(
         .DATA_WIDTH(DATA_WIDTH),
+        .DEST_WIDTH(DEST_WIDTH),
+        .USER_WIDTH(USER_WIDTH)
+    ) in_buffered[N_STREAMS]();
+   
+    axi_stream #(
+        .DATA_WIDTH(DATA_WIDTH),
+        .DEST_WIDTH(DEST_WIDTH),
         .USER_WIDTH(USER_WIDTH)
     ) combined();
     
-    axi_stream #(
-        .DATA_WIDTH(DATA_WIDTH),
-        .USER_WIDTH(USER_WIDTH)
-    ) combined_tlast();
    
-    reg dma_enable;
-    wire capture_inhibit;
+    wire [63:0] dma_base_addr;
+    wire [15:0] trigger_point;
 
-    reg [63:0] dma_base_addr;
-
-    wire [15:0] current_sample;
-
+    wire [N_STREAMS-1:0] buffer_full;
     wire trigger;
-    reg [31:0] cu_write_registers [5:0];
-    reg [31:0] cu_read_registers [5:0];
-    axil_simple_register_cu #(
-        .N_READ_REGISTERS(6),
-        .N_WRITE_REGISTERS(6),
-        .REGISTERS_WIDTH(32),
-        .N_TRIGGER_REGISTERS(1),
-        .TRIGGER_REGISTERS_IDX({3}),
-        .ADDRESS_MASK('h1f)
-    ) CU (
+
+    trigger_engine #(
+        .N_CHANNELS(N_STREAMS)
+    )trigger_controller(
         .clock(clock),
         .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
+        .data_in(stream_in),
+        .axi_in(axi_in),
         .trigger_out(trigger),
-        .axil(axi_in)
+        .trigger_point(trigger_point),
+        .dma_base_addr(dma_base_addr)
+    );
+
+
+    generate
+        genvar i;
+        for(i = 0; i<N_STREAMS; i++)begin
+
+            ultra_buffer #(
+                .ADDRESS_WIDTH(10),
+                .DATA_WIDTH(DATA_WIDTH),
+                .DEST_WIDTH(DEST_WIDTH), 
+                .USER_WIDTH(USER_WIDTH)
+            )buffer(
+                .clock(clock),
+                .reset(reset),
+                .enable(1),
+                .packet_length(CHANNEL_SAMPLES),
+                .trigger(trigger),
+                .trigger_point(trigger_point),
+                .full(buffer_full[i]),
+                .in(stream_in[i]),
+                .out(in_buffered[i])
+            );
+        
+        end
+    endgenerate
+
+
+    wire dma_start;
+    assign dma_start = |buffer_full;
+
+    channel_serializer #(
+        .N_CHANNELS(N_STREAMS),
+        .SAMPLES_PER_CHANNEL(CHANNEL_SAMPLES),
+        .DATA_WIDTH(DATA_WIDTH),
+        .DEST_WIDTH(DEST_WIDTH),
+        .USER_WIDTH(USER_WIDTH)
+    )serializer(
+        .clock(clock),
+        .reset(reset),
+        .trigger(dma_start),
+        .data_in(in_buffered),
+        .data_out(combined)
     );
     
-
-    reg [31:0] selected_trigger;
-    reg capture_ack;
-    reg [15:0] trigger_position;
-
-    assign dma_enable = cu_write_registers[1];
-    assign dma_base_addr[31:0] = cu_write_registers[2];
-    assign dma_base_addr[63:32] = cu_write_registers[3];
-    assign selected_trigger = cu_write_registers[4];
-    assign capture_ack = cu_write_registers[5][0];
-    assign trigger_position = cu_write_registers[6];
-
-
-    assign cu_read_registers[0] = TRANSFER_SIZE;
-    assign cu_read_registers[1] = dma_enable;
-    assign cu_read_registers[2] = dma_base_addr[31:0];
-    assign cu_read_registers[3] = dma_base_addr[63:32];
-    assign cu_read_registers[4] = selected_trigger;
-    assign cu_read_registers[5] = {31'b0, capture_ack};
-    assign cu_read_registers[6] = {16'b0, trigger_position};
-
-
-    trigger_hub #(
-        .N_TRIGGERS(N_TRIGGERS) 
-    ) triggers (
-        .clock(clock),
-        .reset(reset),
-        .buffer_level(current_sample),
-        .capture_done(combined_tlast.tlast),
-        .trigger_in(trigger),
-        .selected_trigger(selected_trigger),
-        .trigger_position(trigger_position),
-        .capture_ack(capture_ack),
-        .capture_inhibit(capture_inhibit),
-        .trigger_out(trigger_out)
-    );
-
-
-    axi_stream_combiner #(
-        .INPUT_DATA_WIDTH(DATA_WIDTH), 
-        .OUTPUT_DATA_WIDTH(DATA_WIDTH), 
-        .DEST_WIDTH(DEST_WIDTH),
-        .USER_WIDTH(USER_WIDTH),
-        .N_STREAMS(N_STREAMS)
-    )combiner(
-        .clock(clock),
-        .reset(reset),
-        .stream_in(stream_in),
-        .stream_out(combined)
-    );
-        
-    tlast_generator_sv tlast_gen(
-        .clock(clock),
-        .reset(reset), 
-        .period(TRANSFER_SIZE),
-        .disable_gen(capture_inhibit),
-        .current_sample(current_sample),
-        .data_in(combined),
-        .data_out(combined_tlast)
-    );
-
-    // CALCULATE THE MINIMUM POWER OF TWO NUMBER OF ROWS FOR THE BUFFER FIFO FOR EFFICIENT IMPLEMENTATION
-    localparam IDEAL_BUFFER_SIZE = 1<<$clog2(TRANSFER_SIZE);
-
-    axi_dma #(
+    axi_dma_bursting #(
         .ADDR_WIDTH(64),
-        .OUTPUT_AXI_WIDTH(OUTPUT_AXI_WIDTH),
-        .DEST_WIDTH(DEST_WIDTH),
-        .MAX_TRANSFER_SIZE(IDEAL_BUFFER_SIZE)
+        .DEST_WIDTH(16),
+        .USER_WIDTH(16),
+        .OUTPUT_AXI_WIDTH(OUTPUT_AXI_WIDTH)
     )dma_engine(
         .clock(clock),
-        .reset(reset),
-        .enable(dma_enable),
+        .reset(reset), 
+        .buffer_full(dma_start),
         .dma_base_addr(dma_base_addr),
-        .data_in(combined_tlast),
+        .packet_length(TRANSFER_SIZE),
+        .data_in(combined),
         .axi_out(out),
         .dma_done(dma_done)
     );
-
-
 endmodule
-
-    /**
-       {
-        "name": "uScope_dma",
-        "type": "peripheral",
-        "registers":[
-            {
-                "name": "buffer_size",
-                "offset": "0x0",
-                "description": "Size of the scope buffer in words",
-                "direction": "RW"
-            },
-            {
-                "name": "enable",
-                "offset": "0x4",
-                "description": "Address of the first word in memory of the data buffer",
-                "direction": "RW"
-            },
-            {
-                "name": "buffer_addr_low",
-                "offset": "0x8",
-                "description": "Writing 1 to this register enables the scope",
-                "direction": "RW"  
-            },
-            {
-                "name": "buffer_addr_high",
-                "offset": "0xC",
-                "description": "Writing 1 to this register enables the scope",
-                "direction": "RW"  
-            },
-            {
-                "name": "selected_trigger",
-                "offset": "0x10",
-                "description": "Writing an address to this register triggers the related signal",
-                "direction": "RW"  
-            },
-            {
-                "name": "capture_ack",
-                "offset": "0x14",
-                "description": "Acknowledge the last captured trigger",
-                "direction": "RW"  
-            },
-            {
-                "name": "trigger_position",
-                "offset": "0x18",
-                "description": "Position of the trigger in the capture window",
-                "direction": "RW"  
-            }
-        ]
-    }  
-    **/
