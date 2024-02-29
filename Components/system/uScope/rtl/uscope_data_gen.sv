@@ -82,23 +82,15 @@ module uscope_data_gen #(
 
                     if(dest_counter==(DEST_START+N_DEST-1))begin
                         dest_counter <= DEST_START;
-                        sequencer_state <= wait_dma_done;
                         data_out.tlast <= 1;
+                        sequencer_state <=wait_tb;     
                         data_gen_ctr <= data_gen_ctr + 1;
                     end else begin
                         dest_counter <= dest_counter + 1;
                     end
 
-                    if(dest_counter==(DEST_START+N_DEST-1))begin
-                       if(data_gen_ctr == packet_length-1) begin
-                            sequencer_state <= wait_dma_done;
-                       end else begin
-                            sequencer_state <=wait_tb;
-                       end
-                       
-                            
-                    end else begin
-
+                    if(~data_out.ready)begin
+                        sequencer_state <=wait_dma_done;  
                     end
 
 
