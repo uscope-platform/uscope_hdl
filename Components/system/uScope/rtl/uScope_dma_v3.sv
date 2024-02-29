@@ -26,7 +26,6 @@ module uScope_dma_v3 #(
 )(
     input wire clock,
     input wire reset,
-    input wire trigger,
     output wire dma_done,
     axi_stream.slave stream_in[N_STREAMS],
     AXI.master out,
@@ -50,7 +49,7 @@ module uScope_dma_v3 #(
    
     wire [63:0] dma_base_addr;
     wire [15:0] trigger_point;
-    wire trigger, buffer_full;
+    wire buffer_full, trigger;
 
     trigger_engine #(
         .N_CHANNELS(N_STREAMS)

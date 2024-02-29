@@ -16,7 +16,10 @@
 `timescale 10ns / 1ns
 `include "interfaces.svh"
 
-module ultra_buffer_memory #(parameter ADDRESS_WIDTH=12)(
+module ultra_buffer_memory #(
+parameter ADDRESS_WIDTH=12,
+DATA_WIDTH = 72
+)(
     input wire clock,
     input wire reset,
     input wire write_enable,
@@ -27,7 +30,6 @@ module ultra_buffer_memory #(parameter ADDRESS_WIDTH=12)(
 );
 
 localparam MEMORY_DEPTH = (1<<ADDRESS_WIDTH);
-localparam DATA_WIDTH = 72;
 
 
 (* ram_style = "ultra" *)
