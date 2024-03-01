@@ -84,8 +84,8 @@ module trigger_engine #(
     reg [31:0] selected_data_dly;
     wire rising_edge, falling_edge;
 
-    assign rising_edge = selected_data > trigger_level && selected_data_dly <= trigger_level;
-    assign falling_edge = selected_data > trigger_level && selected_data_dly <= trigger_level;
+    assign rising_edge = selected_data >= trigger_level && selected_data_dly < trigger_level;
+    assign falling_edge = selected_data <= trigger_level && selected_data_dly > trigger_level;
 
 
 
