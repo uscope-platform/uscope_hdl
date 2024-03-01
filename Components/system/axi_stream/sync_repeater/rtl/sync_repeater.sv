@@ -23,7 +23,8 @@ module axis_sync_repeater #(
     parameter DATA_WIDTH= 32, 
     DEST_WIDTH = 8,
     USER_WIDTH = 8,
-    HOLD_VALID = 0
+    HOLD_VALID = 0,
+    WAIT_INITIALIZATION = 1
 )(
     input wire        clock,
     input wire        reset,
@@ -68,7 +69,7 @@ module axis_sync_repeater #(
             out.tlast <= 0;
         end else begin
             out.valid <= 0;
-            if(sync & wait_init)begin
+            if(sync & (wait_init | WAIT_INITIALIZATION==0))begin
                 out.data <= registered_stream.data;
                 out.dest <= registered_stream.dest;
                 out.user <= registered_stream.user;
