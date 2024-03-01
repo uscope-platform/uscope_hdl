@@ -31,22 +31,28 @@ module ultra_buffer #(parameter ADDRESS_WIDTH=13, DATA_WIDTH=32, DEST_WIDTH=16, 
     localparam MEMORY_DEPTH = (1<<ADDRESS_WIDTH);
 
 
-    enum reg [2:0] { 
-        pre_trigger = 0,
-        acquisition = 1,
-        wait_output = 2,
-        wait_reg = 3,
+    enum reg [2:0] {
+        initial_fill = 0,
+        pre_trigger = 1,
+        acquisition = 2,
+        wait_output = 3,
         readout = 4,
-        empty_pipeline = 5
-    } state = pre_trigger;
+        empty_pipeline = 5,
+        refresh_data = 6
+    } state = initial_fill;
 
 
 
-    reg [ADDRESS_WIDTH-1:0] mem_counter = 0;
+    reg [ADDRESS_WIDTH-1:0] wr_head_ptr = 0;
+    reg [ADDRESS_WIDTH-1:0] rd_head_ptr = 0;
+
+    reg [ADDRESS_WIDTH-1:0] rd_ptr = 0;
+
+    reg [ADDRESS_WIDTH-1:0]  read_address = 0;        // Read  Address
+    
     wire [USER_WIDTH-1:0] out_user;
     wire [DEST_WIDTH-1:0] out_dest;
-    wire [DATA_WIDTH-1:0] out_data;   
-    reg [ADDRESS_WIDTH-1:0]  read_address = 0;     // Read  Address
+    wire [DATA_WIDTH-1:0] out_data;
 
     ultra_buffer_memory #(
         .ADDRESS_WIDTH(ADDRESS_WIDTH)
@@ -54,7 +60,7 @@ module ultra_buffer #(parameter ADDRESS_WIDTH=13, DATA_WIDTH=32, DEST_WIDTH=16, 
         .clock(clock),
         .reset(reset),
         .write_enable(in.valid && (state == pre_trigger || state == acquisition)),
-        .write_address(mem_counter),
+        .write_address(wr_head_ptr),
         .read_address(read_address),
         .write_data({in.user[USER_WIDTH-1:0], in.dest[DEST_WIDTH-1:0], in.data[DATA_WIDTH-1:0]}),
         .read_data({out_user, out_dest, out_data})
@@ -95,6 +101,9 @@ module ultra_buffer #(parameter ADDRESS_WIDTH=13, DATA_WIDTH=32, DEST_WIDTH=16, 
         out.dest <= 0;
     end
 
+    reg initial_fill_done = 0;
+
+
     reg [ADDRESS_WIDTH-1:0] initial_address = 0;
 
     wire[ADDRESS_WIDTH-1:0] unused_buffer_length;
@@ -103,30 +112,36 @@ module ultra_buffer #(parameter ADDRESS_WIDTH=13, DATA_WIDTH=32, DEST_WIDTH=16, 
     wire [ADDRESS_WIDTH-1:0] final_aquisition;
     assign final_aquisition = initial_address-unused_buffer_length-1;
 
+    reg [ADDRESS_WIDTH-1:0] refresh_counter = 0;
+
     always @(posedge clock) begin
+        if(state==initial_fill || state==pre_trigger || state==acquisition  || state==refresh_data)begin
+            if(in.valid)begin
+                wr_head_ptr<= wr_head_ptr +1;
+            end
+        end
         case (state)
+            initial_fill:begin
+                if(wr_head_ptr == MEMORY_DEPTH-1) begin
+                    state <= pre_trigger;
+                    wr_head_ptr <= 0;
+                    in.ready <= 1;
+                end
+            end
             pre_trigger: begin
                 full <= 0;
-                in.ready <= 1;
-                out.tlast <= 0;
-                out.valid <= 0;
                 if(trigger)begin
                     state <= acquisition;
-                    initial_address <= mem_counter - trigger_point;
-                end
-                if(in.valid)begin
-                    mem_counter <= mem_counter + 1;
+                    initial_address <= wr_head_ptr - trigger_point;
                 end
             end 
             acquisition: begin
                 if(in.valid)begin
-                    if(mem_counter == final_aquisition) begin
+                    if(wr_head_ptr == final_aquisition) begin
                         state <= wait_output;
                         read_address <= initial_address;
                         in.ready <= 0;
                         full <= 1;
-                    end else begin
-                        mem_counter<= mem_counter +1;
                     end
                 end
             end
@@ -152,16 +167,30 @@ module ultra_buffer #(parameter ADDRESS_WIDTH=13, DATA_WIDTH=32, DEST_WIDTH=16, 
 
             end
             empty_pipeline:begin
+                rd_head_ptr <= wr_head_ptr;
                 if(out.ready)begin
-                    state <= pre_trigger;
+                    state <= refresh_data;
                     out.valid <= 1;
                     out.tlast <= 1;
+                    refresh_counter <= 0;
                     out.user <= selected_user;
                     out.data <= selected_data;
                     out.dest <= selected_dest;
                 end
             end
+            refresh_data:begin
+                out.tlast <= 0;
+                out.valid <= 0;
+                 in.ready <= 1;
+                if(refresh_counter == MEMORY_DEPTH-1) begin
+                    state <= pre_trigger;
+                end
+                if(in.valid)begin
+                    refresh_counter <= refresh_counter + 1;
+                end
+            end
         endcase
     end
+
 
 endmodule

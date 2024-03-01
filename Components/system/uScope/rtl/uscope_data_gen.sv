@@ -48,13 +48,16 @@ module uscope_data_gen #(
     assign selected_user = get_axis_metadata(16, 1, 0);
 
     enum logic [2:0]{
-        idle = 0,
-        wait_tb = 1,
-        ctr_advance = 2, 
-        wait_dma_done = 3,
-        backoff = 4
-    } sequencer_state = idle;
+        fill_buffers = 0,
+        idle = 1,
+        wait_tb = 2,
+        ctr_advance = 3, 
+        wait_dma_done = 4,
+        backoff = 5
+    } sequencer_state = fill_buffers;
 
+
+    reg [23:0] fill_ctr = 0;
 
     always_ff@(posedge clock)begin
         trigger_del <= trigger;
@@ -62,9 +65,15 @@ module uscope_data_gen #(
             data_out.data <= 0;
             data_out.valid <= 0; 
             data_out.tlast <= 0;
-            sequencer_state <= idle;
+            sequencer_state <= fill_buffers;
         end else begin
             case(sequencer_state)
+                fill_buffers:begin
+                    if(fill_ctr == 128000) begin
+                        sequencer_state <= idle;
+                    end
+                    fill_ctr <= fill_ctr + 1;
+                end
                 idle:begin
                     data_out.tlast <= 0;
                     data_gen_ctr <= 0;
@@ -74,48 +83,31 @@ module uscope_data_gen #(
                 end
                 wait_tb:begin
                     data_out.valid <= 0;
-                    if(timebase)begin
+                    if(timebase & data_out.ready)begin
                         sequencer_state <= ctr_advance;
                     end
                 end
                 ctr_advance:begin
-
+ 
                     if(dest_counter==(DEST_START+N_DEST-1))begin
                         dest_counter <= DEST_START;
                         data_out.tlast <= 1;
                         sequencer_state <=wait_tb;     
-                        data_gen_ctr <= data_gen_ctr + 1;
+                        if(data_gen_ctr == 1023)begin
+                            data_gen_ctr <= 0;
+                        end else begin
+                            data_gen_ctr <= data_gen_ctr + 1;
+                        end
+                        
                     end else begin
                         dest_counter <= dest_counter + 1;
                     end
-
-                    if(~data_out.ready)begin
-                        sequencer_state <=wait_dma_done;  
-                    end
-
-
                     data_out.data <= selected_data;
                     data_out.user <= selected_user;
                     data_out.dest <= dest_counter;
 
                     data_out.valid <= 1;
                     
-                end
-                wait_dma_done:begin
-                    data_out.valid <= 0;
-                    delay_counter <= 0;
-                    data_gen_ctr <= 0;
-                    data_out.tlast <= 0;
-                    if(dma_done)begin
-                        sequencer_state <= backoff;
-                    end
-                end
-                backoff:begin
-                    if(delay_counter == BACKOFF_DELAY-1)begin
-                        sequencer_state <= idle;
-                    end else begin
-                        delay_counter <= delay_counter + 1;
-                    end
                 end
             endcase
         end

@@ -18,7 +18,8 @@
 
 
 module trigger_engine #(
-    N_CHANNELS = 6
+    N_CHANNELS = 6,
+    MEMORY_DEPTH = 1023
 )(
     input wire        clock,
     input wire        reset,
@@ -30,12 +31,12 @@ module trigger_engine #(
 );
 
 
-    reg [31:0] cu_write_registers [5:0];
-    reg [31:0] cu_read_registers [5:0];
+    reg [31:0] cu_write_registers [6:0];
+    reg [31:0] cu_read_registers [6:0];
     
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(6),
-        .N_WRITE_REGISTERS(6),
+        .N_READ_REGISTERS(7),
+        .N_WRITE_REGISTERS(7),
         .REGISTERS_WIDTH(32),
         .ADDRESS_MASK('h1f)
     ) CU (
@@ -46,7 +47,7 @@ module trigger_engine #(
         .axil(axi_in)
     );
 
-
+    wire restart_acquiisition;
     wire [1:0] trigger_mode;
     wire [31:0] trigger_level;
     reg [7:0] channel_selector;
@@ -57,6 +58,7 @@ module trigger_engine #(
     assign dma_base_addr[63:32] = cu_write_registers[3];
     assign channel_selector = cu_write_registers[4];
     assign trigger_point = cu_write_registers[5];
+    assign restart_acquiisition = cu_write_registers[6];
 
     assign cu_read_registers = cu_write_registers;
 
@@ -85,22 +87,51 @@ module trigger_engine #(
     assign rising_edge = selected_data > trigger_level && selected_data_dly <= trigger_level;
     assign falling_edge = selected_data > trigger_level && selected_data_dly <= trigger_level;
 
+
+
+    enum reg [2:0] {
+        wait_fill = 0,
+        run = 1,
+        stop = 2
+    } state = wait_fill;
+
+    reg [15:0] fill_ctr = 0;
+
+
     always @(posedge clock) begin
-        if(selected_valid)begin
-            selected_data_dly <= selected_data;
-            case (trigger_mode)
-                0: begin //RISING EDGE TRIGGER
-                    trigger_out <= rising_edge;
+        selected_data_dly <= selected_data;
+        case (state)
+            wait_fill : begin
+                if(fill_ctr == MEMORY_DEPTH)begin
+                    state <= run;
                 end
-                1:begin //FALLING EDGE TRIGGER
-                    trigger_out <= falling_edge;
-                end 
-                2:begin //BOTH EDGE TRIGGER
-                    trigger_out <= rising_edge | falling_edge;
+                fill_ctr <= fill_ctr + 1;
+            end
+            run : begin
+                if(selected_valid)begin
+                   
+                    case (trigger_mode)
+                        0: begin //RISING EDGE TRIGGER
+                            trigger_out <= rising_edge;
+                        end
+                        1:begin //FALLING EDGE TRIGGER
+                            trigger_out <= falling_edge;
+                        end 
+                        2:begin //BOTH EDGE TRIGGER
+                            trigger_out <= rising_edge | falling_edge;
+                        end
+                    endcase
                 end
-            endcase
-        end
+            end
+            stop : begin
+                if(restart_acquiisition)
+                    state <= run;
+            end
+        endcase
+
+        
     end
+
 
 endmodule
 

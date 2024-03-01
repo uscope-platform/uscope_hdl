@@ -126,7 +126,8 @@ module uScope_stream_dma #(
 
 
             axis_sync_repeater #(
-                .HOLD_VALID(1)
+                .HOLD_VALID(1),
+                .WAIT_INITIALIZATION(0)
             ) ch_synchronizer (
                 .clock(clock),
                 .reset(reset),
