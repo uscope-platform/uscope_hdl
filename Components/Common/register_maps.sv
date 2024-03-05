@@ -233,6 +233,8 @@ package reg_maps;
         int buffer_addr_high = 'hc;
         int channel_selector = 'h10;
         int trigger_point = 'h14;
+        int acquisition_mode = 'h18;
+        int rearm_trigger = 'h1C;
     } uscope_regs;
 
 

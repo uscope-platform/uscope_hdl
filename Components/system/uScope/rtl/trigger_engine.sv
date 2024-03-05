@@ -31,23 +31,27 @@ module trigger_engine #(
 );
 
 
-    reg [31:0] cu_write_registers [6:0];
-    reg [31:0] cu_read_registers [6:0];
+    reg [31:0] cu_write_registers [7:0];
+    reg [31:0] cu_read_registers [7:0];
     
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(7),
-        .N_WRITE_REGISTERS(7),
+        .N_READ_REGISTERS(8),
+        .N_WRITE_REGISTERS(8),
         .REGISTERS_WIDTH(32),
-        .ADDRESS_MASK('h1f)
+        .ADDRESS_MASK('h1f),
+        .N_TRIGGER_REGISTERS(1),
+        .TRIGGER_REGISTERS_IDX('{7})
     ) CU (
         .clock(clock),
         .reset(reset),
         .input_registers(cu_read_registers),
         .output_registers(cu_write_registers),
+        .trigger_out(rearm_trigger),
         .axil(axi_in)
     );
 
-    wire restart_acquiisition;
+    wire rearm_trigger;
+    wire [1:0] acquisition_mode;
     wire [1:0] trigger_mode;
     wire [31:0] trigger_level;
     reg [7:0] channel_selector;
@@ -58,9 +62,11 @@ module trigger_engine #(
     assign dma_base_addr[63:32] = cu_write_registers[3];
     assign channel_selector = cu_write_registers[4];
     assign trigger_point = cu_write_registers[5];
-    assign restart_acquiisition = cu_write_registers[6];
+    assign acquisition_mode = cu_write_registers[6];
 
-    assign cu_read_registers = cu_write_registers;
+    assign cu_read_registers[6:0] = cu_write_registers[6:0];
+    assign cu_read_registers[7] = state;
+
 
     wire[31:0] unrolled_data [N_CHANNELS-1:0];
     wire unrolled_valid [N_CHANNELS-1:0];
@@ -92,7 +98,8 @@ module trigger_engine #(
     enum reg [2:0] {
         wait_fill = 0,
         run = 1,
-        stop = 2
+        stop = 2, 
+        free_run = 3
     } state = wait_fill;
 
     reg [15:0] fill_ctr = 0;
@@ -109,7 +116,6 @@ module trigger_engine #(
             end
             run : begin
                 if(selected_valid)begin
-                   
                     case (trigger_mode)
                         0: begin //RISING EDGE TRIGGER
                             trigger_out <= rising_edge;
@@ -122,14 +128,30 @@ module trigger_engine #(
                         end
                     endcase
                 end
+                if(trigger_out && acquisition_mode ==1)begin
+                    state <= stop;
+                end
+                if(acquisition_mode == 2)begin
+                    state <= free_run;
+                end
             end
             stop : begin
-                if(restart_acquiisition)
+                trigger_out <= 0;
+                if(rearm_trigger || acquisition_mode !=1)begin
                     state <= run;
+                end
+                if(acquisition_mode == 2)begin
+                    state <= free_run;
+                end
+            end
+            free_run : begin
+                trigger_out <= 1;
+                if(acquisition_mode !=2)begin
+                    state <= run;
+                    trigger_out <= 0;
+                end
             end
         endcase
-
-        
     end
 
 
@@ -155,25 +177,37 @@ endmodule
             {
                 "name": "buffer_addr_low",
                 "offset": "0x8",
-                "description": "Channel used to trigger the scope",
+                "description": "Lower 32 bits of the target dma buffer address",
                 "direction": "RW"  
             },
             {
                 "name": "buffer_addr_high",
                 "offset": "0xC",
-                "description": "Point in the buffer where the trigger will be",
+                "description": "Higher 32 bits of the target dma buffer address",
                 "direction": "RW"  
             },
             {
                 "name": "channel_selector",
                 "offset": "0x10",
-                "description": "Writing an address to this register triggers the related signal",
+                "description": "Channel used to trigger the scope",
                 "direction": "RW"  
             },
             {
                 "name": "trigger_point",
                 "offset": "0x14",
-                "description": "Acknowledge the last captured trigger",
+                "description": "Point in the buffer where the trigger will be positioned",
+                "direction": "RW"  
+            },
+            {
+                "name": "acquisition_mode",
+                "offset": "0x18",
+                "description": "Acquisition mode selector",
+                "direction": "RW"  
+            },
+            {
+                "name": "rearm_trigger",
+                "offset": "0x1C",
+                "description": "Rearm the single acquisition trigger",
                 "direction": "RW"  
             }
             ]
