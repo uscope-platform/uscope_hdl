@@ -69,6 +69,7 @@ module trigger_engine #(
 
 
     wire[31:0] unrolled_data [N_CHANNELS-1:0];
+    wire [15:0] unrolled_user [N_CHANNELS-1:0];
     wire unrolled_valid [N_CHANNELS-1:0];
 
     generate
@@ -76,24 +77,64 @@ module trigger_engine #(
         for(i = 0; i<N_CHANNELS; i++)begin
             assign unrolled_data[i] = data_in[i].data;
             assign unrolled_valid[i] = data_in[i].valid;
+            assign unrolled_user[i] = data_in[i].user;
         end
     endgenerate
 
 
     wire [31:0] selected_data;
+    wire [15:0] selected_user;
     wire selected_valid;
     assign selected_data = unrolled_data[channel_selector];
+    assign selected_user = unrolled_user[channel_selector];
     assign selected_valid = unrolled_valid[channel_selector];
 
     initial trigger_out <= 0;
 
-    reg [31:0] selected_data_dly;
+    axi_stream ftoi_in();
+    axi_stream ftoi_out();
+    axi_stream fixed_out();
+
+    assign ftoi_in.data = selected_data;
+    assign ftoi_in.user = selected_user;
+    assign ftoi_in.valid = selected_valid;
+
+    float_to_fixed_wrapper ftoi(
+        .clock(clock),
+        .data_in(ftoi_in),
+        .data_out(ftoi_out)
+    );
+
+
+    register_slice #(
+        .DATA_WIDTH(32),
+        .DEST_WIDTH(32),
+        .USER_WIDTH(32),
+        .N_STAGES(1),
+        .READY_REG(0)
+    ) input_matching_delay (
+        .clock(clock),
+        .reset(reset),
+        .in(ftoi_in),
+        .out(fixed_out)
+    );
+
+
+
+    reg [31:0] trigger_comparator_in_dly;
     wire rising_edge, falling_edge;
 
-    assign rising_edge = selected_data >= trigger_level && selected_data_dly < trigger_level;
-    assign falling_edge = selected_data <= trigger_level && selected_data_dly > trigger_level;
+    assign rising_edge  = $signed(trigger_comparator_in) >= $signed(trigger_level) && $signed(trigger_comparator_in_dly) < $signed(trigger_level);
+    assign falling_edge = $signed(trigger_comparator_in) <= $signed(trigger_level) && $signed(trigger_comparator_in_dly) > $signed(trigger_level);
 
-
+    reg [31:0] trigger_comparator_in;
+    always_comb begin
+        if(is_axis_float(fixed_out.user))begin
+            trigger_comparator_in <= ftoi_out.data;
+        end else begin
+            trigger_comparator_in <= fixed_out.data;
+        end
+    end
 
     enum reg [2:0] {
         wait_fill = 0,
@@ -106,7 +147,7 @@ module trigger_engine #(
 
 
     always @(posedge clock) begin
-        selected_data_dly <= selected_data;
+        trigger_comparator_in_dly <= trigger_comparator_in;
         case (state)
             wait_fill : begin
                 if(fill_ctr == MEMORY_DEPTH)begin
@@ -115,7 +156,7 @@ module trigger_engine #(
                 fill_ctr <= fill_ctr + 1;
             end
             run : begin
-                if(selected_valid)begin
+                if(fixed_out.valid)begin
                     case (trigger_mode)
                         0: begin //RISING EDGE TRIGGER
                             trigger_out <= rising_edge;
@@ -207,7 +248,7 @@ endmodule
             {
                 "name": "rearm_trigger",
                 "offset": "0x1C",
-                "description": "Rearm the single acquisition trigger",
+                "description": "Rearm the single acquisition trigger upon write and read acquisition status",
                 "direction": "RW"  
             }
             ]

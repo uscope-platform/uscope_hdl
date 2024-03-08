@@ -52,6 +52,11 @@ begin
 end
 endfunction
 
+function  is_axis_float (input [15:0] data);
+begin
+    is_axis_float = data[5];
+end
+endfunction
 interface axi_stream #(DATA_WIDTH = 32, USER_WIDTH = 32, DEST_WIDTH = 32);
     logic [DATA_WIDTH-1:0] data;
     logic [USER_WIDTH-1:0] user;

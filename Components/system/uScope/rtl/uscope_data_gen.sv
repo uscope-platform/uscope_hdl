@@ -22,7 +22,8 @@ module uscope_data_gen #(
     parameter OUTPUT_BIAS = 0,
     parameter DEST_START = 1,
     parameter N_DEST = 6,
-    parameter DATA_TYPE="INTEGER"
+    parameter DATA_TYPE="INTEGER",
+    parameter DATA_SRC_FILE=""
 )(
     input wire        clock,
     input wire        reset,
@@ -44,8 +45,23 @@ module uscope_data_gen #(
     wire [31:0] selected_data;
     wire [15:0] selected_user;
     
-    assign selected_data = OUTPUT_BIAS + data_gen_ctr + 2000*(dest_counter - DEST_START);
-    assign selected_user = get_axis_metadata(16, 1, 0);
+    generate
+        if(DATA_SRC_FILE=="")begin
+            assign selected_data = OUTPUT_BIAS + data_gen_ctr + 2000*(dest_counter - DEST_START);
+            assign selected_user = get_axis_metadata(16, 1, 0);
+        end else begin
+        
+            reg [31:0] test_data [1023:0];
+
+            initial begin
+                $readmemh(DATA_SRC_FILE, test_data);
+            end
+            assign selected_data = test_data[data_gen_ctr];
+            assign selected_user = get_axis_metadata(32, 0, 1);
+
+        end
+
+    endgenerate
 
     enum logic [2:0]{
         fill_buffers = 0,
