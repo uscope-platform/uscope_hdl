@@ -4,7 +4,9 @@
         "target_part":"xc7z020clg400",
         "synth_modules":[],
         "synth_tl": "fCore",
-        "sim_modules":[],
+        "sim_modules":[
+            "fCore_conditional_select_tb"
+        ],
         "sim_tl":"fCore_tb",
         "include_paths":[
             "Components/Common"

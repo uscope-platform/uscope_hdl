@@ -16,24 +16,56 @@
 `timescale 10ns / 1ns
 `include "interfaces.svh"
 `include "axi_lite_BFM.svh"
-`include "axis_BFM.svh"
+`include "axi_full_bfm.svh"
 
 module fCore_conditional_select_tb();
 
-    defparam uut.executor.RECIPROCAL_PRESENT = RECIPROCAL_PRESENT;
+
+    reg core_clk, rst, run, done, efi_start;
+
+    axi_stream efi_arguments();
+    axi_stream efi_results();
+    axi_lite axi_master();
+
+    AXI axi_programmer();
+    AXI fCore_programming_bus();
+
+    axi_stream axis_dma_write();
+    axi_stream dma_read_request();
+    axi_stream dma_read_response();
+
+    axi_lite_BFM axil_bfm;
+     
+
+    axi_xbar #(
+        .NM(1),
+        .NS(1),
+        .ADDR_WIDTH(32),
+        .SLAVE_ADDR('{0}),
+        .SLAVE_MASK('{1{'hfF0000000}})
+    ) programming_interconnect  (
+        .clock(clock),
+        .reset(reset),
+        .slaves('{axi_programmer}),
+        .masters(fCore_programming_bus)
+    );
+
+    event core_loaded;
+
     fCore #(
         .FAST_DEBUG("TRUE"),
         .MAX_CHANNELS(9),
-        .INIT_FILE("/home/fils/git/uscope_hdl/public/Components/system/fcore/tb/test_efi.mem")
+        .CONDITIONAL_SELECT_IMPLEMENTED(1)
     ) uut(
         .clock(core_clk),
+        .axi_clock(core_clk),
         .reset(rst),
+        .reset_axi(rst),
         .run(run),
         .done(done),
-        .efi_done(efi_done),
         .efi_start(efi_start),
         .control_axi_in(axi_master),
-        .axi(axi_programmer),
+        .axi(fCore_programming_bus),
         .axis_dma_write(axis_dma_write),
         .axis_dma_read_request(dma_read_request),
         .axis_dma_read_response(dma_read_response),
@@ -41,30 +73,42 @@ module fCore_conditional_select_tb();
         .efi_results(efi_results)
     );
 
+
+
+
     //clock generation
     initial core_clk = 0; 
     always #0.5 core_clk = ~core_clk;
 
 
+    axi_full_bfm  bfm_in;
+
     reg [31:0] reg_readback;
     // reset generation
     initial begin
-        write_BFM = new(write,1);
-        axis_dma_write_BFM = new(axis_dma_write,1);
-        read_req_BFM = new(read_req, 1);
-        read_resp_BFM = new(read_resp, 1);
-        read_resp.ready = 1;
+        axil_bfm = new(axi_master,1);
+        bfm_in = new(axi_programmer, 1);
         rst <=0;
-        axis_dma_write.initialize();
-        op_a.initialize();
-        op_res.initialize();
-        op_res.ready <= 1;
         run <= 0;
         #10.5;
         #20.5 rst <=1;
-        #35 write_BFM.write_dest(8,32'h43c00000);
-        #4; run <= 1;
-        #5 run <=  0;
+        #40;
+        @(core_loaded);
+        #35 axil_bfm.write(32'h43c00000, 8);
+        #4 run <= 1;
+        #1 run <=  0;
+    end
+
+
+    reg [31:0] prog [179:0];
+
+    initial begin
+        $readmemh("/home/fils/git/uscope_hdl/public/Components/system/fcore/tb/micro_bench/csel/csel.mem", prog);
+        #50.5;
+        for(integer i = 0; i<180; i++)begin
+            #10 bfm_in.write(i*4, prog[i]);
+        end
+        ->core_loaded;
     end
 
 

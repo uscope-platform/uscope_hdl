@@ -1,0 +1,12 @@
+{
+    "input_file": "test_csel.c",
+    "output": {
+        "format":"mem",
+        "file": "csel.mem"
+    },
+    "force": true,
+    "dma_io": {
+        "a":{"type": "input", "address":2},
+        "c":{"type": "output", "address":4}
+    }
+}
