@@ -119,7 +119,7 @@ module fCore_conditional_select_tb();
             $finish; 
         end
 
-        $display ("SIMULATION SUCCESSFULL");
+        $display ("SIMULATION SUCCESSFUL");
         $finish; 
     end
 
