@@ -120,6 +120,15 @@ module fCore_FP_ALU #(
         .USER_WIDTH(REGISTER_ADDR_WIDTH)
     ) early_abs_result();
 
+    axi_stream #(
+        .USER_WIDTH(REGISTER_ADDR_WIDTH)
+    ) csel_result();
+ 
+    axi_stream #(
+        .USER_WIDTH(REGISTER_ADDR_WIDTH)
+    ) early_csel_result();
+
+
     generate 
         if(RECIPROCAL_PRESENT==1)begin
 
@@ -229,6 +238,11 @@ module fCore_FP_ALU #(
                 result.dest <= saturation_result.user;
                 result.valid <= 1;
             end
+            fcore_isa::CSEL:begin
+                result.data <= csel_result.data;
+                result.dest <= csel_result.user;
+                result.valid <= 1;
+            end
             default: begin
                 result.data <= 0;
                 result.dest <= 0;
@@ -239,7 +253,7 @@ module fCore_FP_ALU #(
 
 
     ////////////////////////////////////////////////
-    //                    LOGIC                   //
+    //              ABSOLUTE VALUE                //
     ////////////////////////////////////////////////
     
     always@(posedge clock) begin
@@ -269,6 +283,39 @@ module fCore_FP_ALU #(
         .in(early_abs_result),
         .out(abs_result)
     );
+
+
+    ////////////////////////////////////////////////
+    //              ABSOLUTE VALUE                //
+    ////////////////////////////////////////////////
+    
+    generate
+        if(CONDITIONAL_SELECT_IMPLEMENTED==1)begin
+            always@(posedge clock) begin
+                early_csel_result.valid <= 0;
+                early_csel_result.user <= 0;
+                early_csel_result.data <= 0;
+                if(operand_a.valid)begin
+                    early_csel_result.valid <= 1;
+                    early_csel_result.user <= operand_a.user;
+                    early_csel_result.data <= operand_a.data[0] ? operand_b.data : operand_c.data;  
+                end
+            end
+
+            register_slice #(
+                .DATA_WIDTH(32),
+                .DEST_WIDTH(32),
+                .USER_WIDTH(32),
+                .N_STAGES(PIPELINE_DEPTH-1),
+                .READY_REG(0)
+            ) csel_pipeline_adapter (
+                .clock(clock),
+                .reset(reset),
+                .in(early_csel_result),
+                .out(csel_result)
+            );
+        end
+    endgenerate
 
     ////////////////////////////////////////////////
     //                   LOGIC                    //
@@ -345,8 +392,7 @@ module fCore_FP_ALU #(
 
     fCore_compare_unit #(
         .FULL_COMPARE(FULL_COMPARE),
-        .PIPELINE_DEPTH(PIPELINE_DEPTH),
-        .CONDITIONAL_SELECT_IMPLEMENTED(CONDITIONAL_SELECT_IMPLEMENTED)
+        .PIPELINE_DEPTH(PIPELINE_DEPTH)
     )compare_unit(
         .clock(clock),
         .reset(reset),

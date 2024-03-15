@@ -19,8 +19,7 @@ import fcore_isa::*;
 
 module fCore_compare_unit #(
     FULL_COMPARE = 0,
-    PIPELINE_DEPTH = 5,
-    CONDITIONAL_SELECT_IMPLEMENTED = 1
+    PIPELINE_DEPTH = 5
 )(
     input wire clock,
     input wire reset,

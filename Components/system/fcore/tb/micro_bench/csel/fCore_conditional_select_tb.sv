@@ -21,33 +21,35 @@
 module fCore_conditional_select_tb();
 
 
-    reg core_clk, rst, run, done, efi_start;
+    reg clock, reset, run, done, efi_start;
 
     axi_stream efi_arguments();
     axi_stream efi_results();
+
+    axi_lite_BFM axil_bfm;
     axi_lite axi_master();
 
-    AXI axi_programmer();
-    AXI fCore_programming_bus();
+
+    axi_full_bfm #(.ADDR_WIDTH(32)) bfm_in;
+    AXI #(.ADDR_WIDTH(32)) axi_programmer();
+    AXI #(.ADDR_WIDTH(32)) fCore_programming_bus();
 
     axi_stream axis_dma_write();
     axi_stream dma_read_request();
     axi_stream dma_read_response();
 
-    axi_lite_BFM axil_bfm;
-     
 
     axi_xbar #(
         .NM(1),
         .NS(1),
         .ADDR_WIDTH(32),
         .SLAVE_ADDR('{0}),
-        .SLAVE_MASK('{1{'hfF0000000}})
+        .SLAVE_MASK('{1{'hfF00000}})
     ) programming_interconnect  (
         .clock(clock),
         .reset(reset),
         .slaves('{axi_programmer}),
-        .masters(fCore_programming_bus)
+        .masters('{fCore_programming_bus})
     );
 
     event core_loaded;
@@ -57,10 +59,10 @@ module fCore_conditional_select_tb();
         .MAX_CHANNELS(9),
         .CONDITIONAL_SELECT_IMPLEMENTED(1)
     ) uut(
-        .clock(core_clk),
-        .axi_clock(core_clk),
-        .reset(rst),
-        .reset_axi(rst),
+        .clock(clock),
+        .axi_clock(clock),
+        .reset(reset),
+        .reset_axi(reset),
         .run(run),
         .done(done),
         .efi_start(efi_start),
@@ -77,26 +79,48 @@ module fCore_conditional_select_tb();
 
 
     //clock generation
-    initial core_clk = 0; 
-    always #0.5 core_clk = ~core_clk;
+    initial clock = 0; 
+    always #0.5 clock = ~clock;
 
-
-    axi_full_bfm  bfm_in;
 
     reg [31:0] reg_readback;
     // reset generation
     initial begin
         axil_bfm = new(axi_master,1);
         bfm_in = new(axi_programmer, 1);
-        rst <=0;
+        reset <=0;
         run <= 0;
         #10.5;
-        #20.5 rst <=1;
+        #20.5 reset <=1;
         #40;
         @(core_loaded);
         #35 axil_bfm.write(32'h43c00000, 8);
+        #35 axil_bfm.write(32'h43c00004, $shortrealtobits(1.0));
         #4 run <= 1;
         #1 run <=  0;
+        @(done);
+        #40;
+        #35 axil_bfm.read(32'h43c00010, reg_readback);
+        #35 axil_bfm.read(32'h43c00010, reg_readback);
+        if(reg_readback != $shortrealtobits(118.0))begin
+            $display ("RESULT ERROR: Wrong result on true condition");
+            $finish; 
+        end
+        #1000;
+        #35 axil_bfm.write(32'h43c00004, $shortrealtobits(-1.0));
+        
+        #4 run <= 1;
+        #1 run <=  0;
+        @(done);
+        #35 axil_bfm.read(32'h43c00010, reg_readback);
+        #35 axil_bfm.read(32'h43c00010, reg_readback);
+        if(reg_readback != $shortrealtobits(168.0))begin
+            $display ("RESULT ERROR: Wrong result on False condition");
+            $finish; 
+        end
+
+        $display ("SIMULATION SUCCESSFULL");
+        $finish; 
     end
 
 
@@ -105,8 +129,8 @@ module fCore_conditional_select_tb();
     initial begin
         $readmemh("/home/fils/git/uscope_hdl/public/Components/system/fcore/tb/micro_bench/csel/csel.mem", prog);
         #50.5;
-        for(integer i = 0; i<180; i++)begin
-            #10 bfm_in.write(i*4, prog[i]);
+        for(integer i = 0; i<30; i++)begin
+            #5 bfm_in.write(i*4, prog[i]);
         end
         ->core_loaded;
     end

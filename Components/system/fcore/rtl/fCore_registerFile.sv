@@ -20,7 +20,7 @@ module fCore_registerFile #(
     parameter REGISTER_WIDTH = 32,
     FILE_DEPTH = 12, 
     REG_PER_CHANNEL = 16,
-    BITMANIP_IMPLEMENTED=0,
+    OP_C_ENABLED=0,
     EFI_IMPLEMENTED = 0
 )(
     input wire clock,
@@ -93,7 +93,7 @@ module fCore_registerFile #(
     generate
 
 
-        if(BITMANIP_IMPLEMENTED==1) begin
+        if(OP_C_ENABLED==1) begin
         
             reg [REGISTER_WIDTH-1:0] ram_c_read_data;
             reg [$clog2(FILE_DEPTH)-1:0] ram_c_read_addr;

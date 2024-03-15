@@ -205,7 +205,7 @@ module fCore #(
     end
 
     generate
-        if(BITMANIP_IMPLEMENTED==1)begin
+        if(BITMANIP_IMPLEMENTED==1 || CONDITIONAL_SELECT_IMPLEMENTED==1)begin
             assign operand_c.ready = operand_c_dly.ready;
             assign operand_c_dly.data = operand_data_c;
             
@@ -321,7 +321,7 @@ module fCore #(
         .REGISTER_WIDTH(DATAPATH_WIDTH),
         .FILE_DEPTH(REG_FILE_SIZE),
         .REG_PER_CHANNEL(REGISTER_FILE_DEPTH),
-        .BITMANIP_IMPLEMENTED(BITMANIP_IMPLEMENTED),
+        .OP_C_ENABLED(BITMANIP_IMPLEMENTED || CONDITIONAL_SELECT_IMPLEMENTED),
         .EFI_IMPLEMENTED(EFI_IMPLEMENTED)
     ) registers(
         .clock(clock),
