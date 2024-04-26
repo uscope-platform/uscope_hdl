@@ -24,8 +24,7 @@ module sigma_delta_processor #(
     input wire [N_CHANNELS-1:0] data_in,
     input wire sync,
     axi_lite.slave axi_in,
-    axi_stream.master data_out_1,
-    axi_stream.master data_out_2,
+    axi_stream.master data_out,
     output wire clock_out
 );
 
@@ -75,30 +74,42 @@ module sigma_delta_processor #(
 
     assign samplink_clk =  sampling_ctr[clock_selector];
 
-    sigma_delta_channel #(
-        .DATA_PATH_WIDTH(filter_width),
-        .OUTPUT_WIDTH(output_width),
-        .output_shift_size(output_shift)
-    ) channel_a (
-        .clock(clock),
-        .reset(reset),
-        .sd_data_in(data_in[0]),
-        .sd_clock_in(clock_out),
-        .output_clock(samplink_clk),
-        .data_out(data_out_1)
-    );
+    genvar i;
 
-    sigma_delta_channel #(
-        .DATA_PATH_WIDTH(filter_width),
-        .OUTPUT_WIDTH(output_width),
-        .output_shift_size(output_shift)
-    ) channel_b (
+    axi_stream channel_data_out[N_CHANNELS]();
+
+    generate
+
+        for (i = 0; i<N_CHANNELS; i++) begin
+            sigma_delta_channel #(
+                .DATA_PATH_WIDTH(filter_width),
+                .OUTPUT_WIDTH(output_width),
+                .OUTPUT_SHIFT_SIZE(output_shift),
+                .CHANNEL_INDICATOR(i)
+            ) data_channel (
+                .clock(clock),
+                .reset(reset),
+                .sd_data_in(data_in[i]),
+                .sd_clock_in(clock_out),
+                .output_clock(samplink_clk),
+                .data_out(channel_data_out[i])
+            );
+        end
+
+    endgenerate
+
+
+    axi_stream_combiner #(
+        .INPUT_DATA_WIDTH(32), 
+        .OUTPUT_DATA_WIDTH(32), 
+        .DEST_WIDTH(8), 
+        .USER_WIDTH(8),
+        .N_STREAMS(2)
+    )output_combiner(
         .clock(clock),
         .reset(reset),
-        .sd_data_in(data_in[1]),
-        .sd_clock_in(clock_out),
-        .output_clock(samplink_clk),
-        .data_out(data_out_2)
+        .stream_in(channel_data_out),
+        .stream_out(data_out)
     );
 
 

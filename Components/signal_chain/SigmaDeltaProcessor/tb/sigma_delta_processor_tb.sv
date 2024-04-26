@@ -30,13 +30,9 @@ module sigma_delta_processor_tb();
 
 
     axi_stream #(
-        .DATA_WIDTH(16)
+        .DATA_WIDTH(32)
     ) filter_out();
 
-
-    axi_stream #(
-        .DATA_WIDTH(16)
-    ) filter_out_2();
 
     reg sd_in = 0;
     wire sd_clk;
@@ -50,10 +46,11 @@ module sigma_delta_processor_tb();
         .clock_out(sd_clk),
         .sync(1),
         .axi_in(cfg_axi),
-        .data_out_1(filter_out),
-        .data_out_2(filter_out_2)
+        .data_out(filter_out)
     );
  
+
+
 
     always begin
         clk = 1'b1;
@@ -85,7 +82,19 @@ module sigma_delta_processor_tb();
         @(config_done);
 
     end
-    
+
+    reg [31:0] output_1;
+    reg [31:0] output_2;
+
+    always_ff@(posedge clk)begin
+        if(filter_out.valid)begin
+            if(filter_out.dest == 0)begin
+                output_1 <= filter_out.data;
+            end else if(filter_out.dest ==1) begin
+                output_2 <= filter_out.data;
+            end
+        end
+    end
 
     reg [15:0] stimulus_ctr = 0;
 
