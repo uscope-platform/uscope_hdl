@@ -24,21 +24,21 @@ module sigma_delta_integration_stage #(
     output wire [DATA_PATH_WIDTH-1:0] data_out
 );
 
-    reg [23:0] accumulation [2:0] = '{0,0,0};
+    reg [DATA_PATH_WIDTH-1:0] accumulation [2:0] = '{0,0,0};
     assign data_out = accumulation[2];
 
     sd_integrator #(
-        .DATA_PATH_WIDTH(24)
+        .DATA_PATH_WIDTH(DATA_PATH_WIDTH)
     ) int_0 (
         .clock(clock),
         .reset(reset),
         .data_clock(modulation_clock),
-        .data_in({23'b0,data_in}),
+        .data_in({{DATA_PATH_WIDTH-1{1'b0}},data_in}),
         .data_out(accumulation[0])
     );
 
     sd_integrator #(
-        .DATA_PATH_WIDTH(24)
+        .DATA_PATH_WIDTH(DATA_PATH_WIDTH)
     ) int_1 (
         .clock(clock),
         .reset(reset),
@@ -48,7 +48,7 @@ module sigma_delta_integration_stage #(
     );
 
     sd_integrator #(
-        .DATA_PATH_WIDTH(24)
+        .DATA_PATH_WIDTH(DATA_PATH_WIDTH)
     ) int_2 (
         .clock(clock),
         .reset(reset),

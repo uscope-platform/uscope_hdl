@@ -93,7 +93,7 @@ module sigma_delta_processor_tb();
          if(stimulus_ctr<=44000)begin
             stimulus_ctr <= stimulus_ctr +1;
         end
-        sd_in <= stimulus[stimulus_ctr];
+        sd_in <= stimulus[44000-stimulus_ctr];
     end
 
 endmodule
