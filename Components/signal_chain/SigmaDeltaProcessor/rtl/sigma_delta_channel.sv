@@ -30,7 +30,7 @@ module sigma_delta_channel #(
 
     localparam output_shift_size = DATA_PATH_WIDTH - OUTPUT_WIDTH;
 
-    reg [23:0]  integration_out;
+    reg [DATA_PATH_WIDTH-1:0]  integration_out;
 
     sigma_delta_integration_stage #(
         .DATA_PATH_WIDTH(DATA_PATH_WIDTH)
@@ -42,7 +42,7 @@ module sigma_delta_channel #(
         .data_out(integration_out)
     );
 
-    wire [23:0] differentiation_out;
+    wire [DATA_PATH_WIDTH-1:0] differentiation_out;
 
     sigma_delta_differentiation_stage #( 
         .DATA_PATH_WIDTH(DATA_PATH_WIDTH)
@@ -56,7 +56,7 @@ module sigma_delta_channel #(
 
     // OUTPUT STAGE
     reg output_clock_del = 0;
-    reg [15:0] unsigned_out;
+    reg [OUTPUT_WIDTH-1:0] unsigned_out;
     always @(posedge clock) begin
 
         data_out.valid <= 0;

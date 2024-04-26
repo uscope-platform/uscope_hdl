@@ -29,6 +29,12 @@ module sigma_delta_processor #(
     output wire clock_out
 );
 
+    localparam decimation_ratio = 128;
+    localparam clock_selector = $clog2(decimation_ratio)-1;
+    localparam [7:0] filter_width_map [6:0] = '{ 24, 21, 18, 15, 12, 9, 6 };
+
+    localparam [7:0] filter_width = filter_width_map[clock_selector-1];
+
 
     reg mod_clk;
     reg [4:0] modulator_clkgen = 0;
@@ -52,23 +58,19 @@ module sigma_delta_processor #(
 
 
 
-    reg [7:0]   sampling_ctr;
+    reg [7:0] sampling_ctr = 0;
     wire samplink_clk;
 
-    // DECIMATION CLOCK GENERATOR
-    always@(posedge clock_out_inner) begin
-        if(~reset) begin
-            sampling_ctr  <= 0;
-        end else begin
-            sampling_ctr <= sampling_ctr + 1;
-        end
+    reg clock_out_inner_del;
+
+    always@(posedge clock) begin
+        clock_out_inner_del <= clock_out_inner;
+        if(clock_out_inner & ~clock_out_inner_del) sampling_ctr <= sampling_ctr + 1;
     end
 
-    assign samplink_clk =  sampling_ctr[7];
+    assign samplink_clk =  sampling_ctr[clock_selector];
 
-
-
-    sigma_delta_channel #(.DATA_PATH_WIDTH(DATA_PATH_WIDTH)) channel_a (
+    sigma_delta_channel #(.DATA_PATH_WIDTH(filter_width)) channel_a (
         .clock(clock),
         .reset(reset),
         .sd_data_in(data_in[0]),
@@ -77,7 +79,7 @@ module sigma_delta_processor #(
         .data_out(data_out_1)
     );
 
-    sigma_delta_channel #(.DATA_PATH_WIDTH(DATA_PATH_WIDTH)) channel_b (
+    sigma_delta_channel #(.DATA_PATH_WIDTH(filter_width)) channel_b (
         .clock(clock),
         .reset(reset),
         .sd_data_in(data_in[1]),
