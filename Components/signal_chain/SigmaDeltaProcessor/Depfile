@@ -1,0 +1,22 @@
+{
+    "general":{
+        "project_name":"sigma_delta_processor",
+        "target_part":"xc7z020clg400",
+        "synth_modules":[],
+        "synth_tl": "sigma_delta_processor",
+        "sim_modules":[],
+        "sim_tl":"sigma_delta_processor_tb",
+        "include_paths":[
+            "Components/Common"
+        ]
+    },
+    "scripts":[
+        {
+            "name":"set_properties.tcl",
+            "type": "tcl",
+            "arguments":[]
+        }
+    ],
+    "excluded_modules":[],
+    "constraints": []
+}
