@@ -17,7 +17,8 @@
 
 
 module sigma_delta_channel #(
-    parameter DATA_PATH_WIDTH = 24
+    parameter DATA_PATH_WIDTH = 24,
+    parameter OUTPUT_WIDTH = 16
 )(
     input wire clock,
     input wire reset,
@@ -27,6 +28,7 @@ module sigma_delta_channel #(
     axi_stream.master data_out
 );
 
+    localparam output_shift_size = DATA_PATH_WIDTH - OUTPUT_WIDTH;
 
     reg [23:0]  integration_out;
 
@@ -60,8 +62,8 @@ module sigma_delta_channel #(
         data_out.valid <= 0;
         output_clock_del <= output_clock;
         if(output_clock & ~output_clock_del) begin
-            unsigned_out <= differentiation_out >>8;
-            data_out.data <= unsigned_out - (1<<15);
+            unsigned_out <= differentiation_out >> output_shift_size;
+            data_out.data <= unsigned_out - (1<<(OUTPUT_WIDTH-1));
             data_out.valid <= 1;
         end
     end
