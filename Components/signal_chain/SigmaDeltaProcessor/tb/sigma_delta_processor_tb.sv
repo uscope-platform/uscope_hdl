@@ -23,6 +23,8 @@ module sigma_delta_processor_tb();
 
     reg stimulus [44000:0];
 
+    parameter  N_CHANNELS = 4;
+
     event config_done;
     
     axi_lite cfg_axi();
@@ -34,26 +36,23 @@ module sigma_delta_processor_tb();
     ) filter_out();
 
 
-    reg sd_in = 0;
     wire sd_clk;
-    reg out_clk;
 
-    
+    reg [N_CHANNELS-1:0] sd_in = 0;
+
     sigma_delta_processor #(
-        .DECIMATION_RATIO(64)
+        .DECIMATION_RATIO(64),
+        .N_CHANNELS(N_CHANNELS)
     ) UUT(
         .clock(clk),
         .reset(reset),
-        .data_in({sd_in, ~sd_in}),
+        .data_in(sd_in),
         .clock_out(sd_clk),
         .sync(1),
         .axi_in(cfg_axi),
         .data_out(filter_out)
     );
  
-
-
-
     always begin
         clk = 1'b1;
         #0.5 clk = 1'b0;
@@ -79,33 +78,40 @@ module sigma_delta_processor_tb();
 
 
 
-    initial begin
-        @(config_done);
+    reg [31:0] outputs [N_CHANNELS-1:0];
 
+ 
+
+    reg [15:0] stimulus_ctr [N_CHANNELS-1:0];
+    genvar i;
+
+    initial begin
+        for( integer j = 0; j< N_CHANNELS; j++)begin
+            stimulus_ctr[j] = 40000/N_CHANNELS*j*0.2;
+        end
     end
 
-    reg [31:0] output_1;
-    reg [31:0] output_2;
+    for( i = 0; i< N_CHANNELS; i++)begin
 
-    always_ff@(posedge clk)begin
-        if(filter_out.valid)begin
-            if(filter_out.dest == 0)begin
-                output_1 <= filter_out.data;
-            end else if(filter_out.dest ==1) begin
-                output_2 <= filter_out.data;
+
+        always_ff@(posedge clk)begin
+            if(filter_out.valid)begin
+                if(filter_out.dest == i)begin
+                    outputs[i] <= filter_out.data;
+                end
             end
         end
-    end
 
-    reg [15:0] stimulus_ctr = 0;
 
-    always_ff@(posedge sd_clk)begin
-        if(stimulus_ctr<44000)begin
-            stimulus_ctr <= stimulus_ctr +1;
-        end else begin
-            stimulus_ctr <= 0;
+        always_ff@(posedge sd_clk)begin
+            if(stimulus_ctr[i]<40000)begin
+                stimulus_ctr[i] <= stimulus_ctr[i] +1;
+            end else begin
+                stimulus_ctr[i] <= 0;
+            end
+            sd_in[i] <= stimulus[stimulus_ctr[i]];
         end
-        sd_in <= stimulus[stimulus_ctr];
     end
+
 
 endmodule
