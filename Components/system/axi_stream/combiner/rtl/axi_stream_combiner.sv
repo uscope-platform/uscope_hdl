@@ -40,22 +40,42 @@ module axi_stream_combiner #(
 
     
     genvar i;
+    generate
+        if(BUFFER_DEPTH>=16)begin
+            for(i = 0; i<N_STREAMS; i++)begin
+            
+                axis_fifo_xpm #(
+                    .DATA_WIDTH(INPUT_DATA_WIDTH),
+                    .DEST_WIDTH(DEST_WIDTH),
+                    .USER_WIDTH(USER_WIDTH),
+                    .FIFO_DEPTH(BUFFER_DEPTH)
+                )input_buffers(
+                    .clock(clock),
+                    .reset(reset),
+                    .in(stream_in[i]),
+                    .out(stream_in_buf[i])
+                );
 
-    for(i = 0; i<N_STREAMS; i++)begin
+            end  
+        end else begin
+            for(i = 0; i<N_STREAMS; i++)begin
+            
+                axis_fifo #(
+                    .DATA_WIDTH(INPUT_DATA_WIDTH),
+                    .DEST_WIDTH(DEST_WIDTH),
+                    .USER_WIDTH(USER_WIDTH),
+                    .FIFO_DEPTH(BUFFER_DEPTH)
+                ) input_buffers (
+                    .clock(clock),
+                    .reset(reset),
+                    .in(stream_in[i]),
+                    .out(stream_in_buf[i])
+                );
+            end
+        end
         
-        axis_fifo_xpm #(
-            .DATA_WIDTH(INPUT_DATA_WIDTH),
-            .DEST_WIDTH(DEST_WIDTH),
-            .USER_WIDTH(USER_WIDTH),
-            .FIFO_DEPTH(BUFFER_DEPTH)
-        )input_buffers(
-            .clock(clock),
-            .reset(reset),
-            .in(stream_in[i]),
-            .out(stream_in_buf[i])
-        );
 
-    end  
+    endgenerate
 
     wire [N_STREAMS-1:0]valid_bus;
     wire [N_STREAMS-1:0] unrolled_tlast;
