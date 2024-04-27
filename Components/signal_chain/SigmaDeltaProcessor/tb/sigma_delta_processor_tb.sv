@@ -39,7 +39,9 @@ module sigma_delta_processor_tb();
     reg out_clk;
 
     
-    sigma_delta_processor UUT(
+    sigma_delta_processor #(
+        .DECIMATION_RATIO(64)
+    ) UUT(
         .clock(clk),
         .reset(reset),
         .data_in({sd_in, ~sd_in}),
@@ -58,7 +60,6 @@ module sigma_delta_processor_tb();
         #0.5;
     end
     
-
 
     initial begin
         $readmemh("/home/fils/git/uscope_hdl/public/Components/signal_chain/SigmaDeltaProcessor/tb/data.csv", stimulus);
@@ -99,10 +100,12 @@ module sigma_delta_processor_tb();
     reg [15:0] stimulus_ctr = 0;
 
     always_ff@(posedge sd_clk)begin
-         if(stimulus_ctr<=44000)begin
+        if(stimulus_ctr<44000)begin
             stimulus_ctr <= stimulus_ctr +1;
+        end else begin
+            stimulus_ctr <= 0;
         end
-        sd_in <= stimulus[44000-stimulus_ctr];
+        sd_in <= stimulus[stimulus_ctr];
     end
 
 endmodule

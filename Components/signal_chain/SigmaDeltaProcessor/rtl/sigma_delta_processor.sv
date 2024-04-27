@@ -17,7 +17,8 @@
 
 module sigma_delta_processor #(
     parameter DATA_PATH_WIDTH = 24,
-    parameter N_CHANNELS = 2
+    parameter N_CHANNELS = 2,
+    parameter DECIMATION_RATIO = 256
 )(
     input wire clock,
     input wire reset,
@@ -28,8 +29,14 @@ module sigma_delta_processor #(
     output wire clock_out
 );
 
-    localparam decimation_ratio = 256;
-    localparam clock_selector = $clog2(decimation_ratio)-1;
+
+    generate
+        if(DECIMATION_RATIO!=4 && DECIMATION_RATIO!=8 && DECIMATION_RATIO!=16 && DECIMATION_RATIO!=32 && DECIMATION_RATIO!=64 && DECIMATION_RATIO!=128 && DECIMATION_RATIO!=256) begin
+            $fatal(1,"INVALID DECIMATION RATIO: The decimation ratio must be one of the following values [4, 8, 16, 32, 64, 128, 256]\n\tCurrent value%d", DECIMATION_RATIO);
+        end
+    endgenerate
+
+    localparam clock_selector = $clog2(DECIMATION_RATIO)-1;
     //                                           256 128 64  32  16  8  4
     localparam [7:0] filter_width_map [6:0] = '{ 25, 22, 20, 16, 13, 10, 7 };
     localparam [7:0] output_width_map [6:0] = '{ 16, 16, 16, 14, 12, 8, 6 };
@@ -79,7 +86,6 @@ module sigma_delta_processor #(
     axi_stream channel_data_out[N_CHANNELS]();
 
     generate
-
         for (i = 0; i<N_CHANNELS; i++) begin
             sigma_delta_channel #(
                 .DATA_PATH_WIDTH(filter_width),
@@ -104,7 +110,8 @@ module sigma_delta_processor #(
         .OUTPUT_DATA_WIDTH(32), 
         .DEST_WIDTH(8), 
         .USER_WIDTH(8),
-        .N_STREAMS(2)
+        .BUFFER_DEPTH(4),
+        .N_STREAMS(N_CHANNELS)
     )output_combiner(
         .clock(clock),
         .reset(reset),
