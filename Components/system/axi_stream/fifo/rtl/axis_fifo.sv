@@ -56,13 +56,15 @@ always@(posedge clock) begin
         out.tlast <= 0;
         if(out.ready)begin
             if(fill_level != 0)begin
-                if(hp_mem_addr_r == FIFO_DEPTH-1) hp_mem_addr_r <= 0;
-                else hp_mem_addr_r <= hp_mem_addr_r+1;
                 {out.tlast,out.data[DATA_WIDTH-1:0]} <= fifo_memory[hp_mem_addr_r];
                 out.dest <= dest_memory[hp_mem_addr_r];
                 out.user <= user_memory[hp_mem_addr_r];
                 out.valid <=1;
-                fill_level<= fill_level-1;
+                if(out.valid)begin
+                    if(hp_mem_addr_r == FIFO_DEPTH-1) hp_mem_addr_r <= 0;
+                    else hp_mem_addr_r <= hp_mem_addr_r+1;
+                    fill_level<= fill_level-1;
+                end
             end
         end
         if(in.valid)begin
