@@ -27,7 +27,8 @@ module sigma_delta_processor #(
     input wire sync,
     axi_lite.slave axi_in,
     axi_stream.master data_out,
-    output wire clock_out
+    output wire clock_out,
+    axi_lite.slave axi_in
 );
 
 
@@ -37,28 +38,80 @@ module sigma_delta_processor #(
         end
     endgenerate
 
-    localparam main_clock_selector = $clog2(MAIN_DECIMATION_RATIO)-1;
     //                                           256 128 64  32  16  8  4
     localparam [7:0] filter_width_map [6:0] = '{ 25, 22, 20, 16, 13, 10, 7 };
     localparam [7:0] output_width_map [6:0] = '{ 16, 16, 16, 14, 12, 8, 6 };
     localparam [7:0] output_shift_map [6:0] = '{ 8,  5,  2,  1,  0, 1, 0};
 
 
-    localparam [7:0] main_filter_width = filter_width_map[main_clock_selector-1];
-    localparam [7:0] main_output_width = output_width_map[main_clock_selector-1];
-    localparam [7:0] main_output_shift = output_shift_map[main_clock_selector-1];
+    /////////////////////////////////////////////////////////////////////
+    //                          CONTROL SECTION                        //
+    /////////////////////////////////////////////////////////////////////
+
+
+    parameter N_REGISTERS = 2*N_CHANNELS+1;
+
+    reg [31:0] cu_write_registers [N_REGISTERS-1:0];
+    reg [31:0] cu_read_registers [N_REGISTERS-1:0];
+    
+
+    localparam [31:0] INIT_VAL [N_REGISTERS-1:0] = '{default:0};
+    
+    axil_simple_register_cu #(
+        .N_READ_REGISTERS(N_REGISTERS),
+        .N_WRITE_REGISTERS(N_REGISTERS),
+        .REGISTERS_WIDTH(32),
+        .ADDRESS_MASK('hfff),
+        .INITIAL_OUTPUT_VALUES(INIT_VAL)
+    ) CU (
+        .clock(clock),
+        .reset(reset),
+        .input_registers(cu_read_registers),
+        .output_registers(cu_write_registers),
+        .axil(axi_in)
+    );
+
+    assign cu_read_registers = cu_write_registers;
+
+    reg [3:0] main_clock_selector;
+    reg [3:0] comparator_clock_selector;
+    
+    assign main_clock_selector = cu_write_registers[0][3:0];
+    assign comparator_clock_selector = cu_write_registers[0][7:4];
+
+
+    reg [31:0] high_tresholds [N_CHANNELS-1:0];
+    reg [31:0] low_tresholds [N_CHANNELS-1:0];
+
+    genvar n;
+
+    generate
+        for(n=0; n<MAX_STEPS; n = n+1)begin
+            assign high_tresholds[n] = cu_write_registers[n+1];
+            assign low_tresholds[n] = cu_write_registers[2*n+1];
+        end
+    endgenerate
+
+
+    /////////////////////////////////////////////////////////////////////
+    //                      CLOCK GENERATION SECTION                   //
+    /////////////////////////////////////////////////////////////////////
+
+    localparam [7:0] main_filter_width = filter_width_map[main_clock_selector];
+    localparam [7:0] main_output_width = output_width_map[main_clock_selector];
+    localparam [7:0] main_output_shift = output_shift_map[main_clock_selector];
 
 
     localparam comparator_enabled = COMPARATOR_DECIMATION_RATIO>0;
 
-    localparam comparator_clock_selector = $clog2(MAIN_DECIMATION_RATIO)-1;
-    
 
-    localparam [7:0] comparator_filter_width = filter_width_map[comparator_clock_selector-1];
-    localparam [7:0] comparator_output_width = output_width_map[comparator_clock_selector-1];
-    localparam [7:0] comparator_output_shift = output_shift_map[comparator_clock_selector-1];
+    localparam [7:0] comparator_filter_width = filter_width_map[comparator_clock_selector];
+    localparam [7:0] comparator_output_width = output_width_map[comparator_clock_selector];
+    localparam [7:0] comparator_output_shift = output_shift_map[comparator_clock_selector];
 
     wire main_sampling_clock, comparator_sampling_clock;
+
+
 
     sigma_delta_clock_generator clk_gen (
         .clock(clock),
@@ -70,6 +123,12 @@ module sigma_delta_processor #(
         .sd_clock(clock_out)
     );
     genvar i;
+
+
+
+    /////////////////////////////////////////////////////////////////////
+    //                            FILTERS SECTION                      //
+    /////////////////////////////////////////////////////////////////////
 
     axi_stream main_data_out[N_CHANNELS]();
     axi_stream comparator_data_out[N_CHANNELS]();
@@ -112,6 +171,10 @@ module sigma_delta_processor #(
 
     endgenerate
 
+
+    /////////////////////////////////////////////////////////////////////
+    //             COMPARATORS AND OUTPUT SECTION                      //
+    /////////////////////////////////////////////////////////////////////
 
     axi_stream_combiner #(
         .INPUT_DATA_WIDTH(32), 
