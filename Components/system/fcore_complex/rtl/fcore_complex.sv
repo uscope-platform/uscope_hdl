@@ -37,8 +37,6 @@ module fcore_complex #(
     parameter MAX_CHANNELS = 4,
     parameter MOVER_ADDRESS_WIDTH = 32,
     parameter MOVER_CHANNEL_NUMBER=1,
-    parameter [MOVER_ADDRESS_WIDTH-1:0] MOVER_SOURCE_ADDR [MOVER_CHANNEL_NUMBER-1:0] = '{MOVER_CHANNEL_NUMBER{{MOVER_ADDRESS_WIDTH{1'b0}}}},
-    parameter [MOVER_ADDRESS_WIDTH-1:0] MOVER_TARGET_ADDR [MOVER_CHANNEL_NUMBER-1:0] = '{MOVER_CHANNEL_NUMBER{{MOVER_ADDRESS_WIDTH{1'b0}}}},
     parameter PRAGMA_MKFG_DATAPOINT_NAMES = "",
     parameter EFI_TYPE = "NONE",
     parameter AXI_ADDR_WIDTH = 32,
@@ -157,46 +155,9 @@ module fcore_complex #(
         .stream_in('{repeated_constant, core_dma_in}),
         .stream_out(merged_out)
     );
-
-    enum reg [1:0] {
-        wait_constants = 0,
-        idle = 1, 
-        wait_input_transfer_start = 2,
-        wait_input_transfer_end = 3 
-    } input_fsm = wait_constants;
-
-    wire core_done;
     
+    wire core_done;
     reg start_core;
-
-    always_ff @(posedge core_clock)begin
-        case (input_fsm)
-            wait_constants:begin
-                start_core <= start;
-                if(constant_out[0].valid | constant_out[1].valid | constant_out[2].valid)begin
-                    input_fsm <= idle;
-                end
-            end
-            idle: begin
-                start_core <= 0;
-                if(start)begin
-                    input_fsm <= wait_input_transfer_start;
-                end
-            end
-            wait_input_transfer_start: begin
-                if(merged_out.valid == 1)begin
-                    input_fsm <= wait_input_transfer_end;
-                end
-            end
-            wait_input_transfer_end: begin
-                 if(merged_out.valid == 0)begin
-                    start_core <= 1;
-                    input_fsm <= idle;
-                end
-            end
-        endcase
-    end
-
 
     fCore #(
         .PRAGMA_MKFG_MODULE_TOP(PRAGMA_MKFG_MODULE_TOP),
@@ -251,5 +212,44 @@ module fcore_complex #(
         .axi_in(dma_axi),
         .done(done)
     );
+
+    enum reg [1:0] {
+        wait_constants = 0,
+        idle = 1, 
+        wait_input_transfer_start = 2,
+        wait_input_transfer_end = 3 
+    } input_fsm = wait_constants;
+
+
+
+    always_ff @(posedge core_clock)begin
+        case (input_fsm)
+            wait_constants:begin
+                start_core <= start;
+                if(constant_out[0].valid | constant_out[1].valid | constant_out[2].valid)begin
+                    input_fsm <= idle;
+                end
+            end
+            idle: begin
+                start_core <= 0;
+                if(start)begin
+                    input_fsm <= wait_input_transfer_start;
+                end
+            end
+            wait_input_transfer_start: begin
+                if(merged_out.valid == 1)begin
+                    input_fsm <= wait_input_transfer_end;
+                end
+            end
+            wait_input_transfer_end: begin
+                 if(merged_out.valid == 0)begin
+                    start_core <= 1;
+                    input_fsm <= idle;
+                end
+            end
+        endcase
+    end
+
+
 
 endmodule

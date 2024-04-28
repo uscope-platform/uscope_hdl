@@ -16,7 +16,6 @@
 `include "interfaces.svh"
 
 module sigma_delta_processor #(
-    parameter DATA_PATH_WIDTH = 24,
     parameter N_CHANNELS = 2,
     parameter DECIMATION_RATIO = 256
 )(
