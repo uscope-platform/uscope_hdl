@@ -51,41 +51,24 @@ module sigma_delta_processor #(
 
     localparam comparator_enabled = COMPARATOR_DECIMATION_RATIO>0;
 
-
-    reg mod_clk;
-    reg [4:0] modulator_clkgen = 0;
-
-    always_ff @(posedge clock) begin
-        mod_clk <= 0;
-        if(modulator_clkgen==1)begin
-            modulator_clkgen <= 0;
-            mod_clk <= 1;
-        end else begin
-            modulator_clkgen <= modulator_clkgen+1;
-        end
-    end
+    localparam comparator_clock_selector = $clog2(MAIN_DECIMATION_RATIO)-1;
     
-    reg clock_out_inner = 0;
-    assign clock_out = clock_out_inner;
-    
-    always_ff @(posedge clock)begin
-        if(mod_clk) clock_out_inner <= ~clock_out_inner;
-    end
 
+    localparam [7:0] comparator_filter_width = filter_width_map[comparator_clock_selector-1];
+    localparam [7:0] comparator_output_width = output_width_map[comparator_clock_selector-1];
+    localparam [7:0] comparator_output_shift = output_shift_map[comparator_clock_selector-1];
 
+    wire main_sampling_clock, comparator_sampling_clock;
 
-    reg [7:0] sampling_ctr = 0;
-    wire sampling_clk;
-
-    reg clock_out_inner_del;
-
-    always@(posedge clock) begin
-        clock_out_inner_del <= clock_out_inner;
-        if(clock_out_inner & ~clock_out_inner_del) sampling_ctr <= sampling_ctr + 1;
-    end
-
-    assign sampling_clk =  sampling_ctr[clock_selector];
-
+    sigma_delta_clock_generator clk_gen (
+        .clock(clock),
+        .reset(reset),
+        .main_clock_selector(main_clock_selector),
+        .comparator_clock_selector(comparator_clock_selector),
+        .main_sampling_clock(main_sampling_clock),
+        .comparator_sampling_clock(comparator_sampling_clock),
+        .sd_clock(clock_out)
+    );
     genvar i;
 
     axi_stream main_data_out[N_CHANNELS]();
@@ -102,20 +85,14 @@ module sigma_delta_processor #(
                 .reset(reset),
                 .sd_data_in(data_in[i]),
                 .sd_clock_in(clock_out),
-                .output_clock(sampling_clk),
+                .output_clock(main_sampling_clock),
                 .data_out(main_data_out[i])
             );
         end
 
     if(comparator_enabled)begin
-        localparam comparator_clock_selector = $clog2(MAIN_DECIMATION_RATIO)-1;
-        
 
-        localparam [7:0] comparator_filter_width = filter_width_map[comparator_clock_selector-1];
-        localparam [7:0] comparator_output_width = output_width_map[comparator_clock_selector-1];
-        localparam [7:0] comparator_output_shift = output_shift_map[comparator_clock_selector-1];
-
-
+      
         for (i = 0; i<N_CHANNELS; i++) begin
             sigma_delta_channel #(
                 .DATA_PATH_WIDTH(comparator_filter_width),
@@ -127,7 +104,7 @@ module sigma_delta_processor #(
                 .reset(reset),
                 .sd_data_in(data_in[i]),
                 .sd_clock_in(clock_out),
-                .output_clock(sampling_clk),
+                .output_clock(comparator_sampling_clock),
                 .data_out(comparator_data_out[i])
             );
         end
