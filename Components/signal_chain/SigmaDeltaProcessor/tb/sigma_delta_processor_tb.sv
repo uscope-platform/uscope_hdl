@@ -41,7 +41,7 @@ module sigma_delta_processor_tb();
     reg [N_CHANNELS-1:0] sd_in = 0;
 
     sigma_delta_processor #(
-        .DECIMATION_RATIO(64),
+        .MAIN_DECIMATION_RATIO(64),
         .N_CHANNELS(N_CHANNELS)
     ) UUT(
         .clock(clk),
