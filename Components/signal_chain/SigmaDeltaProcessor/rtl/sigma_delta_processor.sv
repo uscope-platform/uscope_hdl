@@ -174,20 +174,14 @@ module sigma_delta_processor #(
     //             COMPARATORS AND OUTPUT SECTION                      //
     /////////////////////////////////////////////////////////////////////
 
-    axi_stream_combiner #(
-        .INPUT_DATA_WIDTH(32), 
-        .OUTPUT_DATA_WIDTH(32), 
-        .DEST_WIDTH(8), 
-        .USER_WIDTH(8),
-        .BUFFER_DEPTH(4),
-        .N_STREAMS(N_CHANNELS)
+     sigma_delta_output_combiner #(
+        .N_CHANNELS(N_CHANNELS)
     )output_combiner(
         .clock(clock),
         .reset(reset),
-        .stream_in(main_data_out),
-        .stream_out(data_out)
+        .data_in(main_data_out),
+        .data_out(data_out)
     );
-
 
 
 
