@@ -25,7 +25,6 @@ module sigma_delta_processor #(
     input wire reset,
     input wire [N_CHANNELS-1:0] data_in,
     input wire sync,
-    axi_lite.slave axi_in,
     axi_stream.master data_out,
     output wire clock_out,
     axi_lite.slave axi_in
@@ -38,6 +37,8 @@ module sigma_delta_processor #(
         end
     endgenerate
 
+    localparam main_clock_selector = $clog2(MAIN_DECIMATION_RATIO)-1;
+    localparam comparator_clock_selector = $clog2(COMPARATOR_DECIMATION_RATIO)-1;
     //                                           256 128 64  32  16  8  4
     localparam [7:0] filter_width_map [6:0] = '{ 25, 22, 20, 16, 13, 10, 7 };
     localparam [7:0] output_width_map [6:0] = '{ 16, 16, 16, 14, 12, 8, 6 };
@@ -49,7 +50,7 @@ module sigma_delta_processor #(
     /////////////////////////////////////////////////////////////////////
 
 
-    parameter N_REGISTERS = 2*N_CHANNELS+1;
+    parameter N_REGISTERS = 2*N_CHANNELS;
 
     reg [31:0] cu_write_registers [N_REGISTERS-1:0];
     reg [31:0] cu_read_registers [N_REGISTERS-1:0];
@@ -73,11 +74,6 @@ module sigma_delta_processor #(
 
     assign cu_read_registers = cu_write_registers;
 
-    reg [3:0] main_clock_selector;
-    reg [3:0] comparator_clock_selector;
-    
-    assign main_clock_selector = cu_write_registers[0][3:0];
-    assign comparator_clock_selector = cu_write_registers[0][7:4];
 
 
     reg [31:0] high_tresholds [N_CHANNELS-1:0];
@@ -86,9 +82,9 @@ module sigma_delta_processor #(
     genvar n;
 
     generate
-        for(n=0; n<MAX_STEPS; n = n+1)begin
-            assign high_tresholds[n] = cu_write_registers[n+1];
-            assign low_tresholds[n] = cu_write_registers[2*n+1];
+        for(n=0; n<N_CHANNELS; n = n+1)begin
+            assign high_tresholds[n] = cu_write_registers[n];
+            assign low_tresholds[n] = cu_write_registers[2*n];
         end
     endgenerate
 
