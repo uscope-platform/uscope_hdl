@@ -25,7 +25,7 @@ module sd_integrator #(
 );
 
 
-    reg [DATA_PATH_WIDTH-1:0] integrator_memory;
+    reg [DATA_PATH_WIDTH-1:0] integrator_memory = 0;
     assign data_out = integrator_memory;
     reg data_clock_del = 0;
 

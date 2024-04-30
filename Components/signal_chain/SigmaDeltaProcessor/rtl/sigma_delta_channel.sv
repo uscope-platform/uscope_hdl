@@ -24,6 +24,7 @@ module sigma_delta_channel #(
 )(
     input wire clock,
     input wire reset,
+    input wire sync,
     input wire sd_data_in,
     input wire sd_clock_in,
     input wire output_clock,
@@ -56,18 +57,28 @@ module sigma_delta_channel #(
 
     // OUTPUT STAGE
     reg output_clock_del = 0;
-    reg [OUTPUT_WIDTH:0] unsigned_out;
+    reg [OUTPUT_WIDTH:0] unsigned_out = 0;
+    reg [OUTPUT_WIDTH-1:0] adc_data = 0;
+
+    always_comb begin
+        if(unsigned_out[OUTPUT_WIDTH])begin
+            adc_data <= {OUTPUT_WIDTH-1{1'b1}};
+        end else begin
+            adc_data <= unsigned_out - (1<<(OUTPUT_WIDTH-1));
+        end
+
+    end
+
     always @(posedge clock) begin
 
         data_out.valid <= 0;
         output_clock_del <= output_clock;
         if(output_clock & ~output_clock_del) begin
             unsigned_out <= differentiation_out >> OUTPUT_SHIFT_SIZE;
-            if(unsigned_out[OUTPUT_WIDTH])begin
-                    data_out.data = {OUTPUT_WIDTH-1{1'b1}};
-            end else begin
-                data_out.data <= unsigned_out - (1<<(OUTPUT_WIDTH-1));
-            end
+        end
+
+        if(sync)begin
+            data_out.data <= adc_data;
             data_out.valid <= 1;
             data_out.dest <= CHANNEL_INDICATOR;
         end

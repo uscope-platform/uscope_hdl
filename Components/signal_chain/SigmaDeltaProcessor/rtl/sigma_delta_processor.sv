@@ -135,9 +135,10 @@ module sigma_delta_processor #(
                 .OUTPUT_WIDTH(main_output_width),
                 .OUTPUT_SHIFT_SIZE(main_output_shift),
                 .CHANNEL_INDICATOR(i)
-            ) data_channel (
+            ) main_channel (
                 .clock(clock),
                 .reset(reset),
+                .sync(sync),
                 .sd_data_in(data_in[i]),
                 .sd_clock_in(clock_out),
                 .output_clock(main_sampling_clock),
@@ -154,9 +155,10 @@ module sigma_delta_processor #(
                 .OUTPUT_WIDTH(comparator_output_width),
                 .OUTPUT_SHIFT_SIZE(comparator_output_shift),
                 .CHANNEL_INDICATOR(i)
-            ) data_channel (
+            ) comparator_channel (
                 .clock(clock),
                 .reset(reset),
+                .sync(1),
                 .sd_data_in(data_in[i]),
                 .sd_clock_in(clock_out),
                 .output_clock(comparator_sampling_clock),
