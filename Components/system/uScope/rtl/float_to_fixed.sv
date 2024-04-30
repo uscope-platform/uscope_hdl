@@ -28,7 +28,7 @@ module float_to_fixed_wrapper(
   wire data_out_tvalid;
 
   float_to_fixed float_to_fixed_i (
-    .clk(clock),
+    .clock(clock),
     .data_in_tdata(data_in.data),
     .data_in_tvalid(data_in.valid),
     .data_out_tdata(data_out.data),

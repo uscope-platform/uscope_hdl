@@ -67,7 +67,7 @@ interface axi_stream #(DATA_WIDTH = 32, USER_WIDTH = 32, DEST_WIDTH = 32);
 
     modport master(input  ready, output data, valid, tlast, user, dest, import initialize);
     modport slave (output  ready, input data, valid, tlast, user, dest, import initialize);
-    modport watcher(input data, valid, tlast, user, dest,ready)
+    modport watcher(input data, valid, tlast, user, dest,ready);
 
     task initialize();
         valid <= 0;

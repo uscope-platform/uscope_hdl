@@ -21,13 +21,13 @@ module sigma_delta_clock_generator #(
     input wire reset,
     axi_stream.watcher data_in[N_CHANNELS],
     input wire [31:0] high_tresholds [N_CHANNELS-1:0],
-    input wire [31:0] low_tresholds [N_CHANNELS-1:0]
+    input wire [31:0] low_tresholds [N_CHANNELS-1:0],
     output reg [N_CHANNELS-1:0] high_outputs,
     output reg [N_CHANNELS-1:0] low_outputs,
     output wire combined_output
 );
 
-    genvar i
+    genvar i;
 
     generate
         always_ff @(posedge clock) begin
@@ -41,7 +41,7 @@ module sigma_delta_clock_generator #(
                 end
             end
         end
-        assign combined_output <= |high_outputs || |low_outputs;
+        assign combined_output = |high_outputs || |low_outputs;
     endgenerate
 
 
