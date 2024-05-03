@@ -15,21 +15,21 @@
 `timescale 10 ns / 1 ns
 
 module sigma_delta_differentiation_stage #(
-    parameter DATA_PATH_WIDTH = 16
+    parameter PROCESSING_RESOLUTION = 16
 )(
     input wire clock,
     input wire samplink_clock,
     input wire reset,
-    input wire [DATA_PATH_WIDTH-1:0] data_in,
-    output wire [DATA_PATH_WIDTH-1:0] data_out
+    input wire [PROCESSING_RESOLUTION-1:0] data_in,
+    output wire [PROCESSING_RESOLUTION-1:0] data_out
 );
 
 
-    reg [DATA_PATH_WIDTH-1:0] differentiators [2:0] = '{0,0,0};
+    reg [PROCESSING_RESOLUTION-1:0] differentiators [2:0] = '{0,0,0};
     assign data_out = differentiators[2];
 
     sd_differentiator #(
-        .DATA_PATH_WIDTH(DATA_PATH_WIDTH)
+        .PROCESSING_RESOLUTION(PROCESSING_RESOLUTION)
     ) diff_0 (
         .clock(clock),
         .reset(reset),
@@ -39,7 +39,7 @@ module sigma_delta_differentiation_stage #(
     );
 
     sd_differentiator #(
-        .DATA_PATH_WIDTH(DATA_PATH_WIDTH)
+        .PROCESSING_RESOLUTION(PROCESSING_RESOLUTION)
     ) diff_1 (
         .clock(clock),
         .reset(reset),
@@ -49,7 +49,7 @@ module sigma_delta_differentiation_stage #(
     );
 
     sd_differentiator #(
-        .DATA_PATH_WIDTH(DATA_PATH_WIDTH)
+        .PROCESSING_RESOLUTION(PROCESSING_RESOLUTION)
     ) diff_2 (
         .clock(clock),
         .reset(reset),

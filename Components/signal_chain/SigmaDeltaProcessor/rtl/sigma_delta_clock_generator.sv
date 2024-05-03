@@ -21,36 +21,33 @@ module sigma_delta_clock_generator (
     input wire [3:0] comparator_clock_selector,
     output wire main_sampling_clock,
     output wire comparator_sampling_clock,
-    output wire sd_clock
+    output reg sd_clock
 );
 
 
     // MODULATOR CLOCK GENERATION
 
-    reg mod_clk;
     reg [4:0] modulator_clkgen = 0;
     reg clock_out_inner = 0;
 
     always_ff @(posedge clock) begin
-        mod_clk <= 0;
+        sd_clock <= 0;
         if(modulator_clkgen==1)begin
             modulator_clkgen <= 0;
-            mod_clk <= 1;
+            sd_clock <= 1;
         end else begin
             modulator_clkgen <= modulator_clkgen+1;
         end
     end
     
     always_ff @(posedge clock)begin
-        if(mod_clk) clock_out_inner <= ~clock_out_inner;
+        if(sd_clock) clock_out_inner <= ~clock_out_inner;
     end
 
-    assign sd_clock = clock_out_inner;
 
     // SAMPLING CLOCKS GENERATION
 
     reg [7:0] sampling_ctr = 0;
-    wire main_sampling_clk;
 
     reg clock_out_inner_del;
 
@@ -60,8 +57,6 @@ module sigma_delta_clock_generator (
     end
 
     assign main_sampling_clock =  sampling_ctr[main_clock_selector];
-   
-    wire comparator_sampling_clk;
     assign comparator_sampling_clock =  sampling_ctr[comparator_clock_selector];
 
 

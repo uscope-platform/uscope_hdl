@@ -15,30 +15,30 @@
 `timescale 10 ns / 1 ns
 
 module sigma_delta_integration_stage #(
-    parameter DATA_PATH_WIDTH = 16
+    parameter PROCESSING_RESOLUTION = 16
 )(
     input wire clock,
     input wire reset,
     input wire modulation_clock,
     input wire data_in,
-    output wire [DATA_PATH_WIDTH-1:0] data_out
+    output wire [PROCESSING_RESOLUTION-1:0] data_out
 );
 
-    reg [DATA_PATH_WIDTH-1:0] accumulation [2:0] = '{0,0,0};
+    reg [PROCESSING_RESOLUTION-1:0] accumulation [2:0] = '{0,0,0};
     assign data_out = accumulation[2];
 
     sd_integrator #(
-        .DATA_PATH_WIDTH(DATA_PATH_WIDTH)
+        .PROCESSING_RESOLUTION(PROCESSING_RESOLUTION)
     ) int_0 (
         .clock(clock),
         .reset(reset),
         .data_clock(modulation_clock),
-        .data_in({{DATA_PATH_WIDTH-1{1'b0}},data_in}),
+        .data_in({{PROCESSING_RESOLUTION-1{1'b0}},data_in}),
         .data_out(accumulation[0])
     );
 
     sd_integrator #(
-        .DATA_PATH_WIDTH(DATA_PATH_WIDTH)
+        .PROCESSING_RESOLUTION(PROCESSING_RESOLUTION)
     ) int_1 (
         .clock(clock),
         .reset(reset),
@@ -48,7 +48,7 @@ module sigma_delta_integration_stage #(
     );
 
     sd_integrator #(
-        .DATA_PATH_WIDTH(DATA_PATH_WIDTH)
+        .PROCESSING_RESOLUTION(PROCESSING_RESOLUTION)
     ) int_2 (
         .clock(clock),
         .reset(reset),

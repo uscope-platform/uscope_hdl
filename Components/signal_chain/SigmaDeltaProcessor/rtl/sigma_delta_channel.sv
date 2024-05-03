@@ -17,8 +17,9 @@
 
 
 module sigma_delta_channel #(
-    parameter DATA_PATH_WIDTH = 24,
-    parameter OUTPUT_WIDTH = 16,
+    parameter PROCESSING_RESOLUTION = 24,
+    parameter RESULT_RESOLUTION = 16,
+    parameter OUTPUT_SIZE = 32,
     parameter CHANNEL_INDICATOR = 0,
     parameter OUTPUT_SHIFT_SIZE = 8
 )(
@@ -31,10 +32,10 @@ module sigma_delta_channel #(
     axi_stream.master data_out
 );
 
-    reg [DATA_PATH_WIDTH-1:0]  integration_out;
+    reg [PROCESSING_RESOLUTION-1:0]  integration_out;
 
     sigma_delta_integration_stage #(
-        .DATA_PATH_WIDTH(DATA_PATH_WIDTH)
+        .PROCESSING_RESOLUTION(PROCESSING_RESOLUTION)
     ) integration_stage (
         .clock(clock),
         .reset(reset),
@@ -43,10 +44,10 @@ module sigma_delta_channel #(
         .data_out(integration_out)
     );
 
-    wire [DATA_PATH_WIDTH-1:0] differentiation_out;
+    wire [PROCESSING_RESOLUTION-1:0] differentiation_out;
 
     sigma_delta_differentiation_stage #( 
-        .DATA_PATH_WIDTH(DATA_PATH_WIDTH)
+        .PROCESSING_RESOLUTION(PROCESSING_RESOLUTION)
     ) diff_stage(
         .clock(clock),
         .reset(reset),
@@ -57,14 +58,14 @@ module sigma_delta_channel #(
 
     // OUTPUT STAGE
     reg output_clock_del = 0;
-    reg [OUTPUT_WIDTH:0] unsigned_out = 0;
-    reg [OUTPUT_WIDTH-1:0] adc_data = 0;
+    reg [RESULT_RESOLUTION:0] unsigned_out = 0;
+    reg [RESULT_RESOLUTION-1:0] adc_data = 0;
 
     always_comb begin
-        if(unsigned_out[OUTPUT_WIDTH])begin
-            adc_data <= {OUTPUT_WIDTH-1{1'b1}};
+        if(unsigned_out[RESULT_RESOLUTION])begin
+            adc_data <= {RESULT_RESOLUTION-1{1'b1}};
         end else begin
-            adc_data <= unsigned_out - (1<<(OUTPUT_WIDTH-1));
+            adc_data <= unsigned_out - (1<<(RESULT_RESOLUTION-1));
         end
 
     end
@@ -78,7 +79,7 @@ module sigma_delta_channel #(
         end
 
         if(sync)begin
-            data_out.data <= adc_data;
+            data_out.data <= {{OUTPUT_SIZE-RESULT_RESOLUTION{adc_data[RESULT_RESOLUTION-1]}},adc_data};
             data_out.valid <= 1;
             data_out.dest <= CHANNEL_INDICATOR;
         end

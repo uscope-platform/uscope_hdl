@@ -15,17 +15,17 @@
 `timescale 10 ns / 1 ns
 
 module sd_differentiator #(
-    parameter DATA_PATH_WIDTH = 16
+    parameter PROCESSING_RESOLUTION = 16
 )(
     input wire clock,
     input wire reset,
     input wire data_clock,
-    input wire  [DATA_PATH_WIDTH-1:0] data_in,
-    output reg [DATA_PATH_WIDTH-1:0] data_out
+    input wire [PROCESSING_RESOLUTION-1:0] data_in,
+    output reg [PROCESSING_RESOLUTION-1:0] data_out
 );
 
 
-    reg [DATA_PATH_WIDTH-1:0] diff_memory = 0;
+    reg [PROCESSING_RESOLUTION-1:0] diff_memory = 0;
     reg data_clock_del = 0;
 
     always @(posedge clock) begin

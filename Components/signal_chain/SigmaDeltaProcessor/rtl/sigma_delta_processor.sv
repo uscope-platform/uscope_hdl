@@ -37,8 +37,8 @@ module sigma_delta_processor #(
         end
     endgenerate
 
-    localparam main_clock_selector = $clog2(MAIN_DECIMATION_RATIO)-1;
-    localparam comparator_clock_selector = $clog2(COMPARATOR_DECIMATION_RATIO)-1;
+    localparam main_clock_selector = $clog2(MAIN_DECIMATION_RATIO)-2;
+    localparam comparator_clock_selector = $clog2(COMPARATOR_DECIMATION_RATIO)-2;
     //                                           256 128 64  32  16  8  4
     localparam [7:0] filter_width_map [6:0] = '{ 25, 22, 20, 16, 13, 10, 7 };
     localparam [7:0] output_width_map [6:0] = '{ 16, 16, 16, 14, 12, 8, 6 };
@@ -93,16 +93,16 @@ module sigma_delta_processor #(
     //                      CLOCK GENERATION SECTION                   //
     /////////////////////////////////////////////////////////////////////
 
-    localparam [7:0] main_filter_width = filter_width_map[main_clock_selector];
-    localparam [7:0] main_output_width = output_width_map[main_clock_selector];
+    localparam [7:0] main_filter_resolution = filter_width_map[main_clock_selector];
+    localparam [7:0] main_result_resolution = output_width_map[main_clock_selector];
     localparam [7:0] main_output_shift = output_shift_map[main_clock_selector];
 
 
     localparam comparator_enabled = COMPARATOR_DECIMATION_RATIO>0;
 
 
-    localparam [7:0] comparator_filter_width = filter_width_map[comparator_clock_selector];
-    localparam [7:0] comparator_output_width = output_width_map[comparator_clock_selector];
+    localparam [7:0] comparator_filter_resolution = filter_width_map[comparator_clock_selector];
+    localparam [7:0] comparator_result_resolution = output_width_map[comparator_clock_selector];
     localparam [7:0] comparator_output_shift = output_shift_map[comparator_clock_selector];
 
     wire main_sampling_clock, comparator_sampling_clock;
@@ -131,8 +131,8 @@ module sigma_delta_processor #(
     generate
         for (i = 0; i<N_CHANNELS; i++) begin
             sigma_delta_channel #(
-                .DATA_PATH_WIDTH(main_filter_width),
-                .OUTPUT_WIDTH(main_output_width),
+                .PROCESSING_RESOLUTION(main_filter_resolution),
+                .RESULT_RESOLUTION(main_result_resolution),
                 .OUTPUT_SHIFT_SIZE(main_output_shift),
                 .CHANNEL_INDICATOR(i)
             ) main_channel (
@@ -151,8 +151,8 @@ module sigma_delta_processor #(
       
         for (i = 0; i<N_CHANNELS; i++) begin
             sigma_delta_channel #(
-                .DATA_PATH_WIDTH(comparator_filter_width),
-                .OUTPUT_WIDTH(comparator_output_width),
+                .PROCESSING_RESOLUTION(comparator_filter_resolution),
+                .RESULT_RESOLUTION(comparator_result_resolution),
                 .OUTPUT_SHIFT_SIZE(comparator_output_shift),
                 .CHANNEL_INDICATOR(i)
             ) comparator_channel (

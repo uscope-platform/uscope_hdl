@@ -61,7 +61,7 @@ module sigma_delta_processor_tb();
     
 
     initial begin
-        $readmemh("/home/fils/git/uscope_hdl/public/Components/signal_chain/SigmaDeltaProcessor/tb/data.csv", stimulus);
+        $readmemh("/home/filssavi/git/uplatform-hdl/public/Components/signal_chain/SigmaDeltaProcessor/tb/data.csv", stimulus);
         axil_bfm = new(cfg_axi, 1);
         filter_out.ready <= 1;
         reset <=1'h1;
