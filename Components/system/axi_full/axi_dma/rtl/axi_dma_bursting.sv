@@ -19,8 +19,8 @@
 
 module axi_dma_bursting #(
     parameter ADDR_WIDTH = 32,
-    parameter DEST_WIDTH = 8,
-    parameter USER_WIDTH = 8,
+    parameter DEST_WIDTH = 16,
+    parameter USER_WIDTH = 16,
     parameter OUTPUT_AXI_WIDTH = 128,
     parameter MAX_TRANSFER_SIZE = 65536
 )(
@@ -34,13 +34,13 @@ module axi_dma_bursting #(
     output reg dma_done
 );
 
-    axi_stream #(.DEST_WIDTH(DEST_WIDTH), .USER_WIDTH(16), .DATA_WIDTH(OUTPUT_AXI_WIDTH)) upsized_data();
-    axi_stream #(.DEST_WIDTH(DEST_WIDTH), .USER_WIDTH(16), .DATA_WIDTH(64)) upsizer_in();
+    axi_stream #(.DEST_WIDTH(DEST_WIDTH), .USER_WIDTH(USER_WIDTH), .DATA_WIDTH(OUTPUT_AXI_WIDTH)) upsized_data();
+    axi_stream #(.DEST_WIDTH(DEST_WIDTH), .USER_WIDTH(USER_WIDTH), .DATA_WIDTH(64)) upsizer_in();
 
     localparam ADDRESS_INCREMENT = 8;
 
 
-    assign upsizer_in.data = {data_in.user[15:0], data_in.dest[15:0], data_in.data[31:0]};
+    assign upsizer_in.data = {data_in.user[USER_WIDTH-1:0], data_in.dest[DEST_WIDTH-1:0], data_in.data[31:0]};
     assign upsizer_in.dest = 0;
     assign upsizer_in.valid = data_in.valid;
     assign upsizer_in.user = 0;

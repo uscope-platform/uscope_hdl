@@ -23,7 +23,7 @@ module uScope_stream_dma #(
     DATA_WIDTH = 32,
     ADDR_WIDTH = 32,
     OUTPUT_AXI_WIDTH = 128,
-    DEST_WIDTH = 8,
+    DEST_WIDTH = 16,
     CHANNEL_SAMPLES = 1024
 ) (
     input wire clock,
@@ -102,8 +102,8 @@ module uScope_stream_dma #(
         .axil(timebase_axi)
     );
 
-    axi_stream #(.USER_WIDTH(16)) scope_in[N_CHANNELS]();
-    axi_stream #(.USER_WIDTH(16)) scope_in_sync[N_CHANNELS]();
+    axi_stream #(.USER_WIDTH(16), .DEST_WIDTH(DEST_WIDTH)) scope_in[N_CHANNELS]();
+    axi_stream #(.USER_WIDTH(16), .DEST_WIDTH(DEST_WIDTH)) scope_in_sync[N_CHANNELS]();
     wire [N_CHANNELS-1:0] unrolled_sync_ready;
     assign data_in.ready = &unrolled_sync_ready;
 
