@@ -185,7 +185,7 @@ endmodule
                         "length": 16
                     },
                     {
-                        "name":"burst_mode",
+                        "name":"dst",
                         "description": "Destination address",
                         "start_position": 15,
                         "n_fields":["1"],

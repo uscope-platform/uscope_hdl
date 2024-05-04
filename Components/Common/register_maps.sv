@@ -260,5 +260,14 @@ package reg_maps;
         int ch_6 = 'h18;
     } uscope_mux;
 
+    struct { 
+        int n_ch = 0;
+        int addr_0 = 'h4;
+        int addr_1 = 'h8;
+        int addr_2 = 'hC;
+        int addr_3 = 'h10;
+        int addr_4 = 'h14;
+        int addr_5 = 'h18;
+    } axis_dynamic_dma_regs;
 endpackage
 
