@@ -24,7 +24,8 @@ module multichannel_axis_sync_repeater #(
     DEST_WIDTH = 8,
     USER_WIDTH = 8,
     WAIT_INITIALIZATION = 1,
-    N_CHANNELS = 8
+    N_CHANNELS = 8,
+    parameter [31:0] DESTINATIONS [N_CHANNELS-1:0] = '{N_CHANNELS{0}}
 )(
     input wire        clock,
     input wire        reset,
@@ -49,8 +50,8 @@ module multichannel_axis_sync_repeater #(
                 .REGISTERED(0)
             )extractor (
                 .clock(clock),
-                .selector(i),
-                .out_dest(i),
+                .selector(DESTINATIONS[i]),
+                .out_dest(DESTINATIONS[i]),
                 .stream_in(in),
                 .stream_out(selected_streams[i])
             );
@@ -61,8 +62,7 @@ module multichannel_axis_sync_repeater #(
                 .DEST_WIDTH(DEST_WIDTH),
                 .USER_WIDTH(USER_WIDTH),
                 .HOLD_VALID(1),
-                .WAIT_INITIALIZATION(WAIT_INITIALIZATION),
-                .N_CHANNELS(N_CHANNELS)
+                .WAIT_INITIALIZATION(WAIT_INITIALIZATION)
             )inner_repeater(
                 .clock(clock),
                 .reset(reset),

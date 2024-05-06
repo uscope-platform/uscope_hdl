@@ -18,7 +18,7 @@
 module sigma_delta_processor #(
     parameter N_CHANNELS = 2,
     parameter MAIN_DECIMATION_RATIO = 256,
-    parameter COMPARATOR_DECIMATION_RATIO = 0,
+    parameter COMPARATOR_DECIMATION_RATIO = 256,
     parameter [31:0] DESTINATIONS [N_CHANNELS-1:0] = '{N_CHANNELS{0}}
 )(
     input wire clock,
@@ -99,14 +99,10 @@ module sigma_delta_processor #(
 
 
     localparam comparator_enabled = COMPARATOR_DECIMATION_RATIO>0;
-    generate
-        if(comparator_enabled)begin
 
-            localparam [7:0] comparator_filter_resolution = filter_width_map[comparator_clock_selector];
-            localparam [7:0] comparator_result_resolution = output_width_map[comparator_clock_selector];
-            localparam [7:0] comparator_output_shift = output_shift_map[comparator_clock_selector];
-        end
-    endgenerate
+    localparam [7:0] comparator_filter_resolution = filter_width_map[comparator_clock_selector];
+    localparam [7:0] comparator_result_resolution = output_width_map[comparator_clock_selector];
+    localparam [7:0] comparator_output_shift = output_shift_map[comparator_clock_selector];
     
     wire main_sampling_clock, comparator_sampling_clock;
 
