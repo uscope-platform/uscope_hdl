@@ -19,6 +19,7 @@ module AdcProcessing #(
     parameter DATA_PATH_WIDTH = 16,
     parameter DEST_WIDTH = 8,
     parameter USER_WIDTH = 16,
+    DATA_BLOCK_BASE_ADDR = 0,
     FLTER_TAP_WIDTH = 16,
     DECIMATED = 1,
     DENOISING = 0,
@@ -129,6 +130,7 @@ module AdcProcessing #(
     calibration #(
         .DATA_PATH_WIDTH(DATA_PATH_WIDTH),
         .N_CHANNELS(N_CHANNELS),
+        .DATA_BLOCK_BASE_ADDR(DATA_BLOCK_BASE_ADDR),
         .OUTPUT_SIGNED(OUTPUT_SIGNED)
     ) calibrator(
         .clock(clock),
@@ -146,6 +148,7 @@ module AdcProcessing #(
 
     denoiser #(
         .DATA_PATH_WIDTH(DATA_PATH_WIDTH),
+        .DATA_BLOCK_BASE_ADDR(DATA_BLOCK_BASE_ADDR),
         .N_CHANNELS(N_CHANNELS)
     )denoise(
         .clock(clock),
@@ -163,6 +166,7 @@ module AdcProcessing #(
 
     linearizer #(
         .DATA_PATH_WIDTH(DATA_PATH_WIDTH),
+        .DATA_BLOCK_BASE_ADDR(DATA_BLOCK_BASE_ADDR),
         .N_CHANNELS(N_CHANNELS),
         .DEST_WIDTH(DEST_WIDTH),
         .USER_WIDTH(USER_WIDTH),

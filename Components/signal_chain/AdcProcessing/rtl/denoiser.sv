@@ -16,6 +16,7 @@
 
 module denoiser #(
     parameter DATA_PATH_WIDTH = 16,
+    DATA_BLOCK_BASE_ADDR = 0,
     N_CHANNELS = 1
 )(
     input wire clock,
@@ -33,8 +34,8 @@ module denoiser #(
     wire signed [DATA_PATH_WIDTH-1 :0] positive_diff;
     wire signed [DATA_PATH_WIDTH-1 :0] negative_diff;
 
-    assign positive_diff = current_data_in-last_good_data[data_in.dest];
-    assign negative_diff = current_data_in-last_good_data[data_in.dest];
+    assign positive_diff = current_data_in-last_good_data[data_in.dest - DATA_BLOCK_BASE_ADDR];
+    assign negative_diff = current_data_in-last_good_data[data_in.dest - DATA_BLOCK_BASE_ADDR];
 
     assign data_in.ready = data_out.ready | ~reset ? 1 : 0;
 
@@ -49,14 +50,14 @@ module denoiser #(
             if(data_in.valid)begin
                 if(enable &&
                     (
-                    positive_diff > thresh_p[data_in.dest] ||
-                    negative_diff < thresh_n[data_in.dest]
+                    positive_diff > thresh_p[data_in.dest - DATA_BLOCK_BASE_ADDR] ||
+                    negative_diff < thresh_n[data_in.dest - DATA_BLOCK_BASE_ADDR]
                     )
                 ) begin
-                    data_out.data <= last_good_data[data_in.dest];
+                    data_out.data <= last_good_data[data_in.dest - DATA_BLOCK_BASE_ADDR];
                 end else begin
                     data_out.data <= data_in.data;
-                    last_good_data[data_in.dest] <= current_data_in;
+                    last_good_data[data_in.dest - DATA_BLOCK_BASE_ADDR] <= current_data_in;
                 end
                 data_out.user <= data_in.user;
                 data_out.dest <= data_in.dest;

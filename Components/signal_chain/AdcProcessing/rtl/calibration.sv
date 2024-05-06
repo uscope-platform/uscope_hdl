@@ -16,6 +16,7 @@
 
 module calibration #(
     parameter DATA_PATH_WIDTH = 16,
+    DATA_BLOCK_BASE_ADDR = 0,
     N_CHANNELS = 1,
     parameter [N_CHANNELS-1:0] OUTPUT_SIGNED = {N_CHANNELS{1'b1}}
     )(
@@ -38,9 +39,9 @@ module calibration #(
 
     saturating_adder #(.DATA_WIDTH(DATA_PATH_WIDTH)) offset_adder(
         .a(data_in.data),
-        .b(offset[data_in.dest]),
+        .b(offset[data_in.dest - DATA_BLOCK_BASE_ADDR]),
         .satp({1'b0,{DATA_PATH_WIDTH-1{1'b1}}}),
-        .satn({OUTPUT_SIGNED[data_in.dest],{DATA_PATH_WIDTH-1{1'b0}}}),
+        .satn({OUTPUT_SIGNED[data_in.dest - DATA_BLOCK_BASE_ADDR],{DATA_PATH_WIDTH-1{1'b0}}}),
         .out(raw_data_out)
     );
 
@@ -54,7 +55,7 @@ module calibration #(
         end else begin
             if(data_in.valid & data_out.ready) begin
                 if(shift_enable) begin
-                    data_out.data <= raw_data_out << shift[data_in.dest];
+                    data_out.data <= raw_data_out << shift[data_in.dest - DATA_BLOCK_BASE_ADDR];
                 end else begin
                     data_out.data <= raw_data_out;
                 end

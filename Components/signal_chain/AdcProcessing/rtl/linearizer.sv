@@ -18,6 +18,7 @@ module linearizer #(
     parameter DATA_PATH_WIDTH = 16,
     parameter DEST_WIDTH = 8,
     parameter USER_WIDTH = 16,
+    DATA_BLOCK_BASE_ADDR = 0,
     N_CHANNELS = 1,
     N_SEGMENTS = 4,
     parameter [DATA_PATH_WIDTH-1:0] BOUNDS [N_CHANNELS-1:0][N_SEGMENTS-1:0] = '{default:0},
@@ -62,7 +63,7 @@ module linearizer #(
         in_dest_del <= data_in.dest;
         in_user_del <= data_in.user;
         if(data_in.valid) begin
-            channel_data[data_in.dest] <= data_in.data;
+            channel_data[data_in.dest - DATA_BLOCK_BASE_ADDR] <= data_in.data;
         end
     end
 
