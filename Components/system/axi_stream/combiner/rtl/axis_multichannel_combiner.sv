@@ -1,4 +1,4 @@
-// Copyright 2023 Filippo Savi
+// Copyright 2024 Filippo Savi
 // Author: Filippo Savi <filssavi@gmail.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,8 +14,11 @@
 // limitations under the License.
 `timescale 10 ns / 1 ns
 
-module sigma_delta_output_combiner #(
-    parameter N_CHANNELS = 2
+module axis_multichannel_combiner #(
+    parameter N_CHANNELS = 2,
+    parameter DATA_WIDTH = 31,
+    parameter DEST_WIDTH = 8,
+    parameter USER_WIDTH = 8
 )(
     input wire clock,
     input wire reset,
@@ -23,7 +26,10 @@ module sigma_delta_output_combiner #(
     axi_stream.master data_out
 );
 
-    reg [31:0] latched_data[N_CHANNELS-1:0] = '{default:0};
+    reg [DATA_WIDTH-1:0] latched_data[N_CHANNELS-1:0] = '{default:0};
+    reg [DEST_WIDTH-1:0] latched_dest[N_CHANNELS-1:0] = '{default:0};
+    reg [USER_WIDTH-1:0] latched_user[N_CHANNELS-1:0] = '{default:0};
+    reg [N_CHANNELS-1:0] latched_tlast = 0;
 
     genvar i;
 
@@ -32,6 +38,9 @@ module sigma_delta_output_combiner #(
             always_ff @(posedge clock)begin
                 if(data_in[i].valid)begin
                     latched_data[i] <= data_in[i].data;
+                    latched_dest[i] <= data_in[i].dest;
+                    latched_user[i] <= data_in[i].user;
+                    latched_tlast[i] <= data_in[i].tlast;
                 end
             end
         end
@@ -41,14 +50,23 @@ module sigma_delta_output_combiner #(
     reg [$clog2(N_CHANNELS)-1:0]outputs_counter = 0;;
 
     enum reg [2:0] { 
-        wait_data = 0,
-        combining = 1
-    } combiner_state = wait_data;
+        init_output = 0,
+        wait_data = 1,
+        combining = 2
+    } combiner_state = init_output;
 
 
     always_ff @(posedge clock)begin
         data_out.valid <= 0;
         case (combiner_state)
+            init_output:begin
+                data_out.data <= 0;
+                data_out.dest <= 0;
+                data_out.user <= 0;
+                data_out.tlast <= 0;
+                data_out.valid <= 0;
+                combiner_state <= wait_data;
+            end
             wait_data: begin
                 if(data_in[0].valid) begin
                     combiner_state <= combining;
@@ -62,7 +80,9 @@ module sigma_delta_output_combiner #(
                     outputs_counter <= outputs_counter+1;
                 end
                 data_out.data <= latched_data[outputs_counter];
-                data_out.dest <= outputs_counter;
+                data_out.user <= latched_user[outputs_counter];
+                data_out.tlast <= latched_tlast[outputs_counter];
+                data_out.dest <= latched_dest[outputs_counter];
                 data_out.valid <= 1;
             end
         endcase

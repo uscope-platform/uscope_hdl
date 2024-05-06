@@ -174,7 +174,7 @@ module sigma_delta_processor #(
     //             COMPARATORS AND OUTPUT SECTION                      //
     /////////////////////////////////////////////////////////////////////
 
-     sigma_delta_output_combiner #(
+    axis_multichannel_combiner #(
         .N_CHANNELS(N_CHANNELS)
     )output_combiner(
         .clock(clock),
