@@ -58,7 +58,7 @@ module denoiser #(
                     data_out.data <= data_in.data;
                     last_good_data[data_in.dest] <= current_data_in;
                 end
-
+                data_out.user <= data_in.user;
                 data_out.dest <= data_in.dest;
                 data_out.valid <= data_in.valid;
             end else begin

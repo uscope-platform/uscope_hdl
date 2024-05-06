@@ -50,6 +50,7 @@ module standard_decimator #(
             always_ff @(posedge clock) begin
                 if(~reset)begin
                     data_out.data <= 0;
+                    data_out.user <= 0;
                     data_out.valid <= 0;
                     data_out.dest <= 0;
                     for(integer i = 0; i<N_CHANNELS; i++)begin
@@ -65,6 +66,7 @@ module standard_decimator #(
                             data_out.data <= (average_accumulator[data_in.dest] + extended_data_in) >>> AVERAGING_DIVISOR;
                             average_accumulator[data_in.dest] <= 0;
                             data_out.dest <= data_in.dest;
+                            data_out.user <= data_in.user;
                             data_out.valid <= 1;
                             decimation_counter[data_in.dest] <= 0;
                         end 
@@ -76,6 +78,7 @@ module standard_decimator #(
                 if(~reset)begin
                     data_out.data <= 0;
                     data_out.valid <= 0;
+                    data_out.user <= 0;
                     data_out.dest <= 0;
                     for(integer i = 0; i<N_CHANNELS; i++)begin
                         decimation_counter[i] <= 0;
@@ -86,6 +89,7 @@ module standard_decimator #(
                         decimation_counter[data_in.dest] <= decimation_counter[data_in.dest] +1;
                         if((decimation_counter[data_in.dest] == decimation_ratio-1 )| decimation_ratio ==0)begin
                             data_out.data <= data_in.data;
+                            data_out.dest <= data_in.dest;
                             data_out.dest <= data_in.dest;
                             data_out.valid <= 1;
                             decimation_counter[data_in.dest] <= 0;

@@ -17,6 +17,8 @@
 
 module AdcProcessing #(
     parameter DATA_PATH_WIDTH = 16,
+    parameter DEST_WIDTH = 8,
+    parameter USER_WIDTH = 16,
     FLTER_TAP_WIDTH = 16,
     DECIMATED = 1,
     DENOISING = 0,
@@ -162,6 +164,8 @@ module AdcProcessing #(
     linearizer #(
         .DATA_PATH_WIDTH(DATA_PATH_WIDTH),
         .N_CHANNELS(N_CHANNELS),
+        .DEST_WIDTH(DEST_WIDTH),
+        .USER_WIDTH(USER_WIDTH),
         .N_SEGMENTS(LINEARIZER_SEGMENTS),
         .BOUNDS(LINEARIZER_BOUNDS),
         .GAINS(LINEARIZER_GAINS)
@@ -174,6 +178,7 @@ module AdcProcessing #(
     );
 
     assign fast_data_out.data = lin_out.data;
+    assign fast_data_out.user = lin_out.user;
     assign fast_data_out.valid = lin_out.valid;
     assign fast_data_out.dest = lin_out.dest;
     
@@ -181,6 +186,7 @@ module AdcProcessing #(
         if(DECIMATED==0)begin
             assign filtered_data_out.data = lin_out.data;
             assign filtered_data_out.valid = lin_out.valid;
+            assign filtered_data_out.user = lin_out.user;
             assign filtered_data_out.dest = lin_out.dest;
             assign lin_out.ready = filtered_data_out.ready;
 

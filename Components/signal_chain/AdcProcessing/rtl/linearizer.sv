@@ -16,6 +16,8 @@
 
 module linearizer #(
     parameter DATA_PATH_WIDTH = 16,
+    parameter DEST_WIDTH = 8,
+    parameter USER_WIDTH = 16,
     N_CHANNELS = 1,
     N_SEGMENTS = 4,
     parameter [DATA_PATH_WIDTH-1:0] BOUNDS [N_CHANNELS-1:0][N_SEGMENTS-1:0] = '{default:0},
@@ -40,21 +42,25 @@ module linearizer #(
         if(enable)begin
             data_out.data <= linear_channel_data[in_dest_del];
             data_out.dest <= in_dest_del;
+            data_out.user <= in_user_del;
             data_out.valid <= in_valid_del;
         end else begin
             data_out.data <= data_in.data;
             data_out.dest <= data_in.dest;
+            data_out.user <= data_in.user;
             data_out.valid <= data_in.valid;
         end
         data_in.ready <= data_out.ready;
     end
    
     reg in_valid_del;
-    reg [7:0] in_dest_del;
+    reg [DEST_WIDTH-1:0] in_dest_del;
+    reg [USER_WIDTH-1:0] in_user_del;
 
     always @(posedge clock)begin
         in_valid_del <= data_in.valid;
         in_dest_del <= data_in.dest;
+        in_user_del <= data_in.user;
         if(data_in.valid) begin
             channel_data[data_in.dest] <= data_in.data;
         end

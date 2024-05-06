@@ -58,7 +58,8 @@ module calibration #(
                 end else begin
                     data_out.data <= raw_data_out;
                 end
-                data_out.dest <=data_in.dest;
+                data_out.dest <= data_in.dest;
+                data_out.user <= data_in.user;
                 data_out.valid <=1;
             end else begin
                 data_out.valid <=0;
