@@ -18,8 +18,8 @@
 module sigma_delta_processor #(
     parameter N_CHANNELS = 2,
     parameter MAIN_DECIMATION_RATIO = 256,
-    parameter COMPARATOR_DECIMATION_RATIO = 0
-    
+    parameter COMPARATOR_DECIMATION_RATIO = 0,
+    parameter [31:0] DESTINATIONS [N_CHANNELS-1:0] = '{N_CHANNELS{0}}
 )(
     input wire clock,
     input wire reset,
@@ -99,12 +99,15 @@ module sigma_delta_processor #(
 
 
     localparam comparator_enabled = COMPARATOR_DECIMATION_RATIO>0;
+    generate
+        if(comparator_enabled)begin
 
-
-    localparam [7:0] comparator_filter_resolution = filter_width_map[comparator_clock_selector];
-    localparam [7:0] comparator_result_resolution = output_width_map[comparator_clock_selector];
-    localparam [7:0] comparator_output_shift = output_shift_map[comparator_clock_selector];
-
+            localparam [7:0] comparator_filter_resolution = filter_width_map[comparator_clock_selector];
+            localparam [7:0] comparator_result_resolution = output_width_map[comparator_clock_selector];
+            localparam [7:0] comparator_output_shift = output_shift_map[comparator_clock_selector];
+        end
+    endgenerate
+    
     wire main_sampling_clock, comparator_sampling_clock;
 
 
@@ -134,7 +137,7 @@ module sigma_delta_processor #(
                 .PROCESSING_RESOLUTION(main_filter_resolution),
                 .RESULT_RESOLUTION(main_result_resolution),
                 .OUTPUT_SHIFT_SIZE(main_output_shift),
-                .CHANNEL_INDICATOR(i)
+                .CHANNEL_INDICATOR(DESTINATIONS[i])
             ) main_channel (
                 .clock(clock),
                 .reset(reset),
@@ -144,8 +147,11 @@ module sigma_delta_processor #(
                 .output_clock(main_sampling_clock),
                 .data_out(main_data_out[i])
             );
+            assign main_data_out[i].user =  get_axis_metadata(main_result_resolution, 1, 0);
         end
 
+        
+        
     if(comparator_enabled)begin
 
       
@@ -169,7 +175,7 @@ module sigma_delta_processor #(
 
     endgenerate
 
-
+    
     /////////////////////////////////////////////////////////////////////
     //             COMPARATORS AND OUTPUT SECTION                      //
     /////////////////////////////////////////////////////////////////////

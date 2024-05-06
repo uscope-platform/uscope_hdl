@@ -19,6 +19,7 @@
 module spi_adc_interface #(
     parameter N_CHANNELS=3,
     DATAPATH_WIDTH=32,
+    REPORTED_SIZE = DATAPATH_WIDTH,
     parameter [31:0] DESTINATIONS [N_CHANNELS-1:0] = '{N_CHANNELS{0}},
     PRAGMA_MKFG_MODULE_TOP = "SPI"
 )(
@@ -67,7 +68,7 @@ module spi_adc_interface #(
         if(adc_samples_valid)begin
             
             data_out.data <= adc_samples_data[0];
-            data_out.user <= get_axis_metadata(12, 0, 0);
+            data_out.user <= get_axis_metadata(REPORTED_SIZE, 0, 0);
             data_out.dest <= DESTINATIONS[0];
             data_out.valid <= 1;
             
