@@ -130,3 +130,4 @@ Components/system/axi_full/axi_to_axil/axi_to_axil/
 Components/system/axi_stream/ultra_buffer/ultra_buffer
 Components/system/axi_stream/upsizer/upsizer
 Components/signal_chain/SigmaDeltaProcessor/sigma_delta_processor
+Components/signal_chain/spi_adc_interface/spi_adc_interface
