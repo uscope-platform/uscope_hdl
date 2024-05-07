@@ -24,7 +24,7 @@ module sigma_delta_integration_stage #(
     output wire [PROCESSING_RESOLUTION-1:0] data_out
 );
 
-    reg [PROCESSING_RESOLUTION-1:0] accumulation [2:0] = '{0,0,0};
+    wire [PROCESSING_RESOLUTION-1:0] accumulation [2:0];
     assign data_out = accumulation[2];
 
     sd_integrator #(

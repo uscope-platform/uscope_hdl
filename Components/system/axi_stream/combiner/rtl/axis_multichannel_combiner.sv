@@ -47,7 +47,7 @@ module axis_multichannel_combiner #(
         
     endgenerate
 
-    reg [$clog2(N_CHANNELS)-1:0]outputs_counter = 0;;
+    reg [$clog2(N_CHANNELS)-1:0]outputs_counter = 0;
 
     enum reg [2:0] { 
         init_output = 0,

@@ -71,7 +71,7 @@ module sigma_delta_channel #(
     end
 
     always @(posedge clock) begin
-
+        data_out.user <= get_axis_metadata(RESULT_RESOLUTION, 1, 0);
         data_out.valid <= 0;
         output_clock_del <= output_clock;
         if(output_clock & ~output_clock_del) begin

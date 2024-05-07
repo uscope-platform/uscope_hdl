@@ -143,7 +143,6 @@ module sigma_delta_processor #(
                 .output_clock(main_sampling_clock),
                 .data_out(main_data_out[i])
             );
-            assign main_data_out[i].user =  get_axis_metadata(main_result_resolution, 1, 0);
         end
 
         

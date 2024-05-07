@@ -25,7 +25,7 @@ module sigma_delta_differentiation_stage #(
 );
 
 
-    reg [PROCESSING_RESOLUTION-1:0] differentiators [2:0] = '{0,0,0};
+    reg [PROCESSING_RESOLUTION-1:0] differentiators [2:0];
     assign data_out = differentiators[2];
 
     sd_differentiator #(
