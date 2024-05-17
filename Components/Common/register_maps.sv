@@ -155,6 +155,14 @@ package reg_maps;
     } en_gen_regs; 
 
     struct { 
+        int enable = 0;
+        int period = 'h4;
+        int treshold_1 = 'h8;
+        int treshold_2 = 'hC;
+        int treshold_3 = 'h10;
+    } en_gen_3_regs; 
+
+    struct { 
         int out = 0;
         int in = 'h4;
     } gpio_regs; 
