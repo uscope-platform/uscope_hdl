@@ -19,7 +19,7 @@
 
 module sigma_delta_processor_tb();
 
-    reg  clk, reset;
+    reg  clk, sd_clk_ref, reset;
 
     reg stimulus [44000:0];
 
@@ -40,11 +40,20 @@ module sigma_delta_processor_tb();
 
     reg [N_CHANNELS-1:0] sd_in = 0;
 
+    localparam [31:0] i_buck_dest [3:0] = '{
+        3,
+        2,
+        1,
+        0
+    };
+
     sigma_delta_processor #(
         .MAIN_DECIMATION_RATIO(64),
-        .N_CHANNELS(N_CHANNELS)
+        .N_CHANNELS(N_CHANNELS),
+        .DESTINATIONS(i_buck_dest)
     ) UUT(
         .clock(clk),
+        .ref_clock_in(sd_clk_ref),
         .reset(reset),
         .data_in(sd_in),
         .clock_out(sd_clk),
@@ -57,6 +66,13 @@ module sigma_delta_processor_tb();
         clk = 1'b1;
         #0.5 clk = 1'b0;
         #0.5;
+    end
+
+
+    always begin
+        sd_clk_ref = 1'b1;
+        #2.5 sd_clk_ref = 1'b0;
+        #2.5;
     end
     
 
@@ -78,7 +94,7 @@ module sigma_delta_processor_tb();
 
 
 
-    reg [31:0] outputs [N_CHANNELS-1:0];
+    reg [30:0] outputs [N_CHANNELS-1:0];
 
  
 
