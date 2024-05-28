@@ -184,6 +184,27 @@ module sigma_delta_processor #(
         .data_out(data_out)
     );
 
-
-
 endmodule
+
+
+
+ /**
+    {
+        "name": "sigma_delta_processor",
+        "type": "parametric_peripheral",
+        "registers":[
+            {
+                "name": "tresh_$_l",
+                "n_regs": ["N_CHANNELS"],
+                "description": "Lower fault treshold",
+                "direction": "RW"
+            },
+            {
+                "name": "tresh_$_h",
+                "n_regs": ["N_CHANNELS"],
+                "description": "Higher fault treshold",
+                "direction": "RW"
+            }
+        ]
+    }   
+ **/

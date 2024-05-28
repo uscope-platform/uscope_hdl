@@ -35,12 +35,14 @@ module I2CControlUnit #(parameter BASE_ADDRESS = 0)(
 
     logic start_transfer;
 
+    localparam [31:0] INITIAL_VAL [2:0] = '{0, 1, 0};
+
     axil_simple_register_cu #(
         .N_READ_REGISTERS(3),
         .N_WRITE_REGISTERS(3),
         .N_TRIGGER_REGISTERS(1),
         .TRIGGER_REGISTERS_IDX('{2}),
-        .INITIAL_OUTPUT_VALUES('{0, 1, 0}),
+        .INITIAL_OUTPUT_VALUES(INITIAL_VAL),
         .REGISTERS_WIDTH(32),
         .ADDRESS_MASK('hf)
     ) CU (
@@ -101,3 +103,66 @@ module I2CControlUnit #(parameter BASE_ADDRESS = 0)(
         end
     end
 endmodule
+
+
+ /**
+       {
+        "name": "I2CControlUnit",
+        "alias": "I2C",
+        "type": "peripheral",
+        "registers":[
+            {
+                "name": "control",
+                "offset": "0x0",
+                "description": "I2C peripheral control register",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"direction",
+                        "description": "Direction of the transfer (read or write)",
+                        "start_position": 0,
+                        "length": 1
+                    },
+                    {
+                        "name":"timebase_enable",
+                        "description": "Enable I2C peripheral timebase generator",
+                        "start_position": 1,
+                        "length": 1
+                    }
+                ]
+            },
+            {
+                "name": "timebase_div",
+                "offset": "0x4",
+                "description": "Diviso setting for the I2C timebase generator",
+                "direction": "RW"
+            },
+            {
+                "name": "tranfer_control",
+                "offset": "0x8",
+                "description": "Period of the periodic transfer enable generator",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"register_adress",
+                        "description": "Direction of the transfer (read or write)",
+                        "start_position": 0,
+                        "length": 8
+                    },
+                    {
+                        "name":"slave_adress",
+                        "description": "Enable I2C peripheral timebase generator",
+                        "start_position": 8,
+                        "length": 8
+                    },
+                    {
+                        "name":"data",
+                        "description": "Enable I2C peripheral timebase generator",
+                        "start_position": 16,
+                        "length": 8
+                    }
+                ]
+            }
+        ]
+    }  
+    **/

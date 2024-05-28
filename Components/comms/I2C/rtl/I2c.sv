@@ -14,7 +14,12 @@
 // limitations under the License.
 `include "interfaces.svh"
 
-module I2c #(parameter FIXED_PERIOD ="FALSE", FIXED_PERIOD_WIDTH = 1000, SCL_TIMEBASE_DELAY = 15)(
+module I2c #(
+    parameter FIXED_PERIOD ="FALSE",
+    FIXED_PERIOD_WIDTH = 1000,
+    SCL_TIMEBASE_DELAY = 15,
+    PRAGMA_MKFG_MODULE_TOP = "I2C"
+)(
     input wire clock,
     input wire reset,
     input wire i2c_scl_in,
@@ -156,65 +161,3 @@ module I2c #(parameter FIXED_PERIOD ="FALSE", FIXED_PERIOD_WIDTH = 1000, SCL_TIM
 
 
 endmodule
-
-
- /**
-       {
-        "name": "I2c",
-        "type": "peripheral",
-        "registers":[
-            {
-                "name": "control",
-                "offset": "0x0",
-                "description": "I2C peripheral control register",
-                "direction": "RW",
-                "fields":[
-                    {
-                        "name":"direction",
-                        "description": "Direction of the transfer (read or write)",
-                        "start_position": 0,
-                        "length": 1
-                    },
-                    {
-                        "name":"timebase_enable",
-                        "description": "Enable I2C peripheral timebase generator",
-                        "start_position": 1,
-                        "length": 1
-                    }
-                ]
-            },
-            {
-                "name": "timebase_div",
-                "offset": "0x4",
-                "description": "Diviso setting for the I2C timebase generator",
-                "direction": "RW"
-            },
-            {
-                "name": "tranfer_control",
-                "offset": "0x8",
-                "description": "Period of the periodic transfer enable generator",
-                "direction": "RW",
-                "fields":[
-                    {
-                        "name":"register_adress",
-                        "description": "Direction of the transfer (read or write)",
-                        "start_position": 0,
-                        "length": 8
-                    },
-                    {
-                        "name":"slave_adress",
-                        "description": "Enable I2C peripheral timebase generator",
-                        "start_position": 8,
-                        "length": 8
-                    },
-                    {
-                        "name":"data",
-                        "description": "Enable I2C peripheral timebase generator",
-                        "start_position": 16,
-                        "length": 8
-                    }
-                ]
-            }
-        ]
-    }  
-    **/
