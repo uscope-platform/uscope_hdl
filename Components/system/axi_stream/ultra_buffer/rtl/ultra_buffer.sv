@@ -122,6 +122,7 @@ module ultra_buffer #(parameter ADDRESS_WIDTH=13, DATA_WIDTH=32, DEST_WIDTH=16, 
         end
         case (state)
             initial_fill:begin
+                in.ready <= 0;
                 if(wr_head_ptr == MEMORY_DEPTH-1) begin
                     state <= pre_trigger;
                     wr_head_ptr <= 0;
