@@ -17,6 +17,7 @@
 module sigma_delta_clock_generator (
     input wire clock,
     input wire ref_clock_in,
+    input wire enable,
     input wire reset,
     input wire [3:0] main_clock_selector,
     input wire [3:0] comparator_clock_selector,
@@ -25,16 +26,55 @@ module sigma_delta_clock_generator (
     output wire sd_clock
 );
 
-    assign sd_clock = ref_clock_in;
+    reg mod_clk;
+
+    reg clk_on_event, clk_off_event;
+
+    reg [2:0] mod_clk_on_ctr = 0;
+    reg [2:0] mod_clk_off_ctr = 3;
+
+    always@(posedge clock) begin
+        clk_on_event <= 0;
+        if(mod_clk_on_ctr == 4) begin
+            mod_clk_on_ctr <= 0;
+            clk_on_event <= 1;
+        end else begin
+            mod_clk_on_ctr <= mod_clk_on_ctr + 1;
+        end
+    end
+
+    always@(negedge clock) begin
+        clk_off_event <= 0;
+        if(mod_clk_off_ctr == 4) begin
+            mod_clk_off_ctr <= 0;
+            clk_off_event <= 1;
+        end else begin
+            mod_clk_off_ctr <= mod_clk_off_ctr + 1;
+        end
+    end
+
+    always_latch begin
+        if(clk_on_event) begin
+            mod_clk<= 1;
+        end else if(clk_off_event) begin
+            mod_clk<= 0;
+        end
+    end
+
+    assign sd_clock = enable & mod_clk;
+
     // SAMPLING CLOCKS GENERATION
+
 
     reg [8:0] sampling_ctr = 0;
 
-    reg ref_clock_in_del;
+    reg mod_clk_del;
 
     always@(posedge clock) begin
-        ref_clock_in_del <= ref_clock_in;
-        if(ref_clock_in & ~ref_clock_in_del) sampling_ctr <= sampling_ctr + 1;
+        if(enable)begin
+            mod_clk_del <= mod_clk;
+            if(mod_clk & ~mod_clk_del) sampling_ctr <= sampling_ctr + 1;
+        end
     end
 
     assign main_sampling_clock =  sampling_ctr[main_clock_selector+1];

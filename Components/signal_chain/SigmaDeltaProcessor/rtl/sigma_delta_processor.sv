@@ -22,6 +22,7 @@ module sigma_delta_processor #(
     parameter [31:0] DESTINATIONS [N_CHANNELS-1:0] = '{N_CHANNELS{0}}
 )(
     input wire clock,
+    input wire enable,
     input wire ref_clock_in,
     input wire reset,
     input wire [N_CHANNELS-1:0] data_in,
@@ -112,6 +113,7 @@ module sigma_delta_processor #(
     sigma_delta_clock_generator clk_gen (
         .clock(clock),
         .reset(reset),
+        .enable(enable),
         .ref_clock_in(ref_clock_in),
         .main_clock_selector(main_clock_selector),
         .comparator_clock_selector(comparator_clock_selector),
@@ -119,7 +121,7 @@ module sigma_delta_processor #(
         .comparator_sampling_clock(comparator_sampling_clock),
         .sd_clock(clock_out)
     );
-    
+
     genvar i;
 
 
