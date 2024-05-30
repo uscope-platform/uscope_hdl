@@ -16,7 +16,6 @@
 
 module sigma_delta_clock_generator (
     input wire clock,
-    input wire ref_clock_in,
     input wire enable,
     input wire reset,
     input wire [3:0] main_clock_selector,

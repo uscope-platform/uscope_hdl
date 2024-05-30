@@ -19,7 +19,7 @@
 
 module sigma_delta_processor_tb();
 
-    reg  clk, sd_clk_ref, reset;
+    reg  clk, reset;
 
     reg stimulus [44000:0];
 
@@ -38,7 +38,7 @@ module sigma_delta_processor_tb();
 
     wire sd_clk;
 
-    reg [N_CHANNELS-1:0] sd_in = 0;
+    wire [N_CHANNELS-1:0] sd_in;
 
     localparam [31:0] i_buck_dest [3:0] = '{
         3,
@@ -53,8 +53,8 @@ module sigma_delta_processor_tb();
         .DESTINATIONS(i_buck_dest)
     ) UUT(
         .clock(clk),
-        .ref_clock_in(sd_clk_ref),
         .reset(reset),
+        .enable(1),
         .data_in(sd_in),
         .clock_out(sd_clk),
         .sync(1),
@@ -68,14 +68,6 @@ module sigma_delta_processor_tb();
         #0.5;
     end
 
-
-    always begin
-        sd_clk_ref = 1'b1;
-        #2.5 sd_clk_ref = 1'b0;
-        #2.5;
-    end
-    
-
     initial begin
         $readmemh("/home/filssavi/git/uplatform-hdl/public/Components/signal_chain/SigmaDeltaProcessor/tb/data.csv", stimulus);
         axil_bfm = new(cfg_axi, 1);
@@ -87,7 +79,7 @@ module sigma_delta_processor_tb();
 
         #50;
         
-        axil_bfm.write(0, 101);
+        axil_bfm.write(0, 'hc);
 
         ->config_done;
     end
@@ -96,7 +88,6 @@ module sigma_delta_processor_tb();
 
     reg [30:0] outputs [N_CHANNELS-1:0];
 
- 
 
     reg [15:0] stimulus_ctr [N_CHANNELS-1:0];
     genvar i;
@@ -107,8 +98,15 @@ module sigma_delta_processor_tb();
         end
     end
 
-    for( i = 0; i< N_CHANNELS; i++)begin
 
+    reg [3:0] base_bitstream = 0;
+
+    assign sd_in[0] = base_bitstream[0];
+    assign sd_in[1] = base_bitstream[1];
+    assign sd_in[2] = base_bitstream[2] ^ sd_clk;
+    assign sd_in[3] = base_bitstream[3] ^ sd_clk;
+ 
+    for( i = 0; i< N_CHANNELS; i++)begin
 
         always_ff@(posedge clk)begin
             if(filter_out.valid)begin
@@ -125,7 +123,7 @@ module sigma_delta_processor_tb();
             end else begin
                 stimulus_ctr[i] <= 0;
             end
-            sd_in[i] <= stimulus[stimulus_ctr[i]];
+            base_bitstream[i] <= stimulus[stimulus_ctr[i]];
         end
     end
 

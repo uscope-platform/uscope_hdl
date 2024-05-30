@@ -26,11 +26,23 @@ module sigma_delta_channel #(
     input wire clock,
     input wire reset,
     input wire sync,
+    input wire manchester_mode,
     input wire sd_data_in,
     input wire sd_clock_in,
     input wire output_clock,
     axi_stream.master data_out
 );
+
+
+    wire decoded_data;
+        
+    sigma_delta_manchester_decoder input_decoder(
+        .clock(clock),
+        .bypass(~manchester_mode),
+        .sd_data_in(sd_data_in),
+        .decoded_data(decoded_data)
+    );
+
 
     reg [PROCESSING_RESOLUTION-1:0]  integration_out;
 
@@ -39,7 +51,7 @@ module sigma_delta_channel #(
     ) integration_stage (
         .clock(clock),
         .reset(reset),
-        .data_in(sd_data_in),
+        .data_in(decoded_data),
         .modulation_clock(sd_clock_in),
         .data_out(integration_out)
     );
