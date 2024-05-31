@@ -40,6 +40,7 @@ module sigma_delta_channel #(
         .clock(clock),
         .bypass(~manchester_mode),
         .sd_data_in(sd_data_in),
+        .sd_clock_in(sd_clock_in),
         .decoded_data(decoded_data)
     );
 

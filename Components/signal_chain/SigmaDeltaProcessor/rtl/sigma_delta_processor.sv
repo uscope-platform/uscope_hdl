@@ -203,7 +203,7 @@ endmodule
         "registers":[
             {
                 "name": "control",
-                "n_regs": ["N_CHANNELS"],
+                "n_regs": ["1"],
                 "description": "Sigma delta filter control register",
                 "direction": "RW"
             },

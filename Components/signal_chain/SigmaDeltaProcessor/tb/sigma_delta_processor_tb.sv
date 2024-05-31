@@ -101,8 +101,8 @@ module sigma_delta_processor_tb();
 
     reg [3:0] base_bitstream = 0;
 
-    assign sd_in[0] = base_bitstream[0];
-    assign sd_in[1] = base_bitstream[1];
+    assign sd_in[0] = base_bitstream[0] ^ sd_clk;
+    assign sd_in[1] = base_bitstream[1] ^ sd_clk;
     assign sd_in[2] = base_bitstream[2] ^ sd_clk;
     assign sd_in[3] = base_bitstream[3] ^ sd_clk;
  

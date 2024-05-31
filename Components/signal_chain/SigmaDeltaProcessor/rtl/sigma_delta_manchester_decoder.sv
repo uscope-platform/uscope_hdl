@@ -20,22 +20,33 @@ module sigma_delta_manchester_decoder(
     input wire clock,
     input wire bypass,
     input wire sd_data_in,
+    input wire sd_clock_in,
     output wire decoded_data
 );
-    reg rec_clk_del = 0;
-    reg rec_data = 0;
 
-    wire rec_clk;
-    assign rec_clk = rec_data ^ sd_data_in;
+
+
+
+    reg rec_data = 0;
     
     assign decoded_data = bypass ? sd_data_in : rec_data;
-    
-    always_ff@(posedge clock)begin
-        rec_clk_del <= rec_clk;
+    reg [1:0] wait_sample_point = 0;
+    reg sd_clock_in_del = 0;
+    always@(posedge clock)begin
+        sd_clock_in_del <= sd_clock_in;
+        if(sd_clock_in_del & !sd_clock_in) begin
+            wait_sample_point <= 1;
+        end
+        if(wait_sample_point == 1)begin
+            wait_sample_point <= 2;
+        end
+        if(wait_sample_point == 2)begin
+            rec_data <= sd_data_in;
+            wait_sample_point <= 0;
+        end
     end
 
-    always_ff@(posedge rec_clk)begin
-        rec_data <= sd_data_in;
-    end
+  
+
 
 endmodule
