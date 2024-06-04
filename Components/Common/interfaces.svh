@@ -115,7 +115,7 @@ interface SPI_if;
 
 endinterface
 
-interface AXI #(parameter ID_WIDTH = 1, USER_WIDTH = 1, DATA_WIDTH = 32, ADDR_WIDTH = 12);
+interface AXI #(parameter ID_WIDTH = 1, USER_WIDTH = 1, DATA_WIDTH = 32, ADDR_WIDTH = 32);
 
     logic [ID_WIDTH-1:0] AWID;
     logic [ADDR_WIDTH-1:0] AWADDR;
