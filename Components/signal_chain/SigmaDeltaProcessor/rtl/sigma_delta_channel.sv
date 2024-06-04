@@ -17,6 +17,8 @@
 
 
 module sigma_delta_channel #(
+    parameter MANCHESER_CODING = "FALSE",
+    parameter SAMPLING_EDGE = "POSITIVE",
     parameter PROCESSING_RESOLUTION = 24,
     parameter RESULT_RESOLUTION = 16,
     parameter OUTPUT_SIZE = 32,
@@ -34,15 +36,40 @@ module sigma_delta_channel #(
 );
 
 
-    wire decoded_data;
-        
-    sigma_delta_manchester_decoder input_decoder(
-        .clock(clock),
-        .bypass(~manchester_mode),
-        .sd_data_in(sd_data_in),
-        .sd_clock_in(sd_clock_in),
-        .decoded_data(decoded_data)
-    );
+
+    wire filter_input;
+
+    generate  
+        if(MANCHESER_CODING=="TRUE")begin
+
+            sigma_delta_manchester_decoder input_decoder(
+                .clock(clock),
+                .bypass(~manchester_mode),
+                .sd_data_in(sd_data_in),
+                .sd_clock_in(sd_clock_in),
+                .decoded_data(filter_input)
+            );
+
+        end else begin
+            reg sd_clock_in_del = 0;
+            reg registered_in = 0;
+
+            always_ff @( posedge clock) begin 
+                sd_clock_in_del <= sd_clock_in;
+                if(SAMPLING_EDGE=="POSITIVE")begin
+                    if(!sd_clock_in_del & sd_clock_in)begin
+                        registered_in <= sd_data_in;
+                    end 
+                end else begin
+                    if(sd_clock_in_del & !sd_clock_in)begin
+                        registered_in <= sd_data_in;
+                    end
+                end
+
+            end
+            assign filter_input = registered_in;
+        end
+    endgenerate
 
 
     reg [PROCESSING_RESOLUTION-1:0]  integration_out;
@@ -52,7 +79,7 @@ module sigma_delta_channel #(
     ) integration_stage (
         .clock(clock),
         .reset(reset),
-        .data_in(decoded_data),
+        .data_in(filter_input),
         .modulation_clock(sd_clock_in),
         .data_out(integration_out)
     );

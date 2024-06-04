@@ -79,7 +79,7 @@ module sigma_delta_processor_tb();
 
         #50;
         
-        axil_bfm.write(0, 'hc);
+        axil_bfm.write(0, 'h3);
 
         ->config_done;
     end
@@ -101,10 +101,10 @@ module sigma_delta_processor_tb();
 
     reg [3:0] base_bitstream = 0;
 
-    assign sd_in[0] = base_bitstream[0] ^ sd_clk;
-    assign sd_in[1] = base_bitstream[1] ^ sd_clk;
-    assign sd_in[2] = base_bitstream[2] ^ sd_clk;
-    assign sd_in[3] = base_bitstream[3] ^ sd_clk;
+    assign sd_in[0] = base_bitstream[0];
+    assign sd_in[1] = base_bitstream[1];
+    assign sd_in[2] = base_bitstream[2];
+    assign sd_in[3] = base_bitstream[3];
  
     for( i = 0; i< N_CHANNELS; i++)begin
 

@@ -19,6 +19,7 @@ module sigma_delta_processor #(
     parameter N_CHANNELS = 2,
     parameter MAIN_DECIMATION_RATIO = 256,
     parameter COMPARATOR_DECIMATION_RATIO = 256,
+    parameter SAMPLING_EDGE = "POSITIVE",
     parameter [31:0] DESTINATIONS [N_CHANNELS-1:0] = '{N_CHANNELS{0}}
 )(
     input wire clock,
@@ -79,17 +80,12 @@ module sigma_delta_processor #(
 
     wire [31:0] high_tresholds [N_CHANNELS-1:0];
     wire [31:0] low_tresholds [N_CHANNELS-1:0];
-    wire [31:0] manchester_mode;
     
     genvar n;
-
-    assign manchester_mode = cu_write_registers[0];
-
     generate
-        for(n=1; n<N_CHANNELS+1; n = n+1)begin
+        for(n=0; n<N_CHANNELS; n = n+1)begin
             assign high_tresholds[n] = cu_write_registers[n];
             assign low_tresholds[n] = cu_write_registers[2*n];
-            
         end
     endgenerate
 
@@ -140,7 +136,8 @@ module sigma_delta_processor #(
                 .PROCESSING_RESOLUTION(main_filter_resolution),
                 .RESULT_RESOLUTION(main_result_resolution),
                 .OUTPUT_SHIFT_SIZE(main_output_shift),
-                .CHANNEL_INDICATOR(DESTINATIONS[i])
+                .CHANNEL_INDICATOR(DESTINATIONS[i]),
+                .SAMPLING_EDGE(SAMPLING_EDGE)
             ) main_channel (
                 .clock(clock),
                 .reset(reset),
@@ -163,7 +160,8 @@ module sigma_delta_processor #(
                 .PROCESSING_RESOLUTION(comparator_filter_resolution),
                 .RESULT_RESOLUTION(comparator_result_resolution),
                 .OUTPUT_SHIFT_SIZE(comparator_output_shift),
-                .CHANNEL_INDICATOR(i)
+                .CHANNEL_INDICATOR(i),
+                .SAMPLING_EDGE(SAMPLING_EDGE)
             ) comparator_channel (
                 .clock(clock),
                 .reset(reset),
@@ -201,12 +199,6 @@ endmodule
         "name": "sigma_delta_processor",
         "type": "parametric_peripheral",
         "registers":[
-            {
-                "name": "control",
-                "n_regs": ["1"],
-                "description": "Sigma delta filter control register",
-                "direction": "RW"
-            },
             {
                 "name": "tresh_$_l",
                 "n_regs": ["N_CHANNELS"],
