@@ -28,7 +28,6 @@ module sigma_delta_channel #(
     input wire clock,
     input wire reset,
     input wire sync,
-    input wire manchester_mode,
     input wire sd_data_in,
     input wire sd_clock_in,
     input wire output_clock,
@@ -44,7 +43,6 @@ module sigma_delta_channel #(
 
             sigma_delta_manchester_decoder input_decoder(
                 .clock(clock),
-                .bypass(~manchester_mode),
                 .sd_data_in(sd_data_in),
                 .sd_clock_in(sd_clock_in),
                 .decoded_data(filter_input)

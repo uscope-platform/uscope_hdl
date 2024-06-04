@@ -141,7 +141,6 @@ module sigma_delta_processor #(
             ) main_channel (
                 .clock(clock),
                 .reset(reset),
-                .manchester_mode(manchester_mode[i]),
                 .sync(sync),
                 .sd_data_in(data_in[i]),
                 .sd_clock_in(clock_out),
