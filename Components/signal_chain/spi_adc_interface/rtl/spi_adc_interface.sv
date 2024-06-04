@@ -43,7 +43,8 @@ module spi_adc_interface #(
 
     SPI #(
         .N_CHANNELS(3),
-        .OUTPUT_WIDTH(DATAPATH_WIDTH)
+        .OUTPUT_WIDTH(DATAPATH_WIDTH),
+        .PRAGMA_MKFG_MODULE_TOP(PRAGMA_MKFG_MODULE_TOP)
     )dab_adc_if(
         .clock(clock),
         .reset(reset),
