@@ -97,6 +97,8 @@ module ultra_buffer #(parameter ADDRESS_WIDTH=13, DATA_WIDTH=32, DEST_WIDTH=16, 
 
     initial begin
         out.data <= 0;
+        out.valid <= 0;
+        out.tlast <= 0;
         out.user <= 0;
         out.dest <= 0;
     end
