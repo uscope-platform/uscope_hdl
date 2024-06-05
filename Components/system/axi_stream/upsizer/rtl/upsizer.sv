@@ -37,6 +37,7 @@ module upsizer#(
             assign data_out.tlast = data_in.tlast;
             assign data_out.user = data_in.user;
             assign data_out.data = data_in.data;
+            assign data_out.valid = data_in.valid;
 
         end else begin
 
