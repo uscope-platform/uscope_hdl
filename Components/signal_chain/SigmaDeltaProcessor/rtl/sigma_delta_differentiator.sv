@@ -32,6 +32,7 @@ module sd_differentiator #(
         if(~reset) begin
             diff_memory <= 0;
             data_clock_del <= 0;
+            data_out <= 0;
         end else begin
             data_clock_del <= data_clock;
 
