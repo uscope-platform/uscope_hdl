@@ -81,29 +81,38 @@ module uscope_testing_logic (
 
     axi_stream scope_in();
 
-    axi_dma_traffic_gen #(
-        .N_DEST(6),
-        .BACKOFF_DELAY(128),
-        .DEST_START(1)
-    ) data_source (
-        .clock(clock),
-        .reset(reset),
-        .enable(enable),
-        .trigger(trigger),
-        .dma_done(dma_done),
-        .packet_length(6),
-        .data_out(scope_in)
-    );
+    reg [3:0] channel_ctr = 0;
+    reg [10:0] data_ctr = 0;
+
+    always_ff @(posedge clock) begin
+        
+        if(sampling_sync)begin
+            scope_in.data <= data_ctr + 100*channel_ctr;
+            scope_in.dest <= channel_ctr;
+            
+            channel_ctr <= channel_ctr + 1;
+            if(channel_ctr == 5) begin
+                channel_ctr <= 0;
+                data_ctr <= data_ctr + 1;
+            end
+            scope_in.valid <= 1;
+        end else begin
+            scope_in.user <= 0;
+            scope_in.valid <= 0;
+            scope_in.tlast <= 0;
+        end
+    end
+
 
     uScope_stream_dma #(
         .N_TRIGGERS(0),
-        .SCOPE_BASE_ADDRESS(transform_control_address_space::uscope),
+        .SCOPE_BASE_ADDRESS(scope_addr),
         .OUTPUT_AXI_WIDTH(64),
         .CHANNEL_SAMPLES(1024)
     ) scope(
         .clock(clock),
         .reset(reset),
-        .sampling_clock(sampling_sync),
+        .sampling_clock(scope_in.valid),
         .dma_done(dma_done),
         .axi_in(scope_axi),
         .scope_out(scope_out),

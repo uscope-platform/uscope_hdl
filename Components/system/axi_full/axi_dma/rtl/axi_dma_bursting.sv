@@ -38,7 +38,7 @@ module axi_dma_bursting #(
     axi_stream #(.DEST_WIDTH(DEST_WIDTH), .USER_WIDTH(USER_WIDTH), .DATA_WIDTH(64)) upsizer_in();
 
     localparam ADDRESS_INCREMENT = 8;
-
+    parameter AXI_SIZE = OUTPUT_AXI_WIDTH == 128 ? 'b100 : 'b011;
 
     assign upsizer_in.data = {data_in.user[USER_WIDTH-1:0], data_in.dest[DEST_WIDTH-1:0], data_in.data[31:0]};
     assign upsizer_in.dest = 0;
@@ -89,6 +89,13 @@ module axi_dma_bursting #(
 
     reg [3:0] beats_counter = 0;
 
+    initial begin
+        axi_out.AWVALID = 0;
+        axi_out.WVALID  = 0;
+        axi_out.ARVALID = 0;
+        axi_out.RREADY <= 1;
+    end
+
     always_ff @(posedge clock) begin
         if(~reset)begin
 
@@ -103,7 +110,7 @@ module axi_dma_bursting #(
             axi_out.AWCACHE <= 0;
             axi_out.AWBURST <= 0;
             axi_out.AWLOCK <= 0;
-            axi_out.AWSIZE <= 'b100;
+            axi_out.AWSIZE <= AXI_SIZE;
 
 
             axi_out.WVALID <= 0;

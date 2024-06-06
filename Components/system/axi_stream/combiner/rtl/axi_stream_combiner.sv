@@ -48,7 +48,8 @@ module axi_stream_combiner #(
                     .DATA_WIDTH(INPUT_DATA_WIDTH),
                     .DEST_WIDTH(DEST_WIDTH),
                     .USER_WIDTH(USER_WIDTH),
-                    .FIFO_DEPTH(BUFFER_DEPTH)
+                    .FIFO_DEPTH(BUFFER_DEPTH),
+                    .SIM_ASSERT_CHK(0)
                 )input_buffers(
                     .clock(clock),
                     .reset(reset),

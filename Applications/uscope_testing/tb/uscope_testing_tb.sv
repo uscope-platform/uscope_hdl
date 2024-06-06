@@ -21,8 +21,8 @@
 import reg_maps::*;
 import transform_control_address_space::*;
 
-import axi_vip_pkg::*;
-import axi_dma_vip_bd_axi_vip_0_0_pkg::*;
+//import axi_vip_pkg::*;
+//import axi_dma_vip_bd_axi_vip_0_0_pkg::*;
 
 module uscope_testing_tb();
 
@@ -35,14 +35,16 @@ module uscope_testing_tb();
     end
 
     localparam timebase_addr = 'h43c00000;
-    localparam scope_addr = 'h43c10000;
+    localparam scope_addr = 'h43c10200;
+    localparam scope_mux_addr = 'h43c10000;
     localparam gpio_addr = 'h43c20000;
+
 
     axi_lite axi_master();
     axi_lite_BFM axil_bfm;
     wire dma_done;
 
-    AXI #(.ID_WIDTH(2), .ADDR_WIDTH(32), .DATA_WIDTH(64))  uscope();
+    AXI #(.ID_WIDTH(2), .ADDR_WIDTH(36), .DATA_WIDTH(64))  uscope();
     
     uscope_testing_logic uut (
         .clock(clk),
@@ -52,11 +54,18 @@ module uscope_testing_tb();
         .scope_out(uscope)
     );
 
-    axi_dma_vip_bd_wrapper VIP(
+    AXI dummy();
+    axi_full_slave_sink dma_sink (
         .clock(clk),
         .reset(reset),
         .axi_in(uscope)
     );
+    
+    // axi_dma_vip_bd_wrapper VIP(
+    //     .clock(clk),
+    //     .reset(reset),
+    //     .axi_in(uscope)
+    // );
 
 
     initial begin  
@@ -80,19 +89,26 @@ module uscope_testing_tb();
         #10 axil_bfm.write(scope_addr + reg_maps::uscope_regs.acquisition_mode, 2);
         #10 axil_bfm.write(scope_addr + reg_maps::uscope_regs.trigger_point, 'h200);
 
+        #10 axil_bfm.write(scope_mux_addr + reg_maps::uscope_mux.ch_1, 0);    
+        #10 axil_bfm.write(scope_mux_addr + reg_maps::uscope_mux.ch_2, 1);
+        #10 axil_bfm.write(scope_mux_addr + reg_maps::uscope_mux.ch_3, 2);
+        #10 axil_bfm.write(scope_mux_addr + reg_maps::uscope_mux.ch_4, 3);
+        #10 axil_bfm.write(scope_mux_addr + reg_maps::uscope_mux.ch_5, 4);
+        #10 axil_bfm.write(scope_mux_addr + reg_maps::uscope_mux.ch_6, 5);
+
         #10 axil_bfm.write(gpio_addr + reg_maps::gpio_regs.out, 1);
 
     end
 
-   axi_dma_vip_bd_axi_vip_0_0_slv_mem_t slv_agent;
+//    axi_dma_vip_bd_axi_vip_0_0_slv_mem_t slv_agent;
 
-    initial begin
-        slv_agent = new("slave vip agent",uscope_testing_tb.VIP.vip_bd_i.axi_vip_0.inst.IF);
-        slv_agent.set_verbosity(400);
-        slv_agent.start_slave();
-        slv_agent.mem_model.set_bresp_delay(19);
-        slv_agent.mem_model.set_inter_beat_gap(0);
-        slv_agent.mem_model.set_bresp_delay_policy(XIL_AXI_MEMORY_DELAY_NOADJUST_FIXED);
-    end
+//     initial begin
+//         slv_agent = new("slave vip agent",uscope_testing_tb.VIP.vip_bd_i.axi_vip_0.inst.IF);
+//         slv_agent.set_verbosity(400);
+//         slv_agent.start_slave();
+//         slv_agent.mem_model.set_bresp_delay(19);
+//         slv_agent.mem_model.set_inter_beat_gap(0);
+//         slv_agent.mem_model.set_bresp_delay_policy(XIL_AXI_MEMORY_DELAY_NOADJUST_FIXED);
+//     end
 
 endmodule
