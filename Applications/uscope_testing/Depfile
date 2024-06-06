@@ -1,0 +1,47 @@
+{
+    "general":{
+        "project_name":"uscope_testing",
+        "target_part":"xc7z020clg400",
+	    "synth_modules":[],
+        "synth_tl": "uscope_testing",
+        "sim_tl":"uscope_testing_tb",
+        "sim_modules":[],
+        "include_paths":[
+            "Components/Common"
+        ]
+    },
+    "bus":{
+        "control":{
+            "bus_interface":"control_axi",
+            "starting_module":"core_logic",
+            "type":"axi_lite"
+        }
+    },
+    "scripts":[
+        {
+            "name":"set_properties.tcl",
+            "type": "tcl",
+            "arguments":[]
+        },
+        {
+            "name":"base_zynq.tcl",
+            "type": "tcl",
+            "arguments":[]
+        },
+        {
+            "name":"float_to_fixed.tcl",
+            "type": "tcl",
+            "arguments":[]
+        }, 
+        {
+            "name":"axi_dma_VIP_bd.tcl",
+            "type": "tcl",
+            "arguments":[]
+        }
+    ],
+    "excluded_modules":[
+       "ps",
+       "float_to_fixed"
+    ],
+    "constraints": []
+}

@@ -65,7 +65,7 @@ Applications/SicDriveMaster/tb/fCore_has
 Applications/mc_adc_test/mc_adc_tests/
 Applications/mc_adc_test/MC_scope_test_top/
 Applications/SicDriveMaster/SensorHubTest/sensorHubTest/
-
+Applications/uscope_testing/uscope_testing/
 
 #SPECIFIC FILE IGNORES
 Applications/AdcTest/output\.bif
