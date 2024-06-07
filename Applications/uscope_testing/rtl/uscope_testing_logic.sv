@@ -85,7 +85,7 @@ module uscope_testing_logic (
     reg [10:0] data_ctr = 0;
 
     always_ff @(posedge clock) begin
-        
+        scope_in.user <= get_axis_metadata(16, 0, 0);
         if(sampling_sync)begin
             scope_in.data <= data_ctr + 100*channel_ctr;
             scope_in.dest <= channel_ctr;
@@ -108,7 +108,8 @@ module uscope_testing_logic (
         .N_TRIGGERS(0),
         .SCOPE_BASE_ADDRESS(scope_addr),
         .OUTPUT_AXI_WIDTH(64),
-        .CHANNEL_SAMPLES(1024)
+        .CHANNEL_SAMPLES(1024),
+        .BURST_SIZE(8)
     ) scope(
         .clock(clock),
         .reset(reset),
