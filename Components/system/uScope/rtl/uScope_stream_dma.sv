@@ -24,7 +24,8 @@ module uScope_stream_dma #(
     ADDR_WIDTH = 32,
     OUTPUT_AXI_WIDTH = 128,
     DEST_WIDTH = 16,
-    CHANNEL_SAMPLES = 1024
+    CHANNEL_SAMPLES = 1024,
+    BURST_SIZE = 16
 ) (
     input wire clock,
     input wire reset,
@@ -145,6 +146,7 @@ module uScope_stream_dma #(
         .DEST_WIDTH(DEST_WIDTH),
         .N_STREAMS(N_CHANNELS),
         .OUTPUT_AXI_WIDTH(OUTPUT_AXI_WIDTH),
+        .BURST_SIZE(BURST_SIZE),
         .CHANNEL_SAMPLES(CHANNEL_SAMPLES)
     )scope_internal (
         .clock(clock),

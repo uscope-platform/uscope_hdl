@@ -22,6 +22,7 @@ module uScope_dma #(
     DEST_WIDTH = 8,
     N_STREAMS = 6,
     OUTPUT_AXI_WIDTH = 128,
+    BURST_SIZE = 16,
     CHANNEL_SAMPLES = 1024
 )(
     input wire clock,
@@ -112,6 +113,7 @@ module uScope_dma #(
         .ADDR_WIDTH(64),
         .DEST_WIDTH(16),
         .USER_WIDTH(16),
+        .BURST_SIZE(BURST_SIZE),
         .OUTPUT_AXI_WIDTH(OUTPUT_AXI_WIDTH)
     )dma_engine(
         .clock(clock),
