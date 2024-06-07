@@ -22,7 +22,8 @@ module axi_dma_bursting #(
     parameter DEST_WIDTH = 16,
     parameter USER_WIDTH = 16,
     parameter OUTPUT_AXI_WIDTH = 128,
-    parameter MAX_TRANSFER_SIZE = 65536
+    parameter MAX_TRANSFER_SIZE = 65536,
+    parameter BURST_SIZE = 16
 )(
     input wire clock,
     input wire reset,
@@ -38,7 +39,8 @@ module axi_dma_bursting #(
     axi_stream #(.DEST_WIDTH(DEST_WIDTH), .USER_WIDTH(USER_WIDTH), .DATA_WIDTH(64)) upsizer_in();
 
     localparam ADDRESS_INCREMENT = 8;
-    parameter AXI_SIZE = OUTPUT_AXI_WIDTH == 128 ? 'b100 : 'b011;
+    
+    localparam BEAT_SIZE = OUTPUT_AXI_WIDTH/8;
 
     assign upsizer_in.data = {data_in.user[USER_WIDTH-1:0], data_in.dest[DEST_WIDTH-1:0], data_in.data[31:0]};
     assign upsizer_in.dest = 0;
@@ -76,15 +78,20 @@ module axi_dma_bursting #(
 
     wire [ADDR_WIDTH-1:0] current_target_address;
     
-    // the address is calculated by taking the overall base address and adding the burst offset on top.
-    // to calculate the burst offset the burst counter is multiplied by 16 bytes in a beat and 16 beats in a burst
-    assign current_target_address = target_base + burst_counter*16*16; 
-
-
     wire dma_end_condition;
-
+    
     generate
-        assign dma_end_condition = burst_counter == packet_length/(2*16)-1;
+
+        // the address is calculated by taking the overall base address and adding the burst offset on top.
+        // to calculate the burst offset the burst counter is multiplied by 8/16 bytes in a beat and 16 beats in a burst
+
+        if(OUTPUT_AXI_WIDTH==128) begin
+            assign current_target_address = target_base + burst_counter*BEAT_SIZE*BURST_SIZE; 
+            assign dma_end_condition = burst_counter == packet_length/(2*BURST_SIZE)-1;
+        end else begin
+            assign current_target_address = target_base + burst_counter*BEAT_SIZE*BURST_SIZE; 
+            assign dma_end_condition = burst_counter == packet_length/BURST_SIZE-1;
+        end
     endgenerate
 
     reg [3:0] beats_counter = 0;
@@ -95,7 +102,6 @@ module axi_dma_bursting #(
         axi_out.ARVALID = 0;
         axi_out.RREADY <= 1;
     end
-
     always_ff @(posedge clock) begin
         if(~reset)begin
 
@@ -110,12 +116,11 @@ module axi_dma_bursting #(
             axi_out.AWCACHE <= 0;
             axi_out.AWBURST <= 0;
             axi_out.AWLOCK <= 0;
-            axi_out.AWSIZE <= AXI_SIZE;
-
+            axi_out.AWSIZE <= OUTPUT_AXI_WIDTH==128 ? 'b100 : 'b11;
+            axi_out.WSTRB <= OUTPUT_AXI_WIDTH==128 ? 'hFFFF : 'hFF;
 
             axi_out.WVALID <= 0;
             
-            axi_out.WSTRB <= 'hFFFF;
             axi_out.WUSER <= 0;
             axi_out.WLAST <= 0;
 
@@ -159,13 +164,13 @@ module axi_dma_bursting #(
                         axi_out.AWVALID <= 1;
                         axi_out.AWBURST <= 1;
                         axi_out.WLAST <= 0;
-                        axi_out.AWLEN = 15;
+                        axi_out.AWLEN = BURST_SIZE-1;
                     end
 
                 end
                 writer_dma_send:begin
                     if(upsized_data.valid) begin
-                        if(beats_counter== 15)begin
+                        if(beats_counter== BURST_SIZE-1)begin
                             axi_out.WLAST <= 1;
                             writer_state <= writer_wait_response;
                             upsized_data.ready <= 0;    
@@ -179,8 +184,8 @@ module axi_dma_bursting #(
                     end
                 end
                 writer_wait_ready:begin
-                    axi_out.WVALID <= 0;
                      if(axi_out.WREADY)begin
+                        axi_out.WVALID <= 0;
                         writer_state <= writer_dma_send;
                         upsized_data.ready <= 1;
                      end
