@@ -42,7 +42,9 @@ module axi_full_slave_sink #(
     always @( posedge clock ) begin : write_response_generation
         if ( reset == 1'b0 ) begin
             axi_in.BVALID <= 0;
-            axi_in.BRESP <= 2'b1;
+            axi_in.BID <= 0;
+            axi_in.BUSER <= 0;
+            axi_in.BRESP <= 2'b0;
         end else begin
             axi_in.BVALID <= 0;
             case (bvalid_wait)
