@@ -18,7 +18,7 @@
 
 module ultra_buffer_tb();
 
-    reg  clock, reset, start;
+    reg  clock, reset;
 
     event test_done;
     axi_stream stream_in();
@@ -33,7 +33,7 @@ module ultra_buffer_tb();
     wire full;
 
     ultra_buffer #(
-        .ADDRESS_WIDTH(13),
+        .ADDRESS_WIDTH(5),
         .IN_DATA_WIDTH(32),
         .DEST_WIDTH(16),
         .USER_WIDTH(16)
@@ -41,9 +41,8 @@ module ultra_buffer_tb();
         .clock(clock),
         .reset(reset),
         .enable(1),
-        .packet_length(6144),
         .trigger(trigger),
-        .trigger_point(300),
+        .trigger_point(10),
         .full(full),
         .in(stream_in),
         .out(stream_out)
@@ -61,13 +60,18 @@ module ultra_buffer_tb();
         #10;
         ->config_done;
         forever begin
-            #500 trigger <= 1;
+            #60 trigger <= 1;
             #1 trigger <= 0;
             #35000;
         end
     end 
 
     reg [15:0] data_ctr = 0;
+    reg stop_test = 0;
+
+    always_ff @(posedge clock)begin
+        if(stream_out.valid) stop_test <= 1;
+    end
 
     initial begin
         stream_in.valid <= 0;
@@ -76,17 +80,53 @@ module ultra_buffer_tb();
         stream_in.user <= 0;
         @(config_done);
         forever begin
-            wait(stream_in.ready == 1);
-            stream_in.valid <= 1;
-            stream_in.data <= data_ctr;
-            stream_in.dest <= 5;
-            stream_in.user <= 'h28;
-            data_ctr <= data_ctr + 1;
-            #1 stream_in.valid <= 0;
+            if(!stop_test)begin
+                wait(stream_in.ready == 1);
+                stream_in.valid <= 1;
+                stream_in.data <= data_ctr;
+                stream_in.dest <= 5;
+                stream_in.user <= 'h28;
+                data_ctr <= data_ctr + 1;
+                #1 stream_in.valid <= 0;
+            end
             #3;
         end
     end
     
+    localparam mem_depth = (1<<5);
+    reg[31:0] check_data [mem_depth-1:0];
+    reg[31:0] result_data [mem_depth-1:0];
+
+    reg [5:0] result_ctr = 0;
+    event do_result_check;
+    always_ff@(posedge clock)begin
+        if(stream_in.valid)begin
+            for(int i = 0; i<mem_depth; i++)begin
+                check_data[mem_depth-i-1] <= check_data[mem_depth-i];
+            end
+            check_data[mem_depth-1] <=  stream_in.data;
+        end
+
+        if(stream_out.valid && stream_out.ready)begin
+            result_data[result_ctr] <= stream_out.data;
+            result_ctr <= result_ctr + 1;
+            if(result_ctr == mem_depth-1) ->do_result_check;
+        end
+    end
+
+
+
+    always begin
+        @(do_result_check)begin
+        #1;
+        assert (check_data == result_data) 
+            else  $fatal("ERROR: wrong result detected");
+        end
+    end
+
+
+
+
 
     initial begin
     
