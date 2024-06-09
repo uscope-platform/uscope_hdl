@@ -32,8 +32,10 @@ module ultra_buffer_tb();
     reg trigger = 0;
     wire full;
 
+    localparam buffer_addr_width = 10;
+
     ultra_buffer #(
-        .ADDRESS_WIDTH(5),
+        .ADDRESS_WIDTH(buffer_addr_width),
         .IN_DATA_WIDTH(32),
         .DEST_WIDTH(16),
         .USER_WIDTH(16)
@@ -42,7 +44,7 @@ module ultra_buffer_tb();
         .reset(reset),
         .enable(1),
         .trigger(trigger),
-        .trigger_point(10),
+        .trigger_point(1),
         .full(full),
         .in(stream_in),
         .out(stream_out)
@@ -67,11 +69,6 @@ module ultra_buffer_tb();
     end 
 
     reg [15:0] data_ctr = 0;
-    reg stop_test = 0;
-
-    always_ff @(posedge clock)begin
-        if(stream_out.valid) stop_test <= 1;
-    end
 
     initial begin
         stream_in.valid <= 0;
@@ -80,24 +77,22 @@ module ultra_buffer_tb();
         stream_in.user <= 0;
         @(config_done);
         forever begin
-            if(!stop_test)begin
-                wait(stream_in.ready == 1);
-                stream_in.valid <= 1;
-                stream_in.data <= data_ctr;
-                stream_in.dest <= 5;
-                stream_in.user <= 'h28;
-                data_ctr <= data_ctr + 1;
-                #1 stream_in.valid <= 0;
-            end
+            wait(stream_in.ready == 1);
+            stream_in.valid <= 1;
+            stream_in.data <= data_ctr;
+            stream_in.dest <= 5;
+            stream_in.user <= 'h28;
+            data_ctr <= data_ctr + 1;
+            #1 stream_in.valid <= 0;
             #3;
         end
     end
     
-    localparam mem_depth = (1<<5);
+    localparam mem_depth = (1<<buffer_addr_width);
     reg[31:0] check_data [mem_depth-1:0];
     reg[31:0] result_data [mem_depth-1:0];
 
-    reg [5:0] result_ctr = 0;
+    reg [buffer_addr_width-1:0] result_ctr = 0;
     event do_result_check;
     always_ff@(posedge clock)begin
         if(stream_in.valid)begin
