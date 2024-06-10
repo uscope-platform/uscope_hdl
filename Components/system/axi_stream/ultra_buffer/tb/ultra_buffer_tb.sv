@@ -21,9 +21,10 @@ module ultra_buffer_tb();
 
 
 
-    localparam buffer_addr_width = 5;
+    localparam buffer_addr_width = 10;
     localparam mem_depth = (1<<buffer_addr_width);
-    localparam backpressure = 0;
+    localparam enable_backpressure = 1;
+    localparam enable_trigger_randomization = 1;
 
 
     reg  clock, reset;
@@ -74,7 +75,7 @@ module ultra_buffer_tb();
             ->capture_triggered;
             #1 trigger <= 0;
             #(7*mem_depth-1);
-            trigger_point <= $urandom();
+            if(enable_trigger_randomization==1) trigger_point <= $urandom_range(1,mem_depth-2);
         end
     end 
 
@@ -124,7 +125,7 @@ module ultra_buffer_tb();
             result_data[result_ctr] <= stream_out.data;
             result_ctr <= result_ctr + 1;
         end
-
+        
         if(result_ctr == mem_depth-1)begin
             ->do_result_check;
             result_ctr <= 0;
@@ -146,8 +147,8 @@ module ultra_buffer_tb();
 
     initial begin
         stream_out.ready <= 1;
-        
-        if(backpressure==1)begin
+        #0.5
+        if(enable_backpressure==1)begin
             forever begin
                 @(full==1);
                 #2;
