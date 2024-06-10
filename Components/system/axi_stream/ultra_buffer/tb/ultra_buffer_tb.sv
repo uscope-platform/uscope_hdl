@@ -91,8 +91,8 @@ module ultra_buffer_tb();
             wait(stream_in.ready == 1);
             stream_in.valid <= 1;
             stream_in.data <= data_ctr;
-            stream_in.dest <= 5;
-            stream_in.user <= 'h28;
+            stream_in.dest <= $urandom_range(0,5);
+            stream_in.user <= $urandom_range(0,5);
             data_ctr <= data_ctr + 1;
             #1 stream_in.valid <= 0;
             #3;
@@ -106,7 +106,12 @@ module ultra_buffer_tb();
 
 
     reg[31:0] check_data [mem_depth-1:0];
+    reg[31:0] check_dest [mem_depth-1:0];
+    reg[31:0] check_user [mem_depth-1:0];
+    
     reg[31:0] result_data [mem_depth-1:0];
+    reg[31:0] result_dest [mem_depth-1:0];
+    reg[31:0] result_user [mem_depth-1:0];
 
     reg [buffer_addr_width-1:0] result_ctr = 0;
     event do_result_check;
@@ -115,14 +120,20 @@ module ultra_buffer_tb();
         if(stream_in.valid)begin
             for(int i = 0; i<mem_depth; i++)begin
                 check_data[mem_depth-i-1] <= check_data[mem_depth-i];
+                check_dest[mem_depth-i-1] <= check_dest[mem_depth-i];
+                check_user[mem_depth-i-1] <= check_user[mem_depth-i];
             end
             check_data[mem_depth-1] <=  stream_in.data;
+            check_dest[mem_depth-1] <=  stream_in.dest;
+            check_user[mem_depth-1] <=  stream_in.user;
         end
     end
 
     always@(posedge clock)begin
         if(stream_out.valid && stream_out.ready)begin
             result_data[result_ctr] <= stream_out.data;
+            result_dest[result_ctr] <= stream_out.dest;
+            result_user[result_ctr] <= stream_out.user;
             result_ctr <= result_ctr + 1;
         end
         
@@ -136,12 +147,19 @@ module ultra_buffer_tb();
     reg start_check = 0;
 
     always begin
-        @(do_result_check)begin
+        @(do_result_check)
         #1;
         start_check <=1;        
         assert (check_data == result_data) 
-            else  $fatal("ERROR: wrong result detected");
-        end
+            else  $fatal("ERROR: wrong result data detected");
+
+        assert (check_dest == result_dest) 
+            else  $fatal("ERROR: wrong result dest detected");
+
+
+        assert (check_user == result_user) 
+            else  $fatal("ERROR: wrong result user detected");
+    
     end
 
 

@@ -27,8 +27,10 @@ module ultra_buffer #(parameter ADDRESS_WIDTH=13, DATA_WIDTH=32, DEST_WIDTH=16, 
     axi_stream.master out
 );
 
-    reg [DATA_WIDTH-1:0] write_data = 0;
+    reg [(DATA_WIDTH+DEST_WIDTH+USER_WIDTH)-1:0] write_data = 0;
     reg [DATA_WIDTH-1:0] read_data = 0;
+    reg [DEST_WIDTH-1:0] read_dest = 0;
+    reg [USER_WIDTH-1:0] read_user = 0;
     reg [ADDRESS_WIDTH-1:0] write_address = 0;
     reg [ADDRESS_WIDTH-1:0] read_address = 0;
     reg registerd_write = 0;
@@ -38,8 +40,7 @@ module ultra_buffer #(parameter ADDRESS_WIDTH=13, DATA_WIDTH=32, DEST_WIDTH=16, 
     localparam MEMORY_DEPTH = (1<<ADDRESS_WIDTH);
 
     ultra_buffer_memory #(
-        .ADDRESS_WIDTH(ADDRESS_WIDTH),
-        .DATA_WIDTH(DATA_WIDTH)
+        .ADDRESS_WIDTH(ADDRESS_WIDTH)
     ) inner_mem(
         .clock(clock),
         .reset(reset),
@@ -47,11 +48,10 @@ module ultra_buffer #(parameter ADDRESS_WIDTH=13, DATA_WIDTH=32, DEST_WIDTH=16, 
         .write_address(write_address),
         .read_address(read_address),
         .write_data(write_data),
-        .read_data(read_data)
+        .read_data({read_user, read_dest, read_data})
     );
     
-
-
+        
     enum reg [2:0] {
         pre_trigger = 1,
         acquisition = 2,
@@ -65,7 +65,6 @@ module ultra_buffer #(parameter ADDRESS_WIDTH=13, DATA_WIDTH=32, DEST_WIDTH=16, 
     reg [ADDRESS_WIDTH-1:0] read_progress_ctr = 0;
 
 
-    reg [DATA_WIDTH-1:0] backpressure_data;    
     reg backpressure_slip;
 
     always_ff @(posedge clock)begin
@@ -82,15 +81,23 @@ module ultra_buffer #(parameter ADDRESS_WIDTH=13, DATA_WIDTH=32, DEST_WIDTH=16, 
     end
 
     wire [DATA_WIDTH-1:0] selected_data;    
-    assign selected_data = backpressure_slip ? backpressure_data : read_data;
+    wire [DATA_WIDTH-1:0] selected_dest;    
+    wire [DATA_WIDTH-1:0] selected_user;  
 
+    reg [DATA_WIDTH-1:0] backpressure_data;    
+    reg [DEST_WIDTH-1:0] backpressure_dest;    
+    reg [USER_WIDTH-1:0] backpressure_user;    
+
+    assign selected_data = backpressure_slip ? backpressure_data : read_data;
+    assign selected_dest = backpressure_slip ? backpressure_dest : read_dest;
+    assign selected_user = backpressure_slip ? backpressure_user : read_user;
 
 
     always_ff @( posedge clock ) begin 
         registerd_write <= in.valid;
         if(in.valid & write_enabled & enable)begin
             write_address <= write_address + 1;
-            write_data <= in.data;
+            write_data <= {in.user[USER_WIDTH-1:0], in.dest[DEST_WIDTH-1:0], in.data[DATA_WIDTH-1:0]};;
             if(state == acquisition)begin
                 fill_progress_ctr <= fill_progress_ctr +1;
             end else begin
@@ -115,12 +122,15 @@ module ultra_buffer #(parameter ADDRESS_WIDTH=13, DATA_WIDTH=32, DEST_WIDTH=16, 
     end
     
     always_ff @( posedge clock ) begin 
-        if(enable)begin
-            case (state)
-                pre_trigger:begin
-                    out.valid <= 0;
-                    out.data <= 0;
-                    full <= 0;
+        case (state)
+            pre_trigger:begin
+                out.valid <= 0;
+                out.data <= 0;
+                out.dest <= 0;
+                out.user <= 0;
+                out.tlast <= 0;
+                full <= 0;
+                if(enable)begin
                     write_enabled <= 1;
                     in.ready <= 1;
                     if(trigger)begin
@@ -132,44 +142,46 @@ module ultra_buffer #(parameter ADDRESS_WIDTH=13, DATA_WIDTH=32, DEST_WIDTH=16, 
                         state <= acquisition;
                     end
                 end
-                acquisition:begin
-                    if(fill_progress_ctr == MEMORY_DEPTH-1)begin
-                        state <= wait_read_latency;
-                        in.ready <= 0;
-                        full <= 1;
-                    end
+            end
+            acquisition:begin
+                if(fill_progress_ctr == MEMORY_DEPTH-1)begin
+                    state <= wait_read_latency;
+                    in.ready <= 0;
+                    full <= 1;
                 end
-                wait_read_latency:begin
-                    full <= 0;
-                    write_enabled <= 0;
+            end
+            wait_read_latency:begin
+                write_enabled <= 0;
+                read_address <= read_address +1;
+                state <= output_phase;
+            end
+            output_phase:begin
+                if(out.ready)begin
+                    out.valid <= 1;
+                    out.data <= selected_data;
+                    out.dest <= selected_dest;
+                    out.user <= selected_user;
+                    if(read_progress_ctr == MEMORY_DEPTH-2) begin
+                        out.tlast <= 1;
+                        read_address <= 0;
+                        state <= pre_trigger;
+                    end else begin
+                        read_address <= read_address +1;
+                    end
+                end else begin
+                    state <= wait_backslip;
+                    read_address <= read_address -1;
+                    out.valid <= 0;
+                end
+            end
+            wait_backslip:begin
+                if(out.ready)begin
                     read_address <= read_address +1;
                     state <= output_phase;
+                    out.valid <= 1;
                 end
-                output_phase:begin
-                    if(out.ready)begin
-                        out.valid <= 1;
-                        out.data <= selected_data;
-                        if(read_progress_ctr == MEMORY_DEPTH-2) begin
-                            read_address <= 0;
-                            state <= pre_trigger;
-                        end else begin
-                            read_address <= read_address +1;
-                        end
-                    end else begin
-                        state <= wait_backslip;
-                        read_address <= read_address -1;
-                        out.valid <= 0;
-                    end
-                end
-                wait_backslip:begin
-                    if(out.ready)begin
-                        read_address <= read_address +1;
-                        state <= output_phase;
-                        out.valid <= 1;
-                    end
-                end
-            endcase
-        end
+            end
+        endcase
     end
 
 
