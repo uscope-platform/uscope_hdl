@@ -18,6 +18,14 @@
 
 module ultra_buffer_tb();
 
+
+
+
+    localparam buffer_addr_width = 5;
+    localparam mem_depth = (1<<buffer_addr_width);
+    localparam backpressure = 0;
+
+
     reg  clock, reset;
 
     event test_done;
@@ -32,8 +40,7 @@ module ultra_buffer_tb();
     reg trigger = 0;
     wire full;
 
-    localparam buffer_addr_width = 10;
-
+    reg [buffer_addr_width-1:0] trigger_point = 10;
     ultra_buffer #(
         .ADDRESS_WIDTH(buffer_addr_width),
         .IN_DATA_WIDTH(32),
@@ -44,12 +51,13 @@ module ultra_buffer_tb();
         .reset(reset),
         .enable(1),
         .trigger(trigger),
-        .trigger_point(1),
+        .trigger_point(trigger_point),
         .full(full),
         .in(stream_in),
         .out(stream_out)
     );
 
+    event capture_triggered;
     
 
     event config_done;
@@ -63,8 +71,10 @@ module ultra_buffer_tb();
         ->config_done;
         forever begin
             #60 trigger <= 1;
+            ->capture_triggered;
             #1 trigger <= 0;
-            #35000;
+            #(7*mem_depth-1);
+            trigger_point <= $urandom();
         end
     end 
 
@@ -87,50 +97,66 @@ module ultra_buffer_tb();
             #3;
         end
     end
-    
-    localparam mem_depth = (1<<buffer_addr_width);
+
+
+    // generate an event upon read start to simplify backpressure insertion and data check
+
+    event read_start;
+
+
     reg[31:0] check_data [mem_depth-1:0];
     reg[31:0] result_data [mem_depth-1:0];
 
     reg [buffer_addr_width-1:0] result_ctr = 0;
     event do_result_check;
-    always_ff@(posedge clock)begin
+    
+    always@(posedge clock)begin
         if(stream_in.valid)begin
             for(int i = 0; i<mem_depth; i++)begin
                 check_data[mem_depth-i-1] <= check_data[mem_depth-i];
             end
             check_data[mem_depth-1] <=  stream_in.data;
         end
+    end
 
+    always@(posedge clock)begin
         if(stream_out.valid && stream_out.ready)begin
             result_data[result_ctr] <= stream_out.data;
             result_ctr <= result_ctr + 1;
-            if(result_ctr == mem_depth-1) ->do_result_check;
         end
+
+        if(result_ctr == mem_depth-1)begin
+            ->do_result_check;
+            result_ctr <= 0;
+        end
+        
     end
 
-
+    reg start_check = 0;
 
     always begin
         @(do_result_check)begin
         #1;
+        start_check <=1;        
         assert (check_data == result_data) 
             else  $fatal("ERROR: wrong result detected");
         end
     end
 
 
-
-
-
     initial begin
-    
         stream_out.ready <= 1;
-        #0.5;
-        #18000;
-        stream_out.ready <= 0;
-        # 5;
-        stream_out.ready <= 1;
+        
+        if(backpressure==1)begin
+            forever begin
+                @(full==1);
+                #2;
+                #4;
+                stream_out.ready <= 0;
+                #5 stream_out.ready <= 1;
+            end
+
+        end
     end
 
 endmodule
