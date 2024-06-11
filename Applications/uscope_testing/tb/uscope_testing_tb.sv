@@ -19,7 +19,6 @@
 `include "axi_full_bfm.svh"
 
 import reg_maps::*;
-import transform_control_address_space::*;
 
 //import axi_vip_pkg::*;
 //import axi_dma_vip_bd_axi_vip_0_0_pkg::*;
@@ -55,18 +54,16 @@ module uscope_testing_tb();
     );
 
     AXI dummy();
-    axi_full_slave_sink dma_sink (
+    axi_full_slave_sink #(
+        .BUFFER_SIZE(6144),
+        .BASE_ADDRESS('h3f410000),
+        .BVALID_LATENCY(3)
+    ) dma_sink (
         .clock(clk),
         .reset(reset),
         .axi_in(uscope)
     );
     
-    // axi_dma_vip_bd_wrapper VIP(
-    //     .clock(clk),
-    //     .reset(reset),
-    //     .axi_in(uscope)
-    // );
-
 
     initial begin  
         axil_bfm = new(axi_master, 1);

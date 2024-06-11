@@ -105,7 +105,6 @@ module uscope_testing_logic (
 
 
     uScope_stream_dma #(
-        .N_TRIGGERS(0),
         .SCOPE_BASE_ADDRESS(scope_addr),
         .OUTPUT_AXI_WIDTH(64),
         .CHANNEL_SAMPLES(1024),
