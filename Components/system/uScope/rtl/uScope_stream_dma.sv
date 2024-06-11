@@ -17,7 +17,6 @@
 
 
 module uScope_stream_dma #(
-    N_TRIGGERS = 1,
     N_CHANNELS = 6,
     SCOPE_BASE_ADDRESS = 0,
     DATA_WIDTH = 32,
@@ -141,7 +140,6 @@ module uScope_stream_dma #(
     
 
     uScope_dma #(
-        .N_TRIGGERS(2),
         .DATA_WIDTH(DATA_WIDTH),
         .DEST_WIDTH(DEST_WIDTH),
         .N_STREAMS(N_CHANNELS),

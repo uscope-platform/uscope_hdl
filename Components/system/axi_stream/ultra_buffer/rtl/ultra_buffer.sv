@@ -28,9 +28,9 @@ module ultra_buffer #(parameter ADDRESS_WIDTH=13, DATA_WIDTH=32, DEST_WIDTH=16, 
 );
 
     reg [(DATA_WIDTH+DEST_WIDTH+USER_WIDTH)-1:0] write_data = 0;
-    reg [DATA_WIDTH-1:0] read_data = 0;
-    reg [DEST_WIDTH-1:0] read_dest = 0;
-    reg [USER_WIDTH-1:0] read_user = 0;
+    wire [DATA_WIDTH-1:0] read_data;
+    wire [DEST_WIDTH-1:0] read_dest;
+    wire [USER_WIDTH-1:0] read_user;
     reg [ADDRESS_WIDTH-1:0] write_address = 0;
     reg [ADDRESS_WIDTH-1:0] read_address = 0;
     reg registerd_write = 0;

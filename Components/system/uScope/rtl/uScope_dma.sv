@@ -16,7 +16,6 @@
 `include "interfaces.svh"
 
 module uScope_dma #(
-    N_TRIGGERS = 16,
     DATA_WIDTH = 32,
     USER_WIDTH = 16,
     DEST_WIDTH = 8,
@@ -40,6 +39,13 @@ module uScope_dma #(
         .DEST_WIDTH(DEST_WIDTH),
         .USER_WIDTH(USER_WIDTH)
     ) in_buffered[N_STREAMS]();
+
+
+    axi_stream #(
+        .DATA_WIDTH(DATA_WIDTH),
+        .DEST_WIDTH(DEST_WIDTH),
+        .USER_WIDTH(USER_WIDTH)
+    ) in_moderated[N_STREAMS]();
    
     axi_stream #(
         .DATA_WIDTH(DATA_WIDTH),
@@ -66,10 +72,13 @@ module uScope_dma #(
         .dma_base_addr(dma_base_addr)
     );
 
+    wire [N_STREAMS-1:0] dma_start;
 
     generate
         genvar i;
         for(i = 0; i<N_STREAMS; i++)begin
+
+            assign dma_start[i] = |buffer_full;
 
             ultra_buffer #(
                 .ADDRESS_WIDTH(10),
@@ -79,41 +88,38 @@ module uScope_dma #(
             )buffer(
                 .clock(clock),
                 .reset(reset),
-                .enable(1),
-                .packet_length(CHANNEL_SAMPLES),
+                .enable(~dma_start[i]),
                 .trigger(trigger),
                 .trigger_point(trigger_point),
                 .full(buffer_full[i]),
                 .in(stream_in[i]),
                 .out(in_buffered[i])
             );
-        
+                
+            // This small buffer is used to bunch up several dma reads as otherwise the ultra-ram based buffers will give problems with the high read latency
+            axis_moderating_fifo #( 
+                .DATA_WIDTH(DATA_WIDTH),
+                .DEST_WIDTH(DEST_WIDTH),
+                .USER_WIDTH(USER_WIDTH),
+                .FIFO_DEPTH(8)
+            )moderator(
+                .clock(clock),
+                .reset(reset),
+                .in(in_buffered[i]),
+                .out(in_moderated[i])
+            );
+
         end
     endgenerate
 
 
-    wire dma_start;
-    assign dma_start = |buffer_full;
-
-    channel_serializer #(
+    axi_dma_bursting_mc #(
         .N_CHANNELS(N_STREAMS),
-        .SAMPLES_PER_CHANNEL(CHANNEL_SAMPLES),
-        .DATA_WIDTH(DATA_WIDTH),
-        .DEST_WIDTH(DEST_WIDTH),
-        .USER_WIDTH(USER_WIDTH)
-    )serializer(
-        .clock(clock),
-        .reset(reset),
-        .trigger(dma_start),
-        .data_in(in_buffered),
-        .data_out(combined)
-    );
-    
-    axi_dma_bursting #(
         .ADDR_WIDTH(64),
         .DEST_WIDTH(16),
         .USER_WIDTH(16),
         .BURST_SIZE(BURST_SIZE),
+        .CHANNEL_SAMPLES(CHANNEL_SAMPLES),
         .OUTPUT_AXI_WIDTH(OUTPUT_AXI_WIDTH)
     )dma_engine(
         .clock(clock),
@@ -121,8 +127,16 @@ module uScope_dma #(
         .buffer_full(dma_start),
         .dma_base_addr(dma_base_addr),
         .packet_length(TRANSFER_SIZE),
-        .data_in(combined),
+        .data_in(in_moderated),
         .axi_out(out),
         .dma_done(dma_done)
     );
+
+    integer dbg_ctr = 0;
+
+    always_ff @(posedge clock)begin
+        if(combined.valid & combined.ready)
+            dbg_ctr++;
+    end
+
 endmodule

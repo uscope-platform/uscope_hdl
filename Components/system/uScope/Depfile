@@ -15,9 +15,15 @@
             "name":"set_properties.tcl",
             "type": "tcl",
             "arguments":[]
+        },
+        {
+            "name":"float_to_fixed.tcl",
+            "type": "tcl",
+            "arguments":[]
         }
     ],
     "excluded_modules":[
+        "float_to_fixed"
     ],
     "constraints": []
 }

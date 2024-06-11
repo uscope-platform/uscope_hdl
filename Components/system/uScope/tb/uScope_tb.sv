@@ -20,87 +20,68 @@
 `include "interfaces.svh"
 `include "axis_BFM.svh"
 
-module uScope_tb();
-    reg  clk, reset;
 
-    reg start_test;
+import reg_maps::*;
+
+module uScope_tb();
+    reg  clock, sampling_clock, reset;
 
     axi_lite axil();
-    axi_lite dma_axi();
+
     axi_lite_BFM axil_bfm;
 
-    axi_stream in_1();
-    axis_BFM axis_BFM_1;
-    axi_stream in_2();
-    axis_BFM axis_BFM_2;
-    axi_stream in_3();
-    axis_BFM axis_BFM_3;
-    axi_stream in_4();
-    axis_BFM axis_BFM_4;
-    axi_stream in_5();
-    axis_BFM axis_BFM_5;
-    axi_stream in_6();
-    axis_BFM axis_BFM_6;
-    axi_stream in_7();
-    axi_stream in_8();
+    axi_stream data_in[6]();
     
-    initial begin
-        axis_BFM_1 = new(in_1,1);
-        axis_BFM_2 = new(in_2,1);
-        axis_BFM_3 = new(in_3,1);
-        axis_BFM_4 = new(in_4,1);
-        axis_BFM_5 = new(in_5,1);
-        axis_BFM_6 = new(in_6,1);
-    end
+    AXI scope_out();
 
-    
-    axi_stream out();
-    axi_stream error_mon();
-
-    reg dma_done;
-    wire [15:0] triggers;
+    wire dma_done;
 
     localparam BASE_ADDRESS = 'h43C00000;
 
-    uScope_stream_dma UUT (
-        .clock(clk),
+    axi_full_slave_sink #(
+        .BUFFER_SIZE(6144),
+        .BASE_ADDRESS('h3f000000),
+        .BVALID_LATENCY(3)
+    )sink(
+        .clock(clock),
+        .reset(reset),
+        .axi_in(scope_out)
+    );
+
+    uScope_dma #(
+        .DATA_WIDTH(32),
+        .DEST_WIDTH(16),
+        .N_STREAMS(6),
+        .OUTPUT_AXI_WIDTH(64),
+        .BURST_SIZE(8),
+        .CHANNEL_SAMPLES(1024)
+    ) UUT (
+        .clock(clock),
         .reset(reset),
         .dma_done(dma_done),
-        .trigger_out(triggers),
-        .in_1(in_1),
-        .in_2(in_2),
-        .in_3(in_3),
-        .in_4(in_4),
-        .in_5(in_5),
-        .in_6(in_6),
-        .in_7(in_7),
-        .in_8(in_8),
         .axi_in(axil),
-        .dma_axi(dma_axi),
-        .out(out)
+        .out(scope_out),
+        .stream_in(data_in)
     );
-    
-    uscope_tb_axis_emulator axis_emu(
-        .clock(clk),
-        .reset(reset),
-        .data(out),
-        .dma_done(dma_done)
-    );
-        
+
 
     //clock generation
-    initial clk = 0; 
-    always #0.5 clk = ~clk; 
+    initial clock = 0; 
+    always #0.5 clock = ~clock; 
 
+    initial begin
+        sampling_clock <= 0;
+        #0.5;
+        forever begin
+           #10 sampling_clock = 1;
+           #1 sampling_clock = 0;
+        end
+    end
+
+    event cfg_done;
 
     initial begin
         axil_bfm = new(axil, 1);
-        in_1.initialize();
-        in_2.initialize();
-        in_3.initialize();
-        in_4.initialize();
-        in_5.initialize();
-        in_6.initialize();
         //Initial status
         reset <=1'h1;
         #1 reset <=1'h0;
@@ -109,71 +90,74 @@ module uScope_tb();
 
 
         #8;
-        // number of samples
-        axil_bfm.write(BASE_ADDRESS, 32'h40);
-        //dma buffer base
-        #10 axil_bfm.write(BASE_ADDRESS+4, 32'h3f000000);
         
-        #10 axil_bfm.write(BASE_ADDRESS+8, 32'h1);
-
-        start_test <= 1;
-        #50 axil_bfm.write(BASE_ADDRESS+'hC, 32'h0);
-        #50 axil_bfm.write(BASE_ADDRESS+14, 32'h5);
+        #10 axil_bfm.write(BASE_ADDRESS+reg_maps::uscope_regs.buffer_addr_low, 32'h3f000000);
+        #10 axil_bfm.write(BASE_ADDRESS+reg_maps::uscope_regs.trigger_level, 10000);
+        #10 axil_bfm.write(BASE_ADDRESS+reg_maps::uscope_regs.channel_selector, 0);
+        #10 axil_bfm.write(BASE_ADDRESS+reg_maps::uscope_regs.acquisition_mode, 0);
+        #10 axil_bfm.write(BASE_ADDRESS+reg_maps::uscope_regs.trigger_point, 32'h200);
+        #7000;
+        #10 axil_bfm.write(BASE_ADDRESS+reg_maps::uscope_regs.acquisition_mode, 2);
+        ->cfg_done;
     end
 
-    always @(posedge clk) begin
-        if(start_test)begin
-            axis_BFM_1.write_dest($urandom, 1);
-            axis_BFM_2.write_dest($urandom, 2);
-            axis_BFM_3.write_dest($urandom, 3);
-            axis_BFM_4.write_dest($urandom, 4);
-            axis_BFM_5.write_dest($urandom, 5);
-            axis_BFM_6.write_dest($urandom, 6);
-        end  
-    end
+    reg [9:0] data_ctr = 0;
 
+    always_ff @(posedge clock) begin
+        if(sampling_clock)begin
+            data_ctr <= data_ctr+1;
+            if(data_in[0].ready)begin
+                data_in[0].data <= data_ctr;
+                data_in[0].user <= $urandom();
+                data_in[0].dest <= 0;
+                data_in[0].valid <= 1;
+            end
 
+            if(data_in[1].ready)begin
+                data_in[1].data <= data_ctr + 1000;
+                data_in[1].user <= $urandom();
+                data_in[1].dest <= 1;
+                data_in[1].valid <= 1;
+            end
 
-    initial begin
-        dma_axi.ARREADY <= 0;
-        dma_axi.AWREADY <= 0;
-        dma_axi.BRESP <= 0;
-        dma_axi.BVALID <= 0;
-        dma_axi.RDATA <= 0;
-        dma_axi.RRESP <= 0;
-        dma_axi.RVALID <= 0;
-        dma_axi.WREADY <= 0;
-        forever begin
-            @(posedge dma_axi.AWVALID);
-            dma_axi.AWREADY <= 1;
-            dma_axi.WREADY <= 1;
-            #1 dma_axi.AWREADY <= 0;
-            dma_axi.WREADY <= 0;
-            dma_axi.BRESP <= 0;
-            dma_axi.BVALID <= 1;
-            @(dma_axi.BREADY)
-            #1 dma_axi.BVALID <= 0;
+            if(data_in[2].ready)begin
+                data_in[2].data <=  data_ctr + 2000;
+                data_in[2].user <= $urandom();
+                data_in[2].dest <= 2;
+                data_in[2].valid <= 1;
+            end
+
+            if(data_in[3].ready)begin
+                data_in[3].data <=  data_ctr + 3000;
+                data_in[3].user <= $urandom();
+                data_in[3].dest <= 3;
+                data_in[3].valid <= 1;
+            end
+
+            if(data_in[4].ready)begin
+                data_in[4].data <=  data_ctr + 4000;
+                data_in[4].user <= $urandom();
+                data_in[4].dest <= 4;
+                data_in[4].valid <= 1;
+            end
+
+            if(data_in[5].ready)begin
+                data_in[5].data <= data_ctr + 5000;
+                data_in[5].user <= $urandom();
+                data_in[5].dest <= 5;
+                data_in[5].valid <= 1;
+            end
+        end else begin
+            data_in[0].valid <= 0;
+            data_in[1].valid <= 0;
+            data_in[2].valid <= 0;
+            data_in[3].valid <= 0;
+            data_in[4].valid <= 0;
+            data_in[5].valid <= 0;
         end
+        
     end
-
-
-endmodule
-
-module uscope_tb_axis_emulator (
-    input wire clock,
-    input wire reset,
-    axi_stream.slave data,
-    output reg dma_done
-);
-
-assign data.ready = 1;
-
-always_ff @(posedge clock) begin
-    if(data.tlast)begin
-        dma_done <= 1;
-    end else
-        dma_done <= 0;
-
-end
     
+
+
 endmodule

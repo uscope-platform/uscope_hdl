@@ -33,7 +33,8 @@ module channel_serializer #(
 
     enum reg [2:0] { 
         wait_trigger = 0,
-        data_transfer = 1
+        data_transfer = 1,
+        increment_channel = 2
     } state = wait_trigger;
 
 
@@ -80,9 +81,13 @@ module channel_serializer #(
                         channels_counter <= 0;
                         state <= wait_trigger;
                     end else begin
-                        channels_counter <= channels_counter + 1;
+                        state <= increment_channel;
                     end
                 end
+            end
+            increment_channel:begin
+                channels_counter <= channels_counter + 1;
+                state <= data_transfer;
             end
         endcase
         
