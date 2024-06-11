@@ -18,6 +18,9 @@
 
 
 module axi_full_slave_sink #(
+    parameter BUFFER_SIZE = 6144,
+    parameter MEMORY_WIDTH = 64,
+    parameter BASE_ADDRESS = 0,
     parameter BVALID_LATENCY = 3
 )(
     input wire        clock,
@@ -25,6 +28,19 @@ module axi_full_slave_sink #(
     AXI.slave  axi_in
 );
 
+    reg [15:0] burst_counter = 0;
+
+    reg [31:0] current_base_address = 0;
+    reg [7:0] burst_address = 0;
+    
+    reg [31:0] current_address;
+    assign current_address = current_base_address  + burst_address*8;
+
+    wire [31:0] memory_index;
+    assign memory_index = (current_address - BASE_ADDRESS)/8;
+     
+
+    reg [MEMORY_WIDTH-1:0] memory_map [BUFFER_SIZE-1:0];
 
     always @( posedge clock ) begin : wready_generation
         if ( reset == 1'b0 ) begin
@@ -46,6 +62,15 @@ module axi_full_slave_sink #(
             axi_in.BUSER <= 0;
             axi_in.BRESP <= 2'b0;
         end else begin
+            if(axi_in.AWVALID)begin
+                current_base_address <= axi_in.AWADDR;
+                burst_address <= 0;
+                burst_counter++;
+            end
+            if(axi_in.WVALID)begin
+                burst_address <= burst_address +1;
+                memory_map[memory_index] <= axi_in.WDATA;
+            end
             axi_in.BVALID <= 0;
             case (bvalid_wait)
                 0:begin
@@ -63,10 +88,16 @@ module axi_full_slave_sink #(
                     end
                 end 
             endcase
-            
-        end
-        
+        end 
     end   
   
+    integer transfers_counter = 0;
+
+    always_ff @(posedge clock)begin
+        if(transfers_counter == BUFFER_SIZE)
+            transfers_counter <= 0;
+        if(axi_in.WVALID && axi_in.WREADY)
+            transfers_counter++;
+    end
 
 endmodule
