@@ -57,7 +57,7 @@ module uscope_testing_tb();
     axi_full_slave_sink #(
         .BUFFER_SIZE(6144),
         .BASE_ADDRESS('h3f410000),
-        .BVALID_LATENCY(3)
+        .BVALID_LATENCY(20)
     ) dma_sink (
         .clock(clk),
         .reset(reset),

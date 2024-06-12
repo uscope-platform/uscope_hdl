@@ -41,7 +41,7 @@ module axi_dma_bursting_mc #(
     //////////////////////////////////////////////
     //        CHANNEL SELECTION LOGIC           //
     //////////////////////////////////////////////
-    (*keep="true"*) reg [7:0] selector = 0;
+    reg [7:0] selector = 0;
 
     axi_stream #(.DEST_WIDTH(DEST_WIDTH), .USER_WIDTH(USER_WIDTH), .DATA_WIDTH(32)) selected_in();
 
@@ -105,13 +105,9 @@ module axi_dma_bursting_mc #(
 
     wire [ADDR_WIDTH-1:0] current_target_address;
     assign current_target_address = target_base + burst_counter*BEAT_SIZE*BURST_SIZE; 
-   
-
-    
-    wire dma_end_condition;
 
 
-    (*keep="true"*) reg [15:0] transfers_tracker = 0;
+    reg [15:0] transfers_tracker = 0;
 
     reg [3:0] beats_counter = 0;
 
@@ -225,7 +221,6 @@ module axi_dma_bursting_mc #(
                         end else begin
                             burst_counter <= burst_counter +1;
                             writer_state <= writer_start_burst;
-                            upsized_data.ready <= 1;
                         end
                     end
                 end
@@ -233,6 +228,7 @@ module axi_dma_bursting_mc #(
                     if(selector==N_CHANNELS-1)begin
                         selector <= 0;
                         writer_state <= writer_idle;
+                        burst_counter <= 0;
                         dma_done <= 1;
                     end else begin
                                                

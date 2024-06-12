@@ -41,7 +41,7 @@ module uScope_tb();
     axi_full_slave_sink #(
         .BUFFER_SIZE(6144),
         .BASE_ADDRESS('h3f000000),
-        .BVALID_LATENCY(3)
+        .BVALID_LATENCY(20)
     )sink(
         .clock(clock),
         .reset(reset),
