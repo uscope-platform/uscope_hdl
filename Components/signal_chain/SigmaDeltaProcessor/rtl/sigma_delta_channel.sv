@@ -30,6 +30,7 @@ module sigma_delta_channel #(
     input wire sync,
     input wire sd_data_in,
     input wire sd_clock_in,
+    input wire signed [15:0] offset,
     input wire output_clock,
     axi_stream.master data_out
 );
@@ -108,6 +109,9 @@ module sigma_delta_channel #(
 
     end
 
+    wire signed [RESULT_RESOLUTION-1:0] extended_data;
+    assign extended_data = {{OUTPUT_SIZE-RESULT_RESOLUTION{adc_data[RESULT_RESOLUTION-1]}},adc_data};
+
     always @(posedge clock) begin
         data_out.user <= get_axis_metadata(RESULT_RESOLUTION, 1, 0);
         data_out.valid <= 0;
@@ -117,7 +121,7 @@ module sigma_delta_channel #(
         end
 
         if(sync)begin
-            data_out.data <= {{OUTPUT_SIZE-RESULT_RESOLUTION{adc_data[RESULT_RESOLUTION-1]}},adc_data};
+            data_out.data <= extended_data + offset;
             data_out.valid <= 1;
             data_out.dest <= CHANNEL_INDICATOR;
         end

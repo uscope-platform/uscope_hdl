@@ -52,7 +52,7 @@ module sigma_delta_processor #(
     /////////////////////////////////////////////////////////////////////
 
 
-    parameter N_REGISTERS = 2*N_CHANNELS;
+    parameter N_REGISTERS = 3*N_CHANNELS;
 
     reg [31:0] cu_write_registers [N_REGISTERS-1:0];
     reg [31:0] cu_read_registers [N_REGISTERS-1:0];
@@ -80,12 +80,14 @@ module sigma_delta_processor #(
 
     wire [31:0] high_tresholds [N_CHANNELS-1:0];
     wire [31:0] low_tresholds [N_CHANNELS-1:0];
+    wire [31:0] offsets [N_CHANNELS-1:0];
     
     genvar n;
     generate
         for(n=0; n<N_CHANNELS; n = n+1)begin
             assign high_tresholds[n] = cu_write_registers[n];
-            assign low_tresholds[n] = cu_write_registers[2*n];
+            assign low_tresholds[n] = cu_write_registers[N_CHANNELS + n];
+            assign offsets[n] = cu_write_registers[2*N_CHANNELS + n];
         end
     endgenerate
 
@@ -142,6 +144,7 @@ module sigma_delta_processor #(
                 .clock(clock),
                 .reset(reset),
                 .sync(sync),
+                .offset(offsets[i]),
                 .sd_data_in(data_in[i]),
                 .sd_clock_in(clock_out),
                 .output_clock(main_sampling_clock),
@@ -208,6 +211,12 @@ endmodule
                 "name": "tresh_$_h",
                 "n_regs": ["N_CHANNELS"],
                 "description": "Higher fault treshold",
+                "direction": "RW"
+            },
+            {
+                "name": "offset_$",
+                "n_regs": ["N_CHANNELS"],
+                "description": "Offset Adjustment",
                 "direction": "RW"
             }
         ]

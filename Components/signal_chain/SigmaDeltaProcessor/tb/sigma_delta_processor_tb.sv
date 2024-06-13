@@ -80,6 +80,21 @@ module sigma_delta_processor_tb();
         #50;
         
         axil_bfm.write(0, 'h3);
+        axil_bfm.write('h4, 'h3);
+        axil_bfm.write('h8, 'h3);
+        axil_bfm.write('hC, 'h3);
+
+
+        axil_bfm.write('h10, 'h6);
+        axil_bfm.write('h14, 'h6);
+        axil_bfm.write('h18, 'h6);
+        axil_bfm.write('h1C, 'h6);
+
+
+        axil_bfm.write('h20, 0);
+        axil_bfm.write('h24, -3000);
+        axil_bfm.write('h28, 3000);
+        axil_bfm.write('h2C, 0);
 
         ->config_done;
     end
