@@ -30,7 +30,8 @@ module sigma_delta_processor #(
     input wire sync,
     axi_stream.master data_out,
     output wire clock_out,
-    output wire [N_CHANNELS-1:0] fault,
+    output wire [N_CHANNELS-1:0] channel_faults,
+    output wire combined_fault,
     axi_lite.slave axi_in
 );
 
@@ -87,8 +88,8 @@ module sigma_delta_processor #(
     genvar n;
     generate
         for(n=0; n<N_CHANNELS; n = n+1)begin
-            assign high_tresholds[n] = cu_write_registers[n];
-            assign low_tresholds[n] = cu_write_registers[N_CHANNELS + n];
+            assign low_tresholds[n] = cu_write_registers[n];
+            assign high_tresholds[n] = cu_write_registers[N_CHANNELS + n];
             assign offsets[n] = cu_write_registers[2*N_CHANNELS + n];
         end
     endgenerate
@@ -134,6 +135,10 @@ module sigma_delta_processor #(
 
     axi_stream main_data_out[N_CHANNELS]();
     axi_stream comparator_data_out[N_CHANNELS]();
+
+    wire [N_CHANNELS-1:0] high_faults;
+    wire [N_CHANNELS-1:0] low_faults;
+
     generate
         for (i = 0; i<N_CHANNELS; i++) begin
             sigma_delta_channel #(
@@ -153,8 +158,6 @@ module sigma_delta_processor #(
                 .data_out(main_data_out[i])
             );
         end
-
-        
         
     if(comparator_enabled)begin
 
@@ -172,12 +175,15 @@ module sigma_delta_processor #(
                 .sync(1),
                 .sd_data_in(data_in[i]),
                 .sd_clock_in(clock_out),
+                .offset(0),
                 .output_clock(comparator_sampling_clock),
                 .data_out(comparator_data_out[i])
             );
+            
+            assign channel_faults[i] = high_faults[i] | low_faults[i];
         end
 
-        assign fault = 0;
+        
     end
 
     endgenerate
@@ -186,6 +192,20 @@ module sigma_delta_processor #(
     /////////////////////////////////////////////////////////////////////
     //             COMPARATORS AND OUTPUT SECTION                      //
     /////////////////////////////////////////////////////////////////////
+
+
+    sigma_delta_comparators #(
+        .N_CHANNELS(N_CHANNELS)
+    ) fault_comparator (
+        .clock(clock),
+        .reset(reset),
+        .data_in(comparator_data_out),
+        .high_tresholds(high_tresholds),
+        .low_tresholds(low_tresholds),
+        .high_outputs(high_faults),
+        .low_outputs(low_faults),
+        .combined_output(combined_fault)
+    );
 
     axis_multichannel_combiner #(
         .N_CHANNELS(N_CHANNELS)

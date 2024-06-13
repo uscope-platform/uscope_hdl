@@ -40,17 +40,10 @@ module sigma_delta_processor_tb();
 
     wire [N_CHANNELS-1:0] sd_in;
 
-    localparam [31:0] i_buck_dest [3:0] = '{
-        3,
-        2,
-        1,
-        0
-    };
-
     sigma_delta_processor #(
         .MAIN_DECIMATION_RATIO(64),
         .N_CHANNELS(N_CHANNELS),
-        .DESTINATIONS(i_buck_dest)
+        .OUTPUT_DESTINATION_BASE(3)
     ) UUT(
         .clock(clk),
         .reset(reset),
@@ -69,7 +62,7 @@ module sigma_delta_processor_tb();
     end
 
     initial begin
-        $readmemh("/home/filssavi/git/uplatform-hdl/public/Components/signal_chain/SigmaDeltaProcessor/tb/data.csv", stimulus);
+        $readmemh("/home/fils/git/uscope_hdl/public/Components/signal_chain/SigmaDeltaProcessor/tb/data.csv", stimulus);
         axil_bfm = new(cfg_axi, 1);
         filter_out.ready <= 1;
         reset <=1'h1;
@@ -79,16 +72,16 @@ module sigma_delta_processor_tb();
 
         #50;
         
-        axil_bfm.write(0, 'h3);
-        axil_bfm.write('h4, 'h3);
-        axil_bfm.write('h8, 'h3);
-        axil_bfm.write('hC, 'h3);
+        axil_bfm.write('h0, -15000);
+        axil_bfm.write('h4, -20000);
+        axil_bfm.write('h8, -40000);
+        axil_bfm.write('hC, -40000);
 
 
-        axil_bfm.write('h10, 'h6);
-        axil_bfm.write('h14, 'h6);
-        axil_bfm.write('h18, 'h6);
-        axil_bfm.write('h1C, 'h6);
+        axil_bfm.write('h10, 15000);
+        axil_bfm.write('h14, 20000);
+        axil_bfm.write('h18, 40000);
+        axil_bfm.write('h1C, 40000);
 
 
         axil_bfm.write('h20, 0);
