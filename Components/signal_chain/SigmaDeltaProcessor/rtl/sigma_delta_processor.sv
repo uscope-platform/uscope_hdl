@@ -20,7 +20,8 @@ module sigma_delta_processor #(
     parameter MAIN_DECIMATION_RATIO = 256,
     parameter COMPARATOR_DECIMATION_RATIO = 256,
     parameter SAMPLING_EDGE = "POSITIVE",
-    parameter [31:0] DESTINATIONS [N_CHANNELS-1:0] = '{N_CHANNELS{0}}
+    parameter PRAGMA_MKFG_DATAPOINT_NAMES = "",
+    parameter OUTPUT_DESTINATION_BASE = 0
 )(
     input wire clock,
     input wire enable,
@@ -29,6 +30,7 @@ module sigma_delta_processor #(
     input wire sync,
     axi_stream.master data_out,
     output wire clock_out,
+    output wire [N_CHANNELS-1:0] fault,
     axi_lite.slave axi_in
 );
 
@@ -138,7 +140,7 @@ module sigma_delta_processor #(
                 .PROCESSING_RESOLUTION(main_filter_resolution),
                 .RESULT_RESOLUTION(main_result_resolution),
                 .OUTPUT_SHIFT_SIZE(main_output_shift),
-                .CHANNEL_INDICATOR(DESTINATIONS[i]),
+                .CHANNEL_INDICATOR(OUTPUT_DESTINATION_BASE + i),
                 .SAMPLING_EDGE(SAMPLING_EDGE)
             ) main_channel (
                 .clock(clock),
@@ -174,6 +176,8 @@ module sigma_delta_processor #(
                 .data_out(comparator_data_out[i])
             );
         end
+
+        assign fault = 0;
     end
 
     endgenerate
