@@ -213,15 +213,16 @@ module fcore_complex #(
         .done(done)
     );
 
-    enum reg [1:0] {
+    enum reg [2:0] {
         wait_constants = 0,
         idle = 1, 
         wait_input_transfer_start = 2,
-        wait_input_transfer_end = 3 
+        wait_input_transfer_end = 3,
+        wait_propagation = 4
     } input_fsm = wait_constants;
 
 
-
+    reg  [2:0] propagation_delay = 0;
     always_ff @(posedge core_clock)begin
         case (input_fsm)
             wait_constants:begin
@@ -243,9 +244,16 @@ module fcore_complex #(
             end
             wait_input_transfer_end: begin
                  if(merged_out.valid == 0)begin
-                    start_core <= 1;
-                    input_fsm <= idle;
+                    input_fsm <= wait_propagation;
+                    propagation_delay <= 0;
                 end
+            end
+            wait_propagation:begin
+                if(propagation_delay == 1)begin
+                    start_core <= 1;
+                    input_fsm <= idle; 
+                end
+                propagation_delay <= propagation_delay + 1;
             end
         endcase
     end
