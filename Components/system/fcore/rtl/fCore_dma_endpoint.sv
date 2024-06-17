@@ -96,6 +96,8 @@ module fCore_dma_endpoint #(
                 reg_dma_write.dest <= translation_table[axis_dma_write.dest];
                 reg_dma_write.data <= axis_dma_write.data;
                 reg_dma_write.valid <= 1;   
+            end else begin
+                reg_dma_write.valid <= 0;   
             end
         end else if(axi_write_data.valid)begin
             if(axi_write_data.dest == 0) begin
