@@ -16,7 +16,7 @@
 `include "interfaces.svh"
 
 module fcore_complex #(
-    parameter PRAGMA_MKFG_MODULE_TOP = "fCore",
+    parameter PRAGMA_MKFG_CHILD_PREFIX = "complex",
     parameter SIM_CONFIG = "FALSE",
     parameter FAST_DEBUG = "TRUE",
     parameter INIT_FILE = "init.mem",
@@ -38,6 +38,7 @@ module fcore_complex #(
     parameter MOVER_ADDRESS_WIDTH = 32,
     parameter MOVER_CHANNEL_NUMBER=1,
     parameter PRAGMA_MKFG_DATAPOINT_NAMES = "",
+    parameter [31:0] MKFG_DESTINATIONS [MOVER_CHANNEL_NUMBER-1:0] = '{default:0},
     parameter EFI_TYPE = "NONE",
     parameter AXI_ADDR_WIDTH = 32,
     parameter N_CONSTANTS = 3,
@@ -100,9 +101,9 @@ module fcore_complex #(
     localparam N_AXI_SLAVES = 2 + N_CONSTANTS;
 
     localparam [AXI_ADDR_WIDTH-1:0] AXI_ADDRESSES [N_AXI_SLAVES-1:0] = '{
-        DMA_BASE_ADDRESS + 'h2000,
-        DMA_BASE_ADDRESS + 'h3000,
         DMA_BASE_ADDRESS + 'h4000,
+        DMA_BASE_ADDRESS + 'h3000,
+        DMA_BASE_ADDRESS + 'h2000,
         DMA_BASE_ADDRESS + 'h1000,
         DMA_BASE_ADDRESS
         };
@@ -160,7 +161,7 @@ module fcore_complex #(
     reg start_core;
 
     fCore #(
-        .PRAGMA_MKFG_MODULE_TOP(PRAGMA_MKFG_MODULE_TOP),
+        .PRAGMA_MKFG_MODULE_TOP("core"),
         .SIM_CONFIG(SIM_CONFIG),
         .FAST_DEBUG(FAST_DEBUG),
         .INIT_FILE(INIT_FILE),
@@ -200,6 +201,7 @@ module fcore_complex #(
         .DATA_WIDTH(32),
         .MAX_CHANNELS(MOVER_CHANNEL_NUMBER),
         .PRAGMA_MKFG_DATAPOINT_NAMES(PRAGMA_MKFG_DATAPOINT_NAMES),
+        .MKFG_DESTINATIONS(MKFG_DESTINATIONS),
         .REPEAT_MODE(REPEAT_MODE)
     )dma (
         .clock(core_clock),

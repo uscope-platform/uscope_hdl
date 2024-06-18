@@ -20,6 +20,7 @@ module axis_dynamic_data_mover #(
     parameter DATA_WIDTH = 32,
     MAX_CHANNELS=1,
     parameter PRAGMA_MKFG_DATAPOINT_NAMES = "",
+    parameter [31:0] MKFG_DESTINATIONS [MAX_CHANNELS-1:0] = '{MAX_CHANNELS{1'b0}},
     parameter OUTPUT_USER = get_axis_metadata(32, 0, 1),
     REPEAT_MODE = 0
 )(
@@ -173,7 +174,7 @@ endmodule
             },    
             {
                 "name": "addr_$",
-                "n_regs": ["MAX_STEPS"],
+                "n_regs": ["MAX_CHANNELS"],
                 "description": "This register selects source and target address for channel $",
                 "direction": "RW",
                 "fields":[
