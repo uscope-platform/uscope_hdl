@@ -32,12 +32,23 @@ module TransferController #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, 
 );
 
     
-    reg [2:0] state;
     reg wait_for_ack, wait_timer_enabled;
-    reg [2:0] next_phase;
     
     reg [15:0] wait_timer;
-    localparam idle_state = 0, start_state = 1, slave_address = 2, register_address = 3, data_state = 4, wait_ack_state = 5, stop_state = 6, bus_free_state = 7;
+
+    typedef enum logic [2:0]{
+        idle_state = 0,
+        start_state = 1,
+        slave_address = 2,
+        register_address = 3,
+        data_state = 4,
+        wait_ack_state = 5,
+        stop_state = 6,
+        bus_free_state = 7
+    }transfer_controller_fsm;
+
+    transfer_controller_fsm state = idle_state;
+    transfer_controller_fsm next_phase = idle_state;
 
     always@(posedge clock)begin
         if(~reset)begin
@@ -54,7 +65,6 @@ module TransferController #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, 
     // Determine the next state
     always @ (posedge clock) begin : control_state_machine
         if (~reset) begin
-            state <=idle_state;
             send_register_address <= 0;
             send_slave_address <= 0;
             send_data <= 0;
@@ -62,7 +72,6 @@ module TransferController #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, 
             i2c_sda_control <= 1;
             timebase_enable <= 0;
             i2c_scl_control <= 1;
-            next_phase <= 0;
             transfert_done <= 0;
             wait_timer_enabled <=0;
         end else begin

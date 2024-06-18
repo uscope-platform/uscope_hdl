@@ -14,9 +14,7 @@
 // limitations under the License.
 `include "interfaces.svh"
 
-module I2c #(
-    parameter FIXED_PERIOD ="FALSE",
-    FIXED_PERIOD_WIDTH = 1000,
+module I2c_reader #(
     SCL_TIMEBASE_DELAY = 15,
     PRAGMA_MKFG_MODULE_TOP = "I2C"
 )(
@@ -32,10 +30,6 @@ module I2c #(
     axi_stream.slave message_if
 );
 
-    
-
-
-    wire [7:0] data;
     wire [7:0] slave_address;
     wire [7:0] register_address;
     wire [31:0] period;
@@ -84,49 +78,41 @@ module I2c #(
     end
 
 
-	generate
-		if (FIXED_PERIOD =="FALSE") begin
-			
-            enable_generator_core #(
-                .COUNTER_WIDTH(16),
-                .CLOCK_MODE("TRUE")
-            ) tb_core(
-				.clock(clock),
-				.reset(reset),
-				.gen_enable_in(timebase_enable),
-				.period(period),
-				.enable_out(timebase)
-			);
-		end else begin
-			enable_generator_core #(
-                .COUNTER_WIDTH(16),
-                .CLOCK_MODE("TRUE")
-            ) tb_core(
-				.clock(clock),
-				.reset(reset),
-				.gen_enable_in(timebase_enable),
-				.period(FIXED_PERIOD_WIDTH),
-				.enable_out(timebase)
-			);
-		end
-	endgenerate
-
-
-    I2CControlUnit #(
-        .BASE_ADDRESS(0)
-    ) control_unit(
+    enable_generator_core #(
+        .COUNTER_WIDTH(16),
+        .CLOCK_MODE("TRUE")
+    ) tb_core(
         .clock(clock),
         .reset(reset),
-        .done(done),
-        .axi_in(axi_in),
-        .direction(direction),
-        .prescale(period),
-        .slave_adress(slave_address),
-        .register_adress(register_address),
-        .data(data),
-        .start(start)
+        .gen_enable_in(timebase_enable),
+        .period(period),
+        .enable_out(timebase)
     );
 
+    logic [31:0] cu_write_registers [0:0];
+    logic [31:0] cu_read_registers [0:0];
+
+    axil_simple_register_cu #(
+        .N_READ_REGISTERS(1),
+        .N_WRITE_REGISTERS(1),
+        .REGISTERS_WIDTH(32),
+        .ADDRESS_MASK('hf)
+    ) CU (
+        .clock(clock),
+        .reset(reset),
+        .input_registers(cu_read_registers),
+        .output_registers(cu_write_registers),
+        .axil(axi_in)
+    );
+
+    assign cu_read_registers = cu_write_registers;
+    assign period = cu_write_registers[0];
+    
+    
+    assign direction = message_if.data;
+    assign slave_address = message_if.dest;
+    assign register_address = message_if.user;
+    assign start = message_if.valid;
 
     TransferController TC(
         .clock(clock),
@@ -152,7 +138,7 @@ module I2c #(
         .direction(direction),
         .slave_address(slave_address),
         .register_address(register_address),
-        .data(data),
+        .data(0),
         .send_slave_address(send_slave_address),
         .send_register(send_register),
         .send_data(send_data),
@@ -162,3 +148,34 @@ module I2c #(
 
 
 endmodule
+
+
+ /**
+       {
+        "name": "I2c_reader",
+        "alias": "I2C_reader",
+        "type": "peripheral",
+        "registers":[
+            {
+                "name": "control",
+                "offset": "0x0",
+                "description": "I2C peripheral control register",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"timebase_enable",
+                        "description": "Enable I2C peripheral timebase generator",
+                        "start_position": 0,
+                        "length": 1
+                    }
+                ]
+            },
+            {
+                "name": "timebase_div",
+                "offset": "0x4",
+                "description": "Diviso setting for the I2C timebase generator",
+                "direction": "RW"
+            }
+        ]
+    }  
+    **/
