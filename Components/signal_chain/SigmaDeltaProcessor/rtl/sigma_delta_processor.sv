@@ -81,8 +81,8 @@ module sigma_delta_processor #(
 
 
 
-    wire [31:0] high_tresholds [N_CHANNELS-1:0];
-    wire [31:0] low_tresholds [N_CHANNELS-1:0];
+    wire signed [31:0] high_tresholds [N_CHANNELS-1:0];
+    wire signed [31:0] low_tresholds [N_CHANNELS-1:0];
     wire [31:0] offsets [N_CHANNELS-1:0];
     
     genvar n;
