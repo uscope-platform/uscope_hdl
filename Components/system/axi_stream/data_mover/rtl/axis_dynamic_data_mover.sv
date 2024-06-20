@@ -192,6 +192,13 @@ endmodule
                         "length": 15
                     }
                 ]
+            },
+            {
+                "name": "user_$",
+                "n_regs": ["MAX_CHANNELS"],
+                "description": "Value for the AXI stream user signal for channel $",
+                "direction": "RW",
+                "fields":[]
             }
         ]
     }   
