@@ -91,6 +91,11 @@ module fCore_dma_endpoint #(
     assign axis_dma_write.ready = 1;
 
     always_ff @(posedge clock) begin
+        if(axi_write_data.valid & axi_write_data.dest == 0) begin
+            n_channels <= axi_write_data.data[15:0];
+            program_size <= axi_write_data.data[31:16];
+        end
+
         if(axis_dma_write.valid)begin
             if(translation_table[axis_dma_write.dest] != 0) begin
                 reg_dma_write.dest <= translation_table[axis_dma_write.dest];
@@ -100,13 +105,7 @@ module fCore_dma_endpoint #(
                 reg_dma_write.valid <= 0;   
             end
         end else if(axi_write_data.valid)begin
-            if(axi_write_data.dest == 0) begin
-                n_channels <= axi_write_data.data[15:0];
-                program_size <= axi_write_data.data[31:16];
-                reg_dma_write.valid <= 0;
-                reg_dma_write.dest <= 0;
-                reg_dma_write.data <= 0;
-            end else begin
+            if(axi_write_data.dest != 0) begin
                 if(RAW_AXI_ACCESS == 1) begin
                     reg_dma_write.dest <= axi_write_data.dest;
                     reg_dma_write.data <= axi_write_data.data;
@@ -115,7 +114,7 @@ module fCore_dma_endpoint #(
                     reg_dma_write.dest <= translation_table[axi_write_data.dest];
                     reg_dma_write.data <= axi_write_data.data;
                     reg_dma_write.valid <= 1;   
-                end 
+                end
             end
         end else begin
             reg_dma_write.valid <= 0;
