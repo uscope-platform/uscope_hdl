@@ -68,6 +68,7 @@ class axi_lite_BFM #(DATA_WIDTH = 32, ADDR_WIDTH = 32, INTERFACE_NAME = "IF");
         this.bus.WDATA <= 0;
         this.bus.WSTRB <= 0;
         @(this.bus.BVALID);
+        $display("WRITING TO ADDRESS: %h,    VALUE: %d", address, data);
         #1;
     endtask
 
