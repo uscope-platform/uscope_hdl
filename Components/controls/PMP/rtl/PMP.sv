@@ -59,11 +59,12 @@ module pre_modulation_processor #(
         .axi_in(axi_in)
     );
 
+    assign modulation_in.ready = 1;
+
     localparam [31:0] TRIGGER_REGISTERS_IDX [4:0] = '{2, 3, 4, 5, 0};
 
     always_ff@(posedge clock) begin 
         triggers <= 0;
-        modulation_in.ready <= 1;
         cu_write.ready <= 1;
         if(cu_write.valid)begin
             cu_write_registers[cu_write.dest] <= cu_write.data;
@@ -75,7 +76,6 @@ module pre_modulation_processor #(
         end
 
         if(modulation_in.valid)begin
-            modulation_in.ready <= 1;
             cu_write_registers[modulation_in.dest & 'hF] <= modulation_in.data;
             for(integer i = 0; i< 5; i= i+1)begin
                 if(modulation_in.dest == TRIGGER_REGISTERS_IDX[i]) begin

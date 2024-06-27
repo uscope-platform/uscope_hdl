@@ -65,6 +65,14 @@ module ultra_buffer #(parameter ADDRESS_WIDTH=13, DATA_WIDTH=32, DEST_WIDTH=16, 
     reg [ADDRESS_WIDTH-1:0] read_progress_ctr = 0;
 
 
+    wire [DATA_WIDTH-1:0] selected_data;    
+    wire [DATA_WIDTH-1:0] selected_dest;    
+    wire [DATA_WIDTH-1:0] selected_user;  
+
+    reg [DATA_WIDTH-1:0] backpressure_data;    
+    reg [DEST_WIDTH-1:0] backpressure_dest;    
+    reg [USER_WIDTH-1:0] backpressure_user;  
+    
     reg backpressure_slip;
 
     always_ff @(posedge clock)begin
@@ -79,14 +87,7 @@ module ultra_buffer #(parameter ADDRESS_WIDTH=13, DATA_WIDTH=32, DEST_WIDTH=16, 
             end
         end
     end
-
-    wire [DATA_WIDTH-1:0] selected_data;    
-    wire [DATA_WIDTH-1:0] selected_dest;    
-    wire [DATA_WIDTH-1:0] selected_user;  
-
-    reg [DATA_WIDTH-1:0] backpressure_data;    
-    reg [DEST_WIDTH-1:0] backpressure_dest;    
-    reg [USER_WIDTH-1:0] backpressure_user;    
+  
 
     assign selected_data = backpressure_slip ? backpressure_data : read_data;
     assign selected_dest = backpressure_slip ? backpressure_dest : read_dest;

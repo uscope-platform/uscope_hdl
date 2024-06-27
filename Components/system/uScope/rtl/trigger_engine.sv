@@ -30,6 +30,7 @@ module trigger_engine #(
     output reg [63:0] dma_base_addr
 );
 
+        wire rearm_trigger;
 
     reg [31:0] cu_write_registers [7:0];
     reg [31:0] cu_read_registers [7:0];
@@ -50,7 +51,7 @@ module trigger_engine #(
         .axil(axi_in)
     );
 
-    wire rearm_trigger;
+   
     wire [1:0] acquisition_mode;
     wire [1:0] trigger_mode;
     wire [31:0] trigger_level;
@@ -65,7 +66,6 @@ module trigger_engine #(
     assign acquisition_mode = cu_write_registers[6];
 
     assign cu_read_registers[6:0] = cu_write_registers[6:0];
-    assign cu_read_registers[7] = state;
 
 
     wire[31:0] unrolled_data [N_CHANNELS-1:0];
@@ -121,13 +121,13 @@ module trigger_engine #(
 
 
 
+    reg [31:0] trigger_comparator_in;
     reg [31:0] trigger_comparator_in_dly;
     wire rising_edge, falling_edge;
 
     assign rising_edge  = $signed(trigger_comparator_in) >= $signed(trigger_level) && $signed(trigger_comparator_in_dly) < $signed(trigger_level);
     assign falling_edge = $signed(trigger_comparator_in) <= $signed(trigger_level) && $signed(trigger_comparator_in_dly) > $signed(trigger_level);
 
-    reg [31:0] trigger_comparator_in;
     always_comb begin
         if(is_axis_float(fixed_out.user))begin
             trigger_comparator_in <= ftoi_out.data;
@@ -145,6 +145,7 @@ module trigger_engine #(
 
     reg [15:0] fill_ctr = 0;
 
+    assign cu_read_registers[7] = state;
 
     always @(posedge clock) begin
         trigger_comparator_in_dly <= trigger_comparator_in;
