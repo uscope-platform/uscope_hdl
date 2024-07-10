@@ -92,8 +92,8 @@ module fCore_dma_endpoint #(
 
     always_ff @(posedge clock) begin
         if(axis_dma_write.valid)begin
-            if(translation_table[axis_dma_write.dest] != 0) begin
-                reg_dma_write.dest <= translation_table[axis_dma_write.dest];
+            if(translation_table[axis_dma_write.dest[15:0]] != 0) begin
+                reg_dma_write.dest <= axis_dma_write.dest[31:16]*REGISTER_FILE_DEPTH + translation_table[axis_dma_write.dest[15:0]];
                 reg_dma_write.data <= axis_dma_write.data;
                 reg_dma_write.valid <= 1;   
             end else begin
@@ -111,8 +111,8 @@ module fCore_dma_endpoint #(
                     reg_dma_write.dest <= axi_write_data.dest;
                     reg_dma_write.data <= axi_write_data.data;
                     reg_dma_write.valid <= 1;
-                end else if(translation_table[axis_dma_write.dest] != 0) begin
-                    reg_dma_write.dest <= translation_table[axi_write_data.dest];
+                end else if(translation_table[axi_write_data.dest[15:0]] != 0) begin
+                    reg_dma_write.dest <= axis_dma_write.dest[31:16]*REGISTER_FILE_DEPTH +  translation_table[axi_write_data.dest[15:0]];
                     reg_dma_write.data <= axi_write_data.data;
                     reg_dma_write.valid <= 1;   
                 end 
@@ -155,7 +155,7 @@ module fCore_dma_endpoint #(
                     stream_read_valid <= 0;
                     if(axis_dma_read_request.valid)begin
                         if(axis_dma_read_request.data > 0) begin
-                            dma_read_addr <= translation_table[axis_dma_read_request.data];
+                            dma_read_addr <= axis_dma_read_request.data[31:16]*REGISTER_FILE_DEPTH  + translation_table[axis_dma_read_request.data[15:0]];
                             state <= wait_read;
                             axis_dma_read_request.ready <= 0;
                             axi_read_addr.ready <= 0;
@@ -164,7 +164,7 @@ module fCore_dma_endpoint #(
                         if(axi_read_addr.data == 0) begin
                             read_n_channels <= 1;
                         end
-                        dma_read_addr <= translation_table[axi_read_addr.data];
+                        dma_read_addr <= axis_dma_read_request.data[31:16] + translation_table[axi_read_addr.data[15:0]];
                         state <= bus_read;
                         axis_dma_read_request.ready <= 0;
                         axi_read_addr.ready <= 0;

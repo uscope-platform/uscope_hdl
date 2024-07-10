@@ -1,0 +1,13 @@
+{
+    "input_file": "mc_dma.c",
+    "output": {
+        "format":"mem",
+        "file": "mc_dma.mem"
+    },
+    "force": true,
+    "dma_io": {
+        "a":{"type": "input", "address":2},
+        "b":{"type": "input", "address":3},
+        "c":{"type": "output", "address":20}
+    }
+}
