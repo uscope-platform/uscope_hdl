@@ -39,6 +39,12 @@ module linearizer #(
     reg signed [DATA_PATH_WIDTH-1:0] linearized_dest = 0;
     reg linearized_valid = 0;
 
+
+    reg in_valid_del;
+    reg [DEST_WIDTH-1:0] in_dest_del;
+    reg [USER_WIDTH-1:0] in_user_del;
+
+
     always_comb begin
         if(enable)begin
             data_out.data <= linear_channel_data[in_dest_del];
@@ -54,10 +60,6 @@ module linearizer #(
         data_in.ready <= data_out.ready;
     end
    
-    reg in_valid_del;
-    reg [DEST_WIDTH-1:0] in_dest_del;
-    reg [USER_WIDTH-1:0] in_user_del;
-
     always @(posedge clock)begin
         in_valid_del <= data_in.valid;
         in_dest_del <= data_in.dest;

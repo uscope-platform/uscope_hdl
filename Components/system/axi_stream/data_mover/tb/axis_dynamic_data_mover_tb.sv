@@ -37,6 +37,8 @@ module axis_dynamic_data_mover_tb();
 
     reg [31:0] registers_in [3:0];
     reg [31:0] registers_out [3:0] = '{0,0,0,0};
+    reg [31:0] users_out [3:0] = '{0,0,0,0};
+
 
     axis_dynamic_data_mover #(
         .DATA_WIDTH(32),
@@ -65,11 +67,17 @@ module axis_dynamic_data_mover_tb();
         #5.5 reset <=1'h1;
 
         #2 axil_bfm.write('h0, 'h3); // active channels
+
         #2 axil_bfm.write('h4, 'h020000);
         #2 axil_bfm.write('h8, 'h010001); 
         #2 axil_bfm.write('hc, 'h000002);
         #2 axil_bfm.write('h10, 'h030003); 
         
+        #2 axil_bfm.write('h14, 28);
+        #2 axil_bfm.write('h18, 51); 
+        #2 axil_bfm.write('h1c, 73);
+        #2 axil_bfm.write('h20, 47); 
+
         #10 start <= 1;
         #1 start <= 0;
         #25 ->test_done;
@@ -88,6 +96,7 @@ module axis_dynamic_data_mover_tb();
     always@(posedge clk) begin
         if(stream_out.valid) begin
             registers_out[stream_out.dest] <= stream_out.data; 
+            users_out[stream_out.dest] <= stream_out.user; 
         end
     end
 
@@ -95,9 +104,26 @@ module axis_dynamic_data_mover_tb();
         @(test_done);
         assert ((registers_in[0] == registers_out[2]) && (registers_in[1] == registers_out[1]) && registers_in[2] == registers_out[0]) 
         else begin
-            $display("Input and output registers do not correspond to what they should be");
+            $display("---------------------------------------------------------------------------------------------");
+            $display("                                        TEST FAILED");
+            $display("              Input and output registers do not correspond to what they should be");
+            $display("---------------------------------------------------------------------------------------------");
             $stop();
         end 
+
+        assert ((users_out[0] == 73) && (users_out[1] == 51) && users_out[2] == 28) 
+        else begin
+            $display("---------------------------------------------------------------------------------------------");
+            $display("                                        TEST FAILED");
+            $display("                                      wrong user value");
+            $display("---------------------------------------------------------------------------------------------");
+            $stop();
+        end 
+
+            $display("---------------------------------------------------------------------------------------------");
+            $display("                                        TEST SUCCESS");
+            $display("---------------------------------------------------------------------------------------------");
+            $stop();
     end
 
 endmodule

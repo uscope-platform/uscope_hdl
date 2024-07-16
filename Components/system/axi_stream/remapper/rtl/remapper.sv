@@ -25,7 +25,9 @@ module axis_remapper #(
     REMAP_TYPE = "DYNAMIC",
     REMAP_OFFSET = 0,
     INPUT_DATA_WIDTH = 16,
-    OUTPUT_DATA_WIDTH = 16
+    OUTPUT_DATA_WIDTH = 16, 
+    USER_WIDTH = 32,
+    DEST_WIDTH = 32
     ) (
     input wire clock,
     axi_stream.slave in,
@@ -33,7 +35,11 @@ module axis_remapper #(
 );
 
 
-    axi_stream #(.DATA_WIDTH(OUTPUT_DATA_WIDTH)) inner_out();
+    axi_stream #(
+        .DATA_WIDTH(OUTPUT_DATA_WIDTH), 
+        .USER_WIDTH(USER_WIDTH),
+        .DEST_WIDTH(DEST_WIDTH)
+    ) inner_out();
 
     generate
     

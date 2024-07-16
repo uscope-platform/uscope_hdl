@@ -21,7 +21,6 @@ module axis_dynamic_data_mover #(
     MAX_CHANNELS=1,
     parameter PRAGMA_MKFG_DATAPOINT_NAMES = "",
     parameter [31:0] MKFG_DESTINATIONS [MAX_CHANNELS-1:0] = '{MAX_CHANNELS{1'b0}},
-    parameter OUTPUT_USER = get_axis_metadata(32, 0, 1),
     REPEAT_MODE = 0
 )(
     input wire clock,
@@ -35,7 +34,7 @@ module axis_dynamic_data_mover #(
     axi_lite.slave axi_in
 );
 
-    parameter N_REGISTERS = MAX_CHANNELS+1;
+    localparam N_REGISTERS = 2*MAX_CHANNELS+1;
 
     reg [31:0] cu_write_registers [N_REGISTERS-1:0];
     reg [31:0] cu_read_registers [N_REGISTERS-1:0];
@@ -43,17 +42,15 @@ module axis_dynamic_data_mover #(
 
     wire [15:0] source_addr  [MAX_CHANNELS-1:0];
     wire [15:0] target_addr [MAX_CHANNELS-1:0];
+    wire [15:0] user_value [MAX_CHANNELS-1:0];
     reg [$clog2(MAX_CHANNELS)-1:0] n_active_channels;
 
-    localparam [31:0] INIT_VAL [N_REGISTERS-1:0] = '{default:0};
-    
 
     axil_simple_register_cu #(
         .N_READ_REGISTERS(N_REGISTERS),
         .N_WRITE_REGISTERS(N_REGISTERS),
         .REGISTERS_WIDTH(32),
-        .ADDRESS_MASK('hfff),
-        .INITIAL_OUTPUT_VALUES(INIT_VAL)
+        .ADDRESS_MASK('hfff)
     ) CU (
         .clock(clock),
         .reset(reset),
@@ -67,9 +64,10 @@ module axis_dynamic_data_mover #(
     assign n_active_channels = cu_write_registers[0];
     genvar n;
     generate
-        for(n = 1; n<N_REGISTERS; n=n+1)begin
-            assign source_addr[n-1] = cu_write_registers[n][15:0];
-            assign target_addr[n-1] = cu_write_registers[n][31:16];
+        for(n = 0; n<MAX_CHANNELS; n=n+1)begin
+            assign source_addr[n] = cu_write_registers[n+1][15:0];
+            assign target_addr[n] = cu_write_registers[n+1][31:16];
+            assign user_value[n] = cu_write_registers[n + 1  + MAX_CHANNELS];
         end
     endgenerate
 
@@ -94,7 +92,6 @@ module axis_dynamic_data_mover #(
             data_request.data <= 0;
             data_request.valid <= 0;
             data_out.data <= 0;
-            data_out.user <= OUTPUT_USER;
             data_out.dest <= 0;
             channel_sequencer <= 0;
             mover_active <= 0;
@@ -122,6 +119,7 @@ module axis_dynamic_data_mover #(
                         data_out.data <= data_response.data;
                         data_buffers[channel_sequencer] <= data_response.data;
                         data_out.dest <= target_addr[channel_sequencer];
+                        data_out.user <= user_value[channel_sequencer];
                         data_out.valid <= data_response.valid;
                         if(channel_sequencer == n_active_channels-1)begin
                             channel_sequencer <= 0;
@@ -135,6 +133,7 @@ module axis_dynamic_data_mover #(
                 end
                 send_buffered_data:begin
                         data_out.data <= data_buffers[channel_sequencer];
+                        data_out.user <= user_value[channel_sequencer];
                         data_out.dest <= target_addr[channel_sequencer];
                         data_out.valid <= 1;
                         if(channel_sequencer == n_active_channels-1)begin
@@ -193,6 +192,13 @@ endmodule
                         "length": 15
                     }
                 ]
+            },
+            {
+                "name": "user_$",
+                "n_regs": ["MAX_CHANNELS"],
+                "description": "Value for the AXI stream user signal for channel $",
+                "direction": "RW",
+                "fields":[]
             }
         ]
     }   

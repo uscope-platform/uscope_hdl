@@ -55,6 +55,8 @@ module fCore_Istore # (
         .axi(axi)
     );
 
+    reg [31:0] header_counter = 0;
+    
     assign dma_read_data_w = read_data;
 
     wire [ADDR_WIDTH-1:0] core_read_address;
@@ -75,7 +77,6 @@ module fCore_Istore # (
         .we_a(write_enable)
     );
 
-    reg [31:0] header_counter = 0;
 
     enum reg [2:0] {
         metadata_section = 0,
