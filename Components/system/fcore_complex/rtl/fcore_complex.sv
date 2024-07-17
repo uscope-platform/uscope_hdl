@@ -149,6 +149,8 @@ module fcore_complex #(
     axi_stream_combiner #(
         .INPUT_DATA_WIDTH(32),
         .OUTPUT_DATA_WIDTH(32),
+        .DEST_WIDTH(32),
+        .USER_WIDTH(32),
         .N_STREAMS(N_CONSTANTS+1)
     )constants_combiner(
         .clock(core_clock),
