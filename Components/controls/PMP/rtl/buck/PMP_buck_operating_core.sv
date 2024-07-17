@@ -28,9 +28,8 @@ module PMP_buck_operating_core #(
     input wire pwm_config_done,
     input wire [3:0] update,
     input wire [15:0] period,
-    input wire [15:0] duty,
+    input wire [15:0] duty[N_PHASES-1:0],
     input wire [15:0] phase_shifts[N_PHASES-1:0],
-    input wire [15:0] duty_adjust[N_PHASES-1:0],
     output reg modulator_status,
     axi_stream.master operating_write
 );
@@ -59,30 +58,6 @@ module PMP_buck_operating_core #(
     localparam duty_register_offset = N_PWM_CHANNELS;
 
 
-
-    ////////////////////////////////////////////
-    //      PER PHASE DUTY CALCULATION        //
-    ////////////////////////////////////////////
-
-
-    reg [15:0] phase_duties [N_PHASES-1:0];
-
-    genvar i;
-
-
-    generate
-        for(i = 0; i<N_PHASES; i++)begin
-            always @(posedge clock) begin 
-                if(duty+duty_adjust[i]>16'hffff) begin
-                    phase_duties[i] = 16'hffff;
-                end else if(($signed(duty_adjust[i])+$signed(duty))<0) begin
-                    phase_duties[i] = 0;
-                end else begin
-                    phase_duties[i] = duty+$signed(duty_adjust[i]);
-                end
-            end
-        end
-    endgenerate
 
     ////////////////////////////////////////////
     //         OPERATING CONFIG FSM           //
@@ -189,7 +164,7 @@ module PMP_buck_operating_core #(
                 update_modulator: begin
                     if(operating_write.ready)begin
                         operating_write.dest <= PWM_BASE_ADDR+ duty_register_offset + (operating_chain_counter+1)*'h100;
-                        operating_write.data <= phase_duties[operating_chain_counter];
+                        operating_write.data <= duty[operating_chain_counter];
                         
                         operating_write.valid <= 1;
 

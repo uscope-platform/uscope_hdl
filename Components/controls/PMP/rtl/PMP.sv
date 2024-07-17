@@ -352,7 +352,7 @@ module pre_modulation_processor #(
 endmodule
 
     /**
-       {
+    {
         "name": "pre_modulation_processor",
         "type": "variant_peripheral",
         "variant_parameter":"CONVERTER_SELECTION",
@@ -423,9 +423,9 @@ endmodule
                 "variants":["DAB"]
             },
             {
-                "name": "duty",
-                "n_regs": ["1"],
-                "description": "Output duty cycle",
+                "name": "duty_$",
+                "n_regs": ["N_CHAINS"],
+                "description": "Duty cycle for phase $",
                 "direction": "RW",
                 "variants":["BUCK"]
             },
@@ -442,14 +442,7 @@ endmodule
                 "description": "Carrier shift of phase $",
                 "direction": "RW",
                 "variants":["BUCK"]
-            },
-            {
-                "name": "d_adj_$",
-                "n_regs": ["N_CHAINS"],
-                "description": "Duty cycle adjust for phase $",
-                "direction": "RW",
-                "variants":["BUCK"]
             }
         ]
-       }  
+    }
     **/
