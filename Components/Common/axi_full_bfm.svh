@@ -21,9 +21,9 @@
 class axi_full_bfm #(int ID_WIDTH = 1,int USER_WIDTH = 1, int DATA_WIDTH = 32, int ADDR_WIDTH = 12);
 
     virtual AXI #(ID_WIDTH, USER_WIDTH, DATA_WIDTH, ADDR_WIDTH) bus;
-    integer clock_period;
+    real clock_period;
 
-    function new (virtual AXI #(ID_WIDTH, USER_WIDTH, DATA_WIDTH, ADDR_WIDTH) test_bus, integer period);
+    function new (virtual AXI #(ID_WIDTH, USER_WIDTH, DATA_WIDTH, ADDR_WIDTH) test_bus, real period);
         begin
             this.bus = test_bus;
 
@@ -72,13 +72,13 @@ class axi_full_bfm #(int ID_WIDTH = 1,int USER_WIDTH = 1, int DATA_WIDTH = 32, i
         this.bus.AWADDR <= address;
         this.bus.AWVALID <= 1;
         this.bus.WLAST <= 1;
-        #1;
+        #(this.clock_period);
         this.bus.AWVALID <= 0;
         this.bus.WDATA <= data;
         this.bus.WVALID <= 1;
         this.bus.WSTRB <= 'hF;
         
-        #1;
+        #(this.clock_period);
         this.bus.BREADY <= 1;
         this.bus.WLAST <= 0;
         this.bus.WVALID <= 0;
@@ -87,7 +87,7 @@ class axi_full_bfm #(int ID_WIDTH = 1,int USER_WIDTH = 1, int DATA_WIDTH = 32, i
         this.bus.WDATA <= 0;
         this.bus.WSTRB <= 0;
         @(this.bus.BVALID);
-        #1;
+        #(this.clock_period);
     endtask
 
     task  read(input logic [ADDR_WIDTH-1:0] address, output logic [DATA_WIDTH-1:0] data);

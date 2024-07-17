@@ -22,10 +22,10 @@
 class axi_lite_BFM #(DATA_WIDTH = 32, ADDR_WIDTH = 32, INTERFACE_NAME = "IF");
 
     virtual axi_lite #(DATA_WIDTH, ADDR_WIDTH, INTERFACE_NAME) bus;
-    integer clock_period;
+    real clock_period;
 
 
-    function new (virtual axi_lite #(DATA_WIDTH, ADDR_WIDTH, INTERFACE_NAME) test_bus, integer period);
+    function new (virtual axi_lite #(DATA_WIDTH, ADDR_WIDTH, INTERFACE_NAME) test_bus, real period);
         begin
             this.bus = test_bus;
 
@@ -53,13 +53,13 @@ class axi_lite_BFM #(DATA_WIDTH = 32, ADDR_WIDTH = 32, INTERFACE_NAME = "IF");
 
         this.bus.AWADDR <= address;
         this.bus.AWVALID <= 1;
-        #1;
+        #(this.clock_period);
         this.bus.AWVALID <= 0;
         this.bus.WDATA <= data;
         this.bus.WVALID <= 1;
         this.bus.WSTRB <= 'hF;
         
-        #1;
+        #(this.clock_period);
         this.bus.BREADY <= 1;
 
         this.bus.WVALID <= 0;
@@ -69,7 +69,7 @@ class axi_lite_BFM #(DATA_WIDTH = 32, ADDR_WIDTH = 32, INTERFACE_NAME = "IF");
         this.bus.WSTRB <= 0;
         @(this.bus.BVALID);
         $display("WRITING TO ADDRESS: %h,    VALUE: %d", address, data);
-        #1;
+        #(this.clock_period);
     endtask
 
     task  read(input logic [ADDR_WIDTH-1:0] address, output logic [DATA_WIDTH-1:0] data);
@@ -77,10 +77,10 @@ class axi_lite_BFM #(DATA_WIDTH = 32, ADDR_WIDTH = 32, INTERFACE_NAME = "IF");
         this.bus.ARVALID <= 1;
         this.bus.RREADY <= 1;
         wait(this.bus.ARREADY);
-        #1;
+        #(this.clock_period);
         this.bus.ARVALID <= 0;
         wait(this.bus.RVALID);
-        #1;
+        #(this.clock_period);
         data = this.bus.RDATA;
         
         this.bus.RREADY <= 0;
