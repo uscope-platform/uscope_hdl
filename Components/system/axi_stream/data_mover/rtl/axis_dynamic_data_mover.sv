@@ -21,7 +21,8 @@ module axis_dynamic_data_mover #(
     MAX_CHANNELS=1,
     parameter PRAGMA_MKFG_DATAPOINT_NAMES = "",
     parameter [31:0] MKFG_DESTINATIONS [MAX_CHANNELS-1:0] = '{MAX_CHANNELS{1'b0}},
-    REPEAT_MODE = 0
+    REPEAT_MODE = 0,
+    MULTICHANNEL_MODE = 0
 )(
     input wire clock,
     input wire reset,
@@ -110,7 +111,11 @@ module axis_dynamic_data_mover #(
                     end
                 end 
                 read_source: begin
-                    data_request.data <= source_addr[channel_sequencer];
+                    if(MULTICHANNEL_MODE==1)begin
+                        data_request.data <={source_addr[channel_sequencer][15:12],4'b0,source_addr[channel_sequencer][11:0]} ;
+                    end else begin
+                        data_request.data <= source_addr[channel_sequencer];
+                    end
                     data_request.valid <= 1;  
                     sequencer_state <= wait_response;
                 end

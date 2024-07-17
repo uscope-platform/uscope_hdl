@@ -279,16 +279,24 @@ package reg_maps;
         int addr_6 = 'h1C;
         int addr_7 = 'h20;
         int addr_8 = 'h24;
+        int addr_9 = 'h28;
+        int addr_10 = 'h2C;
+        int addr_11 = 'h30;
+        int addr_12 = 'h34;
+        int addr_13 = 'h38;
+        int addr_14 = 'h3C;
+        int addr_15 = 'h40;
 
-        int user_0 = 'h28;
-        int user_1 = 'h2C;
-        int user_2 = 'h30;
-        int user_3 = 'h34;
-        int user_4 = 'h38;
-        int user_5 = 'h3c;
-        int user_6 = 'h40;
-        int user_7 = 'h44;
-        int user_8 = 'h48;
+
+        int user_0 = 'h44;
+        int user_1 = 'h48;
+        int user_2 = 'h4c;
+        int user_3 = 'h50;
+        int user_4 = 'h54;
+        int user_5 = 'h58;
+        int user_6 = 'h5c;
+        int user_7 = 'h60;
+        int user_8 = 'h64;
     } axis_dynamic_dma_regs;
 
     struct { 

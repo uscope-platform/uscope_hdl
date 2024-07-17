@@ -42,7 +42,8 @@ module fcore_complex #(
     parameter EFI_TYPE = "NONE",
     parameter AXI_ADDR_WIDTH = 32,
     parameter N_CONSTANTS = 3,
-    parameter REPEAT_MODE = 0
+    parameter REPEAT_MODE = 0,
+    parameter MULTICHANNEL_MODE = 0
 )(
     input wire core_clock,
     input wire interface_clock,
@@ -204,7 +205,8 @@ module fcore_complex #(
         .MAX_CHANNELS(MOVER_CHANNEL_NUMBER),
         .PRAGMA_MKFG_DATAPOINT_NAMES(PRAGMA_MKFG_DATAPOINT_NAMES),
         .MKFG_DESTINATIONS(MKFG_DESTINATIONS),
-        .REPEAT_MODE(REPEAT_MODE)
+        .REPEAT_MODE(REPEAT_MODE),
+        .MULTICHANNEL_MODE(MULTICHANNEL_MODE)
     )dma (
         .clock(core_clock),
         .reset(core_reset),
