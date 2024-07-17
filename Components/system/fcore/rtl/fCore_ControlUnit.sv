@@ -31,6 +31,7 @@ module fCore_ControlUnit #(
     input wire [15:0] program_size,
     output reg efi_start,
     input wire core_stop,
+    input wire result_valid,
     input wire [2*INSTRUCTION_WIDTH-1:0] wide_instruction_in,
     input wire [$clog2(MAX_CHANNELS)-1:0] n_channels,
     output reg [PC_WIDTH-1: 0] program_counter,
@@ -112,7 +113,7 @@ module fCore_ControlUnit #(
                 if(channel_counter>program_size-1)begin
                     state <= FAULT;
                 end
-                if(core_stop)begin
+                if(core_stop & ~result_valid)begin
                     done <= 1;
                     state <= IDLE;
                 end

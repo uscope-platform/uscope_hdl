@@ -137,6 +137,7 @@ module fCore #(
         .efi_done(efi_results.tlast),
         .efi_start(efi_start),
         .core_stop(core_stop),
+        .result_valid(result.valid),
         .program_size(program_size),
         .wide_instruction_in(instruction_w),
         .n_channels(n_channels),
