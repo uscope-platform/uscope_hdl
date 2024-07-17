@@ -29,7 +29,6 @@ module axis_multichannel_combiner #(
     reg [DATA_WIDTH-1:0] latched_data[N_CHANNELS-1:0] = '{default:0};
     reg [DEST_WIDTH-1:0] latched_dest[N_CHANNELS-1:0] = '{default:0};
     reg [USER_WIDTH-1:0] latched_user[N_CHANNELS-1:0] = '{default:0};
-    reg [N_CHANNELS-1:0] latched_tlast = 0;
 
     genvar i;
 
@@ -40,7 +39,6 @@ module axis_multichannel_combiner #(
                     latched_data[i] <= data_in[i].data;
                     latched_dest[i] <= data_in[i].dest;
                     latched_user[i] <= data_in[i].user;
-                    latched_tlast[i] <= data_in[i].tlast;
                 end
             end
         end
@@ -60,6 +58,7 @@ module axis_multichannel_combiner #(
         data_out.valid <= 0;
         case (combiner_state)
             init_output:begin
+                data_out.tlast <= 0;
                 data_out.data <= 0;
                 data_out.dest <= 0;
                 data_out.user <= 0;
@@ -68,6 +67,7 @@ module axis_multichannel_combiner #(
                 combiner_state <= wait_data;
             end
             wait_data: begin
+                data_out.tlast <= 0;
                 if(data_in[0].valid) begin
                     combiner_state <= combining;
                     outputs_counter <= 0;
@@ -76,12 +76,12 @@ module axis_multichannel_combiner #(
             combining: begin
                 if(outputs_counter==N_CHANNELS-1)begin
                     combiner_state <= wait_data;
+                    data_out.tlast <= 1;
                 end else begin
                     outputs_counter <= outputs_counter+1;
                 end
                 data_out.data <= latched_data[outputs_counter];
                 data_out.user <= latched_user[outputs_counter];
-                data_out.tlast <= latched_tlast[outputs_counter];
                 data_out.dest <= latched_dest[outputs_counter];
                 data_out.valid <= 1;
             end
