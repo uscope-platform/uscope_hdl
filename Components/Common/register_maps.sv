@@ -296,13 +296,13 @@ package reg_maps;
         int user_6 = 'h5c;
         int user_7 = 'h60;
         int user_8 = 'h64;
-        int user_9 = 'h60;
-        int user_10 = 'h64;
-        int user_11 = 'h68;
-        int user_12 = 'h6c;
-        int user_13 = 'h70;
-        int user_14 = 'h74;
-        int user_15 = 'h78;
+        int user_9 = 'h68;
+        int user_10 = 'h6c;
+        int user_11 = 'h70;
+        int user_12 = 'h74;
+        int user_13 = 'h78;
+        int user_14 = 'h7c;
+        int user_15 = 'h80;
     } axis_dynamic_dma_regs;
 
     struct { 
