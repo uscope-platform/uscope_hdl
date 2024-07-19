@@ -34,6 +34,9 @@ reg aggregation_in_progress = 0;
 always_ff @(posedge clock)begin
     if(~aggregation_in_progress)begin
         data_out.valid <= 0;
+         data_out.data <= 0;
+         data_out.dest <= 0;
+         data_out.user <= 0;
         if(data_in.valid & data_in.dest == PACKET_START_ADDR) begin
             aggregated_value <= data_in.data;
             aggregation_in_progress <= 1;
