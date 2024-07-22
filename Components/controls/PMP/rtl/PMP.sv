@@ -22,7 +22,8 @@ module pre_modulation_processor #(
     PWM_BASE_ADDR = 0,
     N_PWM_CHANNELS = 4,
     N_PARAMETERS = 13,
-    N_CHAINS = 2
+    N_CHAINS = 2,
+    parameter [31:0] INITIAL_PARAMETERS_VALUES [N_PARAMETERS+1:0] = '{default:0}
 )(
     input wire clock,
     input wire reset,
@@ -42,14 +43,14 @@ module pre_modulation_processor #(
     reg config_required;
 
 
-    reg [31:0] cu_write_registers [N_PARAMETERS+1:0] = '{N_PARAMETERS+2{0}};
+    reg [31:0] cu_write_registers [N_PARAMETERS+1:0] = INITIAL_PARAMETERS_VALUES;
     reg [31:0] cu_read_registers [N_PARAMETERS+1:0];
 
     axil_external_registers_cu #(
         .REGISTERS_WIDTH(32),
         .REGISTERED_BUFFERS(0),
         .BASE_ADDRESS(BASE_ADDRESS),
-        .READ_DELAY(0) 
+        .READ_DELAY(0)
     )CU (
         .clock(clock),
         .reset(reset | ~config_required),
@@ -299,7 +300,8 @@ module pre_modulation_processor #(
             buck_pre_modulation_processor  #(
                 .PWM_BASE_ADDR(PWM_BASE_ADDR),
                 .N_PHASES(N_CHAINS),
-                .N_PWM_CHANNELS(N_PWM_CHANNELS)
+                .N_PWM_CHANNELS(N_PWM_CHANNELS),
+                .N_PARAMETERS(N_PARAMETERS)
             ) buck_pmp (
                 .clock(clock),
                 .reset(reset),
@@ -433,13 +435,6 @@ endmodule
                 "name": "deadtime",
                 "n_regs": ["1"],
                 "description": "Deadtime between high and low side for buck converter",
-                "direction": "RW",
-                "variants":["BUCK"]
-            },
-            {
-                "name": "ps_$",
-                "n_regs": ["N_CHAINS"],
-                "description": "Carrier shift of phase $",
                 "direction": "RW",
                 "variants":["BUCK"]
             }

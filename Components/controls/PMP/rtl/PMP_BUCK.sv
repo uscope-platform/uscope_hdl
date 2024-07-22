@@ -65,15 +65,30 @@ module buck_pre_modulation_processor  #(
     end
 
 
+
+    wire [15:0] phase_shifts[N_PHASES-1:0];
+
     wire operating_config_done;
 
     wire [15:0] duty [N_PHASES-1:0];
     assign duty = modulation_parameters[N_PHASES-1:0];
     wire [15:0] deadtime;
     assign deadtime = modulation_parameters[N_PHASES];
-    wire [15:0] phase_shifts[N_PHASES-1:0];
-    assign phase_shifts[N_PHASES-1:0] = modulation_parameters[2*N_PHASES:N_PHASES+1];
+    wire [3:0] n_active_phases;
+    assign n_active_phases = modulation_parameters[N_PHASES+1];
  
+
+
+    PMP_buck_shifts_calculator #(
+        .N_PHASES(N_PHASES)
+    ) shift_calc_engine(
+        .clock(clock),
+        .reset(reset),
+        .n_phases(n_active_phases+1),
+        .period(period),
+        .phase_shifts(phase_shifts)
+    );
+
 
     PMP_buck_management_core #(
         .PWM_BASE_ADDR(PWM_BASE_ADDR),

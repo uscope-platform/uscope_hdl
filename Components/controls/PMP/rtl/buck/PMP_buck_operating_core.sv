@@ -97,7 +97,7 @@ module PMP_buck_operating_core #(
                 operating_idle: begin
 
                     if(update && modulator_status == 1)begin
-                        opeating_state <= update_period;
+                        opeating_state <= update_phase_shift;
                     end
 
                     if(start) begin 
@@ -117,9 +117,10 @@ module PMP_buck_operating_core #(
                 end
                 wait_configuration:begin
                     if(pwm_config_done)begin
-                        opeating_state <= update_phase_shift;
+                        opeating_state <= update_period;
                     end
                 end
+
                 start_modulator_state: begin
                     if(operating_write.ready)begin
                         operating_write.dest <= PWM_BASE_ADDR;
@@ -131,7 +132,23 @@ module PMP_buck_operating_core #(
                         next_state <= operating_idle;
                     end
                     
-                end                
+                end
+
+                update_period: begin
+                    if(operating_write.ready)begin
+                        operating_write.data <= period;
+                        operating_write.dest <= PWM_BASE_ADDR + period_register_offset + (operating_chain_counter+1)*'h100;
+                        operating_write.valid <= 1;
+                        if(operating_chain_counter == N_PHASES-1) begin
+                            opeating_state <= wait_write_end;
+                            next_state <= update_phase_shift;
+                            operating_chain_counter <= 0;
+                        end else begin
+                            operating_chain_counter <= operating_chain_counter +1;
+                        end
+                    end
+                end
+                                
                 update_phase_shift:begin
                     if(operating_write.ready)begin
                         operating_write.data <= phase_shifts[operating_chain_counter];
@@ -139,27 +156,12 @@ module PMP_buck_operating_core #(
                         operating_write.valid <= 1;
                         if(operating_chain_counter == N_PHASES-1) begin
                             opeating_state <= wait_write_end;
-                            next_state <= update_period;
+                            next_state <= update_modulator;
                             operating_chain_counter <= 0;
                         end else begin
                             operating_chain_counter <= operating_chain_counter +1;
                         end
                     end
-                end
-
-                update_period: begin
-                    if(operating_write.ready)begin
-                            operating_write.data <= period;
-                            operating_write.dest <= PWM_BASE_ADDR + period_register_offset + (operating_chain_counter+1)*'h100;
-                            operating_write.valid <= 1;
-                            if(operating_chain_counter == N_PHASES-1) begin
-                                opeating_state <= wait_write_end;
-                                next_state <= update_modulator;
-                                operating_chain_counter <= 0;
-                            end else begin
-                                operating_chain_counter <= operating_chain_counter +1;
-                            end
-                        end
                 end
                 update_modulator: begin
                     if(operating_write.ready)begin
