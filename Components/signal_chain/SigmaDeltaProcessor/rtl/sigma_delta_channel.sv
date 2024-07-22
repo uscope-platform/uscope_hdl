@@ -23,7 +23,8 @@ module sigma_delta_channel #(
     parameter RESULT_RESOLUTION = 16,
     parameter OUTPUT_SIZE = 32,
     parameter CHANNEL_INDICATOR = 0,
-    parameter OUTPUT_SHIFT_SIZE = 8
+    parameter OUTPUT_SHIFT_SIZE = 8,
+    parameter OUTPUT_VALID_DELAY = 4
 )(
     input wire clock,
     input wire reset,
@@ -84,7 +85,8 @@ module sigma_delta_channel #(
     );
 
     wire [PROCESSING_RESOLUTION-1:0] differentiation_out;
-
+    wire differentiation_valid;
+    
     sigma_delta_differentiation_stage #( 
         .PROCESSING_RESOLUTION(PROCESSING_RESOLUTION)
     ) diff_stage(
@@ -92,13 +94,17 @@ module sigma_delta_channel #(
         .reset(reset),
         .samplink_clock(output_clock),
         .data_in(integration_out),
-        .data_out(differentiation_out)
+        .data_out(differentiation_out),
+        .data_valid(differentiation_valid)
     );
 
     // OUTPUT STAGE
     reg output_clock_del = 0;
     reg [RESULT_RESOLUTION:0] unsigned_out = 0;
     reg [RESULT_RESOLUTION-1:0] adc_data = 0;
+
+    reg output_valid = 0;
+    reg [3:0] output_ctr= 0;
 
     always_comb begin
         if(unsigned_out[RESULT_RESOLUTION])begin
@@ -113,6 +119,23 @@ module sigma_delta_channel #(
     assign extended_data = {{OUTPUT_SIZE-RESULT_RESOLUTION{adc_data[RESULT_RESOLUTION-1]}},adc_data};
 
     always @(posedge clock) begin
+        if(~reset)begin
+            output_valid <= 0;
+        end else begin
+            if(differentiation_valid & ~output_valid)begin
+                if(output_clock & ~output_clock_del)begin
+                    if(output_ctr == OUTPUT_VALID_DELAY-1)begin
+                        output_valid <= 1;
+                    end else begin
+                        output_ctr <= output_ctr + 1;
+                    end
+                end
+            end else begin
+                output_ctr <= 0;
+            end
+        end
+
+
         data_out.user <= get_axis_metadata(RESULT_RESOLUTION, 1, 0);
         data_out.valid <= 0;
         output_clock_del <= output_clock;
@@ -120,7 +143,7 @@ module sigma_delta_channel #(
             unsigned_out <= differentiation_out >> OUTPUT_SHIFT_SIZE;
         end
 
-        if(sync)begin
+        if(sync & output_valid)begin
             data_out.data <= extended_data + offset;
             data_out.valid <= 1;
             data_out.dest <= CHANNEL_INDICATOR;

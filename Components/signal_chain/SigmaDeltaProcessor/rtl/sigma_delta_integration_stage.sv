@@ -15,14 +15,20 @@
 `timescale 10 ns / 1 ns
 
 module sigma_delta_integration_stage #(
-    parameter PROCESSING_RESOLUTION = 16
+    parameter PROCESSING_RESOLUTION = 16,
+    N_STEPS = 3
 )(
     input wire clock,
     input wire reset,
     input wire modulation_clock,
     input wire data_in,
-    output wire [PROCESSING_RESOLUTION-1:0] data_out
-);
+    output wire [PROCESSING_RESOLUTION-1:0] data_out,
+    output wire data_valid
+    );
+
+
+    reg initial_fill = 0;
+    assign data_valid = initial_fill;
 
     wire [PROCESSING_RESOLUTION-1:0] accumulation [2:0];
     assign data_out = accumulation[2];
@@ -57,5 +63,21 @@ module sigma_delta_integration_stage #(
         .data_out(accumulation[2])
     );
 
+    reg modulation_clock_del;
+    reg [$clog2(N_STEPS)-1:0] fill_ctr = 0;
+    
+    always_ff @(posedge clock)begin
+        if(~reset)begin
+            initial_fill <= 0;
+        end else begin
+            modulation_clock_del <= modulation_clock;
+            if(~modulation_clock_del & modulation_clock & ~initial_fill)begin
+                if(fill_ctr==N_STEPS-1)begin
+                    initial_fill <= 1;
+                end
+                fill_ctr <= fill_ctr +1;
+            end
+        end
+    end
 
 endmodule
