@@ -214,6 +214,18 @@ package reg_maps;
         int duty_saturation = 'hc;
         int force_sequencing = 'h10;
         int startup_ramp_div = 'h14;
+        int sequencing_limit_0 = 'h18;
+        int sequencing_limit_1 = 'h1c;
+        int sequencing_limit_2 = 'h20;
+        int sequencing_limit_3 = 'h24;
+        int sequencing_limit_4 = 'h28;
+        int sequencing_limit_5 = 'h2C;
+        int sequencing_limit_6 = 'h30;
+        int sequencing_limit_7 = 'h34;
+        int sequencing_limit_8 = 'h38;
+        int sequencing_limit_9 = 'h3c;
+        int sequencing_limit_10 = 'h40;
+        int sequencing_limit_11 = 'h44;
     } buck_sequencer_regs;
 
     struct { 
