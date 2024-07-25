@@ -21,7 +21,8 @@ module sigma_delta_processor #(
     parameter COMPARATOR_DECIMATION_RATIO = 256,
     parameter SAMPLING_EDGE = "POSITIVE",
     parameter PRAGMA_MKFG_DATAPOINT_NAMES = "",
-    parameter OUTPUT_DESTINATION_BASE = 0
+    parameter OUTPUT_DESTINATION_BASE = 0,
+    parameter [N_CHANNELS-1:0] INVERT_SIGN = 0
 )(
     input wire clock,
     input wire enable,
@@ -146,7 +147,8 @@ module sigma_delta_processor #(
                 .RESULT_RESOLUTION(main_result_resolution),
                 .OUTPUT_SHIFT_SIZE(main_output_shift),
                 .CHANNEL_INDICATOR(OUTPUT_DESTINATION_BASE + i),
-                .SAMPLING_EDGE(SAMPLING_EDGE)
+                .SAMPLING_EDGE(SAMPLING_EDGE),
+                .INVERT_SIGN(INVERT_SIGN[i])
             ) main_channel (
                 .clock(clock),
                 .reset(reset),
@@ -168,7 +170,8 @@ module sigma_delta_processor #(
                 .RESULT_RESOLUTION(comparator_result_resolution),
                 .OUTPUT_SHIFT_SIZE(comparator_output_shift),
                 .CHANNEL_INDICATOR(i),
-                .SAMPLING_EDGE(SAMPLING_EDGE)
+                .SAMPLING_EDGE(SAMPLING_EDGE),
+                .INVERT_SIGN(INVERT_SIGN[i])
             ) comparator_channel (
                 .clock(clock),
                 .reset(reset),

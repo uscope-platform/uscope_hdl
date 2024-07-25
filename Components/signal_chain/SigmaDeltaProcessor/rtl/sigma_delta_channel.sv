@@ -24,7 +24,8 @@ module sigma_delta_channel #(
     parameter OUTPUT_SIZE = 32,
     parameter CHANNEL_INDICATOR = 0,
     parameter OUTPUT_SHIFT_SIZE = 8,
-    parameter OUTPUT_VALID_DELAY = 4
+    parameter OUTPUT_VALID_DELAY = 4,
+    parameter INVERT_SIGN = 0
 )(
     input wire clock,
     input wire reset,
@@ -118,6 +119,9 @@ module sigma_delta_channel #(
     wire signed [RESULT_RESOLUTION-1:0] extended_data;
     assign extended_data = {{OUTPUT_SIZE-RESULT_RESOLUTION{adc_data[RESULT_RESOLUTION-1]}},adc_data};
 
+    wire signed [RESULT_RESOLUTION-1:0] offset_data;
+    assign offset_data = extended_data + offset;
+
     always @(posedge clock) begin
         if(~reset)begin
             output_valid <= 0;
@@ -144,7 +148,7 @@ module sigma_delta_channel #(
         end
 
         if(sync & output_valid)begin
-            data_out.data <= extended_data + offset;
+            data_out.data <= INVERT_SIGN ? -offset_data: offset_data;
             data_out.valid <= 1;
             data_out.dest <= CHANNEL_INDICATOR;
         end
