@@ -19,7 +19,8 @@ module packet_aggregator #(
     parameter DATA_PATH_WIDTH = 16,
     parameter PACKET_START_ADDR = 0,
     parameter PACKET_LENGHT = 10,
-    parameter RESULT_DEST = 0
+    parameter RESULT_DEST = 0,
+    parameter RESULT_USER = 0
 )(
     input wire clock,
     input wire reset,
@@ -34,9 +35,9 @@ reg aggregation_in_progress = 0;
 always_ff @(posedge clock)begin
     if(~aggregation_in_progress)begin
         data_out.valid <= 0;
-         data_out.data <= 0;
-         data_out.dest <= 0;
-         data_out.user <= 0;
+        data_out.data <= 0;
+        data_out.dest <= RESULT_DEST;
+        data_out.user <= RESULT_USER;
         if(data_in.valid & data_in.dest == PACKET_START_ADDR) begin
             aggregated_value <= data_in.data;
             aggregation_in_progress <= 1;
@@ -45,7 +46,6 @@ always_ff @(posedge clock)begin
     end else begin
         if(aggregation_count == PACKET_LENGHT-1)begin
             data_out.data <= aggregated_value + data_in.data;
-            data_out.dest <= RESULT_DEST;
             data_out.valid <= 1;
             aggregation_in_progress <= 0;
             aggregation_count <= 0;
