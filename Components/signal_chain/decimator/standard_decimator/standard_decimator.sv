@@ -20,7 +20,8 @@ module standard_decimator #(
     DATA_WIDTH= 16, 
     AVERAGING=0,
     AVERAGING_DIVISOR=2,
-    N_CHANNELS = 1
+    N_CHANNELS = 1,
+    SOURCE_DEST = 0
     )(
     input wire clock,
     input wire reset,
@@ -44,12 +45,19 @@ module standard_decimator #(
             decimation_counter[i] <= 0;
         end
     end
-    
+
+    reg  [DATA_WIDTH-1:0] inner_data_out; 
+    assign data_out.data = { {32-DATA_WIDTH{inner_data_out[DATA_WIDTH-1]}}, inner_data_out};
+
+    wire [31:0]channel_id;
+    assign channel_id = data_in.dest - SOURCE_DEST;
+
+
     generate
         if(AVERAGING==1) begin
             always_ff @(posedge clock) begin
                 if(~reset)begin
-                    data_out.data <= 0;
+                    inner_data_out <= 0;
                     data_out.user <= 0;
                     data_out.valid <= 0;
                     data_out.dest <= 0;
@@ -60,15 +68,15 @@ module standard_decimator #(
                 end else begin
                     if(data_out.valid) data_out.valid <= 0;
                     if(data_in.valid) begin
-                        average_accumulator[data_in.dest] <= average_accumulator[data_in.dest] + extended_data_in;
-                        decimation_counter[data_in.dest] <= decimation_counter[data_in.dest]+1;
-                        if((decimation_counter[data_in.dest] == (1<<AVERAGING_DIVISOR)-1 )| decimation_ratio ==0)begin
-                            data_out.data <= (average_accumulator[data_in.dest] + extended_data_in) >>> AVERAGING_DIVISOR;
-                            average_accumulator[data_in.dest] <= 0;
+                        average_accumulator[channel_id] <= average_accumulator[channel_id] + extended_data_in;
+                        decimation_counter[channel_id] <= decimation_counter[channel_id]+1;
+                        if((decimation_counter[channel_id] == (1<<AVERAGING_DIVISOR)-1 )| decimation_ratio ==0)begin
+                            inner_data_out <= (average_accumulator[channel_id] + extended_data_in) >>> AVERAGING_DIVISOR;
+                            average_accumulator[channel_id] <= 0;
                             data_out.dest <= data_in.dest;
                             data_out.user <= data_in.user;
                             data_out.valid <= 1;
-                            decimation_counter[data_in.dest] <= 0;
+                            decimation_counter[channel_id] <= 0;
                         end 
                     end
                 end
@@ -76,7 +84,7 @@ module standard_decimator #(
         end else begin
             always_ff @(posedge clock) begin
                 if(~reset)begin
-                    data_out.data <= 0;
+                    inner_data_out <= 0;
                     data_out.valid <= 0;
                     data_out.user <= 0;
                     data_out.dest <= 0;
@@ -86,13 +94,13 @@ module standard_decimator #(
                 end else begin
                     if(data_out.valid) data_out.valid <= 0;
                     if(data_in.valid) begin
-                        decimation_counter[data_in.dest] <= decimation_counter[data_in.dest] +1;
-                        if((decimation_counter[data_in.dest] == decimation_ratio-1 )| decimation_ratio ==0)begin
-                            data_out.data <= data_in.data;
+                        decimation_counter[channel_id] <= decimation_counter[channel_id] +1;
+                        if((decimation_counter[channel_id] == decimation_ratio-1 )| decimation_ratio ==0)begin
+                            inner_data_out <= data_in.data;
                             data_out.dest <= data_in.dest;
-                            data_out.dest <= data_in.dest;
+                            data_out.user <= data_in.user;
                             data_out.valid <= 1;
-                            decimation_counter[data_in.dest] <= 0;
+                            decimation_counter[channel_id] <= 0;
                         end 
                     end
                 end
