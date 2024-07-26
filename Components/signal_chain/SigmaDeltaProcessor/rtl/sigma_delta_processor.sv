@@ -38,17 +38,17 @@ module sigma_delta_processor #(
 
 
     generate
-        if(MAIN_DECIMATION_RATIO!=4 && MAIN_DECIMATION_RATIO!=8 && MAIN_DECIMATION_RATIO!=16 && MAIN_DECIMATION_RATIO!=32 && MAIN_DECIMATION_RATIO!=64 && MAIN_DECIMATION_RATIO!=128 && MAIN_DECIMATION_RATIO!=256) begin
+        if(MAIN_DECIMATION_RATIO!=4 && MAIN_DECIMATION_RATIO!=8 && MAIN_DECIMATION_RATIO!=16 && MAIN_DECIMATION_RATIO!=32 && MAIN_DECIMATION_RATIO!=64 && MAIN_DECIMATION_RATIO!=128 && MAIN_DECIMATION_RATIO!=256 && MAIN_DECIMATION_RATIO!=512) begin
             $fatal(1,"INVALID DECIMATION RATIO: The decimation ratio must be one of the following values [4, 8, 16, 32, 64, 128, 256]\n\tCurrent value%d", MAIN_DECIMATION_RATIO);
         end
     endgenerate
 
     localparam main_clock_selector = $clog2(MAIN_DECIMATION_RATIO)-2;
     localparam comparator_clock_selector = $clog2(COMPARATOR_DECIMATION_RATIO)-2;
-    //                                           256 128 64  32  16  8  4
-    localparam [7:0] filter_width_map [6:0] = '{ 25, 22, 20, 16, 13, 10, 7 };
-    localparam [7:0] output_width_map [6:0] = '{ 16, 16, 16, 14, 12, 8, 6 };
-    localparam [7:0] output_shift_map [6:0] = '{ 8,  5,  2,  1,  0, 1, 0};
+    //                                           512, 256 128 64  32  16  8  4
+    localparam [7:0] filter_width_map [7:0] = '{  27, 25, 22, 20, 16, 13, 10, 7};
+    localparam [7:0] output_width_map [7:0] = '{  16, 16, 16, 16, 14, 12, 8,  6};
+    localparam [7:0] output_shift_map [7:0] = '{  11,  8,  5,  2,  1,  0, 1,  0};
 
 
     /////////////////////////////////////////////////////////////////////

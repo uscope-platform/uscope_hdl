@@ -40,10 +40,12 @@ module sigma_delta_processor_tb();
 
     wire [N_CHANNELS-1:0] sd_in;
 
+    localparam OUTPUT_DESTINATION_BASE = 3;
+
     sigma_delta_processor #(
-        .MAIN_DECIMATION_RATIO(64),
+        .MAIN_DECIMATION_RATIO(512),
         .N_CHANNELS(N_CHANNELS),
-        .OUTPUT_DESTINATION_BASE(3)
+        .OUTPUT_DESTINATION_BASE(OUTPUT_DESTINATION_BASE)
     ) UUT(
         .clock(clk),
         .reset(reset),
@@ -62,7 +64,7 @@ module sigma_delta_processor_tb();
     end
 
     initial begin
-        $readmemh("/home/fils/git/uscope_hdl/public/Components/signal_chain/SigmaDeltaProcessor/tb/data.csv", stimulus);
+        $readmemh("/home/filssavi/git/uplatform-hdl/public/Components/signal_chain/SigmaDeltaProcessor/tb/data.csv", stimulus);
         axil_bfm = new(cfg_axi, 1);
         filter_out.ready <= 1;
         reset <=1'h1;
@@ -118,8 +120,8 @@ module sigma_delta_processor_tb();
 
         always_ff@(posedge clk)begin
             if(filter_out.valid)begin
-                if(filter_out.dest == i)begin
-                    outputs[i] <= filter_out.data;
+                if(filter_out.dest == i+OUTPUT_DESTINATION_BASE)begin
+                    outputs[filter_out.dest-OUTPUT_DESTINATION_BASE] <= filter_out.data;
                 end
             end
         end
