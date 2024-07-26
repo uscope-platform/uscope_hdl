@@ -59,6 +59,7 @@ module standard_decimator #(
                 if(~reset)begin
                     inner_data_out <= 0;
                     data_out.user <= 0;
+                    data_out.tlast <= 0;
                     data_out.valid <= 0;
                     data_out.dest <= 0;
                     for(integer i = 0; i<N_CHANNELS; i++)begin
@@ -66,7 +67,10 @@ module standard_decimator #(
                         decimation_counter[i] <= 0;
                     end
                 end else begin
-                    if(data_out.valid) data_out.valid <= 0;
+                    if(data_out.valid) begin
+                        data_out.tlast <= 0;
+                        data_out.valid <= 0;
+                    end
                     if(data_in.valid) begin
                         average_accumulator[channel_id] <= average_accumulator[channel_id] + extended_data_in;
                         decimation_counter[channel_id] <= decimation_counter[channel_id]+1;
@@ -74,6 +78,7 @@ module standard_decimator #(
                             inner_data_out <= (average_accumulator[channel_id] + extended_data_in) >>> AVERAGING_DIVISOR;
                             average_accumulator[channel_id] <= 0;
                             data_out.dest <= data_in.dest;
+                            data_out.tlast <= data_in.tlast;
                             data_out.user <= data_in.user;
                             data_out.valid <= 1;
                             decimation_counter[channel_id] <= 0;
@@ -92,12 +97,16 @@ module standard_decimator #(
                         decimation_counter[i] <= 0;
                     end
                 end else begin
-                    if(data_out.valid) data_out.valid <= 0;
+                    if(data_out.valid) begin
+                        data_out.tlast <= 0;
+                        data_out.valid <= 0;
+                    end
                     if(data_in.valid) begin
                         decimation_counter[channel_id] <= decimation_counter[channel_id] +1;
                         if((decimation_counter[channel_id] == decimation_ratio-1 )| decimation_ratio ==0)begin
                             inner_data_out <= data_in.data;
                             data_out.dest <= data_in.dest;
+                            data_out.tlast <= data_in.tlast;
                             data_out.user <= data_in.user;
                             data_out.valid <= 1;
                             decimation_counter[channel_id] <= 0;
@@ -105,7 +114,6 @@ module standard_decimator #(
                     end
                 end
             end
-
         end
     endgenerate
 
