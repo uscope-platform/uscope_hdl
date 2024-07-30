@@ -139,7 +139,20 @@ module stream_fault_detector_tb();
 
             #100 clear_fault <= 1;
             #1 clear_fault <= 0;
-            #1000;
+
+            #500;
+
+            #5 axis_bfm.write_dest(-50, 52);
+            #5 axis_bfm.write_dest(-51, 52);
+            #5 axis_bfm.write_dest(-52, 52);
+            #5 axis_bfm.write_dest(-53, 52);
+            #5 axis_bfm.write_dest(-54, 52);
+            #2
+            assert (fault == 0) else begin
+                $fatal(2,"FAILED: Negative inputs should not trigger the fault");
+            end
+
+            #500;
         end
         
     end

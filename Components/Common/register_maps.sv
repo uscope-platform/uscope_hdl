@@ -359,5 +359,12 @@ package reg_maps;
         int offset_11 = 'h8c;
     } sd_filter_12;
 
-endpackage
+    struct { 
+        int slow_tresh_low = 0;
+        int slow_tresh_high = 'h4;
+        int slow_trip_duration = 'h8;
+        int fast_tresh_low = 'hC;
+        int fast_tresh_high = 'h10;
+    } fault_detector;
 
+endpackage

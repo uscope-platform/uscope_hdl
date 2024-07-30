@@ -16,7 +16,7 @@
 `timescale 10 ns / 1 ns
 `include "interfaces.svh"
 
-module stream_fault_detector#(
+module stream_fault_detector #(
     parameter N_CHANNELS = 4,
     parameter STARTING_DEST = 0
 )(
@@ -25,16 +25,16 @@ module stream_fault_detector#(
     axi_stream.watcher  data_in,
     axi_lite.slave    axi_in,
     input wire clear_fault,
-    output reg        fault
+    output wire        fault
 );
 
-    reg [31:0] cu_write_registers [4:0];
-    reg [31:0] cu_read_registers  [4:0];
+    reg [31:0] cu_write_registers [5:0];
+    reg [31:0] cu_read_registers  [5:0];
 
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(5),
-        .N_WRITE_REGISTERS(5),
+        .N_READ_REGISTERS(6),
+        .N_WRITE_REGISTERS(6),
         .REGISTERS_WIDTH(32),
         .ADDRESS_MASK('hff)
     ) CU (
@@ -46,6 +46,10 @@ module stream_fault_detector#(
     );
 
 
+    reg fast_fault = 0;
+    reg slow_fault = 0;
+
+    assign fault = fast_fault | slow_fault;
 
     wire signed [31:0] fast_thresholds [1:0];
     wire signed [31:0] slow_thresholds [1:0];
@@ -56,36 +60,35 @@ module stream_fault_detector#(
     assign slow_trip_duration = cu_write_registers[2][7:0];
     assign fast_thresholds[0] = cu_write_registers[3][31:0];
     assign fast_thresholds[1] = cu_write_registers[4][31:0];
+    
+    assign cu_read_registers[4:0] = cu_write_registers[4:0];
+    assign cu_read_registers[5] = {fast_fault, slow_fault};
 
-    assign cu_read_registers = cu_write_registers;
-
-
-    reg latched = 0;
     
     wire signed[data_in.DATA_WIDTH-1:0] signed_data = $signed(data_in.data);
     wire [7:0] current_address = data_in.dest - STARTING_DEST;  
 
-    wire slow_trip = (signed_data < slow_thresholds[0] || signed_data > slow_thresholds[1]) & ~fast_trip;
-    wire fast_trip = signed_data < fast_thresholds[0] || signed_data > fast_thresholds[1];
+    wire slow_trip = ($signed(signed_data) < $signed(slow_thresholds[0]) || $signed(signed_data) > $signed(slow_thresholds[1])) & ~fast_trip;
+    wire fast_trip =  $signed(signed_data) < $signed(fast_thresholds[0]) || $signed(signed_data) > $signed(fast_thresholds[1]);
 
     reg [7:0] slow_trip_counter [N_CHANNELS-1:0] = '{N_CHANNELS{8'h0}};
 
 
     always @(posedge clock) begin
         if(~reset)begin
-            fault <= 0;
+            fast_fault <= 0;
+            slow_fault <= 0;
         end else begin
-            if(latched)begin
+            if(slow_fault || fast_fault)begin
                 if(clear_fault)begin
-                    latched <= 0; 
-                    fault <= 0;
+                    slow_fault <= 0;
+                    fast_fault <= 0;
                     slow_trip_counter <= '{N_CHANNELS{8'h0}};
                 end
             end else begin
                 if(data_in.valid) begin
                     if(fast_trip) begin
-                        fault <= 1;
-                        latched <=1;
+                        fast_fault <= 1;
                     end 
 
                     if(slow_trip) begin
@@ -97,8 +100,7 @@ module stream_fault_detector#(
                     end
                 end
                     if(slow_trip_counter[current_address]==slow_trip_duration && slow_trip_duration != 0) begin
-                        fault <= 1;
-                        latched <= 1;
+                        slow_fault <= 1;
                     end  
             end
         end
@@ -111,7 +113,7 @@ endmodule
 
  /**
        {
-        "name": "multiphase_reference_generator",
+        "name": "stream_fault_detector",
         "type": "peripheral",
         "registers":[
             {
