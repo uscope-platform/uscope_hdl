@@ -19,7 +19,6 @@ module standard_decimator #(
     parameter MAX_DECIMATION_RATIO = 16, 
     DATA_WIDTH= 16, 
     AVERAGING=0,
-    AVERAGING_DIVISOR=2,
     N_CHANNELS = 1,
     SOURCE_DEST = 0
     )(
@@ -74,8 +73,8 @@ module standard_decimator #(
                     if(data_in.valid) begin
                         average_accumulator[channel_id] <= average_accumulator[channel_id] + extended_data_in;
                         decimation_counter[channel_id] <= decimation_counter[channel_id]+1;
-                        if((decimation_counter[channel_id] == (1<<AVERAGING_DIVISOR)-1 )| decimation_ratio ==0)begin
-                            inner_data_out <= (average_accumulator[channel_id] + extended_data_in) >>> AVERAGING_DIVISOR;
+                        if((decimation_counter[channel_id] == (1<<decimation_ratio)-1 )| decimation_ratio ==0)begin
+                            inner_data_out <= (average_accumulator[channel_id] + extended_data_in) >>> decimation_ratio;
                             average_accumulator[channel_id] <= 0;
                             data_out.dest <= data_in.dest;
                             data_out.tlast <= data_in.tlast;

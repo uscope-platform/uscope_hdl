@@ -38,6 +38,8 @@ module standard_decimator_tb();
         #1 data_in.valid <= 0;
     endtask //automatic
 
+    reg [3:0] decimation_ratio;
+
     standard_decimator #(
         .MAX_DECIMATION_RATIO(16),
         .MAX_CHANNELS(6),
@@ -49,10 +51,11 @@ module standard_decimator_tb();
         .reset(reset),
         .data_in(data_in),
         .data_out(data_out),
-        .decimation_ratio(4)
+        .decimation_ratio(decimation_ratio)
     );
 
     initial begin  
+        decimation_ratio <= 2;
         data_in.valid = 0;
         data_in.data = 0;
         //Initial status
@@ -100,6 +103,18 @@ module standard_decimator_tb();
         send_data(30, 2);
         send_data(40, 3);       
         
+
+        decimation_ratio <= 3;
+
+        #10
+        send_data(4, 3);
+        send_data(4, 3);
+        send_data(4, 3);
+        send_data(4, 3); 
+        send_data(8, 3);
+        send_data(8, 3);
+        send_data(8, 3);
+        send_data(8, 3); 
     end
 
 

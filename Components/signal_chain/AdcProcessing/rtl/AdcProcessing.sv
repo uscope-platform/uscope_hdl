@@ -24,7 +24,6 @@ module AdcProcessing #(
     DECIMATED = 1,
     DENOISING = 0,
     ENABLE_AVERAGE = 0,
-    AVERAGING_DIVISOR = 2,
     STICKY_FAULT = 0,
     N_CHANNELS = 4,
     MAX_FILTER_TAPS = 256,
@@ -200,7 +199,6 @@ module AdcProcessing #(
                 .MAX_DECIMATION_RATIO(16),
                 .DATA_WIDTH(DATA_PATH_WIDTH),
                 .AVERAGING(ENABLE_AVERAGE),
-                .AVERAGING_DIVISOR(AVERAGING_DIVISOR),
                 .N_CHANNELS(N_CHANNELS)
             ) dec(
                 .clock(clock),
