@@ -16,7 +16,10 @@
 `timescale 10 ns / 1 ns
 `include "interfaces.svh"
 
-module stream_fault_detector(
+module stream_fault_detector#(
+    parameter N_CHANNELS = 4,
+    parameter STARTING_DEST = 0
+)(
     input wire clock,
     input wire reset,
     axi_stream.watcher  data_in,
@@ -59,10 +62,14 @@ module stream_fault_detector(
 
     reg latched = 0;
     
-    wire signed[data_in.DATA_WIDTH-1:0] signed_data;
-    assign signed_data = $signed(data_in.data);
+    wire signed[data_in.DATA_WIDTH-1:0] signed_data = $signed(data_in.data);
+    wire [7:0] current_address = data_in.dest - STARTING_DEST;  
 
-    reg [7:0] slow_trip_counter = 0;
+    wire slow_trip = (signed_data < slow_thresholds[0] || signed_data > slow_thresholds[1]) & ~fast_trip;
+    wire fast_trip = signed_data < fast_thresholds[0] || signed_data > fast_thresholds[1];
+
+    reg [7:0] slow_trip_counter [N_CHANNELS-1:0] = '{N_CHANNELS{8'h0}};
+
 
     always @(posedge clock) begin
         if(~reset)begin
@@ -72,25 +79,24 @@ module stream_fault_detector(
                 if(clear_fault)begin
                     latched <= 0; 
                     fault <= 0;
-                    slow_trip_counter <= 0;
+                    slow_trip_counter <= '{N_CHANNELS{8'h0}};
                 end
             end else begin
                 if(data_in.valid) begin
-                    if(signed_data < fast_thresholds[0]) begin
+                    if(fast_trip) begin
                         fault <= 1;
                         latched <=1;
                     end 
 
-                    if(signed_data > fast_thresholds[1]) begin
-                        fault <= 1;
-                        latched <=1;
-                    end 
-
-                    if(signed_data < slow_thresholds[0] || signed_data > slow_thresholds[1]) begin
-                        slow_trip_counter <= slow_trip_counter + 1;
-                    end 
+                    if(slow_trip) begin
+                        slow_trip_counter[current_address] <= slow_trip_counter[current_address] + 1;
+                    end
+                    
+                    if(slow_trip_counter[current_address] != 0 & !slow_trip)begin
+                        slow_trip_counter[current_address] <= 0;
+                    end
                 end
-                    if(slow_trip_counter==slow_trip_duration && slow_trip_duration != 0) begin
+                    if(slow_trip_counter[current_address]==slow_trip_duration && slow_trip_duration != 0) begin
                         fault <= 1;
                         latched <= 1;
                     end  
@@ -101,3 +107,43 @@ module stream_fault_detector(
 
 
 endmodule
+
+
+ /**
+       {
+        "name": "multiphase_reference_generator",
+        "type": "peripheral",
+        "registers":[
+            {
+                "name": "slow_tresh_low",
+                "offset": "0x0",
+                "description": "Slow fault lower treshold",
+                "direction": "RW"
+            },
+            {
+                "name": "slow_tresh_high",
+                "offset": "0x4",
+                "description": "Slow fault higher treshold",
+                "direction": "RW"
+            },
+            {
+                "name": "slow_trip_duration",
+                "offset": "0x8",
+                "description": "Number of cycles after which a slow fault is triggered",
+                "direction": "RW"
+            },
+            {
+                "name": "fast_tresh_low",
+                "offset": "0xC",
+                "description": "Fast fault lower treshold",
+                "direction": "RW"
+            },
+            {
+                "name": "fast_tresh_high",
+                "offset": "0x10",
+                "description": "Fast fault higher treshold",
+                "direction": "RW"
+            }
+        ]
+    }  
+    **/

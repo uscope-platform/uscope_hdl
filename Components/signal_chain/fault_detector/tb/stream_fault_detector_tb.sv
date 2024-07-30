@@ -33,7 +33,10 @@ module stream_fault_detector_tb();
     axi_lite_BFM axil_bfm;
     axis_BFM axis_bfm;
 
-    stream_fault_detector UUT(
+    stream_fault_detector #(
+        .N_CHANNELS(4),
+        .STARTING_DEST(50)
+    ) UUT(
         .clock(clk),
         .reset(reset),
         .data_in(data_in),
@@ -84,13 +87,13 @@ module stream_fault_detector_tb();
         @(configuration_done);
         forever begin
             for(int i =0; i<1000; i++)begin
-                #5 axis_bfm.write($urandom %1000);
+                #5 axis_bfm.write_dest($urandom %1000,53);
                 assert (fault == 0) else begin
                     $fatal(2,"FAILED: The fault signal should be low");
                 end
             end 
 
-            #5 axis_bfm.write(60000);
+            #5 axis_bfm.write_dest(60000,53);
             #10
             assert (fault == 1) else begin
                 $fatal(2,"FAILED: The fault signal should be high for fast trip");
@@ -99,12 +102,37 @@ module stream_fault_detector_tb();
             #1 clear_fault <= 0;
             #1000;
 
-            #5 axis_bfm.write(7000);
-            #5 axis_bfm.write(7001);
-            #5 axis_bfm.write(7002);
-            #5 axis_bfm.write(7003);
-            #5 axis_bfm.write(7004);
+            #5 axis_bfm.write_dest(7000, 53);
+            #5 axis_bfm.write_dest(7001, 53);
+            #5 axis_bfm.write_dest(7002, 53);
+            #5 axis_bfm.write_dest(52, 53);
+            #5 axis_bfm.write_dest(7000, 53);
+            #5 axis_bfm.write_dest(7001, 53);
+            #1
+            assert (fault ==0) else begin
+                $fatal(2,"FAILED: The fault signal should be low as the 53 should have reset the fault counter");
+            end
             #10
+            #5 axis_bfm.write_dest(7002, 53);
+            #5 axis_bfm.write_dest(7002, 53);
+            #5 axis_bfm.write_dest(7003, 53);
+            #2
+            assert (fault == 1) else begin
+                $fatal(2,"FAILED: The fault signal should be high for slow trip");
+            end
+
+            #100 clear_fault <= 1;
+            #1 clear_fault <= 0;
+            #1000;
+
+            #5 axis_bfm.write_dest(7003, 51);
+            #5 axis_bfm.write_dest(33, 53);
+            #5 axis_bfm.write_dest(7003, 51);
+            #5 axis_bfm.write_dest(7003, 51);
+            #5 axis_bfm.write_dest(7003, 51);
+            #5 axis_bfm.write_dest(42, 52);
+            #5 axis_bfm.write_dest(7003, 51);
+            #2
             assert (fault == 1) else begin
                 $fatal(2,"FAILED: The fault signal should be high for slow trip");
             end
