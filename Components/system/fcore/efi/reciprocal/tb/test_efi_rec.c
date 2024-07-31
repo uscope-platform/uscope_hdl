@@ -5,8 +5,8 @@ int main(){
 
     float rec_in[2];
 
-    rec_in[1] = 542;
+    rec_in[1] = 225;
     rec_in[0] = 0;
     rec_out = efi(rec_in, 2);
-    rec_out = rec_out/65564.0;
+    rec_out = itf(rec_out)/65564.0;
 }

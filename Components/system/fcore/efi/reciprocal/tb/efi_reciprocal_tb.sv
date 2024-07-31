@@ -15,50 +15,35 @@
 
 `timescale 10ns / 1ns
 `include "interfaces.svh"
-`include "axi_lite_BFM.svh"
 `include "axis_BFM.svh"
+`include "axi_lite_BFM.svh"
+`include "axi_full_bfm.svh"
 
 module efi_reciprocal_tb();
 
 
 
-    reg core_clk, io_clk, rst, run;
+    reg core_clk, rst, run;
     wire done;
-    
-    axi_stream op_a();
-    axi_stream op_res();
-    AXI axi_programmer();
+
     axi_stream axis_dma_write();
 
     axi_stream dma_read_request();
     axi_stream dma_read_response();
-    axi_stream data_out();
-
-    axis_BFM read_dma_BFM;
-
-    localparam RECIPROCAL_PRESENT = 0;
-    
-    axis_BFM axis_dma_write_BFM;
-    axis_BFM write_BFM;
-    axis_BFM read_req_BFM;
-    axis_BFM read_resp_BFM;
-
-    axi_stream read_req();
-    axi_stream read_resp();
-    axi_stream write();
-    axi_lite axi_master();
-
-    axis_to_axil WRITER(
-        .clock(core_clk),
-        .reset(rst), 
-        .axis_write(write),
-        .axis_read_request(read_req),
-        .axis_read_response(read_resp),
-        .axi_out(axi_master)
-    );
 
     reg efi_start;
     
+
+    event core_loaded;
+
+    axi_lite axi_master();
+    AXI #(.ADDR_WIDTH(32)) fcore_rom_link();
+
+    axi_lite_BFM axil_bfm;
+    axi_full_bfm #(.ADDR_WIDTH(32)) bfm_in;
+
+
+
     axi_stream efi_arguments();
     axi_stream efi_results();
 
@@ -70,11 +55,26 @@ module efi_reciprocal_tb();
         .efi_results(efi_results)
     );
 
-    defparam core.executor.RECIPROCAL_PRESENT = RECIPROCAL_PRESENT;
+
+    AXI #(.ADDR_WIDTH(32)) fCore_programming_bus[2]();
+
+    axi_xbar #(
+        .NM(1),
+        .NS(2),
+        .ADDR_WIDTH(32),
+        .SLAVE_ADDR('{'h83c00000,'h83c80000}),
+        .SLAVE_MASK('{2{'h000F0000}})
+    ) programming_interconnect  (
+        .clock(core_clk),
+        .reset(rst),
+        .slaves('{fcore_rom_link}),
+        .masters(fCore_programming_bus)
+    );
+
     fCore #(
-        .FAST_DEBUG("TRUE"),
+        .FAST_DEBUG("FALSE"),
         .MAX_CHANNELS(9),
-        .INIT_FILE("/home/fils/git/uscope_hdl/public/Components/system/fcore/efi/reciprocal/tb/test_efi_rec.mem")
+        .EFI_IMPLEMENTED(1)
     ) core(
         .clock(core_clk),
         .axi_clock(core_clk),
@@ -84,7 +84,7 @@ module efi_reciprocal_tb();
         .done(done),
         .efi_start(efi_start),
         .control_axi_in(axi_master),
-        .axi(axi_programmer),
+        .axi(fCore_programming_bus[0]),
         .axis_dma_write(axis_dma_write),
         .axis_dma_read_request(dma_read_request),
         .axis_dma_read_response(dma_read_response),
@@ -96,34 +96,37 @@ module efi_reciprocal_tb();
     initial core_clk = 0; 
     always #0.5 core_clk = ~core_clk;
 
-    //clock generation
-    initial begin
-        io_clk = 0; 
-    
-        forever begin
-            #1 io_clk = ~io_clk; 
-        end 
-    end
+    event config_done;
 
-    reg [31:0] reg_readback;
     // reset generation
     initial begin
-        write_BFM = new(write,1);
-        axis_dma_write_BFM = new(axis_dma_write,1);
-        read_req_BFM = new(read_req, 1);
-        read_resp_BFM = new(read_resp, 1);
-        read_resp.ready = 1;
+        bfm_in = new(fcore_rom_link, 1);
+        axil_bfm = new(axi_master,  1);
         rst <=0;
-        axis_dma_write.initialize();
-        op_a.initialize();
-        op_res.initialize();
-        op_res.ready <= 1;
         run <= 0;
         #10.5;
         #20.5 rst <=1;
-        #35 write_BFM.write_dest(8,32'h43c00000);
-        #4; run <= 1;
-        #5 run <=  0;
+        #35 axil_bfm.write('h43c00000,8);
+        ->config_done;
+        @(core_loaded);
+        #4 run <= 1;
+        #1 run <=  0;
+    end
+
+
+    localparam core_0_rom = 'h83c00000;
+
+    reg [31:0] prog [19:0] = '{default:0};
+    
+    initial begin
+        $readmemh("/home/fils/git/uscope_hdl/public/Components/system/fcore/efi/reciprocal/tb/test_efi_rec.mem", prog);
+        #50
+        @(config_done)
+        for(integer i = 0; i<20; i++)begin
+
+            #5 bfm_in.write(core_0_rom + i*4, prog[i]);
+        end
+        ->core_loaded;
     end
 
 
