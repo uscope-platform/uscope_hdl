@@ -1,0 +1,11 @@
+{
+    "input_file":"test_efi_rec.c",
+    "output":{
+        "file":"test_efi_rec.mem",
+        "format":"mem"
+    },
+    "force":true,
+    "dma_io":{
+        "rec_out":{"type": "output", "address":27}
+    }
+}

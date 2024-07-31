@@ -132,3 +132,4 @@ Components/system/axi_stream/upsizer/upsizer
 Components/signal_chain/SigmaDeltaProcessor/sigma_delta_processor
 Components/signal_chain/spi_adc_interface/spi_adc_interface
 Components/signal_chain/fault_detector/stream_fault_detector
+Components/system/fcore/efi/reciprocal/efi_reciprocal
