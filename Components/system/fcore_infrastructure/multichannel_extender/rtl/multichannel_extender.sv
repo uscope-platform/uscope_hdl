@@ -28,23 +28,11 @@ module multichannel_extender #(
 )(
     input wire        clock,
     input wire        reset,
+    input wire        trigger,
     input wire [31:0] repeat_dest [N_REPEAT_VALUES-1:0],
-    axi_stream.slave  in,
+    axi_stream.watcher  in,
     axi_stream.master out
 );
-
-    axi_stream registered_stream();
-    
-    axis_skid_buffer #(
-        .REGISTER_OUTPUT(1),
-        .LATCHING(1),
-        .DATA_WIDTH(32)
-    ) buffer (
-        .clock(clock),
-        .reset(reset),
-        .axis_in(in),
-        .axis_out(registered_stream)
-    );
 
     initial begin
         out.data <= 0;
@@ -54,12 +42,12 @@ module multichannel_extender #(
         out.valid <= 0;
     end
 
-    enum logic {
+    enum logic [1:0] {
        idle = 0,
-       extending = 1
+       wait_trigger = 1,
+       extending = 2
     } extender_state = idle;
 
-    assign registered_stream.ready = out.ready;
 
     reg [$clog2(N_CHANNELS)-1:0] extension_ctr = 0;
     reg [15:0] dest_word = 0;
@@ -74,9 +62,18 @@ module multichannel_extender #(
                     if(in.valid && in.dest[15:0] == repeat_dest[i]) begin
                         latched_data <= in.data;
                         latched_user <= in.user;
-                        extender_state <= extending;
+                        if(trigger)begin
+                            extender_state <= extending;
+                        end else begin
+                            extender_state <= wait_trigger;
+                        end
                         dest_word <= repeat_dest[i];
                     end
+                end
+            end
+            wait_trigger: begin
+                if(trigger)begin
+                    extender_state <= extending;
                 end
             end
             extending: begin
@@ -93,6 +90,13 @@ module multichannel_extender #(
     always_comb begin
            case (extender_state)
             idle: begin
+                out.valid <= 0;
+                out.tlast <= 0;
+                out.data <= 0;
+                out.user <= 0;
+                out.dest <= 0;
+            end
+            wait_trigger: begin
                 out.valid <= 0;
                 out.tlast <= 0;
                 out.data <= 0;
