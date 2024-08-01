@@ -18,7 +18,6 @@
 `include "interfaces.svh"
 
 module fcore_complex_tb();
-    
 
 
    reg clk, reset;

@@ -66,7 +66,6 @@ module fcore_complex #(
 
     generate
         if(EFI_TYPE == "NONE")begin
-            
         end else if(EFI_TYPE == "TRIG") begin
 
             efi_trig efi_trig_unit(
@@ -80,6 +79,16 @@ module fcore_complex #(
             efi_sorter #(
                 .MAX_SORT_LENGTH(256)
             )efi_sort_unit(
+                .clock(core_clock),
+                .reset(core_reset),
+                .efi_arguments(efi_arguments),
+                .efi_results(efi_results)
+            );
+
+        end else if(EFI_TYPE == "RECIPROCAL") begin
+
+
+            efi_reciprocal reciprocal_unit(
                 .clock(core_clock),
                 .reset(core_reset),
                 .efi_arguments(efi_arguments),

@@ -23,7 +23,7 @@ module efi_reciprocal #(
     axi_stream.slave efi_arguments,
     axi_stream.master efi_results
 );
-    
+
     reg [15:0] reciprocal_lut [511:0];
 
 
@@ -32,7 +32,7 @@ module efi_reciprocal #(
     end
 
 
-    enum logic [1:0] { 
+    enum logic [1:0] {
         fsm_idle = 0,
         fsm_calculate = 1
     } efi_trig_fsm = fsm_idle;
@@ -55,7 +55,7 @@ module efi_reciprocal #(
                 efi_results.data <= reciprocal_lut[efi_arguments.data];
                 efi_results.dest <= efi_arguments.dest-2;
                 efi_results.valid<=1;
-                efi_results.tlast<=1;  
+                efi_results.tlast<=1;
             end
         endcase
     end

@@ -11,7 +11,7 @@
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
-// limitations under the License. 
+// limitations under the License.
 
 `timescale 10 ns / 1 ns
 `include "interfaces.svh"
@@ -60,13 +60,13 @@ module stream_fault_detector #(
     assign slow_trip_duration = cu_write_registers[2][7:0];
     assign fast_thresholds[0] = cu_write_registers[3][31:0];
     assign fast_thresholds[1] = cu_write_registers[4][31:0];
-    
+
     assign cu_read_registers[4:0] = cu_write_registers[4:0];
     assign cu_read_registers[5] = {fast_fault, slow_fault};
 
-    
+
     wire signed[data_in.DATA_WIDTH-1:0] signed_data = $signed(data_in.data);
-    wire [7:0] current_address = data_in.dest - STARTING_DEST;  
+    wire [7:0] current_address = data_in.dest - STARTING_DEST;
 
     wire slow_trip = ($signed(signed_data) < $signed(slow_thresholds[0]) || $signed(signed_data) > $signed(slow_thresholds[1])) & ~fast_trip;
     wire fast_trip =  $signed(signed_data) < $signed(fast_thresholds[0]) || $signed(signed_data) > $signed(fast_thresholds[1]);
@@ -89,19 +89,17 @@ module stream_fault_detector #(
                 if(data_in.valid) begin
                     if(fast_trip) begin
                         fast_fault <= 1;
-                    end 
-
+                    end
                     if(slow_trip) begin
                         slow_trip_counter[current_address] <= slow_trip_counter[current_address] + 1;
                     end
-                    
                     if(slow_trip_counter[current_address] != 0 & !slow_trip)begin
                         slow_trip_counter[current_address] <= 0;
                     end
                 end
                     if(slow_trip_counter[current_address]==slow_trip_duration && slow_trip_duration != 0) begin
                         slow_fault <= 1;
-                    end  
+                    end
             end
         end
     end
