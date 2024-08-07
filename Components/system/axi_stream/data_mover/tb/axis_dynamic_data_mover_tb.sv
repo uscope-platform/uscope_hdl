@@ -38,10 +38,13 @@ module axis_dynamic_data_mover_tb();
     reg [31:0] registers_in [3:0];
     reg [31:0] registers_out [3:0] = '{0,0,0,0};
     reg [31:0] users_out [3:0] = '{0,0,0,0};
+    reg [31:0] dest_ch_in [3:0] = '{0,0,0,0};
+    reg [31:0] dest_ch_out [3:0] = '{0,0,0,0};
 
 
     axis_dynamic_data_mover #(
         .DATA_WIDTH(32),
+        .MULTICHANNEL_MODE(1),
         .MAX_CHANNELS(4)
     ) UUT (
         .clock(clk),
@@ -68,10 +71,11 @@ module axis_dynamic_data_mover_tb();
 
         #2 axil_bfm.write('h0, 'h3); // active channels
 
-        #2 axil_bfm.write('h4, 'h020000);
-        #2 axil_bfm.write('h8, 'h010001); 
-        #2 axil_bfm.write('hc, 'h000002);
-        #2 axil_bfm.write('h10, 'h030003); 
+        #2 axil_bfm.write('h4,  'h10026000);
+        #2 axil_bfm.write('h8,  'h20017001); 
+        #2 axil_bfm.write('hc,  'h30008002);
+        #2 axil_bfm.write('h10, 'h40039003);
+        
         
         #2 axil_bfm.write('h14, 28);
         #2 axil_bfm.write('h18, 51); 
@@ -86,7 +90,8 @@ module axis_dynamic_data_mover_tb();
 
     always@(posedge clk) begin
         if(stream_in_req.valid) begin
-            stream_in_resp.data <= registers_in[stream_in_req.data];
+            stream_in_resp.data <= registers_in[stream_in_req.data[15:0]];
+            dest_ch_in[stream_in_req.data[15:0]] <= stream_in_req.data[31:16];
             stream_in_resp.valid <= 1;
         end
         #1 stream_in_resp.valid <= 0;
@@ -95,8 +100,9 @@ module axis_dynamic_data_mover_tb();
 
     always@(posedge clk) begin
         if(stream_out.valid) begin
-            registers_out[stream_out.dest] <= stream_out.data; 
-            users_out[stream_out.dest] <= stream_out.user; 
+            registers_out[stream_out.dest[15:0]] <= stream_out.data; 
+            dest_ch_out[stream_out.dest[15:0]] <= stream_out.dest[31:16];
+            users_out[stream_out.dest[15:0]] <= stream_out.user; 
         end
     end
 
@@ -119,7 +125,26 @@ module axis_dynamic_data_mover_tb();
             $display("---------------------------------------------------------------------------------------------");
             $stop();
         end 
+        
+        assert ((dest_ch_in[0] == 6) && (dest_ch_in[1] == 7) && dest_ch_in[2] == 8) 
+        else begin
+            $display("---------------------------------------------------------------------------------------------");
+            $display("                                        TEST FAILED");
+            $display("                       wrong input destination most significant bytes");
+            $display("---------------------------------------------------------------------------------------------");
+            $stop();
+        end 
 
+        assert ((dest_ch_out[0] == 3) && (dest_ch_out[1] == 2) && dest_ch_out[2] == ) 
+        else begin
+            $display("---------------------------------------------------------------------------------------------");
+            $display("                                        TEST FAILED");
+            $display("                       wrong output destination most significant bytes");
+            $display("---------------------------------------------------------------------------------------------");
+            $stop();
+        end 
+
+       
             $display("---------------------------------------------------------------------------------------------");
             $display("                                        TEST SUCCESS");
             $display("---------------------------------------------------------------------------------------------");

@@ -1,6 +1,6 @@
 {
     "general":{
-        "project_name":"data moved",
+        "project_name":"data mover",
         "target_part":"xc7z020clg400",
         "synth_modules":["axis_dynamic_data_mover"],
         "synth_tl": "axis_data_mover",

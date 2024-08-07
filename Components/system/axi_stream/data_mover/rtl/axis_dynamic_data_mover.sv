@@ -35,7 +35,7 @@ module axis_dynamic_data_mover #(
     axi_lite.slave axi_in
 );
 
-    localparam N_REGISTERS = 2*MAX_CHANNELS+1;
+    localparam N_REGISTERS = 3*MAX_CHANNELS+1;
 
     reg [31:0] cu_write_registers [N_REGISTERS-1:0];
     reg [31:0] cu_read_registers [N_REGISTERS-1:0];
@@ -43,6 +43,7 @@ module axis_dynamic_data_mover #(
 
     wire [15:0] source_addr  [MAX_CHANNELS-1:0];
     wire [15:0] target_addr [MAX_CHANNELS-1:0];
+    wire [7:0] channel_addr [MAX_CHANNELS-1:0];
     wire [15:0] user_value [MAX_CHANNELS-1:0];
     reg [$clog2(MAX_CHANNELS)-1:0] n_active_channels;
 
@@ -69,6 +70,7 @@ module axis_dynamic_data_mover #(
             assign source_addr[n] = cu_write_registers[n+1][15:0];
             assign target_addr[n] = cu_write_registers[n+1][31:16];
             assign user_value[n] = cu_write_registers[n + 1  + MAX_CHANNELS];
+            assign channel_addr[n] = cu_write_registers[n+1 + 2*MAX_CHANNELS];
         end
     endgenerate
 
@@ -112,7 +114,7 @@ module axis_dynamic_data_mover #(
                 end 
                 read_source: begin
                     if(MULTICHANNEL_MODE==1)begin
-                        data_request.data <={source_addr[channel_sequencer][15:12],4'b0,source_addr[channel_sequencer][11:0]} ;
+                        data_request.data <= {source_addr[channel_sequencer][15:12],4'b0,source_addr[channel_sequencer][11:0]};
                     end else begin
                         data_request.data <= source_addr[channel_sequencer];
                     end
@@ -123,7 +125,12 @@ module axis_dynamic_data_mover #(
                     if(data_response.valid)begin
                         data_out.data <= data_response.data;
                         data_buffers[channel_sequencer] <= data_response.data;
-                        data_out.dest <= target_addr[channel_sequencer];
+                        if(MULTICHANNEL_MODE==1)begin
+                            data_out.dest <= {target_addr[channel_sequencer][15:12],4'b0,target_addr[channel_sequencer][11:0]};
+                        end else begin
+                            data_out.dest <= target_addr[channel_sequencer];
+                        end
+
                         data_out.user <= user_value[channel_sequencer];
                         data_out.valid <= data_response.valid;
                         if(channel_sequencer == n_active_channels-1)begin
