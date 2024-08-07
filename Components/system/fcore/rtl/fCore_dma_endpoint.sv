@@ -163,7 +163,7 @@ module fCore_dma_endpoint #(
                         if(axi_read_addr.data == 0) begin
                             read_n_channels <= 1;
                         end
-                        dma_read_addr <= axis_dma_read_request.data[31:16] + translation_table[axi_read_addr.data[15:0]];
+                        dma_read_addr <= axis_dma_read_request.data[31:16]*REGISTER_FILE_DEPTH + translation_table[axi_read_addr.data[15:0]];
                         state <= bus_read;
                         axis_dma_read_request.ready <= 0;
                         axi_read_addr.ready <= 0;
