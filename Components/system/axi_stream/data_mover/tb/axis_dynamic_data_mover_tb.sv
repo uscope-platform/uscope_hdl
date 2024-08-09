@@ -135,7 +135,7 @@ module axis_dynamic_data_mover_tb();
             $stop();
         end 
 
-        assert ((dest_ch_out[0] == 3) && (dest_ch_out[1] == 2) && dest_ch_out[2] == ) 
+        assert ((dest_ch_out[0] == 3) && (dest_ch_out[1] == 2) && dest_ch_out[2] == 1) 
         else begin
             $display("---------------------------------------------------------------------------------------------");
             $display("                                        TEST FAILED");
