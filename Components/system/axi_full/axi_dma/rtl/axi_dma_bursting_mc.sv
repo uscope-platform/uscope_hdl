@@ -106,6 +106,7 @@ module axi_dma_bursting_mc #(
     wire [ADDR_WIDTH-1:0] current_target_address;
     assign current_target_address = target_base + burst_counter*BEAT_SIZE*BURST_SIZE; 
 
+    localparam reg [1:0] TRACKER_ADVANCE = OUTPUT_AXI_WIDTH/64;
 
     reg [15:0] transfers_tracker = 0;
 
@@ -161,7 +162,7 @@ module axi_dma_bursting_mc #(
             writer_state <= writer_idle;
         end else begin
             if(axi_out.WVALID & axi_out.WREADY)begin
-                 transfers_tracker  <= transfers_tracker +1;
+                 transfers_tracker  <= transfers_tracker +TRACKER_ADVANCE;
             end 
             axi_out.BREADY <= 1;
             axi_out.AWVALID <= 0;
