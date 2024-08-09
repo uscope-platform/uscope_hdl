@@ -66,8 +66,8 @@ module ultra_buffer #(parameter ADDRESS_WIDTH=13, DATA_WIDTH=32, DEST_WIDTH=16, 
 
 
     wire [DATA_WIDTH-1:0] selected_data;    
-    wire [DATA_WIDTH-1:0] selected_dest;    
-    wire [DATA_WIDTH-1:0] selected_user;  
+    wire [DEST_WIDTH-1:0] selected_dest;    
+    wire [USER_WIDTH-1:0] selected_user;  
 
     reg [DATA_WIDTH-1:0] backpressure_data;    
     reg [DEST_WIDTH-1:0] backpressure_dest;    
