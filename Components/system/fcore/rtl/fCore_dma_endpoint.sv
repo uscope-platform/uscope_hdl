@@ -87,6 +87,13 @@ module fCore_dma_endpoint #(
         end
     end
 
+    wire [15:0] axis_channel_address = axis_dma_write.dest[31:16];
+    wire [15:0] axis_register_address = translation_table[axis_dma_write.dest[15:0]];
+
+
+    wire [15:0] axi_channel_address = axi_write_data.dest[31:16];
+    wire [15:0] axi_register_address = translation_table[axi_write_data.dest[15:0]];
+
     assign axi_write_data.ready = 1;
     assign axis_dma_write.ready = 1;
 
@@ -98,7 +105,7 @@ module fCore_dma_endpoint #(
 
         if(axis_dma_write.valid)begin
             if(translation_table[axis_dma_write.dest[15:0]] != 0) begin
-                reg_dma_write.dest <= axis_dma_write.dest[31:16]*REGISTER_FILE_DEPTH + translation_table[axis_dma_write.dest[15:0]];
+                reg_dma_write.dest <= axis_channel_address*REGISTER_FILE_DEPTH + axis_register_address;
                 reg_dma_write.data <= axis_dma_write.data;
                 reg_dma_write.valid <= 1;   
             end else begin
@@ -111,7 +118,7 @@ module fCore_dma_endpoint #(
                     reg_dma_write.data <= axi_write_data.data;
                     reg_dma_write.valid <= 1;
                 end else if(translation_table[axi_write_data.dest[15:0]] != 0) begin
-                    reg_dma_write.dest <= axis_dma_write.dest[31:16]*REGISTER_FILE_DEPTH +  translation_table[axi_write_data.dest[15:0]];
+                    reg_dma_write.dest <= axi_channel_address*REGISTER_FILE_DEPTH +  axi_register_address;
                     reg_dma_write.data <= axi_write_data.data;
                     reg_dma_write.valid <= 1;   
                 end
