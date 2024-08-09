@@ -47,11 +47,6 @@ module uScope_dma #(
         .USER_WIDTH(USER_WIDTH)
     ) in_moderated[N_STREAMS]();
    
-    axi_stream #(
-        .DATA_WIDTH(DATA_WIDTH),
-        .DEST_WIDTH(DEST_WIDTH),
-        .USER_WIDTH(USER_WIDTH)
-    ) combined();
     
    
     wire [63:0] dma_base_addr;
@@ -81,7 +76,7 @@ module uScope_dma #(
             assign dma_start[i] = |buffer_full;
 
             ultra_buffer #(
-                .ADDRESS_WIDTH(10),
+                .ADDRESS_WIDTH($clog2(CHANNEL_SAMPLES)),
                 .DATA_WIDTH(DATA_WIDTH),
                 .DEST_WIDTH(DEST_WIDTH), 
                 .USER_WIDTH(USER_WIDTH)
@@ -131,12 +126,5 @@ module uScope_dma #(
         .axi_out(out),
         .dma_done(dma_done)
     );
-
-    integer dbg_ctr = 0;
-
-    always_ff @(posedge clock)begin
-        if(combined.valid & combined.ready)
-            dbg_ctr++;
-    end
 
 endmodule
