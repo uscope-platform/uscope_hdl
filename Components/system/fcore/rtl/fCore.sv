@@ -42,6 +42,7 @@ module fCore #(
     input wire reset,
     input wire reset_axi,
     input wire run,
+    output wire [$clog2(MAX_CHANNELS)-1:0]n_channels,
     output wire done,
     output wire fault,
     output wire efi_start,
@@ -119,7 +120,6 @@ module fCore #(
     wire [DATAPATH_WIDTH-1:0] efi_read_data;
 
     wire [1:0] mem_efi_enable;
-    wire [CH_ADDRESS_WIDTH-1:0] n_channels;
     wire [15:0] program_size;
 
     axi_stream instruction_stream();

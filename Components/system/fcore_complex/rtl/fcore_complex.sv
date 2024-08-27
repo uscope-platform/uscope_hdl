@@ -106,7 +106,9 @@ module fcore_complex #(
 
     axi_stream constant_out[N_CONSTANTS]();
     axi_stream repeated_constant[N_CONSTANTS]();
+    axi_stream extended_repeated_constant[N_CONSTANTS]();
 
+    wire [$clog2(MAX_CHANNELS)-1:0] n_channels;
 
     localparam N_AXI_SLAVES = 2 + N_CONSTANTS;
 
@@ -152,6 +154,24 @@ module fcore_complex #(
             .in(constant_out[n]),
             .out(repeated_constant[n])
         );
+
+
+        multichannel_extender #(
+            .DATA_WIDTH(32),
+            .DEST_WIDTH(32),
+            .USER_WIDTH(32),
+            .MAX_CHANNELS(MAX_CHANNELS),
+            .N_REPEAT_VALUES(1)
+        )channel_extender(
+            .clock(core_clock),
+            .reset(core_reset),
+            .trigger(repeated_constant[n].valid),
+            .repetition_length(n_channels),
+            .repetition_dest('{repeated_constant[n].dest}),
+            .in(repeated_constant[n]),
+            .out(extended_repeated_constant[n])
+        );
+        
     end
         
     axi_stream merged_out();
@@ -165,7 +185,7 @@ module fcore_complex #(
     )constants_combiner(
         .clock(core_clock),
         .reset(core_reset),
-        .stream_in('{repeated_constant, core_dma_in}),
+        .stream_in('{extended_repeated_constant, core_dma_in}),
         .stream_out(merged_out)
     );
     
@@ -199,6 +219,7 @@ module fcore_complex #(
         .reset_axi(interface_reset),
         .run(start_core),
         .done(core_done),
+        .n_channels(n_channels),
         .axis_dma_write(merged_out),
         .axis_dma_read_request(axis_dma_read_req),
         .axis_dma_read_response(axis_dma_read_resp),
@@ -237,7 +258,7 @@ module fcore_complex #(
     } input_fsm = wait_constants;
 
 
-    reg  [2:0] propagation_delay = 0;
+    reg  [3:0] propagation_delay = 0;
     always_ff @(posedge core_clock)begin
         case (input_fsm)
             wait_constants:begin
@@ -264,7 +285,7 @@ module fcore_complex #(
                 end
             end
             wait_propagation:begin
-                if(propagation_delay == 1)begin
+                if(propagation_delay == n_channels)begin
                     start_core <= 1;
                     input_fsm <= idle; 
                 end

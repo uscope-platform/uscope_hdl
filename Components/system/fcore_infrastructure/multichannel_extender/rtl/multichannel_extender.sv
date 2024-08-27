@@ -23,13 +23,14 @@ module multichannel_extender #(
     parameter DATA_WIDTH= 32, 
     DEST_WIDTH = 32,
     USER_WIDTH = 32,
-    N_CHANNELS = 2,
+    MAX_CHANNELS = 2,
     N_REPEAT_VALUES = 1
 )(
     input wire        clock,
     input wire        reset,
     input wire        trigger,
-    input wire [31:0] repeat_dest [N_REPEAT_VALUES-1:0],
+    input wire [$clog2(MAX_CHANNELS)-1:0] repetition_length,
+    input wire [31:0] repetition_dest [N_REPEAT_VALUES-1:0],
     axi_stream.watcher  in,
     axi_stream.master out
 );
@@ -49,7 +50,7 @@ module multichannel_extender #(
     } extender_state = idle;
 
 
-    reg [$clog2(N_CHANNELS)-1:0] extension_ctr = 0;
+    reg [$clog2(MAX_CHANNELS)-1:0] extension_ctr = 0;
     reg [15:0] dest_word = 0;
 
     reg [DATA_WIDTH-1:0] latched_data;
@@ -59,7 +60,7 @@ module multichannel_extender #(
         case (extender_state)
             idle: begin
                 for(integer i =0; i<N_REPEAT_VALUES; i++)begin
-                    if(in.valid && in.dest[15:0] == repeat_dest[i]) begin
+                    if(in.valid && in.dest[15:0] == repetition_dest[i]) begin
                         latched_data <= in.data;
                         latched_user <= in.user;
                         if(trigger)begin
@@ -67,7 +68,7 @@ module multichannel_extender #(
                         end else begin
                             extender_state <= wait_trigger;
                         end
-                        dest_word <= repeat_dest[i];
+                        dest_word <= repetition_dest[i];
                     end
                 end
             end
@@ -77,7 +78,7 @@ module multichannel_extender #(
                 end
             end
             extending: begin
-                if(extension_ctr == N_CHANNELS-1)begin
+                if(extension_ctr == repetition_length-1)begin
                     extension_ctr <= 0;
                     extender_state <= idle;
                 end else begin
@@ -108,7 +109,7 @@ module multichannel_extender #(
                 out.user <= latched_user;
                 out.valid <= 1;
                 out.dest <= {extension_ctr, dest_word};
-                if(extension_ctr == N_CHANNELS-1)begin
+                if(extension_ctr == repetition_length-1)begin
                     out.tlast <= 1;
                 end else begin
                     out.tlast <= 0;
