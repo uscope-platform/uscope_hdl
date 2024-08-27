@@ -76,7 +76,7 @@ module buck_pre_modulation_processor  #(
     assign deadtime = modulation_parameters[N_PHASES];
     wire [3:0] n_active_phases;
     assign n_active_phases = modulation_parameters[N_PHASES+1];
- 
+    wire [15:0] duty_ff [N_PHASES-1:0];
 
 
     PMP_buck_shifts_calculator #(
@@ -105,6 +105,16 @@ module buck_pre_modulation_processor  #(
         .pwm_config_done(operating_config_done),
         .write_request(management_write)
     );
+    
+    PMP_buck_shedding_manager #(
+        .N_PHASES(N_PHASES)
+    )ff_Core(
+        .clock(clock),
+        .reset(reset),
+        .n_phases(n_active_phases),
+        .duty_in(duty),
+        .duty_out(duty_ff)
+    );
 
     PMP_buck_operating_core #(
         .PWM_BASE_ADDR(PWM_BASE_ADDR),
@@ -119,10 +129,11 @@ module buck_pre_modulation_processor  #(
         .update(update),
         .period(period),
         .phase_shifts(phase_shifts),
-        .duty(duty),
+        .duty(duty_ff),
         .modulator_status(modulator_status),
         .operating_write(operating_write)
     );
+
 
 
 endmodule

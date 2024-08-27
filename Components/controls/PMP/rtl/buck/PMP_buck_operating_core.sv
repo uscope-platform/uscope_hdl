@@ -28,7 +28,7 @@ module PMP_buck_operating_core #(
     input wire pwm_config_done,
     input wire [3:0] update,
     input wire [15:0] period,
-    input wire [15:0] duty[N_PHASES-1:0],
+    input wire [15:0] duty    [N_PHASES-1:0],
     input wire [15:0] phase_shifts[N_PHASES-1:0],
     output reg modulator_status,
     axi_stream.master operating_write
