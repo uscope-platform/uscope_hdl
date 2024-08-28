@@ -111,6 +111,7 @@ module buck_pre_modulation_processor  #(
     )ff_Core(
         .clock(clock),
         .reset(reset),
+        .period(period),
         .n_phases(n_active_phases),
         .duty_in(duty),
         .duty_out(duty_ff)

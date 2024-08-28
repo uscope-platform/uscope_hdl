@@ -22,30 +22,42 @@ module PMP_buck_shedding_manager #(
     input wire clock,
     input wire reset,
     input wire [$clog2(N_PHASES)-1:0] n_phases,
+    input wire [15:0] period,
     input wire [15:0] duty_in[N_PHASES-1:0],
     output reg [15:0] duty_out[N_PHASES-1:0]
 );
+  
+    reg signed [15:0] duty_ff[N_PHASES-1:0]  = '{default:0};
 
-    reg [15:0] duty_ff[N_PHASES-1:0]  = '{default:0};
-    reg [$clog2(N_PHASES)-1:0] n_phases_del  = '{default:0};
+    reg [$clog2(N_PHASES)-1:0] n_phases_del  = 0;
+    reg [$clog2(N_PHASES)-1:0]  n_activations = 0;
 
-    wire [$clog2(N_PHASES)-1:0] n_activations = n_phases - n_phases_del;
+    genvar j;
+
 
     always_ff @(posedge clock) begin
         n_phases_del <= n_phases;
-        if(n_phases >= n_phases_del)begin
-            duty_ff[n_phases] <= duty_in[n_phases];
-        end
-        if(n_activations == 1) begin
-            duty_ff[n_phases] <= duty_in[n_phases];
-        end else if(n_activations ==2)begin
-            duty_ff[n_phases] <= duty_in[n_phases];
-            duty_ff[n_phases-1] <= duty_in[n_phases-1];
-        end
-        duty_out[0] <= duty_in[0];
-        for(integer i = 1; i<N_PHASES+1; i++)begin
+        if(n_phases > n_phases_del) n_activations <= n_phases - n_phases_del;
 
-            duty_out[i] <= duty_ff[i] + duty_in[i];
+        if(n_activations == 1) begin
+            duty_ff[n_phases] <= $signed(duty_in[0]);
+        end else if(n_activations ==2)begin
+            duty_ff[n_phases] <= $signed(duty_in[0]);
+            duty_ff[n_phases-1] <= $signed(duty_in[0]);
+        end
+        
+        duty_out[0] <= duty_in[0];
+        for(integer i = 1; i<N_PHASES; i++)begin
+            // duty_ff is guaranteed to be non negative given how the control system workk
+            // thus when the input duty is negative and larger than the ff saturate the output to 0
+            if(($signed(duty_in[i]) +  duty_ff[i])<0) begin
+                duty_out[i] <= 0;
+            end else if(($signed(duty_in[i]) + duty_ff[i])>=period) begin
+                duty_out[i] <= period-1;
+            end else begin
+                duty_out[i] <= $signed(duty_in[i]) + duty_ff[i];
+            end
+                
         end
     end
 
