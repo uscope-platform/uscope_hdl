@@ -41,6 +41,8 @@ module fCore_common_io #(
 
 
     reg [$clog2(FIFO_DEPTH)-1:0] fifo_counter = 0; 
+    reg [$clog2(FIFO_DEPTH)-1:0] unload_target = 0; 
+
 
     enum reg[1:0] { 
         dma_enabled = 0,
@@ -52,17 +54,22 @@ module fCore_common_io #(
         case(state)
         dma_enabled: begin
             if(core_start) begin
+                fifo_counter <= 0;
                 state <= core_running;
             end
         end
         core_running: begin
+            if(dma_in.valid) fifo_counter <= fifo_counter + 1;
             if(core_done)begin
                 state <= fifo_unloading;
+                unload_target <= fifo_counter;
+                fifo_counter <= 0;
                 dma_in.ready <= 0;
             end
         end
         fifo_unloading: begin
-            if(fifo_counter == 0)begin
+            fifo_counter <= fifo_counter + 1;
+            if(fifo_counter == unload_target)begin
                 state <= dma_enabled;
                 dma_in.ready <= 1;
             end
@@ -81,13 +88,12 @@ module fCore_common_io #(
             end else if(state == core_running)begin
                 address_fifo[fifo_counter] <= dma_in.dest;
                 data_fifo[fifo_counter] <= dma_in.data;
-                fifo_counter <= fifo_counter + 1;
-            end else begin
-                fifo_counter <= fifo_counter -1;
-                common_io_memory[address_fifo[fifo_counter]] <= data_fifo[fifo_counter];
-            end
+            end 
         end
 
+        if(state == fifo_unloading)begin
+            common_io_memory[address_fifo[fifo_counter]] <= data_fifo[fifo_counter];
+        end
     end
     
 endmodule

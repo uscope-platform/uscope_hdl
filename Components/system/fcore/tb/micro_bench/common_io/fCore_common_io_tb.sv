@@ -101,6 +101,9 @@ module fCore_common_io_tb();
         #100 dma_bfm.write_dest($shortrealtobits(5.0), 3);
         #4 run <= 1;
         #1 run <=  0;
+        #1
+        #1 dma_bfm.write_dest($shortrealtobits(7.0), 3);
+        #1 dma_bfm.write_dest($shortrealtobits(8.0), 3);
         @(done);
         #10;
         dma_read_request.data <= 4;
@@ -120,6 +123,13 @@ module fCore_common_io_tb();
             $display ("RESULT ERROR: Wrong result for test 2, received %d, expected 6.0t 2", dma_read_response.data);
             $finish; 
         end
+
+        #4 run <= 1;
+        #1 run <=  0;
+        #1
+        #1 dma_bfm.write_dest($shortrealtobits(1.0), 3);
+        #1 dma_bfm.write_dest($shortrealtobits(74.0), 3);
+
     end
 
 
@@ -128,7 +138,7 @@ module fCore_common_io_tb();
     initial begin
         $readmemh("/home/fils/git/uscope_hdl/public/Components/system/fcore/tb/micro_bench/common_io/common_io.mem", prog);
         #50.5;
-        for(integer i = 0; i<30; i++)begin
+        for(integer i = 0; i<34; i++)begin
             #5 bfm_in.write(i*4, prog[i]);
         end
         ->core_loaded;
