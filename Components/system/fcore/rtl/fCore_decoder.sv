@@ -34,6 +34,8 @@ module fCore_decoder #(
     input wire [REG_ADDR_WIDTH-1:0] writeback_addr,
     input wire [INSTRUCTION_WIDTH-1:0] load_data,
     output reg [OPCODE_WIDTH-1:0] exec_opcode,
+    output reg common_io_sel_a,
+    output reg common_io_sel_b,
     output reg core_stop,
     axi_stream.slave instruction_stream,
     axi_stream.master operand_a_if,
@@ -55,6 +57,10 @@ module fCore_decoder #(
 
     wire [REG_ADDR_WIDTH-1:0] alu_dest;
     assign alu_dest = instruction_stream.data[OPCODE_WIDTH+3*REG_ADDR_WIDTH-1:OPCODE_WIDTH+2*REG_ADDR_WIDTH];
+
+    wire common_io_a, common_io_b;
+    assign common_io_a = instruction_stream.data[(OPCODE_WIDTH+3*REG_ADDR_WIDTH-1)+1];
+    assign common_io_b = instruction_stream.data[(OPCODE_WIDTH+3*REG_ADDR_WIDTH-1)+2];
 
     wire [IMMEDIATE_WIDTH-1:0] load_reg_val;
     assign load_reg_val = instruction_stream.data[OPCODE_WIDTH+REG_ADDR_WIDTH+12:OPCODE_WIDTH+REG_ADDR_WIDTH];
@@ -89,6 +95,8 @@ module fCore_decoder #(
             //$cast(current_operation, opcode);
             case(opcode)
                 fcore_isa::ADD: begin
+                    common_io_sel_a <= common_io_a;
+                    common_io_sel_b <= common_io_b;
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -99,6 +107,8 @@ module fCore_decoder #(
                     operation_if.valid <= 1;
                 end
                 fcore_isa::SUB: begin
+                    common_io_sel_a <= common_io_a;
+                    common_io_sel_b <= common_io_b;
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -109,6 +119,8 @@ module fCore_decoder #(
                     operation_if.valid <= 1;
                 end
                 fcore_isa::MUL: begin
+                    common_io_sel_a <= common_io_a;
+                    common_io_sel_b <= common_io_b;
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -118,16 +130,19 @@ module fCore_decoder #(
                     operand_b_if.user <= operand_b+(2**REG_ADDR_WIDTH*channel_address);
                 end
                 fcore_isa::REC: begin
+                    common_io_sel_a <= common_io_a;
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= operand_b+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
                 end
                 fcore_isa::FTI:begin
+                    common_io_sel_a <= common_io_a;
                     operand_b_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_b_if.user <= operand_b+(2**REG_ADDR_WIDTH*channel_address);
                     operand_b_if.valid <= 1;
                 end
                 fcore_isa::ITF:begin
+                    common_io_sel_a <= common_io_a;
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= operand_b+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -143,6 +158,8 @@ module fCore_decoder #(
                     operand_a_if.valid <= 1;
                 end
                 fcore_isa::BGT:begin
+                    common_io_sel_a <= common_io_a;
+                    common_io_sel_b <= common_io_b;
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -153,6 +170,8 @@ module fCore_decoder #(
                     operation_if.valid <= 1;
                 end
                 fcore_isa::BLE:begin
+                    common_io_sel_a <= common_io_a;
+                    common_io_sel_b <= common_io_b;
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -163,6 +182,8 @@ module fCore_decoder #(
                     operation_if.valid <= 1;
                 end
                 fcore_isa::BEQ:begin
+                    common_io_sel_a <= common_io_a;
+                    common_io_sel_b <= common_io_b;
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -173,6 +194,8 @@ module fCore_decoder #(
                     operation_if.valid <= 1;
                 end
                 fcore_isa::BNE:begin
+                    common_io_sel_a <= common_io_a;
+                    common_io_sel_b <= common_io_b;
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1; 
@@ -195,6 +218,7 @@ module fCore_decoder #(
                     operation_if.valid <= 1;
                 end
                 fcore_isa::POPCNT:begin
+                    common_io_sel_a <= common_io_a;
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= operand_b+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -202,6 +226,7 @@ module fCore_decoder #(
                     operation_if.valid <= 1;
                 end
                 fcore_isa::ABS:begin
+                    common_io_sel_a <= common_io_a;
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= operand_b+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -209,6 +234,8 @@ module fCore_decoder #(
                     operation_if.valid <= 1;
                 end
                 fcore_isa::LAND:begin
+                    common_io_sel_a <= common_io_a;
+                    common_io_sel_b <= common_io_b;
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -219,6 +246,8 @@ module fCore_decoder #(
                     operation_if.valid <= 1;
                 end
                 fcore_isa::LOR:begin
+                    common_io_sel_a <= common_io_a;
+                    common_io_sel_b <= common_io_b;
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -230,6 +259,8 @@ module fCore_decoder #(
                     operation_if.valid <= 1;
                 end
                 fcore_isa::LXOR:begin
+                    common_io_sel_a <= common_io_a;
+                    common_io_sel_b <= common_io_b;
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -253,6 +284,8 @@ module fCore_decoder #(
                     operation_if.valid <= 1;
                 end
                 fcore_isa::BSEL:begin
+                    common_io_sel_a <= common_io_a;
+                    common_io_sel_b <= common_io_b;
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -264,6 +297,7 @@ module fCore_decoder #(
                     operation_if.valid <= 1;
                 end
                 fcore_isa::LNOT:begin
+                    common_io_sel_a <= common_io_a;
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= operand_b+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -271,6 +305,7 @@ module fCore_decoder #(
                     operation_if.valid <= 1;
                 end
                 fcore_isa::SATP:begin
+                    common_io_sel_a <= common_io_a;
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -282,6 +317,7 @@ module fCore_decoder #(
                     operation_if.valid <= 1;
                 end
                 fcore_isa::SATN:begin
+                    common_io_sel_a <= common_io_a;
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= alu_dest+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;
@@ -301,6 +337,8 @@ module fCore_decoder #(
                     core_stop <= 1;
                 end         
                 fcore_isa::NOP: begin
+                    common_io_sel_a <= 0;
+                    common_io_sel_b <= 0;
                     operand_a_if.dest <= 0;
                     operand_a_if.user <= 0;
                     operand_a_if.valid <= 0;
@@ -320,6 +358,8 @@ module fCore_decoder #(
                 end
             endcase                        
         end else begin
+            common_io_sel_a <= 0;
+            common_io_sel_b <= 0;
             operand_a_if.dest <= 0;
             operand_a_if.user <= 0;
             operand_a_if.valid <= 0;

@@ -80,8 +80,9 @@ module fCore_Istore # (
 
     enum reg [2:0] {
         metadata_section = 0,
-        io_map_section = 1, 
-        program_section = 2
+        io_map_section = 1,
+        common_io_section = 2,
+        program_section = 3
     } write_watcher = metadata_section;
 
     always_ff@(posedge clock_in)begin
@@ -98,10 +99,21 @@ module fCore_Istore # (
             end
             io_map_section:begin
                 if(write_data == SECTION_SEPARATOR)begin
+                    write_watcher <= common_io_section;
+                end else begin
+                    iommu_control.data <= write_data;
+                    iommu_control.dest <= 0;
+                    iommu_control.valid <= 1;
+                end
+                header_counter++;
+            end
+            common_io_section:begin
+                if(write_data == SECTION_SEPARATOR)begin
                     write_watcher <= program_section;
                 end else begin
                     iommu_control.data <= write_data;
                     iommu_control.valid <= 1;
+                    iommu_control.dest <= 1;
                 end
                 header_counter++;
             end

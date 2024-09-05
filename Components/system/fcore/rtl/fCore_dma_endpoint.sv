@@ -22,6 +22,7 @@ module fCore_dma_endpoint #(
     DATAPATH_WIDTH = 20,
     REG_ADDR_WIDTH = 8,
     REGISTER_FILE_DEPTH = 64,
+    N_COMMON_IO = 32,
     TRANSLATION_TABLE_INIT = "TRANSPARENT",
     TRANSLATION_TABLE_INIT_FILE = "",
     RAW_AXI_ACCESS = 1
@@ -31,6 +32,7 @@ module fCore_dma_endpoint #(
     axi_lite.slave axi_in,
     axi_stream.slave io_mapping,
     axi_stream.master reg_dma_write,
+    axi_stream.master common_io_dma_write,
     output reg [REG_ADDR_WIDTH-1:0] dma_read_addr,
     input wire [DATAPATH_WIDTH-1:0] dma_read_data,
     output reg [$clog2(REG_ADDR_WIDTH)-1:0] n_channels,
@@ -38,6 +40,7 @@ module fCore_dma_endpoint #(
     axi_stream.slave axis_dma_write,
     axi_stream.slave axis_dma_read_request,
     axi_stream.master axis_dma_read_response
+
     );
 
     
@@ -63,26 +66,15 @@ module fCore_dma_endpoint #(
     assign table_write_address = io_mapping.data[15:0];
     
 
-    reg [31:0] translation_table [REGISTER_FILE_DEPTH-1:0];
+    reg [31:0] translation_table [REGISTER_FILE_DEPTH-1:0] = '{default:0};
+    reg [31:0] common_io_translation_table [N_COMMON_IO-1:0] = '{default:0};
+
     reg [$clog2(REGISTER_FILE_DEPTH)-1:0] translation_table_address;
 
-    initial begin
-        if(TRANSLATION_TABLE_INIT == "FILE") begin
-            $readmemh(TRANSLATION_TABLE_INIT_FILE, translation_table);
-        end
-    end
-
-
     always_ff @(posedge clock) begin
-        if(!reset) begin
-            for(integer i = 0; i< REGISTER_FILE_DEPTH; i++)begin
-                if(TRANSLATION_TABLE_INIT == "TRANSPARENT")begin
-                    translation_table[i] <= i;
-                end else if(TRANSLATION_TABLE_INIT=="ZERO")begin
-                    translation_table[i] <= 0;
-                end
-            end
-        end else if(io_mapping.valid)begin
+        if(io_mapping.dest == 1)begin
+            common_io_translation_table[table_write_address] <= table_write_data;
+        end else begin
             translation_table[table_write_address] <= table_write_data;
         end
     end
@@ -108,7 +100,14 @@ module fCore_dma_endpoint #(
                 reg_dma_write.dest <= axis_channel_address*REGISTER_FILE_DEPTH + axis_register_address;
                 reg_dma_write.data <= axis_dma_write.data;
                 reg_dma_write.valid <= 1;   
+                common_io_dma_write.valid <= 0;
+            end else if(common_io_translation_table[axis_dma_write.dest[15:0]] != 0)begin
+                common_io_dma_write.dest <= common_io_translation_table[axis_dma_write.dest[15:0]];
+                common_io_dma_write.data <= axis_dma_write.data;
+                common_io_dma_write.valid <= 1;   
+                reg_dma_write.valid <= 0;   
             end else begin
+                common_io_dma_write.valid <= 0;
                 reg_dma_write.valid <= 0;   
             end
         end else if(axi_write_data.valid)begin
@@ -127,6 +126,10 @@ module fCore_dma_endpoint #(
             reg_dma_write.valid <= 0;
             reg_dma_write.dest <= 0;
             reg_dma_write.data <= 0;
+
+            common_io_dma_write.valid <= 0;
+            common_io_dma_write.dest <= 0;
+            common_io_dma_write.data <= 0;
         end
     end
 

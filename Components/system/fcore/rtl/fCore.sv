@@ -90,7 +90,6 @@ module fCore #(
     axi_stream operand_c();
     axi_stream operand_c_dly();
 
-    axi_stream iommu_control();
     
     axi_stream #(
         .DATA_WIDTH(8)
@@ -113,6 +112,9 @@ module fCore #(
     wire [DATAPATH_WIDTH-1:0] operand_data_b;
     wire [DATAPATH_WIDTH-1:0] operand_data_c;    
 
+    wire [DATAPATH_WIDTH-1:0] constant_data_a;
+    wire [DATAPATH_WIDTH-1:0] constant_data_b; 
+
     wire [REG_ADDR_WIDTH-1:0] dma_read_addr;
     wire [DATAPATH_WIDTH-1:0] dma_read_data;
 
@@ -121,6 +123,7 @@ module fCore #(
 
     wire [1:0] mem_efi_enable;
     wire [15:0] program_size;
+    wire common_io_sel_a, common_io_sel_b;
 
     axi_stream instruction_stream();
     axi_stream io_mapping();
@@ -168,6 +171,8 @@ module fCore #(
         .n_channels(n_channels),
         .exec_opcode(exec_opcode),
         .core_stop(core_stop),
+        .common_io_sel_a(common_io_sel_a),
+        .common_io_sel_b(common_io_sel_b),
         .operand_a_if(operand_a),
         .operand_b_if(operand_b),
         .operand_c_if(operand_c),
@@ -189,13 +194,12 @@ module fCore #(
 
     assign operand_a.ready = operand_a_dly.ready;
     assign operand_b.ready = operand_b_dly.ready;
-    
-    assign operand_a_dly.data = operand_data_a;
-    assign operand_b_dly.data = operand_data_b;
 
+    reg common_io_sel_a_dly, common_io_sel_b_dly;
 
     always@(posedge clock)begin
-
+        common_io_sel_a_dly <= common_io_sel_a;
+        common_io_sel_b_dly <= common_io_sel_b;
         operand_a_dly.dest <= operand_a.dest;
         operand_a_dly.user <= operand_a.user;
         operand_a_dly.valid <= operand_a.valid;
@@ -205,7 +209,27 @@ module fCore #(
         operand_b_dly.valid <= operand_b.valid;
     end
 
+    always_comb begin
+        if(common_io_sel_a_dly)begin
+            operand_a_dly.data <= constant_data_a;
+        end else begin
+            operand_a_dly.data <= operand_data_a;
+        end
+
+        if(common_io_sel_b_dly)begin
+            operand_b_dly.data <= constant_data_b;
+        end else begin
+            operand_b_dly.data <= operand_data_b;
+        end
+
+    end
+
     generate
+
+        assign operand_a_dly.data = operand_data_a;
+        assign operand_b_dly.data = operand_data_b;
+
+
         if(BITMANIP_IMPLEMENTED==1 || CONDITIONAL_SELECT_IMPLEMENTED==1)begin
             assign operand_c.ready = operand_c_dly.ready;
             assign operand_c_dly.data = operand_data_c;
@@ -276,6 +300,7 @@ module fCore #(
     endgenerate
     
     axi_stream dma_write();
+    axi_stream common_io_dma();
 
     fCore_dma_endpoint #( 
         .BASE_ADDRESS(DMA_BASE_ADDRESS),
@@ -296,7 +321,24 @@ module fCore #(
         .program_size(program_size),
         .axis_dma_write(axis_dma_write),
         .axis_dma_read_request(axis_dma_read_request),
-        .axis_dma_read_response(axis_dma_read_response)
+        .axis_dma_read_response(axis_dma_read_response),
+        .common_io_dma_write(common_io_dma)
+    );
+
+    fCore_common_io #(
+        .REGISTER_WIDTH(DATAPATH_WIDTH),
+        .N_IO(32),
+        .FIFO_DEPTH(16)
+    )common_io(
+        .clock(clock),
+        .reset(reset),
+        .core_start(run),
+        .core_done(done),
+        .dma_in(common_io_dma),
+        .read_address_a(operand_a.dest),
+        .read_address_b(operand_b.dest),
+        .read_data_a(constant_data_a),
+        .read_data_b(constant_data_b)
     );
 
     fCore_Istore #(
