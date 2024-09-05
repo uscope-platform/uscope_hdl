@@ -106,10 +106,20 @@ module fCore_common_io_tb();
         dma_read_request.data <= 4;
         dma_read_request.valid <= 1;
         #1 dma_read_request.valid <= 0;
+        #2;
+        if(dma_read_response.data  != $shortrealtobits(6.0))begin
+            $display ("RESULT ERROR: Wrong result for test 1, received %d, expected 6.0", dma_read_response.data);
+            $finish; 
+        end
         #10
         dma_read_request.data <= 'h10004;
         dma_read_request.valid <= 1;
         #1 dma_read_request.valid <= 0;
+        #2;
+        if(dma_read_response.data != $shortrealtobits(5.0))begin
+            $display ("RESULT ERROR: Wrong result for test 2, received %d, expected 6.0t 2", dma_read_response.data);
+            $finish; 
+        end
     end
 
 

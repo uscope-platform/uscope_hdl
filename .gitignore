@@ -124,7 +124,7 @@ Components/system/axi_full/crossbar/axi_xbar/
 
 Components/controls/programmable_sequencer/programmable sequence/
 
-Components/system/axi_stream/data_mover/data moved/
+Components/system/axi_stream/data_mover/data mover/
 Components/system/axi_full/axi_dma/axi_dma/
 Components/system/axi_full/axi_to_axil/axi_to_axil/
 Components/system/axi_stream/ultra_buffer/ultra_buffer
