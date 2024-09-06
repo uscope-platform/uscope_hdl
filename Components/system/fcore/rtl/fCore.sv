@@ -226,10 +226,6 @@ module fCore #(
 
     generate
 
-        assign operand_a_dly.data = operand_data_a;
-        assign operand_b_dly.data = operand_data_b;
-
-
         if(BITMANIP_IMPLEMENTED==1 || CONDITIONAL_SELECT_IMPLEMENTED==1)begin
             assign operand_c.ready = operand_c_dly.ready;
             assign operand_c_dly.data = operand_data_c;

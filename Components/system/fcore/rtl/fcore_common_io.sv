@@ -32,46 +32,39 @@ module fCore_common_io #(
     output reg [31:0] read_data_b
 );
 
+    axi_stream in_buffered();
 
-    reg [$clog2(N_IO)-1:0] address_fifo [FIFO_DEPTH-1:0] = '{default:0};
-    reg [31:0] data_fifo [FIFO_DEPTH-1:0] = '{default:0};
-
+    axis_fifo_xpm #(
+        .DATA_WIDTH(32),
+        .DEST_WIDTH(32),
+        .FIFO_DEPTH(16)
+    )fifo_in(
+        .clock(clock),
+        .reset(reset),
+        .in(dma_in),
+        .out(in_buffered)
+    );
 
     reg [31:0] common_io_memory [N_IO-1:0] = '{default:0};
 
-
-    reg [$clog2(FIFO_DEPTH)-1:0] fifo_counter = 0; 
-    reg [$clog2(FIFO_DEPTH)-1:0] unload_target = 0; 
-
-
     enum reg[1:0] { 
         dma_enabled = 0,
-        core_running = 1,
-        fifo_unloading = 2
+        core_running = 1
     } state = dma_enabled;
 
     always_ff @( posedge clock ) begin
         case(state)
         dma_enabled: begin
+            in_buffered.ready <= 1;
             if(core_start) begin
-                fifo_counter <= 0;
                 state <= core_running;
+                in_buffered.ready <= 0;
             end
         end
         core_running: begin
-            if(dma_in.valid) fifo_counter <= fifo_counter + 1;
             if(core_done)begin
-                state <= fifo_unloading;
-                unload_target <= fifo_counter;
-                fifo_counter <= 0;
-                dma_in.ready <= 0;
-            end
-        end
-        fifo_unloading: begin
-            fifo_counter <= fifo_counter + 1;
-            if(fifo_counter == unload_target)begin
                 state <= dma_enabled;
-                dma_in.ready <= 1;
+                in_buffered.ready <= 1;
             end
         end
         endcase
@@ -82,17 +75,8 @@ module fCore_common_io #(
         read_data_a <= common_io_memory[read_address_a];
         read_data_b <= common_io_memory[read_address_b];
         
-        if(dma_in.valid)begin
-            if(state == dma_enabled) begin
-                common_io_memory[dma_in.dest] <= dma_in.data;
-            end else if(state == core_running)begin
-                address_fifo[fifo_counter] <= dma_in.dest;
-                data_fifo[fifo_counter] <= dma_in.data;
-            end 
-        end
-
-        if(state == fifo_unloading)begin
-            common_io_memory[address_fifo[fifo_counter]] <= data_fifo[fifo_counter];
+        if(in_buffered.valid & in_buffered.ready)begin
+           common_io_memory[in_buffered.dest] <= in_buffered.data;
         end
     end
     

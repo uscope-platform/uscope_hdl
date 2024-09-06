@@ -99,7 +99,7 @@ module fCore_common_io_tb();
         #35 axil_bfm.write(32'h43c00000, 8);
         #100 dma_bfm.write_dest($shortrealtobits(1.0), 2);
         #100 dma_bfm.write_dest($shortrealtobits(5.0), 3);
-        #4 run <= 1;
+        #12 run <= 1;
         #1 run <=  0;
         #1
         #1 dma_bfm.write_dest($shortrealtobits(7.0), 3);
