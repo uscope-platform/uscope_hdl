@@ -29,6 +29,7 @@ module axi_dma_bursting_mc #(
 )(
     input wire clock,
     input wire reset,
+    input wire disable_dma,
     input wire buffer_full,
     input wire [63:0] dma_base_addr,
     input wire  [$clog2(MAX_TRANSFER_SIZE):0] packet_length,
@@ -171,7 +172,7 @@ module axi_dma_bursting_mc #(
                 writer_idle:begin  
                     transfers_tracker <= 0;
                     beats_counter <= 0;
-                    if(buffer_full)begin
+                    if(buffer_full & !disable_dma)begin
                         target_base <= dma_base_addr;
                         writer_state <= writer_start_burst;
                     end
@@ -226,13 +227,12 @@ module axi_dma_bursting_mc #(
                     end
                 end
                 writer_bump_selector:begin
-                    if(selector==N_CHANNELS-1)begin
+                    if((selector==N_CHANNELS-1) || disable_dma)begin
                         selector <= 0;
                         writer_state <= writer_idle;
                         burst_counter <= 0;
                         dma_done <= 1;
-                    end else begin
-                                               
+                    end else begin                    
                         selector <= selector + 1;
                         burst_counter <= burst_counter +1;
                         writer_state <= writer_start_burst;

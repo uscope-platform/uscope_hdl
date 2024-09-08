@@ -82,7 +82,8 @@ module uScope_stream_dma #(
         .axil(mux_ctrl_axi)
     );
 
-    wire external_capture_enable;
+    wire external_capture_enable, disable_dma;
+    assign disable_dma = cu_write_registers[0][0];
     assign external_capture_enable = cu_write_registers[0][24];
 
     assign cu_read_registers = cu_write_registers;
@@ -149,6 +150,7 @@ module uScope_stream_dma #(
     )scope_internal (
         .clock(clock),
         .reset(reset),
+        .disable_dma(disable_dma),
         .stream_in(scope_in_sync),
         .out(scope_out),
         .axi_in(uscope_axi),
@@ -172,6 +174,12 @@ endmodule
                         "name":"external_capture",
                         "description": "Enable external caputure",
                         "start_position": 24,
+                        "length": 1
+                    }, 
+                    {
+                        "name": "disable_dma",
+                        "description": "Disable DMA engine",
+                        "start_position": 0,
                         "length": 1
                     }
                 ]

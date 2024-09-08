@@ -26,6 +26,7 @@ module uScope_dma #(
 )(
     input wire clock,
     input wire reset,
+    input wire disable_dma,
     output wire dma_done,
     axi_stream.slave stream_in[N_STREAMS],
     AXI.master out,
@@ -118,7 +119,8 @@ module uScope_dma #(
         .OUTPUT_AXI_WIDTH(OUTPUT_AXI_WIDTH)
     )dma_engine(
         .clock(clock),
-        .reset(reset), 
+        .reset(reset),
+        .disable_dma(disable_dma), 
         .buffer_full(dma_start),
         .dma_base_addr(dma_base_addr),
         .packet_length(TRANSFER_SIZE),
