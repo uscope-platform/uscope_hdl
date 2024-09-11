@@ -48,8 +48,8 @@ module multi_stream_fault_detector_tb();
     );
 
 
-    reg signed [15:0] trip_high_1 = 16'sd29000;
-    reg signed [15:0] trip_low_1 = -16'sd29000;
+    reg signed [15:0] trip_high_1 = 16'sd28000;
+    reg signed [15:0] trip_low_1 = -16'sd28000;
 
     reg signed [15:0] trip_high_2 = 16'sd29000;
     reg signed [15:0] trip_low_2 = -16'sd29000;
@@ -61,7 +61,8 @@ module multi_stream_fault_detector_tb();
     reg signed [15:0] trip_low_s_2 = -16'sd15000;
 
 
-    reg [7:0] slow_trip_duration = 5;
+    reg [7:0] slow_trip_duration_1 = 5;
+    reg [7:0] slow_trip_duration_2 = 5;
 
     //clock generation
     initial clk = 0; 
@@ -89,8 +90,8 @@ module multi_stream_fault_detector_tb();
         #2 axil_bfm.write('h8, trip_low_s_2); // slow 2 0
         #2 axil_bfm.write('hc, trip_high_s_2); // slow 2 1
 
-        #2 axil_bfm.write('h10, slow_trip_duration); // slow tresh 0
-        #2 axil_bfm.write('h14, slow_trip_duration); // slow tresh 1
+        #2 axil_bfm.write('h10, slow_trip_duration_1); // slow tresh 0
+        #2 axil_bfm.write('h14, slow_trip_duration_2); // slow tresh 1
 
         #2 axil_bfm.write('h18, trip_low_1);  // fast 1 0
         #2 axil_bfm.write('h1c, trip_high_1);  // fast 1 1
@@ -258,6 +259,7 @@ module multi_stream_fault_detector_tb();
         test_end <= 1;
         #1 test_end <= 0;
         test_counter <= 0;
+        $finish();
     end
 
 
