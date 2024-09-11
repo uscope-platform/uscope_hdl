@@ -86,16 +86,16 @@ module multi_stream_fault_detector_tb();
         #5.5 reset <=1'h1;
 
         #2 axil_bfm.write('h0, trip_low_s_1); // slow 1 0
-        #2 axil_bfm.write('h4, trip_high_s_1); // slow 1 1
-        #2 axil_bfm.write('h8, trip_low_s_2); // slow 2 0
+        #2 axil_bfm.write('h4, trip_low_s_2); // slow 1 1
+        #2 axil_bfm.write('h8, trip_high_s_1); // slow 2 0
         #2 axil_bfm.write('hc, trip_high_s_2); // slow 2 1
 
         #2 axil_bfm.write('h10, slow_trip_duration_1); // slow tresh 0
         #2 axil_bfm.write('h14, slow_trip_duration_2); // slow tresh 1
 
         #2 axil_bfm.write('h18, trip_low_1);  // fast 1 0
-        #2 axil_bfm.write('h1c, trip_high_1);  // fast 1 1
-        #2 axil_bfm.write('h20, trip_low_2); // fast 2 0
+        #2 axil_bfm.write('h1c, trip_low_2);  // fast 1 1
+        #2 axil_bfm.write('h20, trip_high_1); // fast 2 0
         #2 axil_bfm.write('h24, trip_high_2); // fast 2 1
 
         ->configuration_done;

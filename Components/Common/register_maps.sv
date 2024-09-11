@@ -369,14 +369,14 @@ package reg_maps;
 
     struct { 
         int slow_tresh_low_0     = 'h00;
-        int slow_tresh_high_0    = 'h04;
-        int slow_tresh_low_1     = 'h08;
+        int slow_tresh_low_1     = 'h04;
+        int slow_tresh_high_0    = 'h08;
         int slow_tresh_high_1    = 'h0C;
         int slow_trip_duration_0 = 'h10;
         int slow_trip_duration_1 = 'h14;
         int fast_tresh_low_0     = 'h18;
-        int fast_tresh_high_0    = 'h1c;
-        int fast_tresh_low_1     = 'h20;
+        int fast_tresh_low_1     = 'h1c;
+        int fast_tresh_high_0    = 'h20;
         int fast_tresh_high_1    = 'h24;
     } fault_detector_2;
 
