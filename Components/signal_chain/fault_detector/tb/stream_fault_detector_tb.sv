@@ -33,7 +33,7 @@ module stream_fault_detector_tb();
     axi_lite_BFM axil_bfm;
     axis_BFM axis_bfm;
 
-    stream_fault_detector #(
+    single_stream_fault_detector #(
         .N_CHANNELS(4),
         .STARTING_DEST(50)
     ) UUT(
