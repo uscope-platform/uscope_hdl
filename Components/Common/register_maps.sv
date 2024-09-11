@@ -378,6 +378,10 @@ package reg_maps;
         int fast_tresh_low_1     = 'h1c;
         int fast_tresh_high_0    = 'h20;
         int fast_tresh_high_1    = 'h24;
+        int fast_fault_0    = 'h28;
+        int fast_fault_1    = 'h2c;
+        int slow_fault_0    = 'h30;
+        int slow_fault_1    = 'h34;
     } fault_detector_2;
 
 endpackage

@@ -64,10 +64,10 @@ module multi_stream_fault_detector #(
     wire [31:0] slow_trip_duration [N_STREAMS-1:0];
 
 
-    assign cu_read_registers[N_REGISTERS-3:0] = cu_write_registers[N_REGISTERS-3:0];
+    assign cu_read_registers[5*N_STREAMS-1:0] = cu_write_registers[5*N_STREAMS-1:0];
 
 
-    genvar  i, j;
+    genvar  j;
 
     generate
 
@@ -80,15 +80,11 @@ module multi_stream_fault_detector #(
         assign fast_thresholds_low = cu_write_registers[4*N_STREAMS-1:3*N_STREAMS];
         assign fast_thresholds_high = cu_write_registers[5*N_STREAMS-1:4*N_STREAMS];
 
-        for (i = 0; i<N_STREAMS; i++) begin
-
-            assign cu_read_registers[N_STREAMS*5+2*i]   = fast_fault[i];
-            assign cu_read_registers[N_STREAMS*5+2*i+1] = slow_fault[i];
-
-        end
 
         for (j = 0; j<N_STREAMS; j++) begin
-            
+            assign cu_read_registers[5*N_STREAMS + j] = fast_fault[j];
+            assign cu_read_registers[6*N_STREAMS + j] = slow_fault[j];
+
             fault_detector_core #(
                 .N_CHANNELS(N_CHANNELS[j]),
                 .STARTING_DEST(STARTING_DEST[j])
