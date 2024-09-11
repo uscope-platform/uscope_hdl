@@ -18,8 +18,8 @@
 
 module multi_stream_fault_detector #(
     parameter N_STREAMS = 2,
-    parameter reg[31:0] N_CHANNELS [N_STREAMS-1:0] = {default:4},
-    parameter reg[31:0] STARTING_DEST [N_STREAMS-1:0] = {default:0}
+    parameter reg[31:0] N_CHANNELS [N_STREAMS-1:0] = '{default:4},
+    parameter reg[31:0] STARTING_DEST [N_STREAMS-1:0] = '{default:0}
 )(
     input wire clock,
     input wire reset,
@@ -29,7 +29,7 @@ module multi_stream_fault_detector #(
     output wire fault
 );
     
-    localparam N_REGISTERS = N_STREAMS*5+2;
+    localparam N_REGISTERS = N_STREAMS*7;
     reg [31:0] cu_write_registers [N_REGISTERS-1:0];
     reg [31:0] cu_read_registers  [N_REGISTERS-1:0];
 
@@ -48,53 +48,69 @@ module multi_stream_fault_detector #(
     );
 
 
-    wire [N_STREAMS-1:0] fast_fault;
-    wire [N_STREAMS-1:0] slow_fault;
+    wire [31:0] fast_fault [N_STREAMS-1:0];
+    wire [31:0] slow_fault [N_STREAMS-1:0];
 
-    assign fault = |fast_fault | |slow_fault;
+    reg [N_STREAMS-1:0] collated_fast_fault;
+    reg [N_STREAMS-1:0] collated_slow_fault;
 
-    wire signed [31:0] fast_thresholds [1:0][N_STREAMS-1:0];
-    wire signed [31:0] slow_thresholds [1:0][N_STREAMS-1:0];
+    assign fault = |collated_fast_fault | |collated_slow_fault;
+
+    wire signed [31:0] fast_thresholds_low [N_STREAMS-1:0];
+    wire signed [31:0] fast_thresholds_high [N_STREAMS-1:0];
+    wire signed [31:0] slow_thresholds_low [N_STREAMS-1:0];
+    wire signed [31:0] slow_thresholds_high [N_STREAMS-1:0];
+
     wire [7:0] slow_trip_duration [N_STREAMS-1:0];
 
 
-
     assign cu_read_registers[N_REGISTERS-3:0] = cu_write_registers[N_REGISTERS-3:0];
-    assign cu_read_registers[N_REGISTERS-2] = fast_fault;
-    assign cu_read_registers[N_REGISTERS-1] = slow_fault;
 
 
-    genvar  i;
+    genvar  i, j;
 
     generate
+
+
         for (i = 0; i<N_STREAMS; i++) begin
             
-
-            assign slow_thresholds[i][0] = cu_write_registers[N_STREAMS*i][31:0];
-            assign slow_thresholds[i][1] = cu_write_registers[N_STREAMS*i+1][31:0];
+            assign slow_thresholds_low[i] = cu_write_registers[2*i][31:0];
+            assign slow_thresholds_high[i] = cu_write_registers[2*i+1][31:0];
 
             assign slow_trip_duration[i] = cu_write_registers[N_STREAMS*2+i][7:0];
 
-            assign fast_thresholds[i][0] = cu_write_registers[N_STREAMS*3+N_STREAMS*i][31:0];
-            assign fast_thresholds[i][1] = cu_write_registers[N_STREAMS*3+N_STREAMS*i+1][31:0];
-            
+            assign fast_thresholds_low[i] = cu_write_registers[N_STREAMS*3+2*i][31:0];
+            assign fast_thresholds_high[i] = cu_write_registers[N_STREAMS*3+2*i+1][31:0];
+                    
+            assign cu_read_registers[N_STREAMS*5+2*i]   = fast_fault[i];
+            assign cu_read_registers[N_STREAMS*5+2*i+1] = slow_fault[i];
 
+        end
+
+        for (j = 0; j<N_STREAMS; j++) begin
+            
             fault_detector_core #(
-                .N_CHANNELS(N_CHANNELS),
-                .STARTING_DEST(STARTING_DEST)
+                .N_CHANNELS(N_CHANNELS[j]),
+                .STARTING_DEST(STARTING_DEST[j])
             ) detector (
                 .clock(clock),
                 .reset(reset),
-                .fast_thresholds(fast_thresholds[i]),
-                .slow_thresholds(slow_thresholds[i]),
-                .slow_trip_duration(slow_trip_duration[i]),
-                .data_in(stream[i]),
+                .fast_threshold_low(fast_thresholds_low[j]),
+                .fast_threshold_high(fast_thresholds_high[j]),
+                .slow_threshold_low(slow_thresholds_low[j]),
+                .slow_threshold_high(slow_thresholds_high[j]),
+                .slow_trip_duration(slow_trip_duration[j]),
+                .data_in(stream[j]),
                 .clear_fault(clear_fault),
-                .fast_fault(fast_fault[i]),
-                .slow_fault(slow_fault[i])
+                .fast_fault(collated_fast_fault[j]),
+                .slow_fault(collated_slow_fault[j]),
+                .fast_fault_origin(fast_fault[j]),
+                .slow_fault_origin(slow_fault[j])
             );
 
         end
+
+
     endgenerate
 
 

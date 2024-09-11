@@ -46,9 +46,10 @@ module single_stream_fault_detector #(
     );
 
 
-    wire fast_fault, slow_fault;
+    wire [N_CHANNELS-1:0] fast_fault;
+    wire [N_CHANNELS-1:0] slow_fault;
 
-    assign fault = fast_fault | slow_fault;
+    assign fault = |fast_fault | |slow_fault;
 
     wire signed [31:0] fast_thresholds [1:0];
     wire signed [31:0] slow_thresholds [1:0];
@@ -61,7 +62,7 @@ module single_stream_fault_detector #(
     assign fast_thresholds[1] = cu_write_registers[4][31:0];
 
     assign cu_read_registers[4:0] = cu_write_registers[4:0];
-    assign cu_read_registers[5] = {fast_fault, slow_fault};
+    assign cu_read_registers[5] = {|fast_fault, |slow_fault};
 
 
     fault_detector_core #(
