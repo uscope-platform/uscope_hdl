@@ -56,12 +56,12 @@ module multi_stream_fault_detector #(
 
     assign fault = |collated_fast_fault | |collated_slow_fault;
 
-    wire signed [31:0] fast_thresholds_low [N_STREAMS-1:0];
-    wire signed [31:0] fast_thresholds_high [N_STREAMS-1:0];
-    wire signed [31:0] slow_thresholds_low [N_STREAMS-1:0];
-    wire signed [31:0] slow_thresholds_high [N_STREAMS-1:0];
+    wire [31:0] fast_thresholds_low [N_STREAMS-1:0];
+    wire [31:0] fast_thresholds_high [N_STREAMS-1:0];
+    wire [31:0] slow_thresholds_low [N_STREAMS-1:0];
+    wire [31:0] slow_thresholds_high [N_STREAMS-1:0];
 
-    wire [7:0] slow_trip_duration [N_STREAMS-1:0];
+    wire [31:0] slow_trip_duration [N_STREAMS-1:0];
 
 
     assign cu_read_registers[N_REGISTERS-3:0] = cu_write_registers[N_REGISTERS-3:0];
@@ -72,16 +72,16 @@ module multi_stream_fault_detector #(
     generate
 
 
+        assign slow_thresholds_low = cu_write_registers[N_STREAMS-1:0];
+        assign slow_thresholds_high = cu_write_registers[2*N_STREAMS-1:N_STREAMS];
+
+        assign slow_trip_duration = cu_write_registers[3*N_STREAMS-1:2*N_STREAMS];
+
+        assign fast_thresholds_low = cu_write_registers[4*N_STREAMS-1:3*N_STREAMS];
+        assign fast_thresholds_high = cu_write_registers[5*N_STREAMS-1:4*N_STREAMS];
+
         for (i = 0; i<N_STREAMS; i++) begin
-            
-            assign slow_thresholds_low[i] = cu_write_registers[2*i][31:0];
-            assign slow_thresholds_high[i] = cu_write_registers[2*i+1][31:0];
 
-            assign slow_trip_duration[i] = cu_write_registers[N_STREAMS*2+i][7:0];
-
-            assign fast_thresholds_low[i] = cu_write_registers[N_STREAMS*3+2*i][31:0];
-            assign fast_thresholds_high[i] = cu_write_registers[N_STREAMS*3+2*i+1][31:0];
-                    
             assign cu_read_registers[N_STREAMS*5+2*i]   = fast_fault[i];
             assign cu_read_registers[N_STREAMS*5+2*i+1] = slow_fault[i];
 
@@ -118,41 +118,53 @@ module multi_stream_fault_detector #(
 endmodule
 
 
- /**
+    /**
        {
-        "name": "stream_fault_detector",
-        "type": "peripheral",
+        "name": "multi_stream_fault_detector",
+        "type": "parametric_peripheral",
         "registers":[
             {
-                "name": "slow_tresh_low",
-                "offset": "0x0",
-                "description": "Slow fault lower treshold",
+                "name": "slow_treshold_low_$",
+                "n_regs": ["N_STREAMS"],
+                "description": "slow fault treshold low for stream $",
                 "direction": "RW"
             },
             {
-                "name": "slow_tresh_high",
-                "offset": "0x4",
-                "description": "Slow fault higher treshold",
+                "name": "slow_treshold_high_$",
+                "n_regs": ["N_STREAMS"],
+                "description": "slow fault treshold high for stream $",
                 "direction": "RW"
             },
             {
-                "name": "slow_trip_duration",
-                "offset": "0x8",
-                "description": "Number of cycles after which a slow fault is triggered",
+                "name": "slow_trip_duration_$",
+                "n_regs": ["N_STREAMS"],
+                "description": "slow fault minimum duration for stream $",
                 "direction": "RW"
             },
             {
-                "name": "fast_tresh_low",
-                "offset": "0xC",
-                "description": "Fast fault lower treshold",
+                "name": "fast_treshold_low_$",
+                "n_regs": ["N_STREAMS"],
+                "description": "fast fault treshold low for stream $",
                 "direction": "RW"
             },
             {
-                "name": "fast_tresh_high",
-                "offset": "0x10",
-                "description": "Fast fault higher treshold",
+                "name": "fast_treshold_high_$",
+                "n_regs": ["N_STREAMS"],
+                "description": "fast fault treshold high for stream $",
+                "direction": "RW"
+            },
+            {
+                "name": "fast_fault_$",
+                "n_regs": ["N_STREAMS"],
+                "description": "fast fault status for stream $",
+                "direction": "RW"
+            },
+            {
+                "name": "slow_fault_$",
+                "n_regs": ["N_STREAMS"],
+                "description": "slow fault status for stream $",
                 "direction": "RW"
             }
         ]
-    }  
+       }
     **/
