@@ -208,12 +208,12 @@ package reg_maps;
     } pmp_dab_regs;
 
     struct { 
-        int cl_transition_tresh = 0;
-        int input_voltage_addr = 'h4;
-        int startup_ramp_inc = 'h8;
-        int duty_saturation = 'hc;
-        int force_sequencing = 'h10;
-        int startup_ramp_div = 'h14;
+        int desired_output = 0;
+        int step_size = 'h4;
+        int step_duration = 'h8;
+        int ref_address = 'hc;
+        int reserved_2 = 'h10;
+        int reserved_3 = 'h14;
         int sequencing_limit_0 = 'h18;
         int sequencing_limit_1 = 'h1c;
         int sequencing_limit_2 = 'h20;
