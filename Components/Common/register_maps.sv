@@ -384,4 +384,28 @@ package reg_maps;
         int slow_fault_1    = 'h34;
     } fault_detector_2;
 
+    struct { 
+        int slow_tresh_low_0     = 'h00;
+        int slow_tresh_low_1     = 'h04;
+        int slow_tresh_low_2     = 'h08;
+        int slow_tresh_high_0    = 'h0c;
+        int slow_tresh_high_1    = 'h10;
+        int slow_tresh_high_2    = 'h14;
+        int slow_trip_duration_0 = 'h18;
+        int slow_trip_duration_1 = 'h1c;
+        int slow_trip_duration_2 = 'h20;
+        int fast_tresh_low_0     = 'h24;
+        int fast_tresh_low_1     = 'h28;
+        int fast_tresh_low_2     = 'h2c;
+        int fast_tresh_high_0    = 'h30;
+        int fast_tresh_high_1    = 'h34;
+        int fast_tresh_high_2    = 'h38;
+        int fast_fault_0    = 'h3c;
+        int fast_fault_1    = 'h40;
+        int fast_fault_2    = 'h44;
+        int slow_fault_0    = 'h48;
+        int slow_fault_1    = 'h4c;
+        int slow_fault_2    = 'h50;
+    } fault_detector_3;
+
 endpackage

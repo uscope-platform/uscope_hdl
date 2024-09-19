@@ -30,7 +30,9 @@ module PMP_buck_operating_core #(
     input wire [15:0] period,
     input wire [15:0] duty    [N_PHASES-1:0],
     input wire [15:0] phase_shifts[N_PHASES-1:0],
+    axi_stream.watcher duty_repeater,
     output reg modulator_status,
+    
     axi_stream.master operating_write
 );
 
@@ -89,6 +91,8 @@ module PMP_buck_operating_core #(
             modulator_status <= 0;
             latched_stop_request <= 0;
         end else begin
+
+            duty_repeater.valid <= 0;
             if(stop)
                 latched_stop_request <= 1;
 
@@ -167,7 +171,9 @@ module PMP_buck_operating_core #(
                     if(operating_write.ready)begin
                         operating_write.dest <= PWM_BASE_ADDR+ duty_register_offset + (operating_chain_counter+1)*'h100;
                         operating_write.data <= duty[operating_chain_counter];
-                        
+                        duty_repeater.data <=  duty[operating_chain_counter];
+                        duty_repeater.dest <= operating_chain_counter;
+                        duty_repeater.valid <= 1;
                         operating_write.valid <= 1;
 
                         if(operating_chain_counter == N_PHASES-1) begin
@@ -187,6 +193,7 @@ module PMP_buck_operating_core #(
                 wait_write_end:begin
                     if(operating_write.ready)begin
                         operating_write.valid <= 0;
+                        duty_repeater.valid <= 0;
                         opeating_state <= next_state;
                     end  
                 end
