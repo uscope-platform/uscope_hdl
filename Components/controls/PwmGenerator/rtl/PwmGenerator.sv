@@ -41,7 +41,7 @@ module PwmGenerator #(
     wire internal_timebase,timebase_enable,sync;
     wire [2:0] dividerSetting;
     wire counter_run;
-    reg selected_timebase;
+    wire selected_timebase;
     wire ext_timebase_enable;
     wire [N_CHAINS-1:0] counter_status;
     wire [N_PWM-1:0] counter_stopped_state;
@@ -61,12 +61,7 @@ module PwmGenerator #(
     end
 
 
-    always_ff @(posedge clock ) begin
-        if(ext_timebase_enable)
-            selected_timebase <= ext_timebase;
-        else
-            selected_timebase <= internal_timebase;
-    end 
+    assign selected_timebase = internal_timebase;
 
     typedef logic [31:0] addr_init_t [N_CHAINS+1];
     function addr_init_t ADDR_CALC();
