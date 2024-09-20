@@ -235,6 +235,7 @@ package reg_maps;
         int startup_ramp_inc = 'hc;
         int ps_saturation = 'h10;
         int forced_sequencing = 'h14;
+        int output_good_treshold = 'h18;
     } dab_sequencer_regs;
 
     struct { 
