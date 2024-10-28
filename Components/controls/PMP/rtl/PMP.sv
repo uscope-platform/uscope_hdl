@@ -32,6 +32,7 @@ module pre_modulation_processor #(
     axi_lite.slave axi_in,
     axi_lite.master axi_out,
     axi_stream.slave modulation_in,
+    axi_stream.watcher duty_repeater,
     output reg modulator_ready
 );
 
@@ -187,6 +188,7 @@ module pre_modulation_processor #(
                 .modulation_parameters(modulation_parameters),
                 .modulator_status(dab_modulator_status),
                 .done(dab_done),
+                .duty_repeater(duty_repeater),
                 .write_request(dab_write)
             );
 
@@ -225,6 +227,7 @@ module pre_modulation_processor #(
                 .modulation_parameters(modulation_parameters),
                 .done(buck_done),
                 .modulator_status(buck_modulator_status),
+                .duty_repeater(duty_repeater),
                 .write_request(buck_write)
             );
 
@@ -254,6 +257,7 @@ module pre_modulation_processor #(
                 .modulation_parameters(modulation_parameters),
                 .modulator_status(dab_modulator_status),
                 .done(dab_done),
+                .duty_repeater(duty_repeater),
                 .write_request(dab_write)
             );
         end else if(CONVERTER_SELECTION == "VSI") begin
@@ -312,6 +316,7 @@ module pre_modulation_processor #(
                 .period(period),
                 .modulation_parameters(modulation_parameters),
                 .done(buck_done),
+                .duty_repeater(duty_repeater),
                 .modulator_status(buck_modulator_status),
                 .write_request(buck_write)
             );

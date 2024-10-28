@@ -35,15 +35,24 @@ module counter_core #(
     
     reg [COUNTER_WIDTH-1:0] unregistered_count_out;
 
-    // output register to improve timing
+    reg [COUNTER_WIDTH-1:0] registered_count_out;
+
     always @(posedge clock) begin 
-        count_out <= unregistered_count_out;
+        registered_count_out <= unregistered_count_out;
     end
     
     reg [COUNTER_WIDTH:0] raw_shifted_counter;
     reg [COUNTER_WIDTH:0] fast_raw_shifted_counter;
 
     always_comb begin
+
+        // only register counter output when using a slower clock, otherwise timing is worsened
+        if(fast_count)begin
+            count_out <= unregistered_count_out;
+        end else begin
+            count_out <= registered_count_out;
+        end
+
         if(fast_count)begin
             if(fast_raw_shifted_counter>=reload_value)begin
                 unregistered_count_out <= fast_raw_shifted_counter-reload_value; 

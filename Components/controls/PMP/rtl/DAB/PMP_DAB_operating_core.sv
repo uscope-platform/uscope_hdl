@@ -33,6 +33,7 @@ module PMP_DAB_operating_core #(
     input wire signed [15:0] phase_shift_1,
     input wire signed [15:0] phase_shift_2,
     output reg modulator_status,
+    axi_stream.watcher duty_repeater,
     axi_stream.master operating_write
 );
 
@@ -200,12 +201,14 @@ module PMP_DAB_operating_core #(
                         if(operating_chain_counter == 1)begin
                             operating_write.dest <= PWM_BASE_ADDR + modulator_registers_address[4+operating_config_counter]+ (operating_chain_counter+1)*'h100;
                             operating_write.data <= modulator_registers_data[4+operating_config_counter];
+                            duty_repeater.data <= modulator_registers_data[4+operating_config_counter];
                         end else begin
                             operating_write.dest <= PWM_BASE_ADDR + modulator_registers_address[operating_config_counter]+ (operating_chain_counter+1)*'h100;
                             operating_write.data <= modulator_registers_data[operating_config_counter];
+                            duty_repeater.data <= modulator_registers_data[operating_config_counter];
                         end
                         
-                        
+                        duty_repeater.valid <= 1;
                         operating_write.valid <= 1;
                         if(operating_config_counter==3)begin
                             operating_config_counter <= 0;
@@ -230,6 +233,7 @@ module PMP_DAB_operating_core #(
                 wait_write_end:begin
                     if(operating_write.ready)begin
                         operating_write.valid <= 0;
+                        duty_repeater.valid <= 0;
                         opeating_state <= next_state;
                     end  
                 end

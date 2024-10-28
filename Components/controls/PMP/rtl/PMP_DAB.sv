@@ -31,6 +31,7 @@ module dab_pre_modulation_processor #(
     input wire [15:0] period,
     input wire [15:0] modulation_parameters[N_PARAMETERS-1:0],
     output reg modulator_status,
+    axi_stream.watcher duty_repeater,
     output reg done,
     axi_stream.master write_request
 );
@@ -114,6 +115,7 @@ module dab_pre_modulation_processor #(
         .phase_shift_1(phase_shift_1),
         .phase_shift_2(phase_shift_2),
         .modulator_status(modulator_status),
+        .duty_repeater(duty_repeater),
         .operating_write(operating_write)
     );
 
