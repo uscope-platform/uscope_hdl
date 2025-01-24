@@ -34,10 +34,12 @@ module PwmGenerator #(
     input wire fault,
     output wire timebase,
     output reg [N_PWM-1:0] pwm_out,
+    output reg sync_out,
     axi_lite.slave axi_in
 );
 
     //Common signals
+    wire [N_CHAINS-1:0] chains_sync_out;
     wire internal_timebase,timebase_enable,sync;
     wire [2:0] dividerSetting;
     wire counter_run;
@@ -51,6 +53,8 @@ module PwmGenerator #(
     assign timebase = internal_timebase;
     
 
+    wire [15:0] sync_out_select;
+    wire [15:0] sync_out_delay;
 
     genvar i;
 
@@ -93,6 +97,21 @@ module PwmGenerator #(
         .masters(internal_bus)
     );
 
+
+    SyncEngine #(
+        .N_CHAINS(N_CHAINS)
+    ) SyncEngine (
+        .clock(clock),
+        .enable(counter_run),
+        .sync_in(chains_sync_out),
+        .sync_select(sync_out_select),
+        .sync_delay(sync_out_delay),
+        .sync_out(sync_out)
+    );
+
+
+
+
     PwmControlUnit #(
         .INITIAL_STOPPED_STATE(INITIAL_STOPPED_STATE),
         .N_PWM(N_PWM)
@@ -105,6 +124,8 @@ module PwmGenerator #(
         .timebase_external_enable(ext_timebase_enable),
         .counter_run(counter_run),
         .sync(sync),
+        .sync_out_select(sync_out_select),
+        .sync_out_delay(sync_out_delay),
         .counter_stopped_state(counter_stopped_state),
         .axi_in(internal_bus[N_CHAINS])
     );
@@ -152,6 +173,7 @@ module PwmGenerator #(
                 .timebase(selected_timebase),
                 .external_counter_run(counter_run),
                 .counter_status(counter_status[i]),
+                .sync_out(chains_sync_out[i]),
                 .out_a(partial_pwm_out_a[i]),
                 .out_b(partial_pwm_out_b[i]),
                 .axi_in(internal_bus[i])

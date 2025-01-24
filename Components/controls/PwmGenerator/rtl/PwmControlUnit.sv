@@ -29,16 +29,25 @@ module PwmControlUnit #(
     output reg        timebase_external_enable,
     output reg        counter_run,
     output reg        sync,
+    output wire [15:0] sync_out_select,
+    output wire [15:0] sync_out_delay,
     output reg [N_PWM-1:0] counter_stopped_state,
     axi_lite.slave axi_in
 );
 
-    reg [31:0] cu_write_registers [0:0];
-    reg [31:0] cu_read_registers [0:0];
+    reg [31:0] cu_write_registers [2:0];
+    reg [31:0] cu_read_registers [2:0];
+    
+    wire [31:0] control_register;
+
+    assign control_register = cu_write_registers[0];
+    assign sync_out_select = cu_write_registers[1];
+    assign sync_out_delay = cu_write_registers[2];
+
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(1),
-        .N_WRITE_REGISTERS(1),
+        .N_READ_REGISTERS(3),
+        .N_WRITE_REGISTERS(3),
         .REGISTERS_WIDTH(32),
         .ADDRESS_MASK('hf)
     ) CU (
@@ -64,30 +73,30 @@ module PwmControlUnit #(
             wait_sync_reset <= 0;
         end else begin
             if(!wait_sync_reset)begin
-                if(cu_write_registers[0][6]) begin
+                if(control_register[6]) begin
                     sync <= 1; 
                     wait_sync_reset <= 1;
                 end else begin
                     if(~|counter_status)begin
-                        timebase_setting <= cu_write_registers[0][2:0];
-                        timebase_enable <= cu_write_registers[0][3];
-                        timebase_external_enable <= cu_write_registers[0][4];    
+                        timebase_setting <= control_register[2:0];
+                        timebase_enable <= control_register[3];
+                        timebase_external_enable <= control_register[4];    
                     end
-                    counter_run <= cu_write_registers[0][5];
-                    counter_stopped_state[N_PWM-1:0] <= cu_write_registers[0][22:7];    
+                    counter_run <= control_register[5];
+                    counter_stopped_state[N_PWM-1:0] <= control_register[22:7];    
                 end
             end else begin
                 sync <= 0;
-                if(!cu_write_registers[0][6]) begin
+                if(!control_register[6]) begin
                     wait_sync_reset <= 0;
                 end
                 if(~|counter_status)begin
-                    timebase_setting <= cu_write_registers[0][2:0];
-                    timebase_enable <= cu_write_registers[0][3];
-                    timebase_external_enable <= cu_write_registers[0][4];    
+                    timebase_setting <= control_register[2:0];
+                    timebase_enable <= control_register[3];
+                    timebase_external_enable <= control_register[4];    
                 end
-                counter_run <= cu_write_registers[0][5];
-                counter_stopped_state[N_PWM-1:0] <= cu_write_registers[0][22:7];    
+                counter_run <= control_register[5];
+                counter_stopped_state[N_PWM-1:0] <= control_register[22:7];    
             end
             
         end

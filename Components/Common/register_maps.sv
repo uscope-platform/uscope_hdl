@@ -17,6 +17,8 @@ package reg_maps;
 
       struct { 
         int timebase = 0;
+        int sync_select = 'h4;
+        int sync_delay = 'h8;
         int chain_0 = 'h100;
         int chain_1 = 'h200;
         int chain_2 = 'h300;

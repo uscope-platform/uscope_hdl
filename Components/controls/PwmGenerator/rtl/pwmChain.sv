@@ -32,6 +32,7 @@ module pwmChain #(
     input wire sync,
     input wire stop_request,
     output wire counter_status,
+    output wire sync_out,
     output wire [N_CHANNELS-1:0] out_a,
     output wire [N_CHANNELS-1:0] out_b,
     axi_lite.slave axi_in
@@ -58,7 +59,7 @@ module pwmChain #(
     reg  counter_stopped;
 
     assign counter_status = ~counter_stopped;
-    
+    assign sync_out = reload_compare;
 
     always@(posedge clock)begin
         if(~reset)begin
