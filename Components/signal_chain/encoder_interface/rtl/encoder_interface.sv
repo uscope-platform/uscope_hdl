@@ -31,8 +31,8 @@ module encoder_interface (
 
 
 
-    reg [31:0] cu_read_registers [3:0];
-    reg [31:0] cu_write_registers [3:0];
+    reg [31:0] cu_read_registers [4:0];
+    reg [31:0] cu_write_registers [4:0];
     
     axil_simple_register_cu #(
         .N_READ_REGISTERS(5),
@@ -43,7 +43,6 @@ module encoder_interface (
         .reset(reset),
         .input_registers(cu_read_registers),
         .output_registers(cu_write_registers),
-        .trigger_out(tap_write),
         .axil(axi_in)
     );
 

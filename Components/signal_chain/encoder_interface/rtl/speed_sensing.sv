@@ -34,8 +34,7 @@ module speed_sensing (
     assign speed_out = speed_register;
 
     always_ff @( posedge clock) begin
-        prev_z <= z;    
-        speed.valid <= 0;
+        prev_z <= z;
         frequency_counter <= frequency_counter+1;
         if(z & ~prev_z)begin
             if(measurement_valid)begin

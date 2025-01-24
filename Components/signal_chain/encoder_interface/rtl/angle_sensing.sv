@@ -43,7 +43,6 @@ module angle_sensing (
     assign angle_out = angle_counter;
     
     always_ff @(posedge clock) begin
-        angle.valid <= 0;
         a_prev <= a;
         b_prev <= b;
 

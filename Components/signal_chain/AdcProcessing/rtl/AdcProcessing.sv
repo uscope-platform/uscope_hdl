@@ -20,6 +20,7 @@ module AdcProcessing #(
     parameter DEST_WIDTH = 8,
     parameter USER_WIDTH = 16,
     DATA_BLOCK_BASE_ADDR = 0,
+    FAST_DATA_OFFSET = 0,
     FLTER_TAP_WIDTH = 16,
     DECIMATED = 1,
     DENOISING = 0,
@@ -183,7 +184,7 @@ module AdcProcessing #(
     assign fast_data_out.data = lin_out.data;
     assign fast_data_out.user = lin_out.user;
     assign fast_data_out.valid = lin_out.valid;
-    assign fast_data_out.dest = lin_out.dest;
+    assign fast_data_out.dest = lin_out.dest + FAST_DATA_OFFSET;
     
     generate
         if(DECIMATED==0)begin

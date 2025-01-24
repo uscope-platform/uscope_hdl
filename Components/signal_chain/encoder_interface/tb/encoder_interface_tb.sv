@@ -67,9 +67,9 @@ module encoder_interface_tb();
         //TESTS
         #5.5 reset <=1'h1;
 
-        #2 axil_bfm.write('h0, 47); // slow 1 0
-        #2 axil_bfm.write('h4, 33); // slow 1 0
-        #2 axil_bfm.write('h8, 1202); // slow 1 0
+        #2 axil_bfm.write(reg_maps::encoder_if.angle_dest, 47); // slow 1 0
+        #2 axil_bfm.write(reg_maps::encoder_if.speed_dest, 33); // slow 1 0
+        #2 axil_bfm.write(reg_maps::encoder_if.max_count, 1202); // slow 1 0
 
         ->configuration_done;
     end

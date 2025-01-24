@@ -63,6 +63,25 @@ package reg_maps;
 
 
      struct { 
+        int tresh_0l = 0;
+        int tresh_1l = 'h4;
+        int tresh_2l = 'h8;
+        int tresh_0h = 'hc;
+        int tresh_1h = 'h10;
+        int tresh_2h = 'h14;
+        int deadtime_0 = 'h18;
+        int deadtime_1 = 'h1c;
+        int deadtime_2 = 'h20;
+        int start = 'h24;
+        int stop = 'h28;
+        int tb_shift = 'h2c;
+        int out_en = 'h30;
+        int dt_en = 'h34;
+        int control = 'h38;
+     } pwm_chain_3_regs;
+
+
+     struct { 
         int cmp_low_f = 0;
         int cmp_low_r = 'h4;
         int cmp_high_f = 'h8;
@@ -159,6 +178,13 @@ package reg_maps;
         int period = 'h4;
         int treshold_1 = 'h8;
         int treshold_2 = 'hC;
+    } en_gen_2_regs; 
+    
+    struct { 
+        int enable = 0;
+        int period = 'h4;
+        int treshold_1 = 'h8;
+        int treshold_2 = 'hC;
         int treshold_3 = 'h10;
     } en_gen_3_regs; 
 
@@ -208,12 +234,6 @@ package reg_maps;
     } pmp_dab_regs;
 
     struct { 
-        int desired_output = 0;
-        int step_size = 'h4;
-        int step_duration = 'h8;
-        int ref_address = 'hc;
-        int reserved_2 = 'h10;
-        int reserved_3 = 'h14;
         int desired_output = 0;
         int step_size = 'h4;
         int step_duration = 'h8;
@@ -415,4 +435,12 @@ package reg_maps;
         int slow_fault_2    = 'h50;
     } fault_detector_3;
 
+    struct { 
+        int angle_dest = 0;
+        int speed_dest = 'h4;
+        int max_count = 'h8;
+        int angle_out = 'hC;
+        int speed_out = 'h10;
+    } encoder_if;
+    
 endpackage

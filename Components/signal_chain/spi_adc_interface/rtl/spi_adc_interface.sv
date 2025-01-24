@@ -39,13 +39,13 @@ module spi_adc_interface #(
     assign spi_transfer.data = 0;
 
     wire adc_samples_valid;
-    wire [DATAPATH_WIDTH-1:0] adc_samples_data [2:0];
+    wire [DATAPATH_WIDTH-1:0] adc_samples_data [N_CHANNELS-1:0];
 
     SPI #(
-        .N_CHANNELS(3),
+        .N_CHANNELS(N_CHANNELS),
         .OUTPUT_WIDTH(DATAPATH_WIDTH),
         .PRAGMA_MKFG_MODULE_TOP(PRAGMA_MKFG_MODULE_TOP)
-    )dab_adc_if(
+    )adc_spi(
         .clock(clock),
         .reset(reset),
         .data_valid(adc_samples_valid),
