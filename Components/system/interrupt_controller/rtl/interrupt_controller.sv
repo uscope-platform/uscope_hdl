@@ -21,14 +21,14 @@ module interrupt_controller # (
     input wire clock,
     input wire reset,
     input wire [N_INTERRUPTS-1:0] interrupt_in,
-    output wire irq,
+    output reg irq,
     axi_lite.slave axi_in
 );
 
 
 
     reg [N_INTERRUPTS-1:0] status_register = 0;
-    reg [N_INTERRUPTS-1:0] ack_register = 0;
+    reg [N_INTERRUPTS-1:0] ack_register;
 
     reg ack_trigger;
     axil_simple_register_cu #(
@@ -47,16 +47,15 @@ module interrupt_controller # (
         .axil(axi_in)
     );
 
-    assign irq = |status_register;
-
 
 
     always_ff @( posedge clock ) begin
-        if(|interrupt_in)begin
-            status_register <= status_register | interrupt_in;
-        end
+        irq <= |status_register;
+        
         if(ack_trigger)begin
             status_register <= status_register & ~ack_register;
+        end else if(|interrupt_in)begin
+            status_register <= status_register | interrupt_in;
         end
     end
 
