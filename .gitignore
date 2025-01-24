@@ -134,3 +134,4 @@ Components/signal_chain/spi_adc_interface/spi_adc_interface
 Components/signal_chain/fault_detector/stream_fault_detector
 Components/system/fcore/efi/reciprocal/efi_reciprocal
 Components/signal_chain/encoder_interface/encoder_interface
+Components/system/interrupt_controller/interrupt_controller
