@@ -31,6 +31,7 @@ module encoder_interface_tb();
     axi_stream speed();
 
 
+    localparam direction = 1;
 
     axi_lite_BFM axil_bfm;
 
@@ -69,7 +70,7 @@ module encoder_interface_tb();
 
         #2 axil_bfm.write(reg_maps::encoder_if.angle_dest, 47); // slow 1 0
         #2 axil_bfm.write(reg_maps::encoder_if.speed_dest, 33); // slow 1 0
-        #2 axil_bfm.write(reg_maps::encoder_if.max_count, 1202); // slow 1 0
+        #2 axil_bfm.write(reg_maps::encoder_if.max_count, 1000); // slow 1 0
 
         ->configuration_done;
     end
@@ -77,15 +78,26 @@ module encoder_interface_tb();
 
     
     always begin
-     #14 a = 1;
-     #14 a = 0;
+        if(direction)begin
+            #14 a = 1;
+            #14 a = 0;
+        end else begin
+            #14 b = 1;
+            #14 b = 0;
+        end
+
     end
 
     initial begin
         #7;
         forever begin
-            #14 b = 1;
-            #14 b = 0;   
+            if(direction)begin
+                #14 b = 1;
+                #14 b = 0;
+            end else begin
+                #14 a = 1;
+                #14 a = 0;
+            end
         end
     end
 
@@ -95,7 +107,7 @@ module encoder_interface_tb();
             z <= 1;
             #5;
             z <= 0;
-            #(1202*7-5);
+            #(1000*7-5);
             
         end
     end
@@ -115,7 +127,7 @@ module encoder_interface_tb();
 
         @(configuration_done);
         forever begin 
-            #50000;
+            #1000;
             sample_speed = 1;
             sample_angle = 1;
             # 1;

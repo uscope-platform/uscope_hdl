@@ -19,6 +19,7 @@
 module angle_sensing (
     input wire clock,
     input wire reset,
+    input wire enable_index_tracking,
     input wire [31:0] output_destination,
     input wire [23:0] max_count,
     input wire a,
@@ -29,6 +30,7 @@ module angle_sensing (
     axi_stream.master angle
 );
 
+    
     reg[23:0] angle_counter = 0;
     reg[23:0] zero_value = 0;
 
@@ -37,37 +39,50 @@ module angle_sensing (
     wire step = a ^ a_prev ^ b ^ b_prev;
     wire direction = a ^ b_prev;
     
-    reg zeroing_enabled;
-    reg initial_zero_tracking;
+    reg zeroing_enabled = 0;
+    reg initial_zero_tracking = 0;
 
-    assign angle_out = angle_counter;
+    assign angle_out = {{8{angle_counter[23]}},angle_counter};
     
     always_ff @(posedge clock) begin
         a_prev <= a;
         b_prev <= b;
-
-        if(angle_counter == max_count)begin
-            angle_counter <= 0;
-        end 
+ 
         
         if(step) begin
-            if(direction) 
-                angle_counter<=angle_counter+1; 
-            else 
-                angle_counter<=angle_counter-1;
-        end
-        z_prev <= z;
+            if(direction)
 
-        if(~z_prev & z)begin
-            if(initial_zero_tracking & zeroing_enabled)begin
-                angle_counter <= zero_value;
-            end else if(initial_zero_tracking) begin
-                zero_value <= angle_counter;
-                zeroing_enabled <= 1;
-            end else begin
-                initial_zero_tracking <= 1;
+                if(angle_counter >= max_count)begin
+                    angle_counter <= 0;
+                end else begin
+                    angle_counter<=angle_counter+1;
+                end
+       
+            else 
+
+                if($signed(angle_counter) <= 0)begin
+                    angle_counter <= max_count;
+                end else begin
+                    angle_counter<=angle_counter-1;
+                end
+       
+                
+        end
+        
+        if(enable_index_tracking)begin
+            z_prev <= z;
+            if(~z_prev & z)begin
+                if(initial_zero_tracking & zeroing_enabled)begin
+                    angle_counter <= zero_value;
+                end else if(initial_zero_tracking) begin
+                    zero_value <= angle_counter;
+                    zeroing_enabled <= 1;
+                end else begin
+                    initial_zero_tracking <= 1;
+                end
             end
         end
+
         
     end
 
