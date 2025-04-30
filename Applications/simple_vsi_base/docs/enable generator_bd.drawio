@@ -1,0 +1,49 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/26.0.16 Chrome/132.0.6834.196 Electron/34.2.0 Safari/537.36" version="26.0.16">
+  <diagram name="Page-1" id="WJVeDfBIBf53ZunuW_aQ">
+    <mxGraphModel dx="574" dy="348" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="M6pXU-eDk5pxYty072w7-408" value="" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="530" y="360" width="260" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="M6pXU-eDk5pxYty072w7-412" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="M6pXU-eDk5pxYty072w7-409" target="M6pXU-eDk5pxYty072w7-410">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="640" y="425" />
+              <mxPoint x="640" y="395" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M6pXU-eDk5pxYty072w7-413" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="M6pXU-eDk5pxYty072w7-409" target="M6pXU-eDk5pxYty072w7-411">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="640" y="425" />
+              <mxPoint x="640" y="455" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M6pXU-eDk5pxYty072w7-409" value="GENERATOR&lt;div&gt;COUNTER&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="540" y="410" width="90" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="M6pXU-eDk5pxYty072w7-410" value="OUTPUT COMPARATOR" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="660" y="380" width="90" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="M6pXU-eDk5pxYty072w7-411" value="OUTPUT COMPARATOR" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="660" y="440" width="90" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="M6pXU-eDk5pxYty072w7-414" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="M6pXU-eDk5pxYty072w7-410">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="790" y="395" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M6pXU-eDk5pxYty072w7-415" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.998;entryY=0.728;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" target="M6pXU-eDk5pxYty072w7-408">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="750" y="454.9" as="sourcePoint" />
+            <mxPoint x="780.1200000000001" y="454.93000000000006" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
