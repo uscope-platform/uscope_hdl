@@ -114,7 +114,7 @@ module axil_crossbar_interface #(
 
     generate
         for(i = 0; i< NS; i = i + 1) begin
-            
+            assign masters[i].BASE_ADDRESS = SLAVE_ADDR[i];
             // WRITE ADDRESS CHANNEL FLATTENING
             assign masters[i].AWVALID = M_AXI_AWVALID[i];
             assign M_AXI_AWREADY[i] = masters[i].AWREADY;
