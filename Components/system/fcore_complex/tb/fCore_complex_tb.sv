@@ -16,6 +16,7 @@
 `include "axi_lite_BFM.svh"
 `include "axis_BFM.svh"
 `include "interfaces.svh"
+`include "axi_full_bfm.svh"
 
 module fcore_complex_tb();
 
@@ -31,8 +32,6 @@ module fcore_complex_tb();
     axi_lite axi_master();
     axi_lite_BFM axil_bfm;
 
-    localparam CORE_PROGRAM = "/home/fils/git/uscope_hdl/public/Components/system/fcore_complex/tb/fCore.mem";
-    localparam TT_INIT_FILE = "/home/fils/git/uscope_hdl/public/Components/system/fcore_complex/tb/fCore_iomap.mem";
 
     reg core_start = 0;
     reg trigger_constant = 0;
@@ -42,13 +41,31 @@ module fcore_complex_tb();
     axi_stream dma_in();
     axi_stream dma_out();
 
-    AXI dummy_rom();
+
+
+
+    AXI fcore_rom_link();
+    AXI fCore_programming_bus();
+    event core_loaded, start_loading;
+
+
+
+
+    axi_xbar #(
+        .NM(1),
+        .NS(1),
+        .ADDR_WIDTH(32),
+        .SLAVE_ADDR('{'h43c00000}),
+        .SLAVE_MASK('{1{'h000F0000}})
+    ) programming_interconnect  (
+        .clock(clk),
+        .reset(reset),
+        .slaves('{fcore_rom_link}),
+        .masters('{fCore_programming_bus})
+    );
 
     fcore_complex #(
-        .INIT_FILE(CORE_PROGRAM),
-        .TRANSLATION_TABLE_INIT_FILE(TT_INIT_FILE),
-        .TRANSLATION_TABLE_INIT("FILE"),
-        .MOVER_CHANNEL_NUMBER(2),
+        .MOVER_CHANNEL_NUMBER(16),
         .MOVER_SOURCE_ADDR({1,2}),
         .MOVER_TARGET_ADDR({8,6}),
         .MAX_CHANNELS(9)
@@ -57,12 +74,11 @@ module fcore_complex_tb();
         .interface_clock(clk),
         .core_reset(reset),
         .interface_reset(reset),
+        .repeat_outputs(1),
         .start(core_start),
         .done(core_done),
-        .constant_capture_mode(1),
-        .constant_trigger(trigger_constant),
         .control_axi(axi_master),
-        .fcore_rom(dummy_rom),
+        .fcore_rom(fCore_programming_bus),
         .core_dma_in(dma_in),
         .core_dma_out(dma_out)
     );
@@ -84,17 +100,34 @@ module fcore_complex_tb();
         #10 reset <=1'h0;
         //TESTS
         #20 reset <=1'h1;
-
+        ->start_loading;
         #50;
         
+        @(core_loaded);
+        #10 axil_bfm.write('h43c02000 + reg_maps::axis_constant_regs.dest, 1);
+        #10 axil_bfm.write('h43c03000 + reg_maps::axis_constant_regs.dest, 2);
+
+        #10 axil_bfm.write('h43c02000 + reg_maps::axis_constant_regs.low, 'hBEBE);
+        #10 axil_bfm.write('h43c03000 + reg_maps::axis_constant_regs.low, 'hCAFE);
+
         #10 axil_bfm.write('h43c00000 + reg_maps::fcore_regs.n_channels, 8);
+
+
+        #10 axil_bfm.write('h43c01000 + reg_maps::axis_dynamic_dma_regs.addr_0, 'h110011);
+        #10 axil_bfm.write('h43c01000 + reg_maps::axis_dynamic_dma_regs.user_0, 'h38);
+
+        #10 axil_bfm.write('h43c01000 + reg_maps::axis_dynamic_dma_regs.addr_1, 'h130013);
+        #10 axil_bfm.write('h43c01000 + reg_maps::axis_dynamic_dma_regs.user_1, 'h38);
+
+        #10 axil_bfm.write('h43c01000 + reg_maps::axis_dynamic_dma_regs.n_ch, 2);
+
         #100;
         forever begin
             in_0 <= $urandom()%(1<<10);
             in_1 <= $urandom()%(1<<10);
             #1 dma_in_bfm.write_dest(in_0, 17);
             #1 dma_in_bfm.write_dest(in_1, 19);
-            #2 core_start = 1;
+            #40 core_start = 1;
             #1 core_start = 0;
             @(core_done);
 
@@ -122,17 +155,21 @@ module fcore_complex_tb();
         end
     end
 
-    initial begin
-        #300;
-        #10 axil_bfm.write('h43c02000 + reg_maps::axis_constant_regs.dest, 43);
-        #10 axil_bfm.write('h43c03000 + reg_maps::axis_constant_regs.dest, 44);
-        #10 axil_bfm.write('h43c04000 + reg_maps::axis_constant_regs.dest, 45);
+    axi_full_bfm #(.ADDR_WIDTH(32)) bfm_in;
 
-        #10 axil_bfm.write('h43c02000 + reg_maps::axis_constant_regs.low, 'hBEBE);
-        #10 axil_bfm.write('h43c03000 + reg_maps::axis_constant_regs.low, 'hCAFE);
-        #10 axil_bfm.write('h43c04000 + reg_maps::axis_constant_regs.low, 'hBEEF);
-        #200 trigger_constant = 1;
-        #1 trigger_constant = 0;
+    reg [31:0] prog [349:0]  = '{default:0};
+    reg  [31:0] addr = 0;
+    
+    initial begin
+        bfm_in = new(fcore_rom_link, 1);
+        $readmemh("/home/fils/git/uscope_hdl/public/Components/system/fcore_complex/tb/fCore.mem", prog);
+        @(start_loading);
+        for(integer i = 0; i<30; i++)begin
+            #5 bfm_in.write(0 + i*4, prog[i]);
+        end
+        ->core_loaded;
     end
+
+
 
 endmodule

@@ -198,7 +198,7 @@ endmodule
                 "offset": "0xC",
                 "description": "Channel selector for constants manipulation",
                 "direction": "RW",
-                fields": [
+                "fields": [
                     {
                         "name": "channel_selector",
                         "description": "Channel selector for the constant",
@@ -224,6 +224,12 @@ endmodule
                 "name": "active_channels",
                 "offset": "0x14",
                 "description": "Number of active channels, with 0 all channels are active",
+                "direction": "RW"
+            },
+            {
+                "name": "constant_user",
+                "offset": "0x18",
+                "description": "Value of the AXI stream user signal associated with the constant",
                 "direction": "RW"
             }
         ]

@@ -81,7 +81,7 @@ module fCore_compare_unit #(
                     early_compare_result.user <= operand_a.user;
                     early_compare_result.valid <= 1;                 
                 end
-                'b011100:begin // LESS THAN
+                'b011100:begin // LESS THAN OR EQUAL
                     if($signed(operand_a.data) <= $signed(operand_b.data)) begin
                         early_compare_result.data <= comparison_result;
                     end else begin
