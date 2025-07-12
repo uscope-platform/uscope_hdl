@@ -33,14 +33,16 @@ module multichannel_constant #(
 
     reg [CONSTANT_WIDTH-1:0] constant_data_memory [0:N_CONSTANTS-1][0:N_CHANNELS-1];
     reg [CONSTANT_WIDTH-1:0] constant_dest_memory [0:N_CONSTANTS-1][0:N_CHANNELS-1];
-
-    reg [31:0] cu_write_registers [5:0];
-    reg [31:0] cu_read_registers [5:0];
+    reg [CONSTANT_WIDTH-1:0] constant_user_memory [0:N_CONSTANTS-1][0:N_CHANNELS-1];
+    
+    localparam N_REGISTER = 7;
+    reg [31:0] cu_write_registers [N_REGISTER-1:0];
+    reg [31:0] cu_read_registers [N_REGISTER-1:0];
 
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(6),
-        .N_WRITE_REGISTERS(6),
+        .N_READ_REGISTERS(N_REGISTER),
+        .N_WRITE_REGISTERS(N_REGISTER),
         .REGISTERS_WIDTH(32),
         .ADDRESS_MASK('hff),
         .N_TRIGGER_REGISTERS(2),
@@ -62,13 +64,14 @@ module multichannel_constant #(
     reg [15:0] channel_selector;
     reg [15:0] constant_selector;
     reg [7:0] active_channels;
-
+    reg [31:0] constant_user;
 
     assign constant_low_bytes = cu_write_registers[0];
     assign constant_high_bytes = cu_write_registers[1];
     assign constant_dest = cu_write_registers[2];
     assign {channel_selector, constant_selector} = cu_write_registers[3];
     assign active_channels = cu_write_registers[5];
+    assign constant_user = cu_write_registers[6];
 
     assign cu_read_registers = cu_write_registers;
 
@@ -80,17 +83,20 @@ module multichannel_constant #(
                 for(int j = 0; j < N_CHANNELS; j++) begin
                     constant_data_memory[i][j] <= 0;
                     constant_dest_memory[i][j] <= 0;
+                    constant_user_memory[i][j] <= 0;
                 end
             end
         end else begin
             if(latch_constant)begin
                 constant_data_memory[constant_selector][channel_selector] <= {constant_high_bytes, constant_low_bytes};
                 constant_dest_memory[constant_selector][channel_selector] <= constant_dest;
+                constant_user_memory[constant_selector][channel_selector] <= constant_user;
                 active_constants[constant_selector] <= 1;
             end
             if(clear_constant)begin
                 constant_data_memory[constant_selector][channel_selector] <= 0;
                 constant_dest_memory[constant_selector][channel_selector] <= 0;
+                constant_user_memory[constant_selector][channel_selector] <= 0;
                 active_constants[constant_selector] <= 0;
             end
         end
@@ -118,6 +124,7 @@ module multichannel_constant #(
             const_out.valid <= 0;
         end else begin
             const_out.valid <= 0;
+            const_out.tlast <= 0;
             case (constant_sender_state)
                 idle_state: begin
                     if (sync) begin
@@ -127,15 +134,18 @@ module multichannel_constant #(
 
                 output_state: begin
 
-                    if( regular_advance | early_advance)begin
-                        channel_counter <= 0;
-                        constant_sender_state <= advance_state;
-                    end else begin
-                        channel_counter <= channel_counter + 1;
-                    end
                     if(const_out.ready) begin
+
+                        if( regular_advance | early_advance)begin
+                            channel_counter <= 0;
+                            constant_sender_state <= advance_state;
+                            if(const_counter == N_CONSTANTS-1) const_out.tlast <= 1;
+                        end else begin
+                            channel_counter <= channel_counter + 1;
+                        end
                         const_out.data <= constant_data_memory[const_counter][channel_counter];
                         const_out.dest <= constant_dest_memory[const_counter][channel_counter];
+                        const_out.user <= constant_user_memory[const_counter][channel_counter];
                         const_out.valid <= 1;
                     end
                 end
