@@ -42,7 +42,21 @@ module fcore_complex_tb();
     axi_stream dma_out();
 
 
+    localparam test_constant_in = 0;
+    localparam test_dma_in = 0;
+    localparam test_both =1;
 
+
+    initial begin
+        if(test_dma_in == 1 && test_constant_in==1)begin
+            $display("-------------------------------------------------------------------------------------");
+            $display("-------------------------------------------------------------------------------------");
+            $display("ERROR: SELECT ONLY ONE OF THE TEST PATTERNS");
+            $display("-------------------------------------------------------------------------------------");
+            $display("-------------------------------------------------------------------------------------");
+            $fatal();
+        end 
+    end
 
     AXI fcore_rom_link();
     AXI fCore_programming_bus();
@@ -84,6 +98,8 @@ module fcore_complex_tb();
     );
 
 
+    reg [15:0] out_0_addr = 7;
+    reg [15:0] out_1_addr = 12;
 
     reg [15:0] in_0;
     reg [15:0] in_1;
@@ -104,19 +120,17 @@ module fcore_complex_tb();
         #50;
         
         @(core_loaded);
-        #10 axil_bfm.write('h43c02000 + reg_maps::axis_constant_regs.dest, 1);
-        #10 axil_bfm.write('h43c03000 + reg_maps::axis_constant_regs.dest, 2);
 
-        #10 axil_bfm.write('h43c02000 + reg_maps::axis_constant_regs.low, 'hBEBE);
-        #10 axil_bfm.write('h43c03000 + reg_maps::axis_constant_regs.low, 'hCAFE);
+        #10 axil_bfm.write('h43c02000 + reg_maps::axis_constant_regs.dest, 17);
+        #10 axil_bfm.write('h43c03000 + reg_maps::axis_constant_regs.dest, 19);
 
         #10 axil_bfm.write('h43c00000 + reg_maps::fcore_regs.n_channels, 8);
 
 
-        #10 axil_bfm.write('h43c01000 + reg_maps::axis_dynamic_dma_regs.addr_0, 'h110011);
+        #10 axil_bfm.write('h43c01000 + reg_maps::axis_dynamic_dma_regs.addr_0, {out_1_addr, 16'h2});
         #10 axil_bfm.write('h43c01000 + reg_maps::axis_dynamic_dma_regs.user_0, 'h38);
 
-        #10 axil_bfm.write('h43c01000 + reg_maps::axis_dynamic_dma_regs.addr_1, 'h130013);
+        #10 axil_bfm.write('h43c01000 + reg_maps::axis_dynamic_dma_regs.addr_1, {out_0_addr, 16'h1});
         #10 axil_bfm.write('h43c01000 + reg_maps::axis_dynamic_dma_regs.user_1, 'h38);
 
         #10 axil_bfm.write('h43c01000 + reg_maps::axis_dynamic_dma_regs.n_ch, 2);
@@ -125,8 +139,21 @@ module fcore_complex_tb();
         forever begin
             in_0 <= $urandom()%(1<<10);
             in_1 <= $urandom()%(1<<10);
-            #1 dma_in_bfm.write_dest(in_0, 17);
-            #1 dma_in_bfm.write_dest(in_1, 19);
+            if(test_dma_in)begin
+
+                #1 dma_in_bfm.write_dest(in_0, 17);
+                #1 dma_in_bfm.write_dest(in_1, 19);
+            end
+            if(test_constant_in) begin
+                #1 axil_bfm.write('h43c02000 + reg_maps::axis_constant_regs.low, in_0);
+                #1 axil_bfm.write('h43c03000 + reg_maps::axis_constant_regs.low, in_1);
+            end
+
+            if(test_both) begin
+                #1 dma_in_bfm.write_dest(in_0, 17);
+                #1 axil_bfm.write('h43c03000 + reg_maps::axis_constant_regs.low, in_1);
+            end
+            
             #40 core_start = 1;
             #1 core_start = 0;
             @(core_done);
@@ -140,13 +167,13 @@ module fcore_complex_tb();
     reg [31:0] check_i_0, check_i_1;
 
     always_ff @(posedge dma_out.valid) begin 
-        if(dma_out.dest==8)begin
+        if(dma_out.dest==out_0_addr)begin
             out_0 = dma_out.data;
             check_0 = in_0 + 5;
             check_i_0 = check_0;
             assert (out_0 == check_i_0) 
             else $fatal("mult result error %d, got %d", check_0, out_0);
-        end else if(dma_out.dest == 6)begin 
+        end else if(dma_out.dest == out_1_addr)begin 
             out_1 = dma_out.data;
             check_1 = in_1*4.8;
             check_i_1 = check_1;
