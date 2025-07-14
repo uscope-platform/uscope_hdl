@@ -445,4 +445,15 @@ package reg_maps;
         int speed_out = 'h10;
     } encoder_if;
     
+    struct { 
+        int const_lsb = 0;
+        int const_hsb = 'h4;
+        int const_dest = 'h8;
+        int const_selector = 'hC;
+        int clear_constant = 'h10;
+        int active_channels = 'h14;
+        int const_user = 'h18;
+    } fcore_constant_engine;
+    
+
 endpackage

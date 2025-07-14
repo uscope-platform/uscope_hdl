@@ -26,10 +26,14 @@ module multichannel_constant #(
     input wire        clock,
     input wire        reset,
     input wire        sync,
+    output reg [7:0] n_active_constants,
     axi_stream.master const_out,
     axi_lite.slave axil
 );
 
+    initial n_active_constants = 0;
+
+    wire latch_constant, clear_constant;
 
     reg [CONSTANT_WIDTH-1:0] constant_data_memory [0:N_CONSTANTS-1][0:N_CHANNELS-1];
     reg [CONSTANT_WIDTH-1:0] constant_dest_memory [0:N_CONSTANTS-1][0:N_CHANNELS-1];
@@ -56,8 +60,6 @@ module multichannel_constant #(
         .axil(axil)
     );
 
-    reg wait_sync;
-
     reg [31:0] constant_low_bytes;
     reg [31:0] constant_high_bytes;
     reg [31:0] constant_dest;
@@ -75,7 +77,7 @@ module multichannel_constant #(
 
     assign cu_read_registers = cu_write_registers;
 
-    reg [0:N_CONSTANTS-1] active_constants;
+    reg [N_CONSTANTS-1:0] active_constants = 0;
 
     always_ff @(posedge clock) begin
         if (~reset) begin
@@ -91,6 +93,7 @@ module multichannel_constant #(
                 constant_data_memory[constant_selector][channel_selector] <= {constant_high_bytes, constant_low_bytes};
                 constant_dest_memory[constant_selector][channel_selector] <= constant_dest;
                 constant_user_memory[constant_selector][channel_selector] <= constant_user;
+                if(!active_constants[constant_selector]) n_active_constants <= n_active_constants + 1;
                 active_constants[constant_selector] <= 1;
             end
             if(clear_constant)begin
@@ -98,6 +101,7 @@ module multichannel_constant #(
                 constant_dest_memory[constant_selector][channel_selector] <= 0;
                 constant_user_memory[constant_selector][channel_selector] <= 0;
                 active_constants[constant_selector] <= 0;
+                n_active_constants <= n_active_constants - 1;
             end
         end
     end
@@ -127,19 +131,19 @@ module multichannel_constant #(
             const_out.tlast <= 0;
             case (constant_sender_state)
                 idle_state: begin
-                    if (sync) begin
-                        constant_sender_state <= output_state;
+                    if (sync && n_active_constants != 0) begin
+                        constant_sender_state <= output_state; 
                     end
                 end
 
                 output_state: begin
 
                     if(const_out.ready) begin
-
                         if( regular_advance | early_advance)begin
+                            if(const_counter == n_active_constants-1) const_out.tlast <= 1;
+                            
                             channel_counter <= 0;
                             constant_sender_state <= advance_state;
-                            if(const_counter == N_CONSTANTS-1) const_out.tlast <= 1;
                         end else begin
                             channel_counter <= channel_counter + 1;
                         end
@@ -151,11 +155,11 @@ module multichannel_constant #(
                 end
 
                 advance_state: begin
-                    if(const_counter == N_CONSTANTS-1) begin
+                    if(const_counter == n_active_constants-1) begin
                         const_counter <= 0;
                         constant_sender_state <= idle_state;
                     end else begin
-                        if(active_constants[const_counter]) begin
+                        if(active_constants[const_counter+1]) begin
                             constant_sender_state <= output_state;
                         end
                         const_counter <= const_counter + 1;
@@ -172,7 +176,7 @@ endmodule
 
     /**
        {
-        "name": "axis_constant",
+        "name": "fcore_constant_engine",
         "type": "peripheral",
         "registers":[
             {

@@ -69,8 +69,6 @@ module fCore_dma_endpoint #(
     reg [31:0] translation_table [REGISTER_FILE_DEPTH-1:0] = '{default:0};
     reg [31:0] common_io_translation_table [N_COMMON_IO-1:0] = '{default:0};
 
-    reg [$clog2(REGISTER_FILE_DEPTH)-1:0] translation_table_address;
-
     always_ff @(posedge clock) begin
         if(io_mapping.dest == 1)begin
             common_io_translation_table[table_write_address] <= table_write_data;
@@ -150,6 +148,11 @@ module fCore_dma_endpoint #(
 
     reg read_n_channels;
 
+    wire [15:0] io_address = axis_dma_read_request.data[15:0];
+
+    wire [31:0] translated_address = translation_table[io_address];
+    wire [31:0] channel_offset = axis_dma_read_request.data[31:16]*REGISTER_FILE_DEPTH;
+
     always_ff @(posedge clock) begin
         if(!reset)begin
             axi_read_addr.ready <= 1;
@@ -164,7 +167,7 @@ module fCore_dma_endpoint #(
                     stream_read_valid <= 0;
                     if(axis_dma_read_request.valid)begin
                         if(axis_dma_read_request.data > 0) begin
-                            dma_read_addr <= axis_dma_read_request.data[31:16]*REGISTER_FILE_DEPTH  + translation_table[axis_dma_read_request.data[15:0]];
+                            dma_read_addr <= channel_offset + translated_address;
                             state <= wait_read;
                             axis_dma_read_request.ready <= 0;
                             axi_read_addr.ready <= 0;
@@ -173,7 +176,7 @@ module fCore_dma_endpoint #(
                         if(axi_read_addr.data == 0) begin
                             read_n_channels <= 1;
                         end
-                        dma_read_addr <= axis_dma_read_request.data[31:16]*REGISTER_FILE_DEPTH + translation_table[axi_read_addr.data[15:0]];
+                        dma_read_addr <= channel_offset + translated_address;
                         state <= bus_read;
                         axis_dma_read_request.ready <= 0;
                         axi_read_addr.ready <= 0;

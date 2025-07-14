@@ -64,6 +64,8 @@ module fcore_complex #(
     axi_stream axis_dma_read_req();
     axi_stream axis_dma_read_resp();
 
+    wire core_done;
+
     generate
         if(EFI_TYPE == "NONE")begin
         end else if(EFI_TYPE == "TRIG") begin
@@ -102,19 +104,13 @@ module fcore_complex #(
 
     axi_lite #(.ADDR_WIDTH(AXI_ADDR_WIDTH)) fcore_axi();
     axi_lite #(.ADDR_WIDTH(AXI_ADDR_WIDTH)) dma_axi();
-    axi_lite #(.ADDR_WIDTH(AXI_ADDR_WIDTH)) constant_axi[N_CONSTANTS]();
+    axi_lite #(.ADDR_WIDTH(AXI_ADDR_WIDTH)) constants_axi();
 
-    axi_stream constant_out[N_CONSTANTS]();
-    axi_stream repeated_constant[N_CONSTANTS]();
-    axi_stream extended_repeated_constant[N_CONSTANTS]();
+    axi_stream constants_out();
 
     wire [$clog2(MAX_CHANNELS)-1:0] n_channels;
 
-    localparam N_AXI_SLAVES = 2 + N_CONSTANTS;
-
-    localparam [AXI_ADDR_WIDTH-1:0] AXI_ADDRESSES [N_AXI_SLAVES-1:0] = '{
-        DMA_BASE_ADDRESS + 'h4000,
-        DMA_BASE_ADDRESS + 'h3000,
+    localparam [AXI_ADDR_WIDTH-1:0] AXI_ADDRESSES [2:0] = '{
         DMA_BASE_ADDRESS + 'h2000,
         DMA_BASE_ADDRESS + 'h1000,
         DMA_BASE_ADDRESS
@@ -124,56 +120,33 @@ module fcore_complex #(
         .DATA_WIDTH(32),
         .ADDR_WIDTH(AXI_ADDR_WIDTH),
         .NM(1),
-        .NS(N_AXI_SLAVES),
+        .NS(3),
         .SLAVE_ADDR(AXI_ADDRESSES),
-        .SLAVE_MASK('{N_AXI_SLAVES{32'hf000}})
+        .SLAVE_MASK('{3{32'hf000}})
     ) control_interconnect (
         .clock(core_clock),
         .reset(core_reset),
         .slaves('{control_axi}),
-        .masters({constant_axi, dma_axi, fcore_axi})
+        .masters({constants_axi, dma_axi, fcore_axi})
     );
 
-    genvar n;
-    
-    for(n = 0; n<N_CONSTANTS; n=n+1)begin
-        axis_constant constant (
-            .clock(core_clock),
-            .reset(core_reset),
-            .sync(1),
-            .const_out(constant_out[n]),
-            .axil(constant_axi[n])
-        );
+    genvar n;        
 
-        axis_sync_repeater #(
-            .HOLD_VALID(1)
-        ) repeater(
-            .clock(core_clock),
-            .reset(core_reset),
-            .sync(start),
-            .in(constant_out[n]),
-            .out(repeated_constant[n])
-        );
+    wire [7:0] n_active_constants;
 
+    multichannel_constant #(
+        .CONSTANT_WIDTH(32),
+        .N_CHANNELS(MAX_CHANNELS),
+        .N_CONSTANTS(N_CONSTANTS)
+    )constants(
+        .clock(core_clock),
+        .reset(core_reset),
+        .sync(start),
+        .n_active_constants(n_active_constants),
+        .const_out(constants_out),
+        .axil(constants_axi)
+    );
 
-        multichannel_extender #(
-            .DATA_WIDTH(32),
-            .DEST_WIDTH(32),
-            .USER_WIDTH(32),
-            .MAX_CHANNELS(MAX_CHANNELS),
-            .N_REPEAT_VALUES(1)
-        )channel_extender(
-            .clock(core_clock),
-            .reset(core_reset),
-            .trigger(repeated_constant[n].valid),
-            .repetition_length(n_channels),
-            .repetition_dest('{repeated_constant[n].dest}),
-            .in(repeated_constant[n]),
-            .out(extended_repeated_constant[n])
-        );
-        
-    end
-        
     axi_stream merged_out();
 
     axi_stream_combiner #(
@@ -181,16 +154,34 @@ module fcore_complex #(
         .OUTPUT_DATA_WIDTH(32),
         .DEST_WIDTH(32),
         .USER_WIDTH(32),
-        .N_STREAMS(N_CONSTANTS+1)
+        .N_STREAMS(2)
     )constants_combiner(
         .clock(core_clock),
         .reset(core_reset),
-        .stream_in('{extended_repeated_constant, core_dma_in}),
+        .stream_in('{constants_out, core_dma_in}),
         .stream_out(merged_out)
     );
     
-    wire core_done;
-    reg start_core;
+    reg [7:0] start_delay = 0;
+    reg start_core = 0;
+    
+    always_ff @(posedge core_clock) begin
+        start_core <= 0;
+
+        if(n_active_constants == 0 && start) start_core <= 1;
+
+        if(start_delay == MAX_CHANNELS-1)begin
+            start_delay <= 0;
+            start_core <= 1;
+        end else begin
+            if(constants_out.tlast) begin
+                start_delay <= 1;
+            end else if (start_delay>0)begin
+                start_delay <= start_delay + 1;
+            end
+        end
+        
+    end
 
     fCore #(
         .PRAGMA_MKFG_MODULE_TOP("core"),
@@ -248,52 +239,6 @@ module fcore_complex #(
         .axi_in(dma_axi),
         .done(done)
     );
-
-    enum reg [2:0] {
-        wait_constants = 0,
-        idle = 1, 
-        wait_input_transfer_start = 2,
-        wait_input_transfer_end = 3,
-        wait_propagation = 4
-    } input_fsm = wait_constants;
-
-
-    reg  [3:0] propagation_delay = 0;
-    always_ff @(posedge core_clock)begin
-        case (input_fsm)
-            wait_constants:begin
-                start_core <= start;
-                if(constant_out[0].valid | constant_out[1].valid | constant_out[2].valid)begin
-                    input_fsm <= idle;
-                end
-            end
-            idle: begin
-                start_core <= 0;
-                if(start)begin
-                    input_fsm <= wait_input_transfer_start;
-                end
-            end
-            wait_input_transfer_start: begin
-                if(merged_out.valid == 1)begin
-                    input_fsm <= wait_input_transfer_end;
-                end
-            end
-            wait_input_transfer_end: begin
-                 if(merged_out.valid == 0)begin
-                    input_fsm <= wait_propagation;
-                    propagation_delay <= 0;
-                end
-            end
-            wait_propagation:begin
-                if(propagation_delay == n_channels)begin
-                    start_core <= 1;
-                    input_fsm <= idle; 
-                end
-                propagation_delay <= propagation_delay + 1;
-            end
-        endcase
-    end
-
 
 
 endmodule

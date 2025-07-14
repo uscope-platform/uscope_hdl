@@ -43,8 +43,8 @@ module fcore_complex_tb();
 
 
     localparam test_constant_in = 0;
-    localparam test_dma_in = 0;
-    localparam test_both =1;
+    localparam test_dma_in = 1;
+    localparam test_both =0;
 
 
     initial begin
@@ -80,8 +80,6 @@ module fcore_complex_tb();
 
     fcore_complex #(
         .MOVER_CHANNEL_NUMBER(16),
-        .MOVER_SOURCE_ADDR({1,2}),
-        .MOVER_TARGET_ADDR({8,6}),
         .MAX_CHANNELS(9)
     )UUT(
         .core_clock(clk),
@@ -97,6 +95,8 @@ module fcore_complex_tb();
         .core_dma_out(dma_out)
     );
 
+    reg [15:0] in_0_addr = 17;
+    reg [15:0] in_1_addr = 19;
 
     reg [15:0] out_0_addr = 7;
     reg [15:0] out_1_addr = 12;
@@ -120,9 +120,11 @@ module fcore_complex_tb();
         #50;
         
         @(core_loaded);
+    
 
-        #10 axil_bfm.write('h43c02000 + reg_maps::axis_constant_regs.dest, 17);
-        #10 axil_bfm.write('h43c03000 + reg_maps::axis_constant_regs.dest, 19);
+
+        #10 axil_bfm.write('h43c02000 + reg_maps::fcore_constant_engine.active_channels, 3);
+        #10 axil_bfm.write('h43c02000 + reg_maps::fcore_constant_engine.const_user, 'h38);
 
         #10 axil_bfm.write('h43c00000 + reg_maps::fcore_regs.n_channels, 8);
 
@@ -139,19 +141,30 @@ module fcore_complex_tb();
         forever begin
             in_0 <= $urandom()%(1<<10);
             in_1 <= $urandom()%(1<<10);
-            if(test_dma_in)begin
 
-                #1 dma_in_bfm.write_dest(in_0, 17);
-                #1 dma_in_bfm.write_dest(in_1, 19);
+            if(test_dma_in)begin
+                #1 dma_in_bfm.write_dest(in_0, in_0_addr);
+                #1 dma_in_bfm.write_dest(in_1, in_1_addr);
             end
+
             if(test_constant_in) begin
-                #1 axil_bfm.write('h43c02000 + reg_maps::axis_constant_regs.low, in_0);
-                #1 axil_bfm.write('h43c03000 + reg_maps::axis_constant_regs.low, in_1);
+                
+                #1 axil_bfm.write('h43c02000 + reg_maps::fcore_constant_engine.const_selector, 'h0000);
+                #1 axil_bfm.write('h43c02000 + reg_maps::fcore_constant_engine.const_dest, in_0_addr);
+                #1 axil_bfm.write('h43c02000 + reg_maps::fcore_constant_engine.const_lsb, in_0);
+
+                #1 axil_bfm.write('h43c02000 + reg_maps::fcore_constant_engine.const_selector, 'h0001);
+                #1 axil_bfm.write('h43c02000 + reg_maps::fcore_constant_engine.const_dest, in_1_addr);
+                #1 axil_bfm.write('h43c02000 + reg_maps::fcore_constant_engine.const_lsb, in_1);
+
             end
 
             if(test_both) begin
-                #1 dma_in_bfm.write_dest(in_0, 17);
-                #1 axil_bfm.write('h43c03000 + reg_maps::axis_constant_regs.low, in_1);
+                #1 dma_in_bfm.write_dest(in_0, in_0_addr);
+
+                #1 axil_bfm.write('h43c02000 + reg_maps::fcore_constant_engine.const_selector, 'h0001);
+                #1 axil_bfm.write('h43c02000 + reg_maps::fcore_constant_engine.const_dest, in_1_addr);
+                #1 axil_bfm.write('h43c02000 + reg_maps::fcore_constant_engine.const_lsb, in_1);
             end
             
             #40 core_start = 1;
