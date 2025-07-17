@@ -43,7 +43,8 @@ module fcore_complex #(
     parameter AXI_ADDR_WIDTH = 32,
     parameter N_CONSTANTS = 3,
     parameter REPEAT_MODE = 0,
-    parameter MULTICHANNEL_MODE = 0
+    parameter MULTICHANNEL_MODE = 0,
+    parameter RAW_AXI_ACCESS = 0
 )(
     input wire core_clock,
     input wire interface_clock,
@@ -202,7 +203,8 @@ module fcore_complex #(
         .CONDITIONAL_SELECT_IMPLEMENTED(CONDITIONAL_SELECT_IMPLEMENTED),
         .FULL_COMPARE(FULL_COMPARE),
         .TRANSLATION_TABLE_INIT(TRANSLATION_TABLE_INIT),
-        .MAX_CHANNELS(MAX_CHANNELS)
+        .MAX_CHANNELS(MAX_CHANNELS),
+        .RAW_AXI_ACCESS(RAW_AXI_ACCESS)
     )  core (
         .clock(core_clock),
         .axi_clock(interface_clock),

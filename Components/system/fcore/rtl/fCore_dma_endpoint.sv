@@ -80,9 +80,10 @@ module fCore_dma_endpoint #(
     wire [15:0] axis_channel_address = axis_dma_write.dest[31:16];
     wire [15:0] axis_register_address = translation_table[axis_dma_write.dest[15:0]];
 
+    wire [7:0] axi_io_address = axi_write_data.dest[7:0];
 
-    wire [15:0] axi_channel_address = axi_write_data.dest[31:16];
-    wire [15:0] axi_register_address = translation_table[axi_write_data.dest[15:0]];
+    wire [7:0] axi_channel_address = axi_write_data.dest[15:8];
+    wire [7:0] axi_register_address = translation_table[axi_io_address];
 
     assign axi_write_data.ready = 1;
     assign axis_dma_write.ready = 1;
@@ -114,7 +115,7 @@ module fCore_dma_endpoint #(
                     reg_dma_write.dest <= axi_write_data.dest;
                     reg_dma_write.data <= axi_write_data.data;
                     reg_dma_write.valid <= 1;
-                end else if(translation_table[axi_write_data.dest[15:0]] != 0) begin
+                end else if(axi_register_address != 0) begin
                     reg_dma_write.dest <= axi_channel_address*REGISTER_FILE_DEPTH +  axi_register_address;
                     reg_dma_write.data <= axi_write_data.data;
                     reg_dma_write.valid <= 1;   
@@ -148,9 +149,9 @@ module fCore_dma_endpoint #(
 
     reg read_n_channels;
 
-    wire [15:0] io_address = axis_dma_read_request.data[15:0];
+    wire [15:0] out_io_address = axis_dma_read_request.data[15:0];
 
-    wire [31:0] translated_address = translation_table[io_address];
+    wire [31:0] translated_address = translation_table[out_io_address];
     wire [31:0] channel_offset = axis_dma_read_request.data[31:16]*REGISTER_FILE_DEPTH;
 
     always_ff @(posedge clock) begin

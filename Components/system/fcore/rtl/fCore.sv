@@ -35,7 +35,8 @@ module fCore #(
     parameter CONDITIONAL_SELECT_IMPLEMENTED = 1,
     parameter FULL_COMPARE = 1,
     parameter TRANSLATION_TABLE_INIT = "TRANSPARENT",
-    parameter MAX_CHANNELS = 4
+    parameter MAX_CHANNELS = 4,
+    parameter RAW_AXI_ACCESS = 1
 )(
     input wire clock,
     input wire axi_clock,
@@ -304,6 +305,7 @@ module fCore #(
         .REG_ADDR_WIDTH(REG_ADDR_WIDTH),
         .REGISTER_FILE_DEPTH(REGISTER_FILE_DEPTH),
         .TRANSLATION_TABLE_INIT(TRANSLATION_TABLE_INIT),
+        .RAW_AXI_ACCESS(RAW_AXI_ACCESS),
         .TRANSLATION_TABLE_INIT_FILE(TRANSLATION_TABLE_INIT_FILE)
     )dma_ep(
         .clock(clock),
