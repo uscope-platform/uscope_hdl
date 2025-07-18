@@ -6,11 +6,10 @@
             "enable_generator",
             "enable_generator_core"
         ],
-        "synth_tl": "enable_generator_2",
+        "synth_tl": "enable_generator_param",
         "sim_modules":[
-            "EnableGen_core_tb"
         ],
-        "sim_tl":"EnableGen_tb",
+        "sim_tl":"enable_generator_param_tb",
         "include_paths":[
             "Components/Common"
         ]
