@@ -1,0 +1,21 @@
+{
+    "general": {
+        "include_paths": [
+            "Components/Common"
+        ],
+        "project_name": "noise_generator",
+        "sim_modules": [],
+        "sim_tl": "noise_generator_tb",
+        "synth_modules": [],
+        "synth_tl": "noise_generator",
+        "target_part": "xc7z020clg400"
+    },
+    "excluded_modules": [],
+    "scripts": [
+        {
+            "arguments": [],
+            "name": "set_properties.tcl",
+            "type": "tcl"
+        }
+    ]
+}
