@@ -20,7 +20,6 @@ module enable_generator_param #(
     COUNTER_WIDTH = 32
 )(
     input wire        clock,
-    input wire        ext_timebase,
     input wire        reset,
     input wire        gen_enable_in,
     output wire [N_ENABLES-1:0]  enable_out,
