@@ -3,6 +3,7 @@
 
 module noise_generator #(
     OUTPUT_WIDTH = 32,
+    parameter GAUSSIAN_OUT = 1,
     parameter LFSR_WIDTH = 21,
     parameter N_PRBS_GENERATORS = 16,
     parameter [LFSR_WIDTH-1:0] INITIAL_STATE [N_PRBS_GENERATORS-1:0] = '{
@@ -131,7 +132,7 @@ module noise_generator #(
                             end
                             if(data_out.ready)begin
                                 state_reg[i] <= state_out[i];
-                                data_out.data <= gaussian_erf[generators_out];
+                                data_out.data <= GAUSSIAN_OUT == 1 ? gaussian_erf[generators_out]: generators_out;
                                 data_out.dest <= output_dest[output_counter];
                                 data_out.valid <= 1'b1;
                             end
