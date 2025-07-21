@@ -29,6 +29,7 @@ module noise_generator #(
     input wire clock,
     input wire reset,
     input wire trigger,
+    output wire active,
     axi_lite.slave axi_in,
     axi_stream.master data_out
 );
@@ -50,6 +51,8 @@ module noise_generator #(
         .axil(axi_in)
     );
 
+    
+
     assign cu_read_registers = cu_write_registers;
 
     wire [31:0] active_outputs;
@@ -57,6 +60,8 @@ module noise_generator #(
     assign active_outputs = cu_write_registers[0];
 
     wire [31:0] output_dest [N_OUTPUTS-1:0];
+
+    assign active = |active_outputs;
 
 
     generate
@@ -88,6 +93,14 @@ module noise_generator #(
     
     reg[7:0] output_counter = 0;
 
+    initial begin
+        data_out.valid = 1'b0;
+        data_out.tlast = 1'b0;
+        data_out.data = 0;
+        data_out.dest = 0;
+        data_out.user = get_axis_metadata(16, 0, 0);
+    end
+    wire [15:0] noise_gen_out = GAUSSIAN_OUT == 1 ? gaussian_erf[generators_out]: generators_out;
     generate
         genvar i;
         
@@ -132,7 +145,7 @@ module noise_generator #(
                             end
                             if(data_out.ready)begin
                                 state_reg[i] <= state_out[i];
-                                data_out.data <= GAUSSIAN_OUT == 1 ? gaussian_erf[generators_out]: generators_out;
+                                data_out.data <= {{data_out.DATA_WIDTH-16{noise_gen_out[15]}}, noise_gen_out};
                                 data_out.dest <= output_dest[output_counter];
                                 data_out.valid <= 1'b1;
                             end
