@@ -14,6 +14,7 @@
 *.log
 *.jou
 *.o
+*.pb
 **/.Xil/
 **/\.ipynb_checkpoints/
 #SPECIFIC DIRECTORY IGNORES
@@ -136,3 +137,4 @@ Components/system/fcore/efi/reciprocal/efi_reciprocal
 Components/signal_chain/encoder_interface/encoder_interface
 Components/system/interrupt_controller/interrupt_controller
 Components/system/fcore_infrastructure/multichannel_constant/multichannel_constant
+Components/signal_chain/noise_generator/noise_generator
