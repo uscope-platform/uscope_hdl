@@ -16,7 +16,9 @@
 `timescale 10 ns / 1 ns
 `include "interfaces.svh"
 
-module speed_sensing (
+module speed_sensing #(
+    parameter COUNTER_WIDTH = 24
+)(
     input wire clock,
     input wire reset,
     input wire z,
@@ -26,8 +28,8 @@ module speed_sensing (
     axi_stream.master speed
 );
 
-    reg [23:0] frequency_counter = 0;
-    reg [23:0] speed_register;
+    reg [COUNTER_WIDTH-1:0] frequency_counter = 0;
+    reg [COUNTER_WIDTH-1:0] speed_register;
     reg prev_z;
     reg measurement_valid = 0;
     

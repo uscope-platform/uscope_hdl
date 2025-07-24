@@ -16,7 +16,9 @@
 `timescale 10 ns / 1 ns
 `include "interfaces.svh"
 
-module encoder_interface (
+module encoder_interface #(
+    parameter COUNTER_WIDTH = 24
+)(
     input wire clock,
     input wire reset,
     input wire a,
@@ -79,7 +81,9 @@ module encoder_interface (
     );
     
 
-    speed_sensing speed_measurement(
+    speed_sensing #(
+        .COUNTER_WIDTH(COUNTER_WIDTH)
+    ) speed_measurement(
         .clock(clock),
         .reset(reset),
         .output_destination(speed_dest),
