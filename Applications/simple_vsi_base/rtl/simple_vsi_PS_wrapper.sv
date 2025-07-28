@@ -1,5 +1,5 @@
 
-module zynqmp_PS_wrapper (
+module simple_vsi_PS_wrapper (
     output wire logic_clock,
     output wire [0:0]reset,
     axi_lite.master control_axi,
@@ -9,7 +9,7 @@ module zynqmp_PS_wrapper (
 
 
 
-    ps_system PS (
+    ps PS (
         .logic_clock(logic_clock),
         .reset(reset),
         .control_axi_araddr(control_axi.ARADDR),
