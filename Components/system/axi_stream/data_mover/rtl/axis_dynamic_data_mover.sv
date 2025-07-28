@@ -74,8 +74,8 @@ module axis_dynamic_data_mover #(
         end
     endgenerate
 
-    reg [DATA_WIDTH-1:0] data_buffers [MAX_CHANNELS-1:0];
-
+    reg [DATA_WIDTH-1:0] data_buffers [MAX_CHANNELS-1:0] = {default:0};
+    reg buffer_valid = 0;
 
     reg mover_active;
     reg [$clog2(MAX_CHANNELS)-1:0] channel_sequencer;

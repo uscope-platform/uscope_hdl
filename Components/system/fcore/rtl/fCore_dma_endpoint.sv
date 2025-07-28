@@ -44,6 +44,9 @@ module fCore_dma_endpoint #(
     );
 
     
+    initial n_channels = 0;
+    initial program_size = 0;
+
     axi_stream axi_read_addr();
     axi_stream axi_read_data();
     axi_stream axi_write_data();
