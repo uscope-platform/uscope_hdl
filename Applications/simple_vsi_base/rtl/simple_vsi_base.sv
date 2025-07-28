@@ -1,5 +1,5 @@
 
-module hped_base (
+module simple_vsi_base (
     output wire user_led_a,
     output wire user_led_b,
     //GATES
@@ -24,7 +24,16 @@ module hped_base (
     output wire dc_spi_clk,
     output wire dc_spi_cs,
     input wire dc_spi_data_v,
-    input wire dc_spi_data_i
+    input wire dc_spi_data_i,
+
+    output wire pmod_1,
+    output wire pmod_2,
+    output wire pmod_3,
+    output wire pmod_4,
+    output wire pmod_5,
+    output wire pmod_6,
+    output wire pmod_7,
+    output wire pmod_8
   
 );
 
@@ -73,7 +82,15 @@ module hped_base (
         .dc_spi_clk(dc_spi_clk),
         .dc_spi_cs(dc_spi_cs),
         .dc_spi_data_v(dc_spi_data_v),
-        .dc_spi_data_i(dc_spi_data_i)
+        .dc_spi_data_i(dc_spi_data_i),
+        .pmod_1(pmod_1),
+        .pmod_2(pmod_2),
+        .pmod_3(pmod_3),
+        .pmod_4(pmod_4),
+        .pmod_5(pmod_5),
+        .pmod_6(pmod_6),
+        .pmod_7(pmod_7),
+        .pmod_8(pmod_8)
     
     );
 

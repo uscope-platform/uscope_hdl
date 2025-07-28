@@ -1,0 +1,31 @@
+{
+    "general":{
+        "project_name":"simple_vsi_base",
+        "target_part":"xc7z020clg400",
+        "board":"xilinx.com:k26c:part0:1.4",
+	    "synth_modules":[],
+        "synth_tl": "hped_base",
+        "sim_modules":[],
+        "sim_tl":"hped_base_tb",
+        "include_paths":[
+            "Components/Common"
+        ]
+    },
+    "scripts":[
+        {
+            "name":"set_properties.tcl",
+            "type": "tcl",
+            "arguments":[]
+        },
+        {
+            "name":"base_zynqmp_xvc.tcl",
+            "type": "tcl",
+            "arguments":[]
+        }
+    ],
+    "excluded_modules":[
+        "ps_system"
+    ],
+    "constraints": [
+    ]
+}

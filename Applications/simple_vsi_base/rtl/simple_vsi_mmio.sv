@@ -1,5 +1,5 @@
 
-module hped_mmio #(
+module simple_vsi_mmio #(
     parameter N_DATAPOINTS = 12,
     parameter BASE_ADDRESS = 0
 ) (

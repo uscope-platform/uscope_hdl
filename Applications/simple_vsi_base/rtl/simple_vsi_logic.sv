@@ -1,5 +1,5 @@
 
-module hped_drive_logic (
+module simple_vsi_logic (
     input wire clock,
     input wire reset,
     AXI.master data_axi, 
@@ -30,7 +30,17 @@ module hped_drive_logic (
     output wire dc_spi_clk,
     output wire dc_spi_cs,
     input wire dc_spi_data_v,
-    input wire dc_spi_data_i
+    input wire dc_spi_data_i,
+
+    output wire pmod_1,
+    output wire pmod_2,
+    output wire pmod_3,
+    output wire pmod_4,
+    output wire pmod_5,
+    output wire pmod_6,
+    output wire pmod_7,
+    output wire pmod_8
+  
   
 );
 
@@ -311,7 +321,7 @@ module hped_drive_logic (
         .stream_out(mmio_data)
     );
 
-     hped_mmio #(
+     simple_vsi_mmio #(
         .N_DATAPOINTS(18),
         .BASE_ADDRESS(MMIO_TB)
      ) mmio (
@@ -344,6 +354,13 @@ module hped_drive_logic (
 
     assign dc_sensing_en = ctrl_word[0];
     assign user_led_b = dc_sensing_en;
+
+    assign pmod_1 = ph_spi_clk;
+    assign pmod_2 = ph_spi_cs;
+    assign pmod_3 = dc_spi_clk;
+    assign pmod_4 = dc_spi_cs;
+    assign pmod_3 = ph_spi_data_v_a;
+    assign pmod_4 = dc_spi_data_v;
 
 
 
