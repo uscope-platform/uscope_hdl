@@ -37,7 +37,8 @@ module fCore_common_io #(
     axis_fifo_xpm #(
         .DATA_WIDTH(32),
         .DEST_WIDTH(32),
-        .FIFO_DEPTH(16)
+        .FIFO_DEPTH(16),
+        .SIM_ASSERT_CHK(0)
     )fifo_in(
         .clock(clock),
         .reset(reset),
