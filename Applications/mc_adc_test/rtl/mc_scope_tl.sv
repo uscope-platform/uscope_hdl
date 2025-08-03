@@ -138,6 +138,7 @@ module mc_scope_tl #(parameter BASE_ADDRESS = 'h43c00000)(
     enable_generator_counter ctr(
         .clock(clock),
         .reset(reset),
+        .pause(0),
         .gen_enable_in(enable),
         .period(833),
         .counter_out(counter)

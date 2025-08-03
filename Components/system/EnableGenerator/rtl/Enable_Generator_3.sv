@@ -74,6 +74,7 @@ module enable_generator_3 #(
     enable_generator_counter counter(
         .clock(clock),
         .reset(reset),
+        .pause(0),
         .external_timebase(ext_timebase),
         .gen_enable_in(bus_enable | gen_enable_in),
         .period(period),

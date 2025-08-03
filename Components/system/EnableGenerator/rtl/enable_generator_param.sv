@@ -22,6 +22,7 @@ module enable_generator_param #(
     input wire        clock,
     input wire        reset,
     input wire        gen_enable_in,
+    input wire        pause,
     output wire [N_ENABLES-1:0]  enable_out,
     axi_lite.slave axil
 );
@@ -65,6 +66,7 @@ module enable_generator_param #(
         .clock(clock),
         .reset(reset),
         .gen_enable_in(bus_enable | gen_enable_in),
+        .pause(pause),
         .period(period),
         .counter_out(count)
     );

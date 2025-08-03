@@ -76,6 +76,7 @@ module multiphase_reference_generator #(
     enable_generator_counter angle_emulator_tb(
         .clock(clock),
         .reset(reset),
+        .pause(0),
         .gen_enable_in(emulate_angle),
         .period(emulation_sampling_period),
         .counter_out(emulator_tb)

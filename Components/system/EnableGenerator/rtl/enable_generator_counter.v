@@ -18,6 +18,7 @@ module enable_generator_counter #(parameter COUNTER_WIDTH = 32, EXTERNAL_TIMEBAS
     input wire       clock,
     input wire       reset,
     input wire       external_timebase,
+    input wire       pause,
     input wire       gen_enable_in,
     input wire [COUNTER_WIDTH-1:0] period,
     output wire [COUNTER_WIDTH-1:0] counter_out
@@ -64,7 +65,7 @@ module enable_generator_counter #(parameter COUNTER_WIDTH = 32, EXTERNAL_TIMEBAS
                     if(enable_counter==internal_period-1) begin
                         enable_counter <= 0;
                     end else begin
-                        enable_counter <= enable_counter+1;
+                        if(~pause) enable_counter <= enable_counter+1;
                     end
                 end else begin
                     enable_counter <= 0;
