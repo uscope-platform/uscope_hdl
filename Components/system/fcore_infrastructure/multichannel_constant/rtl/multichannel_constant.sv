@@ -110,6 +110,7 @@ module multichannel_constant #(
     
 
     reg[7:0] const_counter = 0;
+    reg[7:0] const_pointer = 0;
     reg[7:0] channel_counter = 0;
 
     wire early_advance = channel_counter == active_channels-1 && active_channels != 0;
@@ -131,6 +132,9 @@ module multichannel_constant #(
             const_out.tlast <= 0;
             case (constant_sender_state)
                 idle_state: begin
+                    const_pointer <= 0;
+                    const_counter <= 0;
+                    channel_counter <= 0;
                     if (sync && n_active_constants != 0) begin
                         constant_sender_state <= output_state; 
                     end
@@ -141,15 +145,15 @@ module multichannel_constant #(
                     if(const_out.ready) begin
                         if( regular_advance | early_advance)begin
                             if(const_counter == n_active_constants-1) const_out.tlast <= 1;
-                            
+                            const_pointer <= const_pointer + 1;
                             channel_counter <= 0;
                             constant_sender_state <= advance_state;
                         end else begin
                             channel_counter <= channel_counter + 1;
                         end
-                        const_out.data <= constant_data_memory[const_counter][channel_counter];
-                        const_out.dest <= constant_dest_memory[const_counter][channel_counter];
-                        const_out.user <= constant_user_memory[const_counter][channel_counter];
+                        const_out.data <= constant_data_memory[const_pointer][channel_counter];
+                        const_out.dest <= constant_dest_memory[const_pointer][channel_counter];
+                        const_out.user <= constant_user_memory[const_pointer][channel_counter];
                         const_out.valid <= 1;
                     end
                 end
@@ -159,10 +163,12 @@ module multichannel_constant #(
                         const_counter <= 0;
                         constant_sender_state <= idle_state;
                     end else begin
-                        if(active_constants[const_counter+1]) begin
+                        if(active_constants[const_pointer]) begin
                             constant_sender_state <= output_state;
+                            const_counter <= const_counter + 1;
+                        end else begin
+                            const_pointer <= const_pointer + 1;
                         end
-                        const_counter <= const_counter + 1;
                     end
                 end
             endcase
