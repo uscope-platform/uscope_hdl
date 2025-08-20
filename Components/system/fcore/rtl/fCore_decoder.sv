@@ -36,6 +36,7 @@ module fCore_decoder #(
     output reg [OPCODE_WIDTH-1:0] exec_opcode,
     output reg common_io_sel_a,
     output reg common_io_sel_b,
+    output reg common_io_sel_c,
     output reg core_stop,
     axi_stream.slave instruction_stream,
     axi_stream.master operand_a_if,
@@ -58,9 +59,10 @@ module fCore_decoder #(
     wire [REG_ADDR_WIDTH-1:0] alu_dest;
     assign alu_dest = instruction_stream.data[OPCODE_WIDTH+3*REG_ADDR_WIDTH-1:OPCODE_WIDTH+2*REG_ADDR_WIDTH];
 
-    wire common_io_a, common_io_b;
+    wire common_io_a, common_io_b, common_io_c;
     assign common_io_a = instruction_stream.data[(OPCODE_WIDTH+3*REG_ADDR_WIDTH-1)+1];
     assign common_io_b = instruction_stream.data[(OPCODE_WIDTH+3*REG_ADDR_WIDTH-1)+2];
+    assign common_io_c = instruction_stream.data[(OPCODE_WIDTH+3*REG_ADDR_WIDTH-1)+3];
 
     wire [IMMEDIATE_WIDTH-1:0] load_reg_val;
     assign load_reg_val = instruction_stream.data[OPCODE_WIDTH+REG_ADDR_WIDTH+12:OPCODE_WIDTH+REG_ADDR_WIDTH];
@@ -206,6 +208,10 @@ module fCore_decoder #(
                     operation_if.valid <= 1;
                 end
                 fcore_isa::CSEL: begin
+
+                    common_io_sel_a <= common_io_a;
+                    common_io_sel_b <= common_io_b;
+                    common_io_sel_c <= common_io_c;
                     operand_a_if.dest <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.user <= operand_a+(2**REG_ADDR_WIDTH*channel_address);
                     operand_a_if.valid <= 1;

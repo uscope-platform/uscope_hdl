@@ -115,6 +115,7 @@ module fCore #(
 
     wire [DATAPATH_WIDTH-1:0] constant_data_a;
     wire [DATAPATH_WIDTH-1:0] constant_data_b; 
+    wire [DATAPATH_WIDTH-1:0] constant_data_c; 
 
     wire [REG_ADDR_WIDTH-1:0] dma_read_addr;
     wire [DATAPATH_WIDTH-1:0] dma_read_data;
@@ -124,7 +125,7 @@ module fCore #(
 
     wire [1:0] mem_efi_enable;
     wire [15:0] program_size;
-    wire common_io_sel_a, common_io_sel_b;
+    wire common_io_sel_a, common_io_sel_b, common_io_sel_c;
 
     axi_stream instruction_stream();
     axi_stream io_mapping();
@@ -174,6 +175,7 @@ module fCore #(
         .core_stop(core_stop),
         .common_io_sel_a(common_io_sel_a),
         .common_io_sel_b(common_io_sel_b),
+        .common_io_sel_c(common_io_sel_c),
         .operand_a_if(operand_a),
         .operand_b_if(operand_b),
         .operand_c_if(operand_c),
@@ -196,11 +198,12 @@ module fCore #(
     assign operand_a.ready = operand_a_dly.ready;
     assign operand_b.ready = operand_b_dly.ready;
 
-    reg common_io_sel_a_dly, common_io_sel_b_dly;
+    reg common_io_sel_a_dly, common_io_sel_b_dly, common_io_sel_c_dly;
 
     always@(posedge clock)begin
         common_io_sel_a_dly <= common_io_sel_a;
         common_io_sel_b_dly <= common_io_sel_b;
+        common_io_sel_c_dly <= common_io_sel_c;
         operand_a_dly.dest <= operand_a.dest;
         operand_a_dly.user <= operand_a.user;
         operand_a_dly.valid <= operand_a.valid;
@@ -223,6 +226,11 @@ module fCore #(
             operand_b_dly.data <= operand_data_b;
         end
 
+        if(common_io_sel_c_dly)begin
+            operand_c_dly.data <= constant_data_c;
+        end else begin
+            operand_c_dly.data <= operand_data_c;
+        end
     end
 
     generate
@@ -335,8 +343,10 @@ module fCore #(
         .dma_in(common_io_dma),
         .read_address_a(operand_a.dest),
         .read_address_b(operand_b.dest),
+        .read_address_c(operand_c.dest),
         .read_data_a(constant_data_a),
-        .read_data_b(constant_data_b)
+        .read_data_b(constant_data_b),
+        .read_data_c(constant_data_c)
     );
 
     fCore_Istore #(

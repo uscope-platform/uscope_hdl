@@ -28,8 +28,10 @@ module fCore_common_io #(
     axi_stream dma_in,
     input wire [$clog2(N_IO)-1:0] read_address_a,
     input wire [$clog2(N_IO)-1:0] read_address_b,
+    input wire [$clog2(N_IO)-1:0] read_address_c,
     output reg [31:0] read_data_a,
-    output reg [31:0] read_data_b
+    output reg [31:0] read_data_b,
+    output reg [31:0] read_data_c
 );
 
     axi_stream in_buffered();
@@ -75,6 +77,7 @@ module fCore_common_io #(
 
         read_data_a <= common_io_memory[read_address_a];
         read_data_b <= common_io_memory[read_address_b];
+        read_data_c <= common_io_memory[read_address_c];
         
         if(in_buffered.valid & in_buffered.ready)begin
            common_io_memory[in_buffered.dest] <= in_buffered.data;
