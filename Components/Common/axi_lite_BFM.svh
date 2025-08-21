@@ -19,7 +19,7 @@
 `define AXI_LITE_BFM_SV
 
 
-class axi_lite_BFM #(DATA_WIDTH = 32, ADDR_WIDTH = 32, INTERFACE_NAME = "IF");
+class axi_lite_BFM #(DATA_WIDTH = 32, ADDR_WIDTH = 32, INTERFACE_NAME = "IF", ENABLE_LOGGING = 1);
 
     virtual axi_lite #(DATA_WIDTH, ADDR_WIDTH, INTERFACE_NAME) bus;
     real clock_period;
@@ -68,7 +68,7 @@ class axi_lite_BFM #(DATA_WIDTH = 32, ADDR_WIDTH = 32, INTERFACE_NAME = "IF");
         this.bus.WDATA <= 0;
         this.bus.WSTRB <= 0;
         @(this.bus.BVALID);
-        $display("WRITING TO ADDRESS: %h,    VALUE: %d", address, data);
+        if(ENABLE_LOGGING) $display("WRITING TO ADDRESS: %h,    VALUE: %d", address, data);
         #(this.clock_period);
     endtask
 
