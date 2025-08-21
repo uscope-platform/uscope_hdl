@@ -44,7 +44,8 @@ module fcore_complex #(
     parameter N_CONSTANTS = 3,
     parameter REPEAT_MODE = 0,
     parameter MULTICHANNEL_MODE = 0,
-    parameter RAW_AXI_ACCESS = 0
+    parameter RAW_AXI_ACCESS = 0,
+    parameter ENABLE_ASSERTIONS = 1
 )(
     input wire core_clock,
     input wire interface_clock,
@@ -58,29 +59,35 @@ module fcore_complex #(
     axi_stream.slave core_dma_in,
     axi_stream.master core_dma_out
 );
+    
+    if(ENABLE_ASSERTIONS)begin
+        start_request_pulse: assert property(@(posedge core_clock) start |=> !start) else begin
+            $display("-----------------------------------------------------------------");
+            $display("ERROR: The start signal must be asserted only for a single clock cycle.");
+            $display("%m");
+            $display("-----------------------------------------------------------------");
+            $fatal();
+        end
 
-    start_request_pulse: assert property(@(posedge core_clock) start |=> !start) else begin
-        $display("-----------------------------------------------------------------");
-        $display("ERROR: The start signal must be asserted only for a single clock cycle.");
-        $display("-----------------------------------------------------------------");
-        $fatal();
+
+        done_flag_pulse: assert property(@(posedge core_clock) done |=> !done) else begin
+            $display("-----------------------------------------------------------------");
+            $display("ERROR: Done signal must be asserted only for a single clock cycle.");
+            $display("%m");
+            $display("-----------------------------------------------------------------");
+            $fatal();
+        end
+
+
+        no_start_before_done: assert property(@(posedge core_clock) start |=> !start[*1:$] intersect done[->1]) else begin
+            $display("-----------------------------------------------------------------");
+            $display("ERROR: The start signal must not be asserted before the done signal is high.");
+            $display("%m");
+            $display("-----------------------------------------------------------------");
+            $fatal();
+        end
     end
-
-
-    done_flag_pulse: assert property(@(posedge core_clock) done |=> !done) else begin
-        $display("-----------------------------------------------------------------");
-        $display("ERROR: Done signal must be asserted only for a single clock cycle.");
-        $display("-----------------------------------------------------------------");
-        $fatal();
-    end
-
-
-    no_start_before_done: assert property(@(posedge core_clock) start |=> !start[*1:$] intersect done[->1]) else begin
-        $display("-----------------------------------------------------------------");
-        $display("ERROR: The start signal must not be asserted before the done signal is high.");
-        $display("-----------------------------------------------------------------");
-        $fatal();
-    end
+    
 
 
     axi_stream efi_arguments();
