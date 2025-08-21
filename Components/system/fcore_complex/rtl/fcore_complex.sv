@@ -59,6 +59,30 @@ module fcore_complex #(
     axi_stream.master core_dma_out
 );
 
+    start_request_pulse: assert property(@(posedge core_clock) start |=> !start) else begin
+        $display("-----------------------------------------------------------------");
+        $display("ERROR: The start signal must be asserted only for a single clock cycle.");
+        $display("-----------------------------------------------------------------");
+        $fatal();
+    end
+
+
+    done_flag_pulse: assert property(@(posedge core_clock) done |=> !done) else begin
+        $display("-----------------------------------------------------------------");
+        $display("ERROR: Done signal must be asserted only for a single clock cycle.");
+        $display("-----------------------------------------------------------------");
+        $fatal();
+    end
+
+
+    no_start_before_done: assert property(@(posedge core_clock) start |=> !start[*1:$] intersect done[->1]) else begin
+        $display("-----------------------------------------------------------------");
+        $display("ERROR: The start signal must not be asserted before the done signal is high.");
+        $display("-----------------------------------------------------------------");
+        $fatal();
+    end
+
+
     axi_stream efi_arguments();
     axi_stream efi_results();
 
