@@ -35,6 +35,9 @@ module axis_dynamic_data_mover #(
     axi_lite.slave axi_in
 );
 
+    initial done = 0;
+
+
     localparam N_REGISTERS = 3*MAX_CHANNELS+1;
 
     reg [31:0] cu_write_registers [N_REGISTERS-1:0];
@@ -87,6 +90,7 @@ module axis_dynamic_data_mover #(
         send_buffered_data = 3,
         wait_ready = 4
     } sequencer_state;
+    
 
     always_ff @(posedge clock) begin
         if(!reset) begin
