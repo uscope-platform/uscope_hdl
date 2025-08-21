@@ -150,7 +150,13 @@ module axis_dynamic_data_mover #(
                 send_buffered_data:begin
                         data_out.data <= data_buffers[channel_sequencer];
                         data_out.user <= user_value[channel_sequencer];
-                        data_out.dest <= target_addr[channel_sequencer];
+
+                        if(MULTICHANNEL_MODE==1)begin
+                            data_out.dest <= {target_addr[channel_sequencer][15:12],4'b0,target_addr[channel_sequencer][11:0]};
+                        end else begin
+                            data_out.dest <= target_addr[channel_sequencer];
+                        end
+                        
                         data_out.valid <= 1;
                         if(channel_sequencer == n_active_channels-1)begin
                             channel_sequencer <= 0;
