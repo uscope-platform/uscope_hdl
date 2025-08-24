@@ -1,0 +1,25 @@
+{
+    "general":{
+        "project_name":"itf",
+        "target_part":"xc7z020clg400",
+        "synth_modules":[],
+        "synth_tl": "fp_itf",
+        "sim_modules":[
+            "q015_fp_itf_tb"
+        ],
+        "sim_tl":"fp_itf_tb",
+        "include_paths":[
+            "Components/Common"
+        ]
+    },
+    "scripts":[
+        {
+            "name":"set_properties.tcl",
+            "type": "tcl",
+            "arguments":[]
+        }
+    ],
+    "excluded_modules":[
+    ],
+    "constraints": []
+}
