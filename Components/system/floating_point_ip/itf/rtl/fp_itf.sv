@@ -26,6 +26,10 @@ module fp_itf #(
     axi_stream.master out
 );
 
+
+    assign out.user = get_axis_metadata(32, 1, 1);
+    assign in.ready = out.ready;
+
     axi_stream #(.DATA_WIDTH(INPUT_WIDTH+1), .USER_WIDTH(1)) stage_1(); // sign is mapped to user field;
     axi_stream #(.DATA_WIDTH(INPUT_WIDTH+1), .USER_WIDTH(1)) stage_2(); // sign is mapped to user field the index of the MSB is mapped to dest field;
 
