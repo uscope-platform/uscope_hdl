@@ -24,7 +24,8 @@ module noise_generator #(
         21'b010010000000000000000,
         21'b000000001010100000000
     },
-    N_OUTPUTS = 16
+    N_OUTPUTS = 16,
+    FLOAT_OUT = 0
 )(
     input wire clock,
     input wire reset,
@@ -51,7 +52,35 @@ module noise_generator #(
         .axil(axi_in)
     );
 
+    axi_stream generator_out();
+
+    generate 
+        if(FLOAT_OUT)begin
+
+            fp_itf #(
+                .FIXED_POINT_Q015(1),
+                .INPUT_WIDTH(16)
+            ) itf (
+                .clock(clock),
+                .reset(reset),
+                .in(generator_out),
+                .out(data_out)
+            );
+
+        end else begin
+
+            assign data_out.user = generator_out.user;
+            assign data_out.data = generator_out.data;
+            assign data_out.dest = generator_out.dest;
+            assign data_out.valid = generator_out.valid;
+            assign data_out.tlast = generator_out.tlast;
+            assign generator_out.ready = data_out.ready;
+        end
+
+    endgenerate
     
+    
+
 
     assign cu_read_registers = cu_write_registers;
 
@@ -94,11 +123,11 @@ module noise_generator #(
     reg[7:0] output_counter = 0;
 
     initial begin
-        data_out.valid = 1'b0;
-        data_out.tlast = 1'b0;
-        data_out.data = 0;
-        data_out.dest = 0;
-        data_out.user = get_axis_metadata(16, 0, 0);
+        generator_out.valid = 1'b0;
+        generator_out.tlast = 1'b0;
+        generator_out.data = 0;
+        generator_out.dest = 0;
+        generator_out.user = get_axis_metadata(16, 0, 0);
     end
     wire [15:0] noise_gen_out = GAUSSIAN_OUT == 1 ? gaussian_erf[generators_out]: generators_out;
     generate
@@ -124,8 +153,8 @@ module noise_generator #(
             );
 
             always_ff@(posedge clock) begin
-                data_out.valid <= 1'b0;
-                data_out.tlast <= 1'b0;
+                generator_out.valid <= 1'b0;
+                generator_out.tlast <= 1'b0;
                 if(~reset) begin
                     state_reg[i] <= INITIAL_STATE[i];
                 end else begin
@@ -139,15 +168,15 @@ module noise_generator #(
                         working: begin
                             if(output_counter == active_outputs-1)begin
                                 state <= idle;
-                                data_out.tlast <= 1'b1;
+                                generator_out.tlast <= 1'b1;
                             end else begin
                                 output_counter <= output_counter + 1;
                             end
-                            if(data_out.ready)begin
+                            if(generator_out.ready)begin
                                 state_reg[i] <= state_out[i];
-                                data_out.data <= {{data_out.DATA_WIDTH-16{noise_gen_out[15]}}, noise_gen_out};
-                                data_out.dest <= output_dest[output_counter];
-                                data_out.valid <= 1'b1;
+                                generator_out.data <= {{generator_out.DATA_WIDTH-16{noise_gen_out[15]}}, noise_gen_out};
+                                generator_out.dest <= output_dest[output_counter];
+                                generator_out.valid <= 1'b1;
                             end
                         end
                     endcase
@@ -159,8 +188,6 @@ module noise_generator #(
 
 
     endgenerate
-
-
 
 
 endmodule

@@ -5,6 +5,8 @@
 module noise_generator_tb ();
 
 
+    parameter TEST_FLOAT_MODE = 1;
+
     reg  clk, reset;
 
     event config_done;
@@ -12,7 +14,10 @@ module noise_generator_tb ();
     axi_lite cfg_axi();
     axi_lite_BFM axil_bfm;
 
-    axi_stream #(.DATA_WIDTH(16)) data_out();
+    parameter OUTPUT_WIDTH = TEST_FLOAT_MODE ? 32 : 16;
+
+    axi_stream #(.DATA_WIDTH(OUTPUT_WIDTH)) data_out();
+        
 
     reg trigger = 1'b0;
 
@@ -23,7 +28,8 @@ module noise_generator_tb ();
     end
 
     noise_generator #(
-        .OUTPUT_WIDTH(16)
+        .OUTPUT_WIDTH(16),
+        .FLOAT_OUT(TEST_FLOAT_MODE)
     )gen(
         .clock(clk),
         .reset(reset),
@@ -35,12 +41,30 @@ module noise_generator_tb ();
    
     int results_file;
 
-    initial begin
-        results_file = $fopen("/home/fils/git/uscope_hdl/public/Components/signal_chain/noise_generator/tb/results.csv", "w");
-    end
+    if(TEST_FLOAT_MODE) begin
+        shortreal converted_out;
+        assign converted_out = $bitstoshortreal(data_out.data);
+        initial begin
+            results_file = $fopen("/home/fils/git/uscope_hdl/public/Components/signal_chain/noise_generator/tb/results_fp.csv", "w");
+        end
 
-    always_ff @(data_out.valid)begin
-        if(data_out.data) $fwrite(results_file, "%0d\n", $signed(data_out.data[15:0]));
+        always_ff @(posedge data_out.valid)begin
+            $fwrite(results_file, "%f\n", converted_out);
+            $fflush(results_file);
+        end
+
+
+    end else begin
+
+        initial begin
+            results_file = $fopen("/home/fils/git/uscope_hdl/public/Components/signal_chain/noise_generator/tb/results.csv", "w");
+        end
+
+        always_ff @(posedge data_out.valid)begin
+            $fwrite(results_file, "%0d\n", $signed(data_out.data[15:0]));
+        end
+
+
     end
 
     always begin
@@ -52,6 +76,7 @@ module noise_generator_tb ();
 
     initial begin
 
+        data_out.ready <= 1'b0;
         axil_bfm = new(cfg_axi, 1);
         //Initial status
         reset <=1'h1;
