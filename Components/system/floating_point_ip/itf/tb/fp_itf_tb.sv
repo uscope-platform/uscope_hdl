@@ -84,6 +84,15 @@ module fp_itf_tb();
         end
 
 
+        // Run through some edge + random cases
+        for (i =0; i <= 850000; i++) begin
+            @(posedge clk);
+            dut_in.valid = 1;
+            dut_in.data  = 2147083647+i;
+        end
+
+
+
         // stop driving inputs
         @(posedge clk);
         dut_in.valid = 0;

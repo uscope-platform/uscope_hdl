@@ -30,21 +30,13 @@ module q015_fp_itf_tb();
         dut_in.data = 0;
         #20 rst = 1;
 
-        // Run through some edge + random cases
-        for (i = -32768; i <= 32767; i = i + 2048) begin
+
+        for (i =0; i <= 16'hffff; i++) begin
             @(posedge clk);
             dut_in.valid = 1;
-            dut_in.data  = i[15:0];
+            dut_in.data  = i;
         end
-
-        // a few specific edge cases
-        @(posedge clk);
-        dut_in.data  = 16'sh0000; in_valid = 1; // zero
-        @(posedge clk);
-        dut_in.data  = 16'sh7FFF; in_valid = 1; // just under +1
-        @(posedge clk);
-        dut_in.data  = 16'sh8000; in_valid = 1; // exactly -1
-
+        
         // stop driving inputs
         @(posedge clk);
         dut_in.valid = 0;
