@@ -50,10 +50,10 @@ module fp_itf #(
 
 
 
-    function  logic [31:0] get_msb_index (input logic [31:0] value);
+    function  logic [$clog2(INPUT_WIDTH)-1:0] get_msb_index (input logic [31:0] value);
         
         integer i;
-        logic [31:0] msb = 0;
+        logic [$clog2(INPUT_WIDTH)-1:0] msb = 0;
         for (i = 0; i < INPUT_WIDTH; i++)
             if (value[i]) msb = i;
         get_msb_index = msb;
@@ -79,6 +79,8 @@ module fp_itf #(
     // -----------------------
 
     logic [7:0] exponent;
+    logic [7:0] pre_rounded_exponent;
+
     if(FIXED_POINT_Q015)begin
         assign exponent = 127 + (stage_2.dest - 15);
     end else begin
@@ -86,11 +88,27 @@ module fp_itf #(
     end
     
     logic [38:0] shifted;
-    assign shifted = stage_2.data << (23 - stage_2.dest);
+    assign shifted = stage_2.dest<23 ? stage_2.data << (23 - stage_2.dest) : stage_2.data >> (stage_2.dest - 23);
 
+    logic round_up;
     logic [22:0] mantissa;
+    logic [22:0] pre_rounded_mantissa;
+    assign pre_rounded_mantissa = shifted[22:0] +1'b1;
+
+    assign pre_rounded_exponent = exponent + 1'b1;
+
     assign mantissa = shifted[22:0];
+
+    rounding_engine #(
+        .DATA_WIDTH(INPUT_WIDTH)
+    ) rounder (
+        .data_in(stage_2.data),
+        .msb_index(stage_2.dest),
+        .mantissa_lsb(shifted[0]),
+        .round_up(round_up)
+    );
     
+
     always_ff @(posedge clock) begin
         if (!reset) begin
             out.valid <= 0;
@@ -100,7 +118,16 @@ module fp_itf #(
             if (stage_2.data == 0) begin
                 out.data <= 32'h0000_0000; // zero
             end else begin
-                out.data <= {stage_2.user, exponent, mantissa};
+                if(round_up) begin
+                    if(mantissa == 23'h7FFFFF) begin
+                        out.data <= {stage_2.user, pre_rounded_exponent, 23'b0};
+                    end else begin
+                        out.data <= {stage_2.user, exponent,pre_rounded_mantissa};
+                    end
+                end else begin
+                    out.data <= {stage_2.user, exponent, mantissa};
+                end
+
             end
         end
     end

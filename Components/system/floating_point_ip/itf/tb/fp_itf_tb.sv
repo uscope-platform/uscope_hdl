@@ -7,7 +7,8 @@ module fp_itf_tb();
 
     // DUT
     fp_itf  #(
-        .FIXED_POINT_Q015(0)
+        .FIXED_POINT_Q015(0),
+        .INPUT_WIDTH(32)
     ) dut (
         .clock(clk),
         .reset(rst),
@@ -17,7 +18,7 @@ module fp_itf_tb();
 
     // Clock generator
     initial clk = 0;
-    always #5 clk = ~clk;
+    always #0.5 clk = ~clk;
 
     // Stimulus
     integer i;
@@ -30,20 +31,58 @@ module fp_itf_tb();
         dut_in.data = 0;
         #20 rst = 1;
 
+        dut_in.valid = 1;
+        // a few specific edge cases
+
+
         // Run through some edge + random cases
-        for (i = -32768; i <= 32767; i = i + 2048) begin
+        for (i = -32768; i <= 32768; i++) begin
             @(posedge clk);
             dut_in.valid = 1;
-            dut_in.data  = i[15:0];
+            dut_in.data  = i;
         end
 
-        // a few specific edge cases
-        @(posedge clk);
-        dut_in.data  = 16'sh0000; in_valid = 1; // zero
-        @(posedge clk);
-        dut_in.data  = 16'sh7FFF; in_valid = 1; // just under +1
-        @(posedge clk);
-        dut_in.data  = 16'sh8000; in_valid = 1; // exactly -1
+        // Run through some edge + random cases
+        for (i =0; i <= 250000; i++) begin
+            @(posedge clk);
+            dut_in.valid = 1;
+            dut_in.data  = 16718748+i;
+        end
+
+        // Run through some edge + random cases
+        for (i =0; i <= 250000; i++) begin
+            @(posedge clk);
+            dut_in.valid = 1;
+            dut_in.data  = 33554411+i;
+        end
+
+                // Run through some edge + random cases
+        for (i =0; i <= 250000; i++) begin
+            @(posedge clk);
+            dut_in.valid = 1;
+            dut_in.data  = 67070430+i;
+        end
+        
+        for (i =0; i <= 250000; i++) begin
+            @(posedge clk);
+            dut_in.valid = 1;
+            dut_in.data  = -16718748-i;
+        end
+
+                // Run through some edge + random cases
+        for (i =0; i <= 250000; i++) begin
+            @(posedge clk);
+            dut_in.valid = 1;
+            dut_in.data  = -33554411-i;
+        end
+
+                // Run through some edge + random cases
+        for (i =0; i <= 250000; i++) begin
+            @(posedge clk);
+            dut_in.valid = 1;
+            dut_in.data  = -67070430-i;
+        end
+
 
         // stop driving inputs
         @(posedge clk);
@@ -54,23 +93,38 @@ module fp_itf_tb();
         $finish;
     end
 
-    logic [15:0] in_delayed[1:0];
-    logic [15:0] in_check;
+    logic [31:0] in_delayed[1:0];
+    logic [31:0] in_check;
 
-    real in_real;
-    real out_real;
-    assign out_real = $bitstoshortreal(dut_out.data);
-    assign in_real = $signed(in_check) / 32768.0;
 
     always_ff @(posedge clk) begin
         in_delayed[0] <= dut_in.data;
         in_delayed[1] <= in_delayed[0];
-        in_check <= in_delayed[1];
+        in_check     <= in_delayed[1];
     end
+
+    real in_real;
+    assign in_real = $signed(in_check);
+
+
     logic [31:0] check_data;
     assign check_data = $shortrealtobits(in_real);
-    
-    assert property (@(posedge clk) dut_out.valid |->  dut_out.data[31:0] == check_data[31:0])
-    else $error("Q0.15 conversion failed: dut_out.data = %h, expected = %h", dut_out.data, $shortrealtobits(in_real));
-    
+        
+
+
+    always_ff @(posedge clk) begin
+        if (dut_out.valid) begin
+                assert (dut_out.data == check_data)
+                else begin
+                    $display("==============================================================================");
+                    $display("CONVERSION FAILED at time %t", $time);
+                    $display(" -> Input:   %d (%h)", $signed(in_check), in_check);
+                    $display(" -> DUT Out: %h (%f)", dut_out.data, $bitstoshortreal(dut_out.data));
+                    $display(" -> Expected:  %h (%f)", check_data, in_real);
+                    $display("==============================================================================");
+                    $finish();
+                end
+        end
+    end
+
 endmodule
