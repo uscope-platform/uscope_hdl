@@ -226,18 +226,15 @@ module fCore #(
             operand_b_dly.data <= operand_data_b;
         end
 
-        if(common_io_sel_c_dly)begin
-            operand_c_dly.data <= constant_data_c;
-        end else begin
-            operand_c_dly.data <= operand_data_c;
-        end
     end
 
     generate
 
         if(BITMANIP_IMPLEMENTED==1 || CONDITIONAL_SELECT_IMPLEMENTED==1)begin
             assign operand_c.ready = operand_c_dly.ready;
-            assign operand_c_dly.data = operand_data_c;
+
+
+            assign operand_c_dly.data = common_io_sel_c_dly ? constant_data_c: operand_data_c;
             
             always@(posedge clock)begin
                 operand_c_dly.dest <= operand_c.dest;

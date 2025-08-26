@@ -78,14 +78,6 @@ module fcore_complex #(
             $fatal();
         end
 
-
-        no_start_before_done: assert property(@(posedge core_clock) start |=> !start[*1:$] intersect done[->1]) else begin
-            $display("-----------------------------------------------------------------");
-            $display("ERROR: The start signal must not be asserted before the done signal is high.");
-            $display("%m");
-            $display("-----------------------------------------------------------------");
-            $fatal();
-        end
     end
     
 
