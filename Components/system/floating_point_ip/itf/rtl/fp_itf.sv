@@ -20,11 +20,44 @@ module fp_itf #(
     parameter FIXED_POINT_Q015 = 0,
     parameter INPUT_WIDTH = 16
 ) (
-    input  logic clock,
-    input  logic reset,
+    input wire clock,
+    input wire reset,
     axi_stream.slave in,
     axi_stream.master out
 );
+
+    localparam PIPELINE_DEPTH = 3;
+
+    // delay tlast and dest to match pipeline latency
+
+    reg [PIPELINE_DEPTH-1:0] tlast_del = 0;
+
+    always_ff @(posedge clock) begin
+        tlast_del <= {tlast_del[PIPELINE_DEPTH-2:0], in.tlast};
+    end
+    assign out.tlast = tlast_del[PIPELINE_DEPTH-1];
+
+
+    reg [31:0] dest_reg [PIPELINE_DEPTH-1:0];
+
+    assign out.dest = dest_reg[PIPELINE_DEPTH-1];
+
+    generate
+        always_ff@(posedge clock)begin
+            if(~reset)begin
+                for(integer i = 0; i < PIPELINE_DEPTH; i++) begin
+                    dest_reg[i] <= 0;
+                end
+ 
+            end else begin
+                dest_reg[0] <= in.dest;
+                for(integer i = 1; i < PIPELINE_DEPTH; i++) begin
+                    dest_reg[i] <= dest_reg[i-1];
+                end
+            end
+            
+        end       
+    endgenerate
 
 
     assign out.user = get_axis_metadata(32, 1, 1);
