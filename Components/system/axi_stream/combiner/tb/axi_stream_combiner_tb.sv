@@ -27,9 +27,9 @@ module axi_stream_combiner_tb();
     axi_stream merged_stream();
 
     axi_stream_combiner #(
-        .INPUT_DATA_WIDTH(16), 
-        .OUTPUT_DATA_WIDTH(32), 
-        .DEST_WIDTH(8), 
+        .INPUT_DATA_WIDTH(16),
+        .OUTPUT_DATA_WIDTH(32),
+        .DEST_WIDTH(8),
         .USER_WIDTH(8),
         .N_STREAMS(2)
     ) UUT (
@@ -41,8 +41,8 @@ module axi_stream_combiner_tb();
 
 
     //clock generation
-    initial clk = 0; 
-    always #0.5 clk = ~clk; 
+    initial clk = 0;
+    always #0.5 clk = ~clk;
 
     axis_BFM BFM_1;
     axis_BFM BFM_2;
@@ -65,7 +65,7 @@ module axi_stream_combiner_tb();
 
 
     initial begin
-        
+
         #6.5;
         for(i = 0; i< 1050; i++)begin
             #10 BFM_2.write($urandom);

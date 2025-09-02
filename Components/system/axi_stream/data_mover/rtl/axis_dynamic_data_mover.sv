@@ -38,7 +38,7 @@ module axis_dynamic_data_mover #(
     initial done = 0;
 
 
-    localparam N_REGISTERS = 3*MAX_CHANNELS+3;
+    localparam int N_REGISTERS = 3*MAX_CHANNELS+3;
 
     reg [31:0] cu_write_registers [N_REGISTERS-1:0];
     reg [31:0] cu_read_registers [N_REGISTERS-1:0];
@@ -71,7 +71,7 @@ module axis_dynamic_data_mover #(
     );
 
     assign cu_read_registers = cu_write_registers;
-    
+
     assign n_active_channels = cu_write_registers[0];
     assign buffer_fill_data = cu_write_registers[1];
     assign buffer_fill_channel = cu_write_registers[2];
@@ -86,20 +86,19 @@ module axis_dynamic_data_mover #(
         end
     endgenerate
 
-    reg [DATA_WIDTH-1:0] data_buffers [MAX_CHANNELS-1:0] = {default:0};
+    reg [DATA_WIDTH-1:0] data_buffers [MAX_CHANNELS-1:0] = '{default:0};
     reg buffer_valid = 0;
 
     reg mover_active;
     reg [$clog2(MAX_CHANNELS)-1:0] channel_sequencer;
 
-    enum reg [2:0] { 
-        idle = 0, 
+    enum reg [2:0] {
+        idle = 0,
         read_source = 1,
         wait_response = 2,
         send_buffered_data = 3,
         wait_ready = 4
     } sequencer_state;
-    
 
     always_ff @(posedge clock) begin
         if(!reset) begin
@@ -119,7 +118,7 @@ module axis_dynamic_data_mover #(
             end
 
             data_out.valid <= 0;
-            data_request.valid <= 0; 
+            data_request.valid <= 0;
             case (sequencer_state)
                 idle :begin
                     done <= 0;
@@ -136,7 +135,7 @@ module axis_dynamic_data_mover #(
                     end else begin
                         data_request.data <= source_addr[channel_sequencer];
                     end
-                    data_request.valid <= 1;  
+                    data_request.valid <= 1;
                     sequencer_state <= wait_response;
                 end
                 wait_response: begin
@@ -170,7 +169,7 @@ module axis_dynamic_data_mover #(
                         end else begin
                             data_out.dest <= target_addr[channel_sequencer];
                         end
-                        
+
                         data_out.valid <= 1;
                         if(channel_sequencer == n_active_channels-1)begin
                             channel_sequencer <= 0;
@@ -237,5 +236,5 @@ endmodule
                 "fields":[]
             }
         ]
-    }   
+    }
  **/

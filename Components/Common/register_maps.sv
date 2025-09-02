@@ -444,8 +444,8 @@ package reg_maps;
         int angle_out = 'hC;
         int speed_out = 'h10;
     } encoder_if;
-    
-    struct { 
+
+    struct {
         int const_lsb = 0;
         int const_hsb = 'h4;
         int const_dest = 'h8;
@@ -454,6 +454,29 @@ package reg_maps;
         int active_channels = 'h14;
         int const_user = 'h18;
     } fcore_constant_engine;
-    
+
+
+    struct { 
+        int shape = 0;
+        int output_selector = 'h4;
+        int parameter_0 = 'h8;
+        int parameter_1 = 'hC;
+        int parameter_2 = 'h10;
+        int parameter_3 = 'h14;
+        int parameter_4 = 'h18;
+        int parameter_5 = 'h1c;
+        int parameter_6 = 'h20;
+        int parameter_7 = 'h24;
+        int parameter_8 = 'h28;
+        int parameter_9 = 'h2c;
+        int parameter_10 = 'h30;
+        int parameter_11 = 'h34;
+        int parameter_12 = 'h38;
+        int parameter_13 = 'h3c;
+        int parameter_14 = 'h40;
+        int parameter_15 = 'h44;
+    } waveform_generator;
+
+
 
 endpackage

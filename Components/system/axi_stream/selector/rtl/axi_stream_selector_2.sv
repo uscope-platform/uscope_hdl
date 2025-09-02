@@ -16,11 +16,11 @@
 `timescale 10ns / 1ns
 `include "interfaces.svh"
 
-module axi_stream_selector_2 #(parameter DATA_WIDTH = 16, REGISTERED = 1)(
+module axi_stream_selector_2 #(parameter int DATA_WIDTH = 16, int REGISTERED = 1)(
     input wire clock,
     input wire [0:0] address,
     axi_stream.slave stream_in,
-    axi_stream.master stream_out_1, 
+    axi_stream.master stream_out_1,
     axi_stream.master stream_out_2
 
 );
@@ -70,7 +70,7 @@ module axi_stream_selector_2 #(parameter DATA_WIDTH = 16, REGISTERED = 1)(
                         stream_out_2.valid <= 0;
                         stream_out_2.user <= 0;
                         stream_out_2.tlast <= 0;
-                        
+
                 end
                 1:begin
                         stream_out_2.data <= stream_in.data;
@@ -84,12 +84,12 @@ module axi_stream_selector_2 #(parameter DATA_WIDTH = 16, REGISTERED = 1)(
                         stream_out_1.user <= 0;
                         stream_out_1.tlast <= 0;
                 end
-                endcase 
+                endcase
             end
         end
-    
-        
+
+
     endgenerate
 
-   
+
 endmodule

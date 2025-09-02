@@ -138,4 +138,6 @@ Components/signal_chain/encoder_interface/encoder_interface
 Components/system/interrupt_controller/interrupt_controller
 Components/system/fcore_infrastructure/multichannel_constant/multichannel_constant
 Components/signal_chain/noise_generator/noise_generator
+Components/signal_chain/waveform_generator/waveform_generator
 Components/system/floating_point_ip/itf/itf
+
