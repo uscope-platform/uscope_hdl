@@ -1,0 +1,21 @@
+{
+    "general": {
+        "include_paths": [
+            "Components/Common"
+        ],
+        "project_name": "waveform_generator",
+        "sim_modules": [],
+        "sim_tl": "waveform_generator_tb",
+        "synth_modules": [],
+        "synth_tl": "waveform_generator",
+        "target_part": "xc7z020clg400"
+    },
+    "excluded_modules": [],
+    "scripts": [
+        {
+            "arguments": [],
+            "name": "set_properties.tcl",
+            "type": "tcl"
+        }
+    ]
+}

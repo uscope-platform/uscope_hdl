@@ -17,11 +17,11 @@
 `include "interfaces.svh"
 
 module axi_stream_mux #(
-    parameter N_STREAMS = 2,
-    DATA_WIDTH = 32, 
-    DEST_WIDTH = 8, 
-    USER_WIDTH = 8,
-    BUFFERED = 1
+    parameter integer N_STREAMS = 2,
+    integer DATA_WIDTH = 32,
+    integer DEST_WIDTH = 8,
+    integer USER_WIDTH = 8,
+    integer BUFFERED = 1
 )(
     input wire clock,
     input wire reset,
@@ -53,7 +53,7 @@ module axi_stream_mux #(
     endgenerate
 
     generate
-        if(BUFFERED==1)begin
+        if(BUFFERED==1)begin : gen_buffered_mux
             always_ff@(posedge clock) begin
                 stream_out.data <= unrolled_data[address];
                 stream_out.dest <= unrolled_dest[address];
@@ -61,7 +61,7 @@ module axi_stream_mux #(
                 stream_out.tlast <= unrolled_tlast[address];
                 stream_out.valid <= valid_bus[address];
             end
-        end else begin
+        end else begin : gen_unbuffered_mux
                 assign stream_out.data = unrolled_data[address];
                 assign stream_out.dest = unrolled_dest[address];
                 assign stream_out.user = unrolled_user[address];
@@ -69,8 +69,6 @@ module axi_stream_mux #(
                 assign stream_out.valid = valid_bus[address];
         end
     endgenerate
-    
-    
-  
+
 
 endmodule
