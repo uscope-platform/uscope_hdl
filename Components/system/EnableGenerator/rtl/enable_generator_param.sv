@@ -27,7 +27,7 @@ module enable_generator_param #(
     axi_lite.slave axil
 );
 
-
+    
     reg [COUNTER_WIDTH-1:0] period;
     wire [COUNTER_WIDTH-1:0] count;
     reg bus_enable;
@@ -71,8 +71,8 @@ module enable_generator_param #(
         .counter_out(count)
     );
 
-
-
+    reg [N_ENABLES-1:0] internal_enable_out;
+    assign enable_out = internal_enable_out & {N_ENABLES{~pause}};
     genvar i;
     generate
         for (i = 0; i < N_ENABLES; i++) begin
@@ -86,7 +86,7 @@ module enable_generator_param #(
                 .reset(reset),
                 .enable_treshold(enable_threshold[i]),
                 .count(count),
-                .enable_out(enable_out[i])
+                .enable_out(internal_enable_out[i])
             );
             
         end

@@ -38,11 +38,14 @@ module axis_dynamic_data_mover #(
     initial done = 0;
 
 
-    localparam N_REGISTERS = 3*MAX_CHANNELS+1;
+    localparam N_REGISTERS = 3*MAX_CHANNELS+3;
 
     reg [31:0] cu_write_registers [N_REGISTERS-1:0];
     reg [31:0] cu_read_registers [N_REGISTERS-1:0];
     
+    wire buffer_fill_valid;
+    wire [DATA_WIDTH-1:0] buffer_fill_data;
+    wire [31:0] buffer_fill_channel;
 
     wire [15:0] source_addr  [MAX_CHANNELS-1:0];
     wire [15:0] target_addr [MAX_CHANNELS-1:0];
@@ -50,10 +53,12 @@ module axis_dynamic_data_mover #(
     wire [15:0] user_value [MAX_CHANNELS-1:0];
     reg [$clog2(MAX_CHANNELS)-1:0] n_active_channels;
 
-
+    
     axil_simple_register_cu #(
         .N_READ_REGISTERS(N_REGISTERS),
         .N_WRITE_REGISTERS(N_REGISTERS),
+        .N_TRIGGER_REGISTERS(1),
+        .TRIGGER_REGISTERS_IDX('{1}),
         .REGISTERS_WIDTH(32),
         .ADDRESS_MASK('hfff)
     ) CU (
@@ -61,19 +66,23 @@ module axis_dynamic_data_mover #(
         .reset(reset),
         .input_registers(cu_read_registers),
         .output_registers(cu_write_registers),
+        .trigger_out(buffer_fill_valid),
         .axil(axi_in)
     );
 
     assign cu_read_registers = cu_write_registers;
     
     assign n_active_channels = cu_write_registers[0];
+    assign buffer_fill_data = cu_write_registers[1];
+    assign buffer_fill_channel = cu_write_registers[2];
+
     genvar n;
     generate
         for(n = 0; n<MAX_CHANNELS; n=n+1)begin
-            assign source_addr[n] = cu_write_registers[n+1][15:0];
-            assign target_addr[n] = cu_write_registers[n+1][31:16];
-            assign user_value[n] = cu_write_registers[n + 1  + MAX_CHANNELS];
-            assign channel_addr[n] = cu_write_registers[n+1 + 2*MAX_CHANNELS];
+            assign source_addr[n] = cu_write_registers[n+3][15:0];
+            assign target_addr[n] = cu_write_registers[n+3][31:16];
+            assign user_value[n] = cu_write_registers[n + 3  + MAX_CHANNELS];
+            assign channel_addr[n] = cu_write_registers[n+3 + 2*MAX_CHANNELS];
         end
     endgenerate
 
@@ -104,6 +113,11 @@ module axis_dynamic_data_mover #(
             mover_active <= 0;
             sequencer_state <= idle;
         end else begin
+
+            if(buffer_fill_valid)begin
+                data_buffers[buffer_fill_channel] <= buffer_fill_data;
+            end
+
             data_out.valid <= 0;
             data_request.valid <= 0; 
             case (sequencer_state)
