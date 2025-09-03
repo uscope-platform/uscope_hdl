@@ -7,6 +7,7 @@ module waveform_generator #(
     input wire clock,
     input wire reset,
     input wire trigger,
+    output reg active,
     axi_lite.slave axi_in,
     axi_stream.master data_out
 );
@@ -17,16 +18,20 @@ module waveform_generator #(
     reg [31:0] cu_read_registers [N_REGISTERS-1:0];
     reg [31:0] cu_write_registers [N_REGISTERS-1:0];
 
+    wire latch_parameters;
     axil_simple_register_cu #(
         .N_READ_REGISTERS(N_REGISTERS),
         .N_WRITE_REGISTERS(N_REGISTERS),
-        .ADDRESS_MASK('hFF)
+        .ADDRESS_MASK('hFF),
+        .TRIGGER_REGISTERS_IDX('{1}),
+        .N_TRIGGER_REGISTERS(1)
     ) CU (
         .clock(clock),
         .reset(reset),
         .input_registers(cu_read_registers),
         .output_registers(cu_write_registers),
-        .axil(axi_in)
+        .axil(axi_in),
+        .trigger_out('{latch_parameters})
     );
 
 
@@ -46,6 +51,7 @@ module waveform_generator #(
 
     axi_stream channel_out [N_OUTPUTS]();
 
+    initial active = 0;
 
 
     genvar output_idx;
@@ -53,7 +59,10 @@ module waveform_generator #(
     generate
         for ( i = 0; i<N_PARAMETERS; i++) begin
             always_ff @(posedge clock)begin
-                parameters[output_selector][i] <= cu_write_registers[i+2];
+                if(latch_parameters)begin
+                    parameters[output_selector][i] <= cu_write_registers[i+2];
+                    active <= 1;
+                end
             end
         end
 

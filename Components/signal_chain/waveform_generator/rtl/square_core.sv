@@ -49,21 +49,27 @@ module square_core #(
     assign output_status = generator_counter > t_on;
 
     always_ff@(posedge clock)begin
+
+        data_out.tlast <= 0;
+        data_out.valid <= 0;
         if(!running)begin
             if(trigger)begin
                 running <= 1;
+                data_out.data <= output_status ? v_on : v_off;
+                data_out.dest <= dest_out;
+                data_out.user <= user_out;
+                data_out.tlast <= 1;
+                data_out.valid <= 1;
             end
             generator_counter <= t_delay;
         end else begin
-            data_out.tlast <= 0;
-            data_out.valid <= 0;
-            if(trigger)begin
-                if(generator_counter==period-1)begin
-                    generator_counter <= 0;
-                end else begin
-                    generator_counter <= generator_counter+1;
-                end
+            if(generator_counter==period-1)begin
+                generator_counter <= 0;
+            end else begin
+                generator_counter <= generator_counter+1;
+            end
 
+            if(trigger)begin
                 data_out.data <= output_status ? v_on : v_off;
                 data_out.dest <= dest_out;
                 data_out.user <= user_out;
