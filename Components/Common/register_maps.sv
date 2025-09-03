@@ -15,7 +15,7 @@
 
 package reg_maps;
 
-      struct { 
+      struct {
         int timebase = 0;
         int sync_select = 'h4;
         int sync_delay = 'h8;
@@ -36,7 +36,7 @@ package reg_maps;
         int chain_14 = 'hF00;
       } pwm_gen_map_regs;
 
-     struct { 
+     struct {
         int tresh_0l = 0;
         int tresh_0h = 'h4;
         int deadtime_0 = 'h8;
@@ -48,7 +48,7 @@ package reg_maps;
         int control = 'h1c;
      } pwm_chain_1_regs;
 
-     struct { 
+     struct {
         int tresh_0l = 0;
         int tresh_1l = 'h4;
         int tresh_0h = 'h8;
@@ -64,7 +64,7 @@ package reg_maps;
      } pwm_chain_2_regs;
 
 
-     struct { 
+     struct {
         int tresh_0l = 0;
         int tresh_1l = 'h4;
         int tresh_2l = 'h8;
@@ -83,7 +83,7 @@ package reg_maps;
      } pwm_chain_3_regs;
 
 
-     struct { 
+     struct {
         int cmp_low_f = 0;
         int cmp_low_r = 'h4;
         int cmp_high_f = 'h8;
@@ -96,7 +96,7 @@ package reg_maps;
         int tap_address = 'h2C;
      } adc_processing_1_regs;
      
-     struct { 
+     struct {
         int cmp_low_f = 0;
         int cmp_low_r = 'h4;
         int cmp_high_f = 'h8;
@@ -113,7 +113,7 @@ package reg_maps;
         int tap_address = 'h34;
      } adc_processing_3_regs;
      
-     struct { 
+     struct {
         int cmp_low_f = 0;
         int cmp_low_r = 'h4;
         int cmp_high_f = 'h8;
@@ -148,20 +148,20 @@ package reg_maps;
         int tap_data = 'h7c;
         int tap_address = 'h80;
      } adc_processing_12_regs;
-     
-     struct { 
+
+     struct {
         int n_channels = 0;
         int io_map_addr = 'h4;
         int io_map_data = 'h8;
      } fcore_regs;
-     
-     struct { 
+
+     struct {
         int low = 0;
         int high = 'h4;
         int dest = 'h8;
      } axis_constant_regs;
-     
-     struct { 
+
+     struct {
         int control = 0;
         int ss_delay = 'h4;
         int period = 'h8;
@@ -169,33 +169,33 @@ package reg_maps;
         int data_0 = 'h10;
     } SPI_regs;
 
-    struct { 
+    struct {
         int enable = 0;
         int period = 'h4;
         int treshold = 'h8;
-    } en_gen_regs; 
+    } en_gen_regs;
 
-    struct { 
+    struct {
         int enable = 0;
         int period = 'h4;
         int treshold_1 = 'h8;
         int treshold_2 = 'hC;
-    } en_gen_2_regs; 
-    
-    struct { 
+    } en_gen_2_regs;
+
+    struct {
         int enable = 0;
         int period = 'h4;
         int treshold_1 = 'h8;
         int treshold_2 = 'hC;
         int treshold_3 = 'h10;
-    } en_gen_3_regs; 
+    } en_gen_3_regs;
 
-    struct { 
+    struct {
         int out = 0;
         int in = 'h4;
-    } gpio_regs; 
+    } gpio_regs;
 
-    struct { 
+    struct {
         int control = 0;
         int period = 'h4;
         int duty_0 = 'h8;
@@ -225,7 +225,7 @@ package reg_maps;
         int ps_11 = 'h68;
     } pmp_buck_regs;
 
-    struct { 
+    struct {
         int control = 0;
         int period = 'h4;
         int duty_1 = 'h8;
@@ -235,7 +235,7 @@ package reg_maps;
         int deadtime = 'h18;
     } pmp_dab_regs;
 
-    struct { 
+    struct {
         int desired_output = 0;
         int step_size = 'h4;
         int step_duration = 'h8;
@@ -256,7 +256,7 @@ package reg_maps;
         int sequencing_limit_11 = 'h44;
     } buck_sequencer_regs;
 
-    struct { 
+    struct {
         int sec_start_tresh = 0;
         int startup_done_tresh = 'h4;
         int startup_voltage_addr = 'h8;
@@ -266,7 +266,7 @@ package reg_maps;
         int output_good_treshold = 'h18;
     } dab_sequencer_regs;
 
-    struct { 
+    struct {
         int stop_value = 0;
         int dest = 'h4;
         int inc = 'h8;
@@ -274,7 +274,7 @@ package reg_maps;
         int ramp_bypass = 'h10;
     } ramp_generator_regs;
 
-    struct { 
+    struct {
         int trigger_mode = 0;
         int trigger_level = 'h4;
         int buffer_addr_low = 'h8;
@@ -285,8 +285,7 @@ package reg_maps;
         int rearm_trigger = 'h1C;
     } uscope_regs;
 
-
-    struct { 
+    struct {
         int control = 0;
         int tb_divider = 'h4;
         int step_delay = 'h8;
@@ -298,7 +297,7 @@ package reg_maps;
         int pulse_skipping_2 = 'h20;
     } prog_sequencer_3_regs;
 
-    struct { 
+    struct {
         int control = 0;
         int ch_1 = 'h4;
         int ch_2 = 'h8;
@@ -308,7 +307,7 @@ package reg_maps;
         int ch_6 = 'h18;
     } uscope_mux;
 
-    struct { 
+    struct {
         int n_ch = 0;
         int buffer_fill_data = 4;
         int buffer_fill_channel = 8;
@@ -346,7 +345,7 @@ package reg_maps;
         int user_15 = 'h88;
     } axis_dynamic_dma_regs;
 
-    struct { 
+    struct {
         int tresh_0l = 0;
         int tresh_1l = 'h4;
         int tresh_2l = 'h8;
@@ -388,7 +387,7 @@ package reg_maps;
         int offset_11 = 'h8c;
     } sd_filter_12;
 
-    struct { 
+    struct {
         int slow_tresh_low = 0;
         int slow_tresh_high = 'h4;
         int slow_trip_duration = 'h8;
@@ -396,7 +395,7 @@ package reg_maps;
         int fast_tresh_high = 'h10;
     } fault_detector_1;
 
-    struct { 
+    struct {
         int slow_tresh_low_0     = 'h00;
         int slow_tresh_low_1     = 'h04;
         int slow_tresh_high_0    = 'h08;
@@ -413,7 +412,7 @@ package reg_maps;
         int slow_fault_1    = 'h34;
     } fault_detector_2;
 
-    struct { 
+    struct {
         int slow_tresh_low_0     = 'h00;
         int slow_tresh_low_1     = 'h04;
         int slow_tresh_low_2     = 'h08;
@@ -437,7 +436,7 @@ package reg_maps;
         int slow_fault_2    = 'h50;
     } fault_detector_3;
 
-    struct { 
+    struct {
         int angle_dest = 0;
         int speed_dest = 'h4;
         int max_count = 'h8;
@@ -456,7 +455,7 @@ package reg_maps;
     } fcore_constant_engine;
 
 
-    struct { 
+    struct {
         int shape = 0;
         int output_selector = 'h4;
         int parameter_0 = 'h8;

@@ -36,10 +36,10 @@ module noise_generator #(
 );
 
     localparam N_REGISTERS = 1+N_OUTPUTS;
-    
+
     reg [31:0] cu_read_registers [N_REGISTERS-1:0];
     reg [31:0] cu_write_registers [N_REGISTERS-1:0];
-    
+
     axil_simple_register_cu #(
         .N_READ_REGISTERS(N_REGISTERS),
         .N_WRITE_REGISTERS(N_REGISTERS),
@@ -78,8 +78,7 @@ module noise_generator #(
         end
 
     endgenerate
-    
-    
+
 
 
     assign cu_read_registers = cu_write_registers;
@@ -111,15 +110,15 @@ module noise_generator #(
     reg [15:0] gaussian_erf [65535:0];
 
     initial begin
-        $readmemh("erf.mem", gaussian_erf); 
+        $readmemh("erf.mem", gaussian_erf);
     end
 
 
-    enum reg { 
+    enum reg {
         idle = 0,
         working = 1
     } state = idle;
-    
+
     reg[7:0] output_counter = 0;
 
     initial begin
@@ -132,9 +131,9 @@ module noise_generator #(
     wire [15:0] noise_gen_out = GAUSSIAN_OUT == 1 ? gaussian_erf[generators_out]: generators_out;
     generate
         genvar i;
-        
+
         for(i = 0; i < N_PRBS_GENERATORS; i++) begin
-            
+
             lfsr # (
                 .LFSR_WIDTH(21),
                 .LFSR_POLY(polynomial),
@@ -181,7 +180,6 @@ module noise_generator #(
                         end
                     endcase
                 end
-                
             end
         end
 

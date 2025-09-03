@@ -16,7 +16,7 @@
 `include "interfaces.svh"
 
 module zynqmp_PS_wrapper #(
-    parameter FCORE_PRESENT = 0
+    parameter int FCORE_PRESENT = 0
 ) (
     output wire io_clock,
     output wire logic_clock,
@@ -31,7 +31,7 @@ module zynqmp_PS_wrapper #(
     AXI term();
 
     generate
-        
+
         if(FCORE_PRESENT == 0)begin
             axi_terminator terminator(
                 .clock(logic_clock),
@@ -102,7 +102,7 @@ module zynqmp_PS_wrapper #(
                 .dma_done(dma_done)
             );
         end else begin
-            
+
         ps PS (
             .IO_clock(io_clock),
             .logic_clock(logic_clock),

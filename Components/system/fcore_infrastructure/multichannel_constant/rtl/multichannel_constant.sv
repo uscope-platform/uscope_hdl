@@ -38,7 +38,7 @@ module multichannel_constant #(
     reg [CONSTANT_WIDTH-1:0] constant_data_memory [0:N_CONSTANTS-1][0:N_CHANNELS-1];
     reg [CONSTANT_WIDTH-1:0] constant_dest_memory [0:N_CONSTANTS-1][0:N_CHANNELS-1];
     reg [CONSTANT_WIDTH-1:0] constant_user_memory [0:N_CONSTANTS-1][0:N_CHANNELS-1];
-    
+
     localparam N_REGISTER = 7;
     reg [31:0] cu_write_registers [N_REGISTER-1:0];
     reg [31:0] cu_read_registers [N_REGISTER-1:0];
