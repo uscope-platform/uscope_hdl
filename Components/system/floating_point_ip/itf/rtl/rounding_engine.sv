@@ -23,34 +23,30 @@ module rounding_engine #(
         logic [DATA_WIDTH:0] mask = (1'b1 << index) - 1'b1;
         return |(data_in & mask);
     endfunction
-    
+
 
     reg guard, round, sticky;
     wire  factor_1;
-    assign factor_1 = (round | sticky | mantissa_lsb); 
+    assign factor_1 = (round | sticky | mantissa_lsb);
 
     assign round_up = guard & factor_1;
     always_comb begin
 
-        guard  <= 0;
-        round  <= 0;
-        sticky <= 0;
+        guard  = 0;
+        round  = 0;
+        sticky = 0;
 
         if (msb_index >= 24) begin
-            guard <= get_bit(data_in, msb_index - 24);
+            guard = get_bit(data_in, msb_index - 24);
         end
 
         if (msb_index >= 25) begin
-            round <= get_bit(data_in, msb_index - 25);
+            round = get_bit(data_in, msb_index - 25);
         end
 
         if (msb_index >= 26) begin
-            sticky <= get_sticky(data_in, msb_index - 25);
+            sticky = get_sticky(data_in, msb_index - 25);
         end
     end
-    
-
-    
-
 
 endmodule

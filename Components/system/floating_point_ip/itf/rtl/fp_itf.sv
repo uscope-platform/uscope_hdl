@@ -48,15 +48,15 @@ module fp_itf #(
                 for(integer i = 0; i < PIPELINE_DEPTH; i++) begin
                     dest_reg[i] <= 0;
                 end
- 
+
             end else begin
                 dest_reg[0] <= in.dest;
                 for(integer i = 1; i < PIPELINE_DEPTH; i++) begin
                     dest_reg[i] <= dest_reg[i-1];
                 end
             end
-            
-        end       
+
+        end
     endgenerate
 
 
@@ -76,7 +76,7 @@ module fp_itf #(
         end else begin
             stage_1.valid <= in.valid;
             stage_1.user  <= in.data[INPUT_WIDTH-1];
-           
+
             if(in.data[INPUT_WIDTH-1])begin
                 stage_1.data <= (~in.data + 1'b1);
             end else begin
@@ -88,7 +88,7 @@ module fp_itf #(
 
 
     function  logic [$clog2(INPUT_WIDTH)-1:0] get_msb_index (input logic [31:0] value);
-        
+
         integer i;
         logic [$clog2(INPUT_WIDTH)-1:0] msb = 0;
         for (i = 0; i < INPUT_WIDTH; i++)
@@ -99,7 +99,7 @@ module fp_itf #(
     // -----------------------
     // Stage 2: Leading-One Detection
     // -----------------------
-    
+
     always_ff @(posedge clock) begin
         if (!reset) begin
             stage_2.valid <= 0;
@@ -123,7 +123,7 @@ module fp_itf #(
     end else begin
         assign exponent = 127 + stage_2.dest;
     end
-    
+
     logic [38:0] shifted;
     assign shifted = stage_2.dest<23 ? stage_2.data << (23 - stage_2.dest) : stage_2.data >> (stage_2.dest - 23);
 
@@ -144,7 +144,7 @@ module fp_itf #(
         .mantissa_lsb(shifted[0]),
         .round_up(round_up)
     );
-    
+
 
     always_ff @(posedge clock) begin
         if (!reset) begin
