@@ -62,7 +62,7 @@ module fp_itf_tb();
             dut_in.valid = 1;
             dut_in.data  = 67070430+i;
         end
-        
+
         for (i =0; i <= 250000; i++) begin
             @(posedge clk);
             dut_in.valid = 1;

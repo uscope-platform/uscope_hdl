@@ -136,7 +136,7 @@ module fp_itf #(
 
     assign mantissa = shifted[22:0];
 
-    rounding_engine #(
+    itf_rounding_engine #(
         .DATA_WIDTH(INPUT_WIDTH)
     ) rounder (
         .data_in(stage_2.data),

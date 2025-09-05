@@ -1,4 +1,4 @@
-module rounding_engine #(
+module itf_rounding_engine #(
     parameter DATA_WIDTH = 32
 ) (
     input  wire [DATA_WIDTH-1:0] data_in,
