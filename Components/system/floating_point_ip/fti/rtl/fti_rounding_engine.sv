@@ -3,7 +3,7 @@ module fti_rounding_engine #(
 ) (
     input  wire [23:0] data_in,
     input  wire mantissa_lsb,
-    input  wire signed [10:0] lsb_index,
+    input  wire signed [7:0] lsb_index,
     output wire round_up
 );
 

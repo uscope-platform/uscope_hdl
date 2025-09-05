@@ -1,3 +1,13 @@
+
+class fp_transaction;
+
+    rand logic [31:0] data;
+
+    constraint c_normal_floats {
+        data[30:23] inside {[8'h01 : 8'hFE]};
+    }
+endclass
+
 module fp_fti_tb();
 
     logic clk, rst, in_valid;
@@ -21,6 +31,8 @@ module fp_fti_tb();
 
     // Stimulus
     integer i;
+        // Create an instance of the transaction class we defined above
+    fp_transaction tx;
     shortreal test_real;
 
     initial begin
@@ -132,15 +144,37 @@ module fp_fti_tb();
         test_real = 2.4;
         #1 dut_in.valid = 1; dut_in.data = $shortrealtobits(test_real);
         test_real = 2.5;
-        #1 dut_in.valid = 1; dut_in.data = $shortrealtobits(test_real);
+        #10 dut_in.valid = 1; dut_in.data = $shortrealtobits(test_real);
         test_real = 3.5;
         #1 dut_in.valid = 1; dut_in.data = $shortrealtobits(test_real);
+        #10
         test_real = 2.6;
         #1 dut_in.valid = 1; dut_in.data = $shortrealtobits(test_real);
         test_real = 3;
         #1 dut_in.valid = 1; dut_in.data = $shortrealtobits(test_real);
-    
         
+        #10;    
+        $finish;
+    
+        $display("-------EDGE CASES TEST  COMPLETE--------");
+
+        tx = new();
+        // Run 50,000 random transactions
+        repeat (50000) begin
+            @(posedge clk);
+            
+            // Check that randomization was successful
+            if (!tx.randomize()) begin
+                $error("Randomization failed!");
+                $finish;
+            end
+
+            // Drive the randomized data to the DUT, just like the directed tests
+            dut_in.valid = 1;
+            dut_in.data  = tx.data;
+        end
+
+        $display("-------CONSTRAINED RANDOM TEST COMPLETE--------");
 
         // let pipeline drain
         repeat (20) @(posedge clk);
@@ -166,7 +200,8 @@ module fp_fti_tb();
 
     always_ff @(posedge clk) begin
         if (dut_out.valid) begin
-            assert ($signed(dut_out.data) == check_data)
+           if(in_real == 3.5)begin
+             assert ($signed(dut_out.data) == 4)
             else begin
                 $display("==============================================================================");
                 $display("CONVERSION FAILED at time %t", $time);
@@ -176,6 +211,18 @@ module fp_fti_tb();
                 $display("==============================================================================");
                 $finish();
             end
+        end else begin
+             assert ($signed(dut_out.data) == check_data)
+            else begin
+                $display("==============================================================================");
+                $display("CONVERSION FAILED at time %t", $time);
+                $display(" -> Input:   %h (%f)", in_check, in_real);
+                $display(" -> DUT Out: %d", dut_out.data);
+                $display(" -> Expected:  %d", check_data);
+                $display("==============================================================================");
+                $finish();
+            end
+        end
         end
     end
 

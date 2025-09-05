@@ -95,7 +95,7 @@ end
 
     wire round_up;
     fti_rounding_engine #(
-        .DATA_WIDTH(32)
+        .DATA_WIDTH(24)
     ) rounder (
         .data_in(mantissa),
         .lsb_index(lsb_index),
