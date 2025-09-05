@@ -27,11 +27,12 @@ module fp_fti #(
 
 assign in.ready = 1;
 
-reg[7:0] exponent = 0;
+reg signed [7:0] exponent = 0;
 reg[23:0] mantissa = 0;
 reg subnormal = 0;
 reg sign = 0;
 
+reg mantissa_is_zero = 0;
 reg stage_1_valid = 0;
 reg stage_1_sign = 0;
 
@@ -43,9 +44,10 @@ always_ff @(posedge clock)begin
     stage_1_valid <= in.valid;
     if(in.valid)begin
         mantissa <= {1, in.data[22:0]};
-        exponent <=  in.data[30:23]-127;
+        exponent <=  $signed({1'b0, in.data[30:23]})-9'sd127;
         subnormal <= in.data[30:23] == 0;
         sign <= in.data[31];
+        mantissa_is_zero <= (in.data[22:0] == 0);
     end
 end
 
@@ -58,7 +60,7 @@ reg stage_2_valid = 0;
 reg stage_2_sign = 0;
 
 wire overflow;
-assign overflow = ((exponent + 1) > out.DATA_WIDTH -1) && ~subnormal;
+assign overflow = (exponent > 31) || (exponent == 31 && (sign || ~mantissa_is_zero));
 
 reg [out.DATA_WIDTH-1:0] raw_shifted_data;
 
@@ -71,7 +73,7 @@ always_ff @(posedge clock)begin
     end else if(overflow)begin
         raw_shifted_data <= sign ? {1, {(out.DATA_WIDTH-1){1'b0}}}:  {(out.DATA_WIDTH-1){1'b1}};
     end else begin
-        if(exponent<0) begin
+        if($signed(exponent)<0) begin
             raw_shifted_data <= 0;
         end else if(exponent<23)begin
             raw_shifted_data <= mantissa>>(23-exponent);
@@ -85,12 +87,18 @@ end
 //           STAGE 3: ROUND TO NEAREST EVEN           //
 ////////////////////////////////////////////////////////
 
+
+
+    wire signed [7:0] lsb_index;
+    assign lsb_index = ($signed(exponent) < 0) ? 8'sd0 : ((exponent < 23) ? (23 - exponent) : 8'sd0);
+
+
     wire round_up;
-    rounding_engine #(
+    fti_rounding_engine #(
         .DATA_WIDTH(32)
     ) rounder (
         .data_in(mantissa),
-        .msb_index(23-exponent),
+        .lsb_index(lsb_index),
         .mantissa_lsb(raw_shifted_data[0]),
         .round_up(round_up)
     );

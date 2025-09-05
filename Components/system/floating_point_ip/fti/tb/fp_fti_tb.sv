@@ -3,7 +3,7 @@ module fp_fti_tb();
     logic clk, rst, in_valid;
 
     axi_stream dut_in();
-    axi_stream #(.DATA_WIDTH(20)) dut_out();
+    axi_stream #(.DATA_WIDTH(32)) dut_out();
 
     // DUT
     fp_fti  #(
@@ -21,6 +21,7 @@ module fp_fti_tb();
 
     // Stimulus
     integer i;
+    shortreal test_real;
 
     initial begin
         rst = 0;
@@ -38,8 +39,7 @@ module fp_fti_tb();
             dut_in.valid = 1;
             dut_in.data  = $shortrealtobits($itor(i));
         end
-
-        dut_in.valid = 0;
+        $display("-------ROUND 1 COMPLETE--------");
         #10;
         // Run through some edge + random cases
         for (i =0 ; i >= -32768; i--) begin
@@ -47,12 +47,100 @@ module fp_fti_tb();
             dut_in.valid = 1;
             dut_in.data  = $shortrealtobits($itor(i));
         end
+        $display("-------ROUND 2 COMPLETE--------");
+        // Run through some edge + random cases
+        for (i =0; i <= 250000; i++) begin
+            @(posedge clk);
+            dut_in.valid = 1;
+            dut_in.data  = $shortrealtobits($itor(16718748+i));
+        end
+        $display("-------ROUND 3 COMPLETE--------");
+        // Run through some edge + random cases
+        for (i =0; i <= 250000; i++) begin
+            @(posedge clk);
+            dut_in.valid = 1;
+            dut_in.data  = $shortrealtobits($itor(33554411+i));
+        end
+        $display("-------ROUND 4 COMPLETE--------");
+        
+        for (i =0; i <= 250000; i++) begin
+            @(posedge clk);
+            dut_in.valid = 1;
+            dut_in.data  = $shortrealtobits($itor(67070430+i));
+        end
+        
+        $display("-------ROUND 5 COMPLETE--------");
+        for (i =0; i <= 250000; i++) begin
+            @(posedge clk);
+            dut_in.valid = 1;
+            dut_in.data  = $shortrealtobits($itor(-16718748-i));
+        end
+        $display("-------ROUND 6 COMPLETE--------");
+
+                // Run through some edge + random cases
+        for (i =0; i <= 250000; i++) begin
+            @(posedge clk);
+            dut_in.valid = 1;
+            dut_in.data  = $shortrealtobits($itor(-33554411-i));
+        end
+
+        $display("-------ROUND 7 COMPLETE--------");
+                // Run through some edge + random cases
+        for (i =0; i <= 250000; i++) begin
+            @(posedge clk);
+            dut_in.valid = 1;
+            dut_in.data  = $shortrealtobits($itor(-67070430-i));
+        end
+
+        $display("-------ROUND 8 COMPLETE--------");
+        // Run through some edge + random cases
+        for (i =0; i <= 400000; i++) begin
+            @(posedge clk);
+            dut_in.valid = 1;
+            dut_in.data  = $shortrealtobits($itor(2147083647+i));
+        end
+
+        $display("-------ROUND 9 COMPLETE--------");
+
 
 
 
         // stop driving inputs
         @(posedge clk);
         dut_in.valid = 0;
+
+        #100;
+        
+        // Start testing edge cases
+
+        #1 dut_in.valid = 1; dut_in.data = 32'h00000000; // +0
+        #1 dut_in.valid = 1; dut_in.data = 32'h80000000; // -0
+        #1 dut_in.valid = 1; dut_in.data = 32'h00000001; // smallest subnormal
+
+        test_real = 0.1;
+        #1 dut_in.valid = 1; dut_in.data = $shortrealtobits(test_real);
+        test_real = 0.4;
+        #1 dut_in.valid = 1; dut_in.data = $shortrealtobits(test_real);
+        test_real = 0.5;
+        #1 dut_in.valid = 1; dut_in.data = $shortrealtobits(test_real);
+        test_real = 0.6;
+        #1 dut_in.valid = 1; dut_in.data = $shortrealtobits(test_real);
+        test_real = 1.2;
+        #1 dut_in.valid = 1; dut_in.data = $shortrealtobits(test_real);
+        test_real = 2;
+        #1 dut_in.valid = 1; dut_in.data = $shortrealtobits(test_real);
+        test_real = 2.4;
+        #1 dut_in.valid = 1; dut_in.data = $shortrealtobits(test_real);
+        test_real = 2.5;
+        #1 dut_in.valid = 1; dut_in.data = $shortrealtobits(test_real);
+        test_real = 3.5;
+        #1 dut_in.valid = 1; dut_in.data = $shortrealtobits(test_real);
+        test_real = 2.6;
+        #1 dut_in.valid = 1; dut_in.data = $shortrealtobits(test_real);
+        test_real = 3;
+        #1 dut_in.valid = 1; dut_in.data = $shortrealtobits(test_real);
+    
+        
 
         // let pipeline drain
         repeat (20) @(posedge clk);

@@ -1,9 +1,9 @@
 module fti_rounding_engine #(
     parameter DATA_WIDTH = 32
 ) (
-    input  wire [DATA_WIDTH-1:0] data_in,
+    input  wire [23:0] data_in,
     input  wire mantissa_lsb,
-    input  wire [$clog2(DATA_WIDTH)-1:0] lsb_index,
+    input  wire signed [10:0] lsb_index,
     output wire round_up
 );
 
@@ -35,16 +35,14 @@ module fti_rounding_engine #(
         round  = 0;
         sticky = 0;
 
-        if (lsb_index >= 1) begin
-            guard = get_bit(data_in, lsb_index-1);
+        if (lsb_index > 0) begin
+            guard  = get_bit(data_in, lsb_index-1);
         end
-
-        if (lsb_index >= 6) begin
-            round = get_bit(data_in, lsb_index - 2);
+        if (lsb_index > 1) begin
+            round  = get_bit(data_in, lsb_index-2);
         end
-
-        if (lsb_index >= 7) begin
-            sticky = get_sticky(data_in,lsb_index-3);
+        if (lsb_index > 2) begin
+            sticky = get_sticky(data_in, lsb_index-3);
         end
     end
 
