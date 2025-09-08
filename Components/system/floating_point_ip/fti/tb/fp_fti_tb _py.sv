@@ -5,8 +5,8 @@ module fp_fti_tb_py();
     axi_stream dut_in();
     axi_stream #(.DATA_WIDTH(32)) dut_out();
 
-    reg [31:0] stimulus[999999:0];
-    reg [31:0] results[999999:0];
+    reg [31:0] stimulus[10000001:0];
+    reg [31:0] results[10000001:0];
 
     initial begin
         $readmemh("/home/fils/git/uscope_hdl/public/Components/system/floating_point_ip/fti/tb/test_stimuli.mem", stimulus);
@@ -36,7 +36,7 @@ module fp_fti_tb_py();
         #20 rst = 1;
 
          
-        for(i = 0; i<1000000; i++)begin
+        for(i = 0; i<10000000; i++)begin
             #1 dut_in.data <= stimulus[i]; dut_in.valid = 1;
         end
         // let pipeline drain
@@ -45,11 +45,12 @@ module fp_fti_tb_py();
     end
 
     reg[31:0] output_counter = 0;
+    
 
     always_ff @(posedge clk) begin
         if(dut_out.valid)begin
             if(dut_out.data !== results[output_counter]) begin
-                $display("Mismatch at %0d: got %h, expected %h", output_counter, dut_out.data, results[output_counter]);
+                $display("Mismatch at %0d: got %h, expected %h for input: %f", output_counter, dut_out.data, results[output_counter], $bitstoshortreal(stimulus[output_counter]));
                 $fatal;
             end
             output_counter <= output_counter + 1;

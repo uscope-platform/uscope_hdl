@@ -28,7 +28,7 @@ module fp_fti #(
 assign in.ready = 1;
 
 reg signed [7:0] exponent = 0;
-reg[23:0] mantissa = 0;
+reg [23:0] mantissa = 0;
 reg subnormal = 0;
 reg sign = 0;
 
@@ -58,15 +58,18 @@ end
 
 reg stage_2_valid = 0;
 reg stage_2_sign = 0;
+reg [23:0] stage_2_mantissa = 0;
 
 wire overflow;
 assign overflow = (exponent > 31) || (exponent == 31 && (sign || ~mantissa_is_zero));
 
 reg [out.DATA_WIDTH-1:0] raw_shifted_data;
+reg signed [7:0] lsb_index;
 
 
 always_ff @(posedge clock)begin
     stage_2_valid <= stage_1_valid;
+    stage_2_mantissa <= mantissa;
     stage_2_sign <= sign;
     if(subnormal)begin
         raw_shifted_data <= 0;
@@ -81,6 +84,12 @@ always_ff @(posedge clock)begin
             raw_shifted_data <= mantissa << (exponent-23);
         end
     end
+    
+    if (($signed(exponent) < -1) || ($signed(exponent) >= 23)) begin
+        lsb_index <= 8'sd0;
+    end else begin
+        lsb_index <= 23 - exponent;
+    end
 end
 
 ////////////////////////////////////////////////////////
@@ -89,15 +98,11 @@ end
 
 
 
-    wire signed [7:0] lsb_index;
-    assign lsb_index = ($signed(exponent) < 0) ? 8'sd0 : ((exponent < 23) ? (23 - exponent) : 8'sd0);
-
-
     wire round_up;
     fti_rounding_engine #(
         .DATA_WIDTH(24)
     ) rounder (
-        .data_in(mantissa),
+        .data_in(stage_2_mantissa),
         .lsb_index(lsb_index),
         .mantissa_lsb(raw_shifted_data[0]),
         .round_up(round_up)

@@ -19,7 +19,7 @@ module fti_rounding_engine #(
         input logic [DATA_WIDTH:0] data_in,
         input logic [$clog2(DATA_WIDTH)-1:0] index
     );
-        logic [DATA_WIDTH:0] mask = (1<<index)-1;
+        logic [DATA_WIDTH:0] mask = (1 << (index + 1)) - 1;
         return |(data_in & mask);
     endfunction
 
