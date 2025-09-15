@@ -107,7 +107,7 @@ module multichannel_constant #(
     end
 
 
-    
+
 
     reg[7:0] const_counter = 0;
     reg[7:0] const_pointer = 0;
@@ -136,7 +136,7 @@ module multichannel_constant #(
                     const_counter <= 0;
                     channel_counter <= 0;
                     if (sync && n_active_constants != 0) begin
-                        constant_sender_state <= output_state; 
+                        constant_sender_state <= output_state;
                     end
                 end
 
@@ -182,7 +182,7 @@ endmodule
 
     /**
        {
-        "name": "fcore_constant_engine",
+        "name": "multichannel_constant",
         "type": "peripheral",
         "registers":[
             {
@@ -218,7 +218,7 @@ endmodule
                     {
                         "name": "constant_selector",
                         "description": "Constant selector for the constant",
-                        "direction": "RW", 
+                        "direction": "RW",
                         "start_position": 16,
                         "length": 16
                     }
@@ -243,5 +243,5 @@ endmodule
                 "direction": "RW"
             }
         ]
-    }  
+    }
     **/

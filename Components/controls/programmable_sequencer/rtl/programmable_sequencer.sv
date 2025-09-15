@@ -184,7 +184,7 @@ endmodule
                 "n_regs": ["1"],
                 "description": "Additional delay between sequence steps",
                 "direction": "RW"
-            },            
+            },
             {
                 "name": "step_$",
                 "n_regs": ["MAX_STEPS"],
@@ -192,5 +192,5 @@ endmodule
                 "direction": "RW"
             }
         ]
-    }   
+    }
  **/

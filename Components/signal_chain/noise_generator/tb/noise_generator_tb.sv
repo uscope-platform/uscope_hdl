@@ -10,14 +10,14 @@ module noise_generator_tb ();
     reg  clk, reset;
 
     event config_done;
-    
+
     axi_lite cfg_axi();
     axi_lite_BFM axil_bfm;
 
     parameter OUTPUT_WIDTH = TEST_FLOAT_MODE ? 32 : 16;
 
     axi_stream #(.DATA_WIDTH(OUTPUT_WIDTH)) data_out();
-        
+
 
     reg trigger = 1'b0;
 
@@ -38,7 +38,7 @@ module noise_generator_tb ();
         .data_out(data_out)
     );
 
-   
+
     int results_file;
 
     if(TEST_FLOAT_MODE) begin

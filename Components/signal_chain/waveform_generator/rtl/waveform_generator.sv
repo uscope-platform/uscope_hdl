@@ -13,7 +13,7 @@ module waveform_generator #(
 );
 
     localparam int N_PARAMETERS = 10;
-    localparam int N_REGISTERS = N_PARAMETERS+2;
+    localparam int N_REGISTERS = N_PARAMETERS+3;
 
     reg [31:0] cu_read_registers [N_REGISTERS-1:0];
     reg [31:0] cu_write_registers [N_REGISTERS-1:0];
@@ -41,9 +41,9 @@ module waveform_generator #(
     wire [7:0] output_selector;
     assign cu_read_registers = cu_write_registers;
 
-    assign shape = cu_write_registers[0][15:0];
-    assign active_channels = cu_write_registers[0][31:16];
-    assign output_selector = cu_write_registers[1];
+    assign active_channels = cu_write_registers[0];
+    assign shape           = cu_write_registers[1];
+    assign output_selector = cu_write_registers[2];
 
 
 
@@ -62,7 +62,7 @@ module waveform_generator #(
         for ( i = 0; i<N_PARAMETERS; i++) begin
             always_ff @(posedge clock)begin
                 if(latch_parameters)begin
-                    parameters[output_selector][i] <= cu_write_registers[i+2];
+                    parameters[output_selector][i] <= cu_write_registers[i+3];
                     active <= 1;
                 end
             end
@@ -152,6 +152,40 @@ module waveform_generator #(
                 tlast_counter <= tlast_counter+1;
             end
         end
-    end 
+    end
 
 endmodule
+
+ /**
+    {
+        "name": "waveform_generator",
+        "alias": "waveform_generator",
+        "type": "parametric_peripheral",
+        "registers":[
+            {
+                "name": "enable",
+                "n_regs": ["1"],
+                "description": "Write 1 to a bit in this register to enable the corresponding channel",
+                "direction": "RW"
+            },
+            {
+                "name": "shape",
+                "n_regs": ["1"],
+                "description": "Shape of the selected channel",
+                "direction": "RW"
+            },
+            {
+                "name": "output_selector",
+                "n_regs": ["1"],
+                "description": "Select the output parameter to configure",
+                "direction": "RW"
+            },
+            {
+                "name": "param_$",
+                "n_regs": ["N_PARAMETERS"],
+                "description": "Shape dependent parameter # $",
+                "direction": "RW"
+            }
+        ]
+    }
+ **/
