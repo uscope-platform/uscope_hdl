@@ -40,19 +40,27 @@ module triangle_core #(
     reg[23:0] generator_counter = 0;
     reg running = 0;
 
+    initial begin
+        data_out.data = 0;
+        data_out.dest = 0;
+        data_out.tlast = 0;
+        data_out.valid = 0;
+        data_out.user = 0;
+    end
+
 
     wire down_ramp;
     assign down_ramp = generator_counter > duty-1;
 
     always_ff@(posedge clock)begin
+        data_out.tlast <= 0;
+        data_out.valid <= 0;
         if(!running)begin
             if(trigger)begin
                 running <= 1;
             end
             generator_counter <= phase;
         end else begin
-            data_out.tlast <= 0;
-            data_out.user <= 0;
             if(trigger)begin
                 if(generator_counter==period-1)begin
                     generator_counter <= 0;

@@ -36,11 +36,13 @@ module waveform_generator #(
 
 
     wire [1:0] shape;
+    wire [15:0] active_channels;
     reg [31:0] parameters[N_OUTPUTS][N_PARAMETERS-1:0];
     wire [7:0] output_selector;
     assign cu_read_registers = cu_write_registers;
 
-    assign shape = cu_write_registers[0];
+    assign shape = cu_write_registers[0][15:0];
+    assign active_channels = cu_write_registers[0][31:16];
     assign output_selector = cu_write_registers[1];
 
 
@@ -73,7 +75,7 @@ module waveform_generator #(
             )square_gen(
                 .clock(clock),
                 .reset(reset),
-                .trigger(trigger),
+                .trigger(trigger & active_channels>output_idx),
                 .parameters(parameters[output_idx]),
                 .data_out(square_out[output_idx])
             );
@@ -83,7 +85,7 @@ module waveform_generator #(
             )sine_gen(
                 .clock(clock),
                 .reset(reset),
-                .trigger(trigger),
+                .trigger(trigger & active_channels>output_idx),
                 .parameters(parameters[output_idx]),
                 .data_out(sine_out[output_idx])
             );
@@ -93,7 +95,7 @@ module waveform_generator #(
             )triangle_gen(
                 .clock(clock),
                 .reset(reset),
-                .trigger(trigger),
+                .trigger(trigger & active_channels>output_idx),
                 .parameters(parameters[output_idx]),
                 .data_out(triangle_out[output_idx])
             );
@@ -112,7 +114,10 @@ module waveform_generator #(
                 .stream_out(channel_out[output_idx])
             );
         end
+
     endgenerate
+
+    axi_stream serialized_out();
 
     axi_stream_combiner #(
         .INPUT_DATA_WIDTH(32),
@@ -124,7 +129,29 @@ module waveform_generator #(
         .clock(clock),
         .reset(reset),
         .stream_in(channel_out),
-        .stream_out(data_out)
+        .stream_out(serialized_out)
     );
+
+
+    assign serialized_out.ready = data_out.ready;
+
+    reg [15:0] tlast_counter = 0;
+
+    always_ff @( posedge clock ) begin
+        data_out.data <= serialized_out.data;
+        data_out.valid <= serialized_out.valid;
+        data_out.dest <= serialized_out.dest;
+        data_out.user <= serialized_out.user;
+
+        if(serialized_out.valid == 0) begin
+            data_out.tlast <= 0;
+        end else begin
+            if(tlast_counter == active_channels-1) begin
+                data_out.tlast <= 1;
+            end else begin
+                tlast_counter <= tlast_counter+1;
+            end
+        end
+    end 
 
 endmodule

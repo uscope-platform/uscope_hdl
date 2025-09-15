@@ -24,4 +24,12 @@ module sine_core #(
     wire [31:0] phase;
     assign phase = parameters[3];
 
+    initial begin
+        data_out.data = 0;
+        data_out.dest = 0;
+        data_out.tlast = 0;
+        data_out.valid = 0;
+        data_out.user = 0;
+    end
+
 endmodule

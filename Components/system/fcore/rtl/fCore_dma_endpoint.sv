@@ -22,7 +22,7 @@ module fCore_dma_endpoint #(
     DATAPATH_WIDTH = 20,
     REG_ADDR_WIDTH = 8,
     REGISTER_FILE_DEPTH = 64,
-    N_COMMON_IO = 32,
+    N_COMMON_IO_TRANSLATION_SLOTS = 128,
     TRANSLATION_TABLE_INIT = "TRANSPARENT",
     TRANSLATION_TABLE_INIT_FILE = "",
     RAW_AXI_ACCESS = 1
@@ -70,7 +70,7 @@ module fCore_dma_endpoint #(
     
 
     reg [31:0] translation_table [REGISTER_FILE_DEPTH-1:0] = '{default:0};
-    reg [31:0] common_io_translation_table [N_COMMON_IO-1:0] = '{default:0};
+    reg [31:0] common_io_translation_table [N_COMMON_IO_TRANSLATION_SLOTS-1:0] = '{default:0};
 
     always_ff @(posedge clock) begin
         if(io_mapping.dest == 1)begin

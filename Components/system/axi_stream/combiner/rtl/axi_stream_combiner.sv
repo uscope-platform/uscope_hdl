@@ -113,6 +113,14 @@ module axi_stream_combiner #(
     ///////////////STREAM COMBINATION SECTION///////////////
 
 
+    initial begin
+        stream_out.tlast <= 0;
+        stream_out.user <= 0;
+        stream_out.dest <= 0;
+        stream_out.data <= 0;
+        stream_out.valid <=0;
+    end
+
     always@(posedge clock)begin
 
         for(int k = N_STREAMS-1; k>=0; k--)begin
