@@ -53,7 +53,7 @@ module waveform_generator_tb();
         //TESTS
         #20.5 reset <=1'h1;
 
-        #1 axil_bfm.write(reg_maps::waveform_generator.shape, 0);
+        #1 axil_bfm.write(reg_maps::waveform_generator.shape, 1);
         #1 axil_bfm.write(reg_maps::waveform_generator.output_selector, 0);
         #1 axil_bfm.write(reg_maps::waveform_generator.parameter_0, $shortrealtobits(10.5));
         #1 axil_bfm.write(reg_maps::waveform_generator.parameter_1, $shortrealtobits(55.5));
@@ -79,6 +79,21 @@ module waveform_generator_tb();
         data_out.ready <= 1'b1;
 
         ->config_done;
+    end
+
+    reg [15:0] count = 0;
+
+    reg [31:0] data_log [0:65534];
+    always_ff@(posedge clk) begin
+        if(data_out.valid )begin
+            count <= count + 1;
+            data_log[count] <= data_out.data;
+            if(count == 65535) begin
+                $writememh("/home/fils/git/uscope_hdl/public/Components/signal_chain/waveform_generator/tb/waveform_data.log", data_log);
+                $finish;
+            end
+        end
+
     end
 
 
