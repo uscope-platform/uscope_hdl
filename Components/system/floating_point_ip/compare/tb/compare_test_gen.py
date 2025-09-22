@@ -48,7 +48,7 @@ if __name__ == "__main__":
         for stimulus in test_stimuli:
             str_a = struct.unpack('<I', struct.pack('<f', stimulus[0]))[0]
             str_b = struct.unpack('<I', struct.pack('<f', stimulus[1]))[0]
-            f.write(f"{str_a:08x},{str_b:08x}\n")
+            f.write(f"{str_a:08x}{str_b:08x}\n")
     with open(base_dir + "/test_results.mem", "w") as f:
         for result in test_results:
             f.write(f"{result & 0xffffffff:08x}\n")
