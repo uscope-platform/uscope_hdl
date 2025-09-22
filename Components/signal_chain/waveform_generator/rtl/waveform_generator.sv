@@ -50,14 +50,13 @@ module waveform_generator #(
     );
 
 
-    wire [1:0] shape;
+    reg [1:0] shape [N_OUTPUTS];
     wire [15:0] active_channels;
     reg [31:0] parameters[N_OUTPUTS][N_PARAMETERS-1:0];
     wire [7:0] output_selector;
     assign cu_read_registers = cu_write_registers;
 
     assign active_channels = cu_write_registers[0];
-    assign shape           = cu_write_registers[1];
     assign output_selector = cu_write_registers[2];
 
 
@@ -78,6 +77,7 @@ module waveform_generator #(
             always_ff @(posedge clock)begin
                 if(latch_parameters)begin
                     parameters[output_selector][i] <= cu_write_registers[i+3];
+                    shape[output_selector] <= cu_write_registers[1][1:0];
                     active <= 1;
                 end
             end
@@ -124,7 +124,7 @@ module waveform_generator #(
             ) output_selection (
                 .clock(clock),
                 .reset(reset),
-                .address(shape),
+                .address(shape[output_idx]),
                 .stream_in('{square_out[output_idx], sine_out[output_idx], triangle_out[output_idx]}),
                 .stream_out(channel_out[output_idx])
             );

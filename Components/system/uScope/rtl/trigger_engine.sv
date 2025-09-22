@@ -34,7 +34,7 @@ module trigger_engine #(
 
     reg [31:0] cu_write_registers [7:0];
     reg [31:0] cu_read_registers [7:0];
-    
+
     axil_simple_register_cu #(
         .N_READ_REGISTERS(8),
         .N_WRITE_REGISTERS(8),
@@ -51,12 +51,12 @@ module trigger_engine #(
         .axil(axi_in)
     );
 
-   
+
     wire [1:0] acquisition_mode;
     wire [1:0] trigger_mode;
     wire [31:0] trigger_level;
     reg [7:0] channel_selector;
-    
+
     assign trigger_mode = cu_write_registers[0];
     assign trigger_level = cu_write_registers[1];
     assign dma_base_addr[31:0] = cu_write_registers[2];
@@ -91,20 +91,23 @@ module trigger_engine #(
 
     initial trigger_out <= 0;
 
-    axi_stream ftoi_in();
-    axi_stream ftoi_out();
-    axi_stream fixed_out();
+    axi_stream itf_in();
+    axi_stream itf_out();
+    axi_stream float_out();
 
-    assign ftoi_in.data = selected_data;
-    assign ftoi_in.user = selected_user;
-    assign ftoi_in.valid = selected_valid;
+    assign itf_in.data = selected_data;
+    assign itf_in.user = selected_user;
+    assign itf_in.valid = selected_valid;
 
-    float_to_fixed_wrapper ftoi(
+    fp_itf #(
+        .FIXED_POINT_Q015(0),
+        .INPUT_WIDTH(32)
+    ) ftoi (
         .clock(clock),
-        .data_in(ftoi_in),
-        .data_out(ftoi_out)
+        .reset(reset),
+        .in(itf_in),
+        .out(itf_out)
     );
-
 
     register_slice #(
         .DATA_WIDTH(32),
@@ -115,8 +118,8 @@ module trigger_engine #(
     ) input_matching_delay (
         .clock(clock),
         .reset(reset),
-        .in(ftoi_in),
-        .out(fixed_out)
+        .in(itf_in),
+        .out(float_out)
     );
 
 
@@ -129,17 +132,17 @@ module trigger_engine #(
     assign falling_edge = $signed(trigger_comparator_in) <= $signed(trigger_level) && $signed(trigger_comparator_in_dly) > $signed(trigger_level);
 
     always_comb begin
-        if(is_axis_float(fixed_out.user))begin
-            trigger_comparator_in <= ftoi_out.data;
+        if(is_axis_float(float_out.user))begin
+            trigger_comparator_in <= float_out.data;
         end else begin
-            trigger_comparator_in <= fixed_out.data;
+            trigger_comparator_in <= itf_out.data;
         end
     end
 
     enum reg [2:0] {
         wait_fill = 0,
         run = 1,
-        stop = 2, 
+        stop = 2,
         free_run = 3
     } state = wait_fill;
 
@@ -147,7 +150,7 @@ module trigger_engine #(
 
     assign cu_read_registers[7] = state;
 
-    always @(posedge clock) begin
+    always_ff @(posedge clock) begin
         trigger_comparator_in_dly <= trigger_comparator_in;
         case (state)
             wait_fill : begin
