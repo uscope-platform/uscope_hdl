@@ -27,7 +27,7 @@ module fCore_compare_unit #(
     axi_stream.slave operand_b,
     axi_stream.slave operand_c,
     axi_stream.slave operation,
-    axi_stream.master result 
+    axi_stream.master result
 );
 
 
@@ -56,7 +56,6 @@ module fCore_compare_unit #(
         end
     endgenerate
 
-    
 
     always@(posedge clock) begin
         early_compare_result.valid <= 0;
@@ -68,14 +67,14 @@ module fCore_compare_unit #(
                     if(operand_a.data)
                         early_compare_result.data <= operand_b.data;
                     else
-                        early_compare_result.data <= operand_c.data;     
+                        early_compare_result.data <= operand_c.data;
                 end
                 'b100100:begin // GREATER THAN
                     if($signed(operand_a.data) > $signed(operand_b.data)) begin 
                         early_compare_result.data <= comparison_result;
                     end else begin
                         early_compare_result.data <= 0;
-                    end          
+                    end
                 end
                 'b011100:begin // LESS THAN OR EQUAL
                     if($signed(operand_a.data) <= $signed(operand_b.data)) begin
@@ -100,7 +99,7 @@ module fCore_compare_unit #(
                 end
             endcase
             early_compare_result.user <= operand_a.user;
-            early_compare_result.valid <= 1;    
+            early_compare_result.valid <= 1;
         end
     end
 
