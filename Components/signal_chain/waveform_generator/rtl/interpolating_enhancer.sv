@@ -16,11 +16,11 @@
 module interpolating_enhancer #(
     parameter DATA_WIDTH = 16
 )(
-    input logic clock,
-    input logic signed [DATA_WIDTH-1:0] cos,
-    input logic signed [DATA_WIDTH-1:0] cos_next,
-    input logic [1:0] selector,
-    output logic signed [DATA_WIDTH-1:0] cos_out
+    input wire clock,
+    input wire signed [DATA_WIDTH-1:0] cos,
+    input wire signed [DATA_WIDTH-1:0] cos_next,
+    input wire [1:0] selector,
+    output reg signed [DATA_WIDTH-1:0] cos_out
 );
 
 

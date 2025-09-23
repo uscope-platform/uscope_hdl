@@ -102,7 +102,7 @@ module trigger_engine #(
     fp_itf #(
         .FIXED_POINT_Q015(0),
         .INPUT_WIDTH(32)
-    ) ftoi (
+    ) itof (
         .clock(clock),
         .reset(reset),
         .in(itf_in),
@@ -122,21 +122,37 @@ module trigger_engine #(
         .out(float_out)
     );
 
+    axi_stream comp_in_a();
+    axi_stream comp_in_b();
+    axi_stream comp_out();
 
+    fp_compare #(
+        .IEEE_COMPLIANT("FALSE")
+    )cmp(
+        .clock(clock),
+        .in_a(comp_in_a),
+        .in_b(comp_in_b),
+        .out(comp_out)
+    );
 
-    reg [31:0] trigger_comparator_in;
-    reg [31:0] trigger_comparator_in_dly;
+    reg [1:0] comp_out_dly;
     wire rising_edge, falling_edge;
 
-    assign rising_edge  = $signed(trigger_comparator_in) >= $signed(trigger_level) && $signed(trigger_comparator_in_dly) < $signed(trigger_level);
-    assign falling_edge = $signed(trigger_comparator_in) <= $signed(trigger_level) && $signed(trigger_comparator_in_dly) > $signed(trigger_level);
+
+
+    assign rising_edge  = comp_out_dly == 2 && (comp_out.data == 1 || comp_out.data == 0);
+    assign falling_edge = (comp_out.data == 1 || comp_out.data == 0) && comp_out.data == 2;
 
     always_comb begin
         if(is_axis_float(float_out.user))begin
-            trigger_comparator_in <= float_out.data;
+            comp_in_a.data = float_out.data;
+            comp_in_a.valid = float_out.valid;
         end else begin
-            trigger_comparator_in <= itf_out.data;
+            comp_in_a.data = itf_out.data;
+            comp_in_a.valid = itf_out.valid;
         end
+        comp_in_b.data = trigger_level;
+        comp_in_b.valid = 1;
     end
 
     enum reg [2:0] {
@@ -151,7 +167,7 @@ module trigger_engine #(
     assign cu_read_registers[7] = state;
 
     always_ff @(posedge clock) begin
-        trigger_comparator_in_dly <= trigger_comparator_in;
+        comp_out_dly <= comp_out.data;
         case (state)
             wait_fill : begin
                 if(fill_ctr == MEMORY_DEPTH)begin
@@ -160,7 +176,7 @@ module trigger_engine #(
                 fill_ctr <= fill_ctr + 1;
             end
             run : begin
-                if(fixed_out.valid)begin
+                if(comp_out.valid)begin
                     case (trigger_mode)
                         0: begin //RISING EDGE TRIGGER
                             trigger_out <= rising_edge;

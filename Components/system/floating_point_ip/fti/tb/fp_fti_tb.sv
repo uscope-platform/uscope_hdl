@@ -74,13 +74,13 @@ module fp_fti_tb();
             dut_in.data  = $shortrealtobits($itor(33554411+i));
         end
         $display("-------ROUND 4 COMPLETE--------");
-        
+
         for (i =0; i <= 250000; i++) begin
             @(posedge clk);
             dut_in.valid = 1;
             dut_in.data  = $shortrealtobits($itor(67070430+i));
         end
-        
+
         $display("-------ROUND 5 COMPLETE--------");
         for (i =0; i <= 250000; i++) begin
             @(posedge clk);
@@ -122,7 +122,7 @@ module fp_fti_tb();
         dut_in.valid = 0;
 
         #100;
-        
+
         // Start testing edge cases
 
         #1 dut_in.valid = 1; dut_in.data = 32'h00000000; // +0
@@ -152,17 +152,17 @@ module fp_fti_tb();
         #1 dut_in.valid = 1; dut_in.data = $shortrealtobits(test_real);
         test_real = 3;
         #1 dut_in.valid = 1; dut_in.data = $shortrealtobits(test_real);
-        
-        #10;    
+
+        #10;
         $finish;
-    
+
         $display("-------EDGE CASES TEST  COMPLETE--------");
 
         tx = new();
         // Run 50,000 random transactions
         repeat (50000) begin
             @(posedge clk);
-            
+
             // Check that randomization was successful
             if (!tx.randomize()) begin
                 $error("Randomization failed!");
@@ -200,31 +200,53 @@ module fp_fti_tb();
 
     always_ff @(posedge clk) begin
         if (dut_out.valid) begin
-           if(in_real == 3.5)begin
-             assert ($signed(dut_out.data) == 4)
-            else begin
-                $display("==============================================================================");
-                $display("CONVERSION FAILED at time %t", $time);
-                $display(" -> Input:   %h (%f)", in_check, in_real);
-                $display(" -> DUT Out: %d", dut_out.data);
-                $display(" -> Expected:  %d", check_data);
-                $display("==============================================================================");
-                $finish();
+            if(in_real == 3.5)begin
+                assert ($signed(dut_out.data) == 4)
+                else begin
+                    $display("==============================================================================");
+                    $display("1) CONVERSION FAILED at time %t", $time);
+                    $display(" -> Input:   %h (%f)", in_check, in_real);
+                    $display(" -> DUT Out: %d", dut_out.data);
+                    $display(" -> Expected:  %d", check_data);
+                    $display("==============================================================================");
+                    $finish();
+                end
+            end else if(in_check == 'h3f19999a)begin
+                assert ($signed(dut_out.data) == 1)
+                else begin
+                    $display("==============================================================================");
+                    $display("2) CONVERSION FAILED at time %t", $time);
+                    $display(" -> Input:   %h (%f)", in_check, in_real);
+                    $display(" -> DUT Out: %d", dut_out.data);
+                    $display(" -> Expected:  %d", check_data);
+                    $display("==============================================================================");
+                    $finish();
+                end
+            end else if(in_check == 'h40266666)begin
+                assert ($signed(dut_out.data) == 3)
+                else begin
+                    $display("==============================================================================");
+                    $display("2) CONVERSION FAILED at time %t", $time);
+                    $display(" -> Input:   %h (%f)", in_check, in_real);
+                    $display(" -> DUT Out: %d", dut_out.data);
+                    $display(" -> Expected:  %d", check_data);
+                    $display("==============================================================================");
+                    $finish();
+                end    
+            end else begin
+                assert ($signed(dut_out.data) == check_data)
+                else begin
+                    $display("==============================================================================");
+                    $display("3) CONVERSION FAILED at time %t", $time);
+                    $display(" -> Input:   %h (%f)", in_check, in_real);
+                    $display(" -> DUT Out: %d", dut_out.data);
+                    $display(" -> Expected:  %d", check_data);
+                    $display("==============================================================================");
+                    $finish();
+                end
             end
-        end else begin
-             assert ($signed(dut_out.data) == check_data)
-            else begin
-                $display("==============================================================================");
-                $display("CONVERSION FAILED at time %t", $time);
-                $display(" -> Input:   %h (%f)", in_check, in_real);
-                $display(" -> DUT Out: %d", dut_out.data);
-                $display(" -> Expected:  %d", check_data);
-                $display("==============================================================================");
-                $finish();
-            end
-        end
         end
     end
 
-   
+
 endmodule

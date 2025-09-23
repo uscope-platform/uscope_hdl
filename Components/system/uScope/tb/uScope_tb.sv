@@ -31,7 +31,7 @@ module uScope_tb();
     axi_lite_BFM axil_bfm;
 
     axi_stream data_in[6]();
-    
+
     AXI scope_out();
 
     wire dma_done;
@@ -90,7 +90,7 @@ module uScope_tb();
 
 
         #8;
-        
+
         #10 axil_bfm.write(BASE_ADDRESS+reg_maps::uscope_regs.buffer_addr_low, 32'h3f000000);
         #10 axil_bfm.write(BASE_ADDRESS+reg_maps::uscope_regs.trigger_level, 10000);
         #10 axil_bfm.write(BASE_ADDRESS+reg_maps::uscope_regs.channel_selector, 0);
@@ -155,9 +155,9 @@ module uScope_tb();
             data_in[4].valid <= 0;
             data_in[5].valid <= 0;
         end
-        
+
     end
-    
+
 
 
 endmodule

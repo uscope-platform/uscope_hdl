@@ -4,7 +4,9 @@
         "target_part":"xc7z020clg400",
         "synth_modules":[],
         "synth_tl": "uScope_stream_dma",
-        "sim_modules":[],
+        "sim_modules":[
+            "trigger_engine_tb"
+        ],
         "sim_tl":"uScope_tb",
         "include_paths":[
             "Components/Common"

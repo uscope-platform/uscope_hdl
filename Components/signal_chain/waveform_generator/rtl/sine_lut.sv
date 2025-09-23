@@ -18,9 +18,9 @@ module sine_lut #(
     parameter INPUT_DATA_WIDTH = 16,
     parameter OUTPUT_WIDTH  = 16
 )(
-    input  logic [INPUT_DATA_WIDTH-1:0] angle,
-    output logic [OUTPUT_WIDTH-1:0] cos,
-    output logic [OUTPUT_WIDTH-1:0] cos_next
+    input  wire [INPUT_DATA_WIDTH-1:0] angle,
+    output reg [OUTPUT_WIDTH-1:0] cos,
+    output reg [OUTPUT_WIDTH-1:0] cos_next
 );
 
     localparam real STEP   = (2*3.14159265358979323846/4.0) / LUT_DEPTH;

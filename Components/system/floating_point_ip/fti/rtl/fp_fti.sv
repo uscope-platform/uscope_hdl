@@ -84,7 +84,7 @@ always_ff @(posedge clock)begin
             raw_shifted_data <= mantissa << (exponent-23);
         end
     end
-    
+
     if (($signed(exponent) < -1) || ($signed(exponent) >= 23)) begin
         lsb_index <= 8'sd0;
     end else begin
