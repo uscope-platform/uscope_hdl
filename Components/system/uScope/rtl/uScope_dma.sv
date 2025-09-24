@@ -16,13 +16,13 @@
 `include "interfaces.svh"
 
 module uScope_dma #(
-    DATA_WIDTH = 32,
-    USER_WIDTH = 16,
-    DEST_WIDTH = 8,
-    N_STREAMS = 6,
-    OUTPUT_AXI_WIDTH = 128,
-    BURST_SIZE = 16,
-    CHANNEL_SAMPLES = 1024
+    int DATA_WIDTH = 32,
+    int USER_WIDTH = 16,
+    int DEST_WIDTH = 8,
+    int N_STREAMS = 6,
+    int OUTPUT_AXI_WIDTH = 128,
+    int BURST_SIZE = 16,
+    int CHANNEL_SAMPLES = 1024
 )(
     input wire clock,
     input wire reset,
@@ -33,8 +33,8 @@ module uScope_dma #(
     axi_lite.slave axi_in
 );
 
-    localparam TRANSFER_SIZE = CHANNEL_SAMPLES*N_STREAMS;
-    
+    localparam int TRANSFER_SIZE = CHANNEL_SAMPLES*N_STREAMS;
+
     axi_stream #(
         .DATA_WIDTH(DATA_WIDTH),
         .DEST_WIDTH(DEST_WIDTH),
@@ -47,9 +47,9 @@ module uScope_dma #(
         .DEST_WIDTH(DEST_WIDTH),
         .USER_WIDTH(USER_WIDTH)
     ) in_moderated[N_STREAMS]();
-   
-    
-   
+
+
+
     wire [63:0] dma_base_addr;
     wire [15:0] trigger_point;
 
@@ -79,7 +79,7 @@ module uScope_dma #(
             ultra_buffer #(
                 .ADDRESS_WIDTH($clog2(CHANNEL_SAMPLES)),
                 .DATA_WIDTH(DATA_WIDTH),
-                .DEST_WIDTH(DEST_WIDTH), 
+                .DEST_WIDTH(DEST_WIDTH),
                 .USER_WIDTH(USER_WIDTH)
             )buffer(
                 .clock(clock),
@@ -91,7 +91,7 @@ module uScope_dma #(
                 .in(stream_in[i]),
                 .out(in_buffered[i])
             );
-                
+
             // This small buffer is used to bunch up several dma reads as otherwise the ultra-ram based buffers will give problems with the high read latency
             axis_moderating_fifo #( 
                 .DATA_WIDTH(DATA_WIDTH),
@@ -120,7 +120,7 @@ module uScope_dma #(
     )dma_engine(
         .clock(clock),
         .reset(reset),
-        .disable_dma(disable_dma), 
+        .disable_dma(disable_dma),
         .buffer_full(dma_start),
         .dma_base_addr(dma_base_addr),
         .packet_length(TRANSFER_SIZE),

@@ -18,10 +18,10 @@
 
 
 module channel_selector #(
-    N_CHANNELS = 6,
-    DATA_WIDTH = 32,
-    DEST_WIDTH = 16,
-    USER_WIDTH = 16
+    int N_CHANNELS = 6,
+    int DATA_WIDTH = 32,
+    int DEST_WIDTH = 16,
+    int USER_WIDTH = 16
 )(
     input wire        clock,
     input wire        reset,
@@ -30,11 +30,6 @@ module channel_selector #(
     axi_stream.master data_out
 );
 
-    enum reg [2:0] { 
-        wait_trigger = 0,
-        data_transfer = 1,
-        increment_channel = 2
-    } state = wait_trigger;
 
 
     reg [N_CHANNELS-1:0] ready_blanking = 1;
@@ -55,7 +50,7 @@ module channel_selector #(
         assign data_in[i].ready = ready_blanking[i] & data_out.ready;
     end
     endgenerate
-    
+
 
     reg [$clog2(N_CHANNELS)-1:0] channels_counter = 0;
 
@@ -67,6 +62,6 @@ module channel_selector #(
         ready_blanking <= 1'b1<<selector;
     end
 
-    
+
 
 endmodule

@@ -18,14 +18,14 @@
 `include "interfaces.svh"
 
 module axi_dma_bursting_mc #(
-    N_CHANNELS = 6,
-    parameter ADDR_WIDTH = 32,
-    parameter DEST_WIDTH = 16,
-    parameter USER_WIDTH = 16,
-    parameter OUTPUT_AXI_WIDTH = 128,
-    parameter MAX_TRANSFER_SIZE = 65536,
-    parameter BURST_SIZE = 16,
-    CHANNEL_SAMPLES = 1024
+    parameter int N_CHANNELS = 6,
+    parameter int  ADDR_WIDTH = 32,
+    parameter int DEST_WIDTH = 16,
+    parameter int USER_WIDTH = 16,
+    parameter int OUTPUT_AXI_WIDTH = 128,
+    parameter int  MAX_TRANSFER_SIZE = 65536,
+    parameter int  BURST_SIZE = 16,
+    int CHANNEL_SAMPLES = 1024
 )(
     input wire clock,
     input wire reset,
@@ -67,7 +67,7 @@ module axi_dma_bursting_mc #(
     axi_stream #(.DEST_WIDTH(DEST_WIDTH), .USER_WIDTH(USER_WIDTH), .DATA_WIDTH(64)) upsizer_in();
 
     localparam ADDRESS_INCREMENT = 8;
-    
+
     localparam BEAT_SIZE = OUTPUT_AXI_WIDTH/8;
 
     assign upsizer_in.data = {selected_in.user[USER_WIDTH-1:0], selected_in.dest[DEST_WIDTH-1:0], selected_in.data[31:0]};
@@ -90,7 +90,7 @@ module axi_dma_bursting_mc #(
     );
 
     enum reg [2:0] {
-        writer_idle = 0,       
+        writer_idle = 0,
         writer_start_burst = 1,
         writer_dma_send = 2,
         writer_wait_ready = 3,
@@ -100,7 +100,7 @@ module axi_dma_bursting_mc #(
 
 
     reg [63:0] target_base;
-    
+
 
     reg [$clog2(MAX_TRANSFER_SIZE):0] burst_counter = 0;
 
@@ -138,7 +138,7 @@ module axi_dma_bursting_mc #(
             axi_out.WSTRB <= OUTPUT_AXI_WIDTH==128 ? 'hFFFF : 'hFF;
 
             axi_out.WVALID <= 0;
-            
+
             axi_out.WUSER <= 0;
             axi_out.WLAST <= 0;
 
@@ -158,18 +158,18 @@ module axi_dma_bursting_mc #(
             axi_out.BREADY <= 1;
 
             upsized_data.ready <= 0;
-            
+
             dma_done <= 0;
             writer_state <= writer_idle;
         end else begin
             if(axi_out.WVALID & axi_out.WREADY)begin
                  transfers_tracker  <= transfers_tracker +TRACKER_ADVANCE;
-            end 
+            end
             axi_out.BREADY <= 1;
             axi_out.AWVALID <= 0;
             dma_done <= 0;
             case (writer_state)
-                writer_idle:begin  
+                writer_idle:begin
                     transfers_tracker <= 0;
                     beats_counter <= 0;
                     if(buffer_full & !disable_dma)begin
@@ -186,7 +186,7 @@ module axi_dma_bursting_mc #(
                         axi_out.AWVALID <= 1;
                         axi_out.AWBURST <= 1;
                         axi_out.WLAST <= 0;
-                        axi_out.AWLEN = BURST_SIZE-1;
+                        axi_out.AWLEN <= BURST_SIZE-1;
                     end
 
                 end
@@ -195,10 +195,10 @@ module axi_dma_bursting_mc #(
                         if(beats_counter== BURST_SIZE-1)begin
                             axi_out.WLAST <= 1;
                             writer_state <= writer_wait_response;
-                            upsized_data.ready <= 0;    
+                            upsized_data.ready <= 0;
                         end else begin
                             writer_state <= writer_wait_ready;
-                            upsized_data.ready <= 0; 
+                            upsized_data.ready <= 0;
                             beats_counter <= beats_counter + 1;
                         end
                         axi_out.WDATA <= upsized_data.data;
@@ -214,7 +214,7 @@ module axi_dma_bursting_mc #(
                 end
                 writer_wait_response:begin
                     if(axi_out.WREADY) axi_out.WVALID <= 0;
-    
+
                     if(axi_out.BVALID)begin
                         axi_out.BREADY <= 0;
                         if(transfers_tracker == CHANNEL_SAMPLES)begin
@@ -232,11 +232,11 @@ module axi_dma_bursting_mc #(
                         writer_state <= writer_idle;
                         burst_counter <= 0;
                         dma_done <= 1;
-                    end else begin                    
+                    end else begin
                         selector <= selector + 1;
                         burst_counter <= burst_counter +1;
                         writer_state <= writer_start_burst;
-                    end     
+                    end
                 end
             endcase
         end

@@ -181,7 +181,7 @@ module fp_compare #(
             end
         end else begin : low_latency_mode
 
-                assign out.valid = s2_valid;
+                assign out.valid = s1_valid;
                 assign out.data = raw_result;
         end
     endgenerate

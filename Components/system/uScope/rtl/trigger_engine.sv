@@ -93,7 +93,7 @@ module trigger_engine #(
 
     axi_stream itf_in();
     axi_stream itf_out();
-    axi_stream float_out();
+    axi_stream delayed_in();
 
     assign itf_in.data = selected_data;
     assign itf_in.user = selected_user;
@@ -113,13 +113,13 @@ module trigger_engine #(
         .DATA_WIDTH(32),
         .DEST_WIDTH(32),
         .USER_WIDTH(32),
-        .N_STAGES(1),
+        .N_STAGES(3),
         .READY_REG(0)
     ) input_matching_delay (
         .clock(clock),
         .reset(reset),
         .in(itf_in),
-        .out(float_out)
+        .out(delayed_in)
     );
 
     axi_stream comp_in_a();
@@ -144,9 +144,9 @@ module trigger_engine #(
     assign falling_edge = (comp_out.data == 1 || comp_out.data == 0) && comp_out.data == 2;
 
     always_comb begin
-        if(is_axis_float(float_out.user))begin
-            comp_in_a.data = float_out.data;
-            comp_in_a.valid = float_out.valid;
+        if(is_axis_float(delayed_in.user))begin
+            comp_in_a.data = delayed_in.data;
+            comp_in_a.valid = delayed_in.valid;
         end else begin
             comp_in_a.data = itf_out.data;
             comp_in_a.valid = itf_out.valid;
