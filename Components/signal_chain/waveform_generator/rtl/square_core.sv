@@ -17,6 +17,7 @@
 `include "interfaces.svh"
 
 module square_core #(
+    parameter int COUNTER_WIDTH = 32,
     parameter int N_PARAMETERS = 16
 )(
     input wire clock,
@@ -49,7 +50,7 @@ module square_core #(
     assign user_out = parameters[6];
 
 
-    reg[23:0] generator_counter = 0;
+    reg[COUNTER_WIDTH-1:0] generator_counter = 0;
     reg running = 0;
 
     initial begin

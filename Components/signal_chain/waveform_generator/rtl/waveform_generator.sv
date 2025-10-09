@@ -38,7 +38,7 @@ module waveform_generator #(
         .N_READ_REGISTERS(N_REGISTERS),
         .N_WRITE_REGISTERS(N_REGISTERS),
         .ADDRESS_MASK('hFF),
-        .TRIGGER_REGISTERS_IDX('{1}),
+        .TRIGGER_REGISTERS_IDX('{0}),
         .N_TRIGGER_REGISTERS(1)
     ) CU (
         .clock(clock),

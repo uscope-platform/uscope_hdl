@@ -17,14 +17,14 @@
 
 
 module uScope_stream_dma #(
-    N_CHANNELS = 6,
-    SCOPE_BASE_ADDRESS = 0,
-    DATA_WIDTH = 32,
-    ADDR_WIDTH = 32,
-    OUTPUT_AXI_WIDTH = 128,
-    DEST_WIDTH = 16,
-    CHANNEL_SAMPLES = 1024,
-    BURST_SIZE = 16
+    int N_CHANNELS = 6,
+    int SCOPE_BASE_ADDRESS = 0,
+    int DATA_WIDTH = 32,
+    int ADDR_WIDTH = 32,
+    int OUTPUT_AXI_WIDTH = 128,
+    int DEST_WIDTH = 16,
+    int CHANNEL_SAMPLES = 1024,
+    int BURST_SIZE = 16
 ) (
     input wire clock,
     input wire reset,
@@ -35,7 +35,7 @@ module uScope_stream_dma #(
     axi_stream.slave data_in
 );
 
-    wire [7:0] addr[N_CHANNELS-1:0];
+    wire [31:0] addr[N_CHANNELS-1:0];
 
     axi_lite #(.INTERFACE_NAME("MUX CONTROLLER"), .ADDR_WIDTH(ADDR_WIDTH)) mux_ctrl_axi();
     axi_lite #(.INTERFACE_NAME("TRIGGER CONTROLLER"), .ADDR_WIDTH(ADDR_WIDTH)) uscope_axi();
@@ -116,6 +116,7 @@ module uScope_stream_dma #(
 
             axi_stream_extractor #(
                 .DATA_WIDTH(DATA_WIDTH),
+                .DEST_WIDTH(32),
                 .REGISTERED(0)
             ) extractor (
                 .clock(clock),
@@ -135,10 +136,10 @@ module uScope_stream_dma #(
                 .sync(sample_scope),
                 .in(scope_in[i]),
                 .out(scope_in_sync[i])
-            );    
+            );
         end
     endgenerate
-    
+
 
     uScope_dma #(
         .DATA_WIDTH(DATA_WIDTH),
