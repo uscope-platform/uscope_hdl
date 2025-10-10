@@ -191,29 +191,6 @@ module axis_dynamic_data_mover #(
     end
 
 endmodule
-{
-    "name": "addr_$",
-    "n_regs": ["1"],
-    "description": "This register selects source and target address for channel $",
-    "direction": "RW",
-    "fields":[],
-    "fields":[
-            {
-            "name":"src",
-            "description": "Source address",
-            "n_fields":["1"],
-            "start_position": 0,
-            "length": 16
-        },
-        {
-            "name":"dst",
-            "description": "Destination address",
-            "start_position": 15,
-            "n_fields":["1"],
-            "length": 15
-        }
-    ]
-}
 
 
  /**
