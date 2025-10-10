@@ -82,40 +82,46 @@ module fault_detector_core #(
 endmodule
 
 
+
  /**
        {
         "name": "stream_fault_detector",
-        "type": "peripheral",
+        "type": "parametric_peripheral",
         "registers":[
             {
                 "name": "slow_tresh_low",
-                "offset": "0x0",
+                "n_regs": ["1"],
                 "description": "Slow fault lower treshold",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "slow_tresh_high",
-                "offset": "0x4",
+                "n_regs": ["1"],
                 "description": "Slow fault higher treshold",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "slow_trip_duration",
-                "offset": "0x8",
+                "n_regs": ["1"],
                 "description": "Number of cycles after which a slow fault is triggered",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "fast_tresh_low",
-                "offset": "0xC",
+                "n_regs": ["1"],
                 "description": "Fast fault lower treshold",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "fast_tresh_high",
-                "offset": "0x10",
+                "n_regs": ["1"],
                 "description": "Fast fault higher treshold",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             }
         ]
     }  

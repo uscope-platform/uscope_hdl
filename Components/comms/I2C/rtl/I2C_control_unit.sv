@@ -103,29 +103,32 @@ module I2CControlUnit #(parameter BASE_ADDRESS = 0)(
         end
     end
 endmodule
+ 
 
 
  /**
        {
         "name": "I2CControlUnit",
         "alias": "I2C",
-        "type": "peripheral",
+        "type": "parametric_peripheral",
         "registers":[
             {
                 "name": "control",
-                "offset": "0x0",
+                "n_regs": ["1"],
                 "description": "I2C peripheral control register",
                 "direction": "RW",
                 "fields":[
                     {
                         "name":"direction",
                         "description": "Direction of the transfer (read or write)",
+                        "n_fields":["1"],
                         "start_position": 0,
                         "length": 1
                     },
                     {
                         "name":"timebase_enable",
                         "description": "Enable I2C peripheral timebase generator",
+                        "n_fields":["1"],
                         "start_position": 1,
                         "length": 1
                     }
@@ -133,31 +136,35 @@ endmodule
             },
             {
                 "name": "timebase_div",
-                "offset": "0x4",
+                "n_regs": ["1"],
                 "description": "Diviso setting for the I2C timebase generator",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[],
             },
             {
                 "name": "tranfer_control",
-                "offset": "0x8",
+                "n_regs": ["1"],
                 "description": "Period of the periodic transfer enable generator",
                 "direction": "RW",
                 "fields":[
                     {
                         "name":"register_adress",
                         "description": "Direction of the transfer (read or write)",
+                        "n_fields":["1"],
                         "start_position": 0,
                         "length": 8
                     },
                     {
                         "name":"slave_adress",
                         "description": "Enable I2C peripheral timebase generator",
+                        "n_fields":["1"],
                         "start_position": 8,
                         "length": 8
                     },
                     {
                         "name":"data",
                         "description": "Enable I2C peripheral timebase generator",
+                        "n_fields":["1"],
                         "start_position": 16,
                         "length": 8
                     }

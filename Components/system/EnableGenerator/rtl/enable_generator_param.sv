@@ -96,6 +96,7 @@ module enable_generator_param #(
 
 endmodule
 
+
  /**
     {
         "name": "enable_generator_param",
@@ -106,19 +107,22 @@ endmodule
                 "name": "enable",
                 "n_regs": ["1"],
                 "description": "Writing 1 to this register enables the generator",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "period",
                 "n_regs": ["1"],
                 "description": "Period of the enable pulses in clock cycles",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },           
             {
                 "name": "treshold_$",
                 "n_regs": ["MAX_STEPS"],
                 "description": "value of the counter at which the enable $ pulse is triggered",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             }
         ]
     }   

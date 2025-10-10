@@ -218,58 +218,67 @@ module trigger_engine #(
 
 endmodule
 
+
     /**
        {
         "name": "trigger_engine",
-        "type": "peripheral",
+        "type": "parametric_peripheral",
         "registers":[
             {
                 "name": "trigger_mode",
-                "offset": "0x0",
+                "n_regs": ["1"],
                 "description": "Trigger mode selection",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "trigger_level",
-                "offset": "0x4",
+                "n_regs": ["1"],
                 "description": "Trigger level",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "buffer_addr_low",
-                "offset": "0x8",
+                "n_regs": ["1"],
                 "description": "Lower 32 bits of the target dma buffer address",
-                "direction": "RW"  
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "buffer_addr_high",
-                "offset": "0xC",
+                "n_regs": ["1"],
                 "description": "Higher 32 bits of the target dma buffer address",
-                "direction": "RW"  
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "channel_selector",
-                "offset": "0x10",
+                "n_regs": ["1"],
                 "description": "Channel used to trigger the scope",
-                "direction": "RW"  
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "trigger_point",
-                "offset": "0x14",
+                "n_regs": ["1"],
                 "description": "Point in the buffer where the trigger will be positioned",
-                "direction": "RW"  
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "acquisition_mode",
-                "offset": "0x18",
+                "n_regs": ["1"],
                 "description": "Acquisition mode selector",
-                "direction": "RW"  
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "rearm_trigger",
-                "offset": "0x1C",
+                "n_regs": ["1"],
                 "description": "Rearm the single acquisition trigger upon write and read acquisition status",
-                "direction": "RW"  
+                "direction": "RW",
+                "fields":[]
             }
             ]
     }  

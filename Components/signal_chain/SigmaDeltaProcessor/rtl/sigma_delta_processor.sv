@@ -232,19 +232,22 @@ endmodule
                 "name": "tresh_$_l",
                 "n_regs": ["N_CHANNELS"],
                 "description": "Lower fault treshold",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "tresh_$_h",
                 "n_regs": ["N_CHANNELS"],
                 "description": "Higher fault treshold",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "offset_$",
                 "n_regs": ["N_CHANNELS"],
                 "description": "Offset Adjustment",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             }
         ]
     }   

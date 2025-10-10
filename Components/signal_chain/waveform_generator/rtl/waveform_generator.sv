@@ -181,25 +181,29 @@ endmodule
                 "name": "enable",
                 "n_regs": ["1"],
                 "description": "Write 1 to a bit in this register to enable the corresponding channel",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "shape",
                 "n_regs": ["1"],
                 "description": "Shape of the selected channel",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "output_selector",
                 "n_regs": ["1"],
                 "description": "Select the output parameter to configure",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "param_$",
                 "n_regs": ["N_PARAMETERS"],
                 "description": "Shape dependent parameter # $",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             }
         ]
     }

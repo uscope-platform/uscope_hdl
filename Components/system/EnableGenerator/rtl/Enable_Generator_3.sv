@@ -113,40 +113,46 @@ module enable_generator_3 #(
 
 endmodule
 
+
 /**
        {
         "name": "enable_generator_3",
-        "type": "peripheral",
+        "type": "parametric_peripheral",
         "registers":[
             {
                 "name": "enable",
-                "offset": "0x0",
+                "n_regs": ["1"],
                 "description": "Writing 1 to this register enables the generator",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "period",
-                "offset": "0x4",
+                "n_regs": ["1"],
                 "description": "Period of the enable pulses in clock cycles",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "treshold_1",
-                "offset": "0x8",
+                "n_regs": ["1"],
                 "description": "Value of the counter at which the enable pulse for output 1 is produced",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "treshold_2",
-                "offset": "0xC",
+                "n_regs": ["1"],
                 "description": "Value of the counter at which the enable pulse for output 2 is produced",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "treshold_3",
-                "offset": "0x10",
+                "n_regs": ["1"],
                 "description": "Value of the counter at which the enable pulse for output 3 is produced",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             }
         ]
     }  

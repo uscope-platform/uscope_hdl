@@ -48,19 +48,21 @@ endmodule
     /**
        {
         "name": "gpio",
-        "type": "peripheral",
+        "type": "parametric_peripheral",
         "registers":[
             {
                 "name": "out",
-                "offset": "0x0",
+                "n_regs": ["1"],
                 "description": "Output Register",
-                "direction": "RW"        
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "in",
-                "offset": "0x4",
+                "n_regs": ["1"],
                 "description": "Input Register",
-                "direction": "R"
+                "direction": "R",
+                "fields":[]
             }
         ]
        }  

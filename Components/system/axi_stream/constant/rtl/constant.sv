@@ -105,25 +105,28 @@ endmodule
     /**
        {
         "name": "axis_constant",
-        "type": "peripheral",
+        "type": "parametric_peripheral",
         "registers":[
             {
                 "name": "low",
-                "offset": "0x0",
+                "n_regs": ["1"],
                 "description": "Least significant bytes of the constant",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "high",
-                "offset": "0x4",
+                "n_regs": ["1"],
                 "description": "Most significant bytes of the constant",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "dest",
-                "offset": "0x8",
+                "n_regs": ["1"],
                 "description": "Value of the AXI stream dest signal associated with the constant",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
                 
             }
         ]

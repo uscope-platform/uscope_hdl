@@ -183,29 +183,32 @@ endmodule
     /**
        {
         "name": "multichannel_constant",
-        "type": "peripheral",
+        "type": "parametric_peripheral",
         "registers":[
             {
                 "name": "low",
-                "offset": "0x0",
+                "n_regs": ["1"],
                 "description": "Least significant bytes of the constant",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "high",
-                "offset": "0x4",
+                "n_regs": ["1"],
                 "description": "Most significant bytes of the constant",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "dest",
-                "offset": "0x8",
+                "n_regs": ["1"],
                 "description": "Value of the AXI stream dest signal associated with the constant",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "selectors",
-                "offset": "0xC",
+                "n_regs": ["1"],
                 "description": "Channel selector for constants manipulation",
                 "direction": "RW",
                 "fields": [
@@ -213,12 +216,14 @@ endmodule
                         "name": "channel_selector",
                         "description": "Channel selector for the constant",
                         "start_position": 0,
+                        "n_fields":["1"],
                         "length": 16
                     },
                     {
                         "name": "constant_selector",
                         "description": "Constant selector for the constant",
                         "direction": "RW",
+                        "n_fields":["1"],
                         "start_position": 16,
                         "length": 16
                     }
@@ -226,19 +231,19 @@ endmodule
             },
             {
                 "name": "clear_address",
-                "offset": "0x10",
+                "n_regs": ["1"],
                 "description": "write here to clear the selected constant",
                 "direction": "RW"
             },
             {
                 "name": "active_channels",
-                "offset": "0x14",
+                "n_regs": ["1"],
                 "description": "Number of active channels, with 0 all channels are active",
                 "direction": "RW"
             },
             {
                 "name": "constant_user",
-                "offset": "0x18",
+                "n_regs": ["1"],
                 "description": "Value of the AXI stream user signal associated with the constant",
                 "direction": "RW"
             }

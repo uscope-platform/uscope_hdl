@@ -71,8 +71,10 @@ module single_stream_fault_detector #(
     ) detector (
         .clock(clock),
         .reset(reset),
-        .fast_thresholds(fast_thresholds),
-        .slow_thresholds(slow_thresholds),
+        .fast_threshold_low(fast_thresholds[0]),
+        .fast_threshold_high(fast_thresholds[1]),
+        .slow_threshold_low(slow_thresholds[0]),
+        .slow_threshold_high(slow_thresholds[1]),
         .slow_trip_duration(slow_trip_duration),
         .data_in(data_in),
         .clear_fault(clear_fault),
@@ -86,37 +88,42 @@ endmodule
  /**
        {
         "name": "stream_fault_detector",
-        "type": "peripheral",
+        "type": "parametric_peripheral",
         "registers":[
             {
                 "name": "slow_tresh_low",
-                "offset": "0x0",
+                "n_regs": ["1"],
                 "description": "Slow fault lower treshold",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "slow_tresh_high",
-                "offset": "0x4",
+                "n_regs": ["1"],
                 "description": "Slow fault higher treshold",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "slow_trip_duration",
-                "offset": "0x8",
+                "n_regs": ["1"],
                 "description": "Number of cycles after which a slow fault is triggered",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "fast_tresh_low",
-                "offset": "0xC",
+                "n_regs": ["1"],
                 "description": "Fast fault lower treshold",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "fast_tresh_high",
-                "offset": "0x10",
+                "n_regs": ["1"],
                 "description": "Fast fault higher treshold",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             }
         ]
     }  

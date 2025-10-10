@@ -154,17 +154,18 @@ endmodule
        {
         "name": "I2c_reader",
         "alias": "I2C_reader",
-        "type": "peripheral",
+        "type": "parametric_peripheral",
         "registers":[
             {
                 "name": "control",
-                "offset": "0x0",
+                "n_regs": ["1"],
                 "description": "I2C peripheral control register",
                 "direction": "RW",
                 "fields":[
                     {
                         "name":"timebase_enable",
                         "description": "Enable I2C peripheral timebase generator",
+                        "n_fields":["1"],
                         "start_position": 0,
                         "length": 1
                     }
@@ -172,9 +173,10 @@ endmodule
             },
             {
                 "name": "timebase_div",
-                "offset": "0x4",
+                "n_regs": ["1"],
                 "description": "Diviso setting for the I2C timebase generator",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             }
         ]
     }  

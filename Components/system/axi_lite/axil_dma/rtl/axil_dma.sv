@@ -178,31 +178,35 @@ endmodule
     /**
        {
         "name": "axil_dma",
-        "type": "peripheral",
+        "type": "parametric_peripheral",
         "registers":[
             {
                 "name": "target_base_l",
-                "offset": "0x0",
+                "n_regs": ["1"],
                 "description": "Least significant bytes of the nase address for the target memmory area",
-                "direction": "RW"        
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "transfer_size",
                 "offset": "0x4",
                 "description": "Size of the dma buffer to transfer",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "reserved",
-                "offset": "0x8",
+                "n_regs": ["1"],
                 "description": "Reserved register do not use",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "target_base_h",
-                "offset": "0xc",
+                "n_regs": ["1"],
                 "description": "Most significant bytes of the nase address for the target memmory area",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             }
         ]
        }  

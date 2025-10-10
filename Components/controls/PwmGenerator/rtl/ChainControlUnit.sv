@@ -102,7 +102,6 @@ module ChainControlUnit #(
 
 endmodule
 
-
     /**
        {
         "name": "ChainControlUnit",
@@ -112,42 +111,49 @@ endmodule
                 "name": "tresh_$L",
                 "n_regs": ["N_CHANNELS"],
                 "description": "Comparator $ treshold low",
+                "fields":[],
                 "direction": "RW"
             },
             {
                 "name": "tresh_$H",
                 "n_regs": ["N_CHANNELS"],
                 "description": "Comparator $ treshold high",
+                "fields":[],
                 "direction": "RW"
             },
             {
                 "name": "deadtime_$",
                 "n_regs": ["N_CHANNELS"],
                 "description": "Length of deadtime automatically inserted in pair A (if enabled)",
+                "fields":[],
                 "direction": "RW"
             },
             {
                 "name": "counter_start",
                 "n_regs": ["1"],
                 "description": "Start Value for the PWM generator",
+                "fields":[],
                 "direction": "RW"
             },
             {
                 "name": "counter_stop",
                 "n_regs": ["1"],
                 "description": "Stop Value for the PWM generator",
+                "fields":[],
                 "direction": "RW"
             },
             {
                 "name": "tb_shift",
                 "n_regs": ["1"],
                 "description": "Carrier phase shift",
+                "fields":[],
                 "direction": "RW"
             },
             {
                 "name": "out_en",
                 "n_regs": ["1"],
                 "description": "Output enable register",
+                "fields":[],
                 "direction": "RW",
                 "fields":[
                     {

@@ -123,43 +123,50 @@ endmodule
                 "name": "slow_treshold_low_$",
                 "n_regs": ["N_STREAMS"],
                 "description": "slow fault treshold low for stream $",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "slow_treshold_high_$",
                 "n_regs": ["N_STREAMS"],
                 "description": "slow fault treshold high for stream $",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "slow_trip_duration_$",
                 "n_regs": ["N_STREAMS"],
                 "description": "slow fault minimum duration for stream $",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "fast_treshold_low_$",
                 "n_regs": ["N_STREAMS"],
                 "description": "fast fault treshold low for stream $",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "fast_treshold_high_$",
                 "n_regs": ["N_STREAMS"],
                 "description": "fast fault treshold high for stream $",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "fast_fault_$",
                 "n_regs": ["N_STREAMS"],
                 "description": "fast fault status for stream $",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "slow_fault_$",
                 "n_regs": ["N_STREAMS"],
                 "description": "slow fault status for stream $",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             }
         ]
        }

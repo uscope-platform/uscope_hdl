@@ -177,18 +177,21 @@ endmodule
                 "name": "reserved",
                 "n_regs": ["1"],
                 "description": "Reserved register, Do not use",
+                "fields":[],
                 "direction": "RW"
             },
             {
                 "name": "step_delay",
                 "n_regs": ["1"],
                 "description": "Additional delay between sequence steps",
+                "fields":[],
                 "direction": "RW"
             },
             {
                 "name": "step_$",
                 "n_regs": ["MAX_STEPS"],
                 "description": "This register selects which sequencer output is active for step # $",
+                "fields":[],
                 "direction": "RW"
             }
         ]

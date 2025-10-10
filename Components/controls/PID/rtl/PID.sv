@@ -206,77 +206,88 @@ endmodule
     /**
        {
         "name": "PID",
-        "type": "peripheral",
+        "type": "parametric_peripheral",
         "registers":[
             {
                 "name": "control",
-                "offset": "0x0",
+                "n_regs": ["1"],
                 "description": "Control register",
-                "direction": "RW"        
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "kp",
-                "offset": "0x4",
+                "n_regs": ["1"],
                 "description": "Proportional action gain",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "ki",
-                "offset": "0x8",
+                "n_regs": ["1"],
                 "description": "Integral action gain",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "kd",
-                "offset": "0xc",
+                "n_regs": ["1"],
                 "description": "Derivative action gain",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "limit_out_p",
-                "offset": "0x10",
+                "n_regs": ["1"],
                 "description": "Upper output saturation limit",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "limit_out_n",
-                "offset": "0x14",
+                "n_regs": ["1"],
                 "description": "Lower output saturation limit",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "limit_int_p",
-                "offset": "0x18",
+                "n_regs": ["1"],
                 "description": "Upper integrator saturation limit",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "limit_int_n",
-                "offset": "0x1c",
+                "n_regs": ["1"],
                 "description": "Lower integrator saturation limit",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "gain_scaling",
-                "offset": "0x20",
+                "n_regs": ["1"],
                 "description": "Gain scaling factor",
                 "direction": "RW",
                 "fields": [
                     {
                         "name":"kp_den",
                         "description": "Proportional action scaling factor",
+                        "n_fields":["1"],
                         "start_position": 0,
                         "length": 8
                     },
                     {
                         "name":"ki_den",
                         "description": "Integral action scaling factor",
+                        "n_fields":["1"],
                         "start_position": 8,
                         "length": 8
                     },
                     {
                         "name":"kd_den",
                         "description": "derivative action scaling factor",
+                        "n_fields":["1"],
                         "start_position": 16,
                         "length": 8
                     }

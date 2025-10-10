@@ -160,14 +160,16 @@ module uScope_stream_dma #(
 
 
 endmodule
+
+
 /**
     {
         "name": "uScope_stream_dma",
-        "type": "peripheral",
+        "type": "parametric_peripheral",
         "registers":[
             {
                 "name": "scope_control",
-                "offset": "0x0",
+                "n_regs": ["1"],
                 "description": "uScope sampling control",
                 "direction": "RW",
                 "fields":[
@@ -175,51 +177,24 @@ endmodule
                         "name":"external_capture",
                         "description": "Enable external caputure",
                         "start_position": 24,
+                        "n_fields":["1"],
                         "length": 1
                     }, 
                     {
                         "name": "disable_dma",
                         "description": "Disable DMA engine",
                         "start_position": 0,
+                        "n_fields":["1"],
                         "length": 1
                     }
                 ]
             },
             {
-                "name": "addr_1",
-                "offset": "0x4",
-                "description": "Address for channel 1 mux",
-                "direction": "RW"
-            },
-            {
-                "name": "addr_2",
-                "offset": "0x8",
-                "description": "Address for channel 2 mux",
-                "direction": "RW"
-            },
-            {
-                "name": "addr_3",
-                "offset": "0xC",
-                "description": "Address for channel 3 mux",
-                "direction": "RW"
-            },
-            {
-                "name": "addr_4",
-                "offset": "0x10",
-                "description": "Address for channel 4 mux",
-                "direction": "RW"
-            },
-            {
-                "name": "addr_5",
-                "offset": "0x14",
-                "description": "Address for channel 5 mux",
-                "direction": "RW"
-            },
-            {
-                "name": "addr_6",
-                "offset": "0x18",
-                "description": "Address for channel 6 mux",
-                "direction": "RW"
+                "name": "addr_$",
+                "n_regs": ["N_CHANNELS"],
+                "description": "Address for channel $ mux",
+                "direction": "RW",
+                "fields":[]
             }
         ]
     }

@@ -280,13 +280,15 @@ endmodule
                 "name": "offset_$",
                 "n_regs": ["N_CHANNELS"],
                 "description": "Offset calibration coefficient",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "shift_$",
                 "n_regs": ["N_SHIFT_REGS"],
                 "description": "Data shift calibration coefficient",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "denoise_tresh_$",
@@ -385,13 +387,15 @@ endmodule
                 "name": "filter_tap_data",
                 "n_regs": ["1"],
                 "description": "Fir Filter tap data value",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "filter_tap_address",
                 "n_regs": ["1"],
                 "description": "Fir Filter tap address value",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             }
         ]
     }   

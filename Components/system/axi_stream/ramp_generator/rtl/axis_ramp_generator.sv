@@ -171,31 +171,35 @@ endmodule
     /**
        {
         "name": "axis_ramp_Generator",
-        "type": "peripheral",
+        "type": "parametric_peripheral",
         "registers":[
             {
                 "name": "stop_value",
-                "offset": "0x0",
+                "n_regs": ["1"],
                 "description": "Value at which the ramp will end",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "dest",
-                "offset": "0x4",
+                "n_regs": ["1"],
                 "description": "Value of the AXI stream dest signal associated with the constant",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "inc",
-                "offset": "0x8",
+                "n_regs": ["1"],
                 "description": "Value of the increment for each ramp step",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "ramp_bypass",
-                "offset": "0xC",
+                "n_regs": ["1"],
                 "description": "A write an output bypassing the ramp (for initialization and debug purposes)",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
                 
             }
         ]

@@ -202,13 +202,15 @@ endmodule
                 "name": "enable",
                 "n_regs": ["1"],
                 "description": "Write 1 to a bit in this register to enable the corresponding channel",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "dest_$",
                 "n_regs": ["N_OUTPUTS"],
                 "description": "Value of the destination field for channel $",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             }
         ]
     }

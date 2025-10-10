@@ -248,26 +248,29 @@ endmodule
     /**
     {
         "name": "fCore_dma_endpoint",
-        "type": "peripheral",
+        "type": "parametric_peripheral",
         "alias": "fCore",
         "registers":[
             {
                 "name": "n_channel",
-                "offset": "0x0",
+                "n_regs": ["1"],
                 "description": "Number active channels for the active program",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             }, 
             {
-                "name": "io_translation_address",
-                "offset": "0x4",
+                "name": "io_translation_address",,
+                "n_regs": ["1"],
                 "description": "Address of the IO translation table access window",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
-                "name": "io_translation_data",
-                "offset": "0x8",
+                "name": "io_translation_data",,
+                "n_regs": ["1"],
                 "description": "IO translation table access window",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             }
         ]
     }  

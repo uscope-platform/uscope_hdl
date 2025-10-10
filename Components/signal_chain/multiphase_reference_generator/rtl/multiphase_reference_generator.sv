@@ -234,25 +234,28 @@ endmodule
  /**
        {
         "name": "multiphase_reference_generator",
-        "type": "peripheral",
+        "type": "parametric_peripheral",
         "registers":[
             {
                 "name": "freerunning_mode",
-                "offset": "0x0",
+                "n_regs": ["1"],
                 "description": "Run the multiphase reference generator in free-running mode",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "ph_adv",
-                "offset": "0x4",
+                "n_regs": ["1"],
                 "description": "Phase advance for direct digital synthesis",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "per",
-                "offset": "0x8",
+                "n_regs": ["1"],
                 "description": "Sampling period for direct digital synthesis",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             }
         ]
     }  

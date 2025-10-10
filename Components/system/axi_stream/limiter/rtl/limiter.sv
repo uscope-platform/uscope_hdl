@@ -82,19 +82,21 @@ endmodule
     /**
        {
         "name": "axis_constant",
-        "type": "peripheral",
+        "type": "parametric_peripheral",
         "registers":[
             {
                 "name": "lim_up",
-                "offset": "0x0",
+                "n_regs": ["1"],
                 "description": "Highest allowable value on the stream",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             },
             {
                 "name": "high",
-                "offset": "0x4",
+                "n_regs": ["1"],
                 "description": "Lowest allowable value on the stream",
-                "direction": "RW"
+                "direction": "RW",
+                "fields":[]
             }
         ]
     }  
