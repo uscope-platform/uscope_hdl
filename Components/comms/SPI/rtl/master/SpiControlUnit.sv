@@ -55,12 +55,12 @@ module SpiControlUnit #(
     };
 
     localparam [31:0] VARIABLE_INITIAL_VALUES [N_CHANNELS-1:0] = '{N_CHANNELS{1'b0}};
- 
+
     parameter [31:0] INITIAL_REGISTER_VALUES [N_REGISTERS-1:0] = {VARIABLE_INITIAL_VALUES, FIXED_REGISTER_VALUES};
 
 
     reg bus_start_transfer, axis_start_transfer;
-    
+
     assign spi_start_transfer = bus_start_transfer | axis_start_transfer;
 
     reg [31:0] cu_write_registers [N_REGISTERS-1:0];
