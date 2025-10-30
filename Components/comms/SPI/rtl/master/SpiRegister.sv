@@ -17,7 +17,7 @@
 
 module SpiRegister #(parameter N_CHANNELS=3)(
     input logic clock,
-    input logic shift_clock, 
+    input logic shift_clock,
     input logic reset,
     input logic enable,
     input logic serial_in,
@@ -32,15 +32,15 @@ module SpiRegister #(parameter N_CHANNELS=3)(
 );
     localparam serial_msb_out_first = 0, serial_lsb_out_first = 1;
 
-    logic shr_data_valid_lock = 0;   
+    logic shr_data_valid_lock = 0;
     logic [31:0] shift_reg;
 
     always@(posedge clock)begin
         parallel_out <= shift_reg;
         parallel_out_valid <= !enable & shr_data_valid_lock;
     end
-    
-    
+
+
     reg previous_sclk;
     always@(posedge clock)begin
         if(~reset) begin
