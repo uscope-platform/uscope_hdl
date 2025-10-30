@@ -259,14 +259,14 @@ endmodule
                 "fields":[]
             }, 
             {
-                "name": "io_translation_address",,
+                "name": "io_translation_address",
                 "n_regs": ["1"],
                 "description": "Address of the IO translation table access window",
                 "direction": "RW",
                 "fields":[]
             },
             {
-                "name": "io_translation_data",,
+                "name": "io_translation_data",
                 "n_regs": ["1"],
                 "description": "IO translation table access window",
                 "direction": "RW",

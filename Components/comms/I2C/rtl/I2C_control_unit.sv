@@ -107,7 +107,7 @@ endmodule
 
 
  /**
-       {
+    {
         "name": "I2CControlUnit",
         "alias": "I2C",
         "type": "parametric_peripheral",
@@ -139,7 +139,7 @@ endmodule
                 "n_regs": ["1"],
                 "description": "Diviso setting for the I2C timebase generator",
                 "direction": "RW",
-                "fields":[],
+                "fields":[]
             },
             {
                 "name": "tranfer_control",
