@@ -23,14 +23,13 @@ module SPI_slave#(
 )(
     input reg clock,
     input reg reset,
-    output reg data_valid,
-    output reg [OUTPUT_WIDTH-1:0] data_out [N_CHANNELS-1:0],
     output reg [N_CHANNELS-1:0] MISO,
     output reg SCLK,
     input wire [N_CHANNELS-1:0] MOSI,
     output reg [N_CHANNELS-1:0] SS,
     axi_lite.slave axi_in,
-    axi_stream.slave external_spi_transfer
+    axi_stream.slave external_spi_transfer,
+    axi_stream.master spi_data_out [N_CHANNELS]
 );
 
     parameter N_REGISTERS = 4;
@@ -59,7 +58,6 @@ module SPI_slave#(
     assign ss_polarity = cu_write_registers[0][2];
     assign transfer_length = cu_write_registers[1];
 
-    axi_stream spi_data_out[N_CHANNELS]();
 
     genvar i;
     generate
@@ -79,15 +77,6 @@ module SPI_slave#(
                 .ss_polarity(ss_polarity),
                 .data_out(spi_data_out[i])
             );
-
-            always_ff @(posedge clock) begin
-                if(spi_data_out[i].valid) begin
-                    data_out[i] <= spi_data_out[i].data;
-                    data_valid <= 1;
-                end else begin
-                    data_valid <= 0;
-                end
-            end
         end
     endgenerate
 
