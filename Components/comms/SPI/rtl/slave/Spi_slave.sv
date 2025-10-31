@@ -1,4 +1,4 @@
-// Copyright 2021 University of Nottingham Ningbo China
+// Copyright 2025 Filippo Savi
 // Author: Filippo Savi <filssavi@gmail.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");

@@ -1,4 +1,4 @@
-// Copyright 2021 University of Nottingham Ningbo China
+// Copyright 2025 Filippo Savi
 // Author: Filippo Savi <filssavi@gmail.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,6 +12,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 
 `timescale 10 ns / 1 ns
 
@@ -99,15 +100,12 @@ module spi_slave_register #(
                 if(inner_sclk & ~sclk_del) begin
                     if(transfer_counter == 0) begin
                         state <= spi_wait_deassert;
-                        data_out.data <= shifted_data;
+                        data_out.data <= shifted_data>>(REGISTERS_WIDTH - spi_transfer_length);
                         data_out.valid <= 1;
                     end
                     transfer_counter <= transfer_counter -1;
                     spi_register <= shifted_data;
                     MISO <= spi_register[REGISTERS_WIDTH - spi_transfer_length];
-                    if(transfer_counter == 1)begin
-
-                    end
                 end
             end
             spi_wait_deassert: begin

@@ -1,4 +1,4 @@
-// Copyright 2021 University of Nottingham Ningbo China
+// Copyright 2025 Filippo Savi
 // Author: Filippo Savi <filssavi@gmail.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,17 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 `timescale 10 ns / 1 ns
 `include "axi_lite_BFM.svh"
+
 
 module spi_slave_tb();
 
     logic clk, rst;
 
     localparam N_CHANNELS=3;
+    localparam MAX_SPI_DATA_WIDTH=32;
 
     reg [N_CHANNELS-1:0] mosi;
     reg sclk;
@@ -31,6 +34,25 @@ module spi_slave_tb();
     always #0.5 clk = ~clk;
     event reset_done;
 
+
+    reg[2:0] test_config;
+    reg [7:0] test_width = 16;
+
+
+    covergroup spi_config_cg @(posedge clk);
+
+    coverpoint test_config[0] { bins clock_idle[] = {0,1}; }
+    coverpoint test_config[1] { bins latching_edge[] = {0,1}; }
+    coverpoint test_config[2] { bins ss_polarity[] = {0,1}; } 
+
+    // Cover width (8–16)
+    coverpoint test_width {
+        bins widths[] = {[4:32]};
+    }
+
+    cross test_config, test_width;
+
+    endgroup : spi_config_cg
 
     // reset generation
     initial begin
@@ -45,11 +67,14 @@ module spi_slave_tb();
 
     axi_lite_BFM axil_bfm;
 
-    reg [15:0] data_out [2:0];
+    reg [MAX_SPI_DATA_WIDTH-1:0] data_out [2:0];
+
+    spi_config_cg spi_cov = new();
 
     SPI_slave #(
         .N_CHANNELS(3),
-        .OUTPUT_WIDTH(16)
+        .OUTPUT_WIDTH(MAX_SPI_DATA_WIDTH),
+        .REGISTERS_WIDTH(MAX_SPI_DATA_WIDTH)
     ) uut(
         .clock(clk),
         .reset(rst),
@@ -63,16 +88,22 @@ module spi_slave_tb();
         .external_spi_transfer(data_in)
     );
 
-    reg [15:0] test_pattern;
+    reg [MAX_SPI_DATA_WIDTH-1:0] test_pattern;
 
     task static send_spi_pattern(
-        input logic [15:0] pattern,
+        input logic [MAX_SPI_DATA_WIDTH-1:0] pattern,
+        input logic [7:0] transfer_length,
         input logic ss_polarity,
+        input logic latching_edge,
         input logic clock_idle
     );
+        #10 axil_bfm.write(4, transfer_length);
+        #10 axil_bfm.write(0,{ss_polarity, latching_edge, clock_idle});
+        #5 ss[0] = ss_polarity;
         #5 sclk = clock_idle;
         #5 ss[0] = ~ss_polarity;
-        for (int i = 0; i < 16; i++) begin
+        spi_cov.sample();
+        for (int i = 0; i < transfer_length; i++) begin
             #1 mosi[0] = pattern[i];
             #10 sclk = ~clock_idle;
             #9 sclk = clock_idle;
@@ -80,8 +111,6 @@ module spi_slave_tb();
         #5 sclk = clock_idle;
         #5 ss[0] = ss_polarity;
     endtask
-
-    reg[2:0] signal_config;
 
     initial begin
 
@@ -98,10 +127,8 @@ module spi_slave_tb();
 
         // SS positive, data sampled on rising edge, clock idle low
 
-        #10 axil_bfm.write(4, 16);
-        #10 axil_bfm.write(0, 3'b000);
         #2 test_pattern = 16'hA5A5;
-        send_spi_pattern( test_pattern, 0, 0);
+        send_spi_pattern( test_pattern, test_width, 0, 0, 0);
         #5;
         assert (data_out[0] == test_pattern)
         else begin
@@ -112,9 +139,8 @@ module spi_slave_tb();
 
         // SS positive, data sampled on rising edge, clock idle high
 
-        #10 axil_bfm.write(0, 3'b001);
         #2 test_pattern = 16'h5A5A;
-        send_spi_pattern( test_pattern, 0, 1);
+        send_spi_pattern( test_pattern, test_width, 0, 0, 1);
         #5;
         assert (data_out[0] == test_pattern)
         else begin
@@ -126,9 +152,8 @@ module spi_slave_tb();
 
         // SS positive, data sampled on falling edge, clock idle low
 
-        #10 axil_bfm.write(0, 3'b010);
         #2 test_pattern = 16'hA5A5;
-        send_spi_pattern( test_pattern, 0, 0);
+        send_spi_pattern( test_pattern, test_width, 0, 1, 0);
         #5;
         assert (data_out[0] == test_pattern)
         else begin
@@ -139,9 +164,8 @@ module spi_slave_tb();
 
         // SS positive, data sampled on falling edge, clock idle high
 
-        #10 axil_bfm.write(0, 3'b011);
         #2 test_pattern = 16'h5A5A;
-        send_spi_pattern( test_pattern, 0, 1);
+        send_spi_pattern( test_pattern, test_width, 0, 1, 1);
         #5;
         assert (data_out[0] == test_pattern)
         else begin
@@ -153,10 +177,8 @@ module spi_slave_tb();
 
         // SS negative, data sampled on rising edge, clock idle low
 
-        #10 axil_bfm.write(0, 3'b100);
-        #5 ss[0] = 1'b1;
         #2 test_pattern = 16'hA5A5;
-        send_spi_pattern( test_pattern, 1, 0);
+        send_spi_pattern( test_pattern, test_width, 1, 0, 0);
         #5;
         assert (data_out[0] == test_pattern)
         else begin
@@ -167,9 +189,8 @@ module spi_slave_tb();
 
         // SS negative, data sampled on rising edge, clock idle high
 
-        #10 axil_bfm.write(0, 3'b101);
         #2 test_pattern = 16'h5A5A;
-        send_spi_pattern( test_pattern, 1, 1);
+        send_spi_pattern( test_pattern, test_width, 1, 0, 1);
         #5;
         assert (data_out[0] == test_pattern)
         else begin
@@ -181,9 +202,8 @@ module spi_slave_tb();
 
         // SS negative, data sampled on falling edge, clock idle low
 
-        #10 axil_bfm.write(0, 3'b110);
         #2 test_pattern = 16'hA5A5;
-        send_spi_pattern( test_pattern, 1, 0);
+        send_spi_pattern( test_pattern, test_width, 1, 1, 0);
         #5;
         assert (data_out[0] == test_pattern)
         else begin
@@ -194,9 +214,8 @@ module spi_slave_tb();
 
         // SS negative, data sampled on falling edge, clock idle high
 
-        #10 axil_bfm.write(0, 3'b111);
         #2 test_pattern = 16'h5A5A;
-        send_spi_pattern( test_pattern, 1, 0);
+        send_spi_pattern( test_pattern, test_width, 1, 1, 1);
         #5;
         assert (data_out[0] == test_pattern)
         else begin
@@ -206,7 +225,23 @@ module spi_slave_tb();
         #1000;
 
         #30000;
-
+        repeat(5000)begin
+            test_width = $urandom_range(4,32);
+            test_pattern = $urandom();
+            test_pattern = test_pattern & ((1<<test_width)-1);
+            test_config = $urandom_range(0,7);
+            send_spi_pattern( test_pattern, test_width, test_config[2], test_config[1], test_config[0]);
+            #5;
+            assert (data_out[0] == test_pattern)
+            else begin
+                $error("Data mismatch: expected %h, got %h", test_pattern, data_out[0]);
+                $fatal;
+            end
+            #500;
+        end
+        $finish;
     end
+
+
 
 endmodule
