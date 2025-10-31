@@ -28,7 +28,7 @@ module SPI_slave#(
     input wire [N_CHANNELS-1:0] MOSI,
     output reg [N_CHANNELS-1:0] SS,
     axi_lite.slave axi_in,
-    axi_stream.slave external_spi_transfer,
+    axi_stream.slave spi_data_in [N_CHANNELS],
     axi_stream.master spi_data_out [N_CHANNELS]
 );
 
@@ -71,6 +71,7 @@ module SPI_slave#(
                 .SS(SS[i]),
                 .MOSI(MOSI[i]),
                 .MISO(MISO[i]),
+                .data_in(spi_data_in[i]),
                 .spi_transfer_length(transfer_length),
                 .clock_polarity(clock_polarity),
                 .latching_edge(latching_edge),
@@ -84,106 +85,3 @@ module SPI_slave#(
 
 
 endmodule
-
-
- /**
-       {
-        "name": "SpiControlUnit",
-        "alias": "SPI",
-        "type": "peripheral",
-        "registers":[
-            {
-                "name": "control",
-                "offset": "0x0",
-                "description": "SPI peripheral control register",
-                "direction": "RW",
-                "fields":[
-                    {
-                        "name":"spi_mode",
-                        "description": "Deprecated",
-                        "start_position": 0,
-                        "length": 1
-                    },
-                    {
-                        "name":"divider_setting",
-                        "description": "SCLK generator division setting",
-                        "start_position": 1,
-                        "length": 3
-                    },
-                    {
-                        "name":"spi_transfer_length",
-                        "description": "length of the SPI transfer",
-                        "start_position": 4,
-                        "length": 4
-                    },
-                    {
-                        "name":"spi_direction",
-                        "description": "Direction of travel fo the data (MSB or LSB first)",
-                        "start_position": 9,
-                        "length": 1
-                    },
-                    {
-                        "name":"start_generator_enable",
-                        "description": "Enable the internal trigger generator for periodic transfers",
-                        "start_position": 12,
-                        "length": 1
-                    },
-                    {
-                        "name":"ss_polarity",
-                        "description": "Polarity of the Chip Select signal",
-                        "start_position": 13,
-                        "length": 1
-                    },
-                    {
-                        "name":"ss_deassert_delay_enable",
-                        "description": "Enable the addition of delay between CS deassertion and SPI transfer",
-                        "start_position": 14,
-                        "length": 1
-                    },
-                    {
-                        "name":"transfer_length_choice",
-                        "description": "Toggle between internal and external transfer length input",
-                        "start_position": 15,
-                        "length": 1
-                    },
-                    {
-                        "name":"latching_edge",
-                        "description": "Select edge with which the data is transfered",
-                        "start_position": 16,
-                        "length": 1
-                    },
-                    {
-                        "name":"clock_polarity",
-                        "description": "Polarity of the SCLK signal (active high or active low)",
-                        "start_position": 17,
-                        "length": 1
-                    }
-                ]
-            },
-            {
-                "name": "ss_delay",
-                "offset": "0x4",
-                "description": "Delay between the Chip Select signal and the spi transfer",
-                "direction": "RW"
-            },
-            {
-                "name": "period",
-                "offset": "0x8",
-                "description": "Period of the periodic transfer enable generator",
-                "direction": "RW"
-            },
-            {
-                "name": "trigger",
-                "offset": "0xC",
-                "description": "Writing 1 to this register triggers a transfer",
-                "direction": "RW"
-            },
-            {
-                "name": "data_1",
-                "offset": "0x10",
-                "description": "SPI register for the first channel",
-                "direction": "RW"
-            }
-        ]
-    }  
-    **/

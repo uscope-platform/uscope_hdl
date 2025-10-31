@@ -29,6 +29,7 @@ module spi_slave_register #(
     input wire clock_polarity,
     input wire latching_edge,
     input wire ss_polarity,
+    axi_stream.slave data_in,
     axi_stream.master data_out
 );
 
@@ -83,17 +84,23 @@ module spi_slave_register #(
 
     wire[REGISTERS_WIDTH-1:0] shifted_data;
     assign shifted_data = {MOSI, spi_register[REGISTERS_WIDTH-1:1]};
+    
+    reg [REGISTERS_WIDTH-1:0] latched_data_in;
 
     always_ff @(posedge clock) begin
+        if(~reset) MISO <= 0;
         sclk_del <= inner_sclk;
         ss_polarity_del <= ss_polarity;
         ss_del <= inner_ss;
         case (state)
             spi_idle: begin
+                if(data_in.valid) latched_data_in <= data_in.data;
                 if(inner_ss && ~ss_del && ~(ss_polarity_del ^ ss_polarity)) begin
                     state <= spi_transfer;
                     ss_active <= 1;
+                    spi_register = latched_data_in;
                     transfer_counter <= spi_transfer_length-1;
+                    MISO <= latched_data_in[0];
                 end
             end
             spi_transfer: begin
@@ -105,7 +112,7 @@ module spi_slave_register #(
                     end
                     transfer_counter <= transfer_counter -1;
                     spi_register <= shifted_data;
-                    MISO <= spi_register[REGISTERS_WIDTH - spi_transfer_length];
+                    MISO <= shifted_data[0];
                 end
             end
             spi_wait_deassert: begin
