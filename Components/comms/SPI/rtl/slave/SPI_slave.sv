@@ -21,16 +21,26 @@ module SPI_slave#(
     REGISTERS_WIDTH=16,
     OUTPUT_WIDTH=32
 )(
-    input reg clock,
-    input reg reset,
+    input wire clock,
+    input wire reset,
+    input wire enable,
     output reg [N_CHANNELS-1:0] MISO,
-    output reg SCLK,
+    input wire SCLK,
     input wire [N_CHANNELS-1:0] MOSI,
-    output reg [N_CHANNELS-1:0] SS,
+    input wire [N_CHANNELS-1:0] SS,
     axi_lite.slave axi_in,
     axi_stream.slave spi_data_in [N_CHANNELS],
     axi_stream.master spi_data_out [N_CHANNELS]
 );
+
+
+    (* keep="true" *) wire [31:0] waddr;
+    (* keep="true" *) wire [31:0] wdata;
+    (* keep="true" *) wire wvalid;
+    assign waddr = axi_in.AWADDR;
+    assign wdata = axi_in.WDATA;
+    assign wvalid = axi_in.WVALID;
+
 
     parameter N_REGISTERS = 4;
 
@@ -71,6 +81,7 @@ module SPI_slave#(
                 .SS(SS[i]),
                 .MOSI(MOSI[i]),
                 .MISO(MISO[i]),
+                .enable(enable),
                 .data_in(spi_data_in[i]),
                 .spi_transfer_length(transfer_length),
                 .clock_polarity(clock_polarity),

@@ -278,7 +278,7 @@ module spi_slave_tb();
         #1000;
 
         #5000;
-        repeat(7000)begin
+        repeat(9000)begin
             test_width = $urandom_range(4,32);
             reception_pattern = $urandom() & ((1<<test_width)-1);
             test_config = $urandom_range(0,7);
