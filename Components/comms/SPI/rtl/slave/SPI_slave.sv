@@ -61,11 +61,12 @@ module SPI_slave#(
     );
 
     wire [7:0] transfer_length;
-    wire ss_polarity, latching_edge, clock_polarity;
+    wire ss_polarity, latching_edge, clock_polarity, msb_first;
 
     assign clock_polarity = cu_write_registers[0][0];
     assign latching_edge = cu_write_registers[0][1];
     assign ss_polarity = cu_write_registers[0][2];
+    assign msb_first = cu_write_registers[0][3];
     assign transfer_length = cu_write_registers[1];
 
 
@@ -82,6 +83,7 @@ module SPI_slave#(
                 .MOSI(MOSI[i]),
                 .MISO(MISO[i]),
                 .enable(enable),
+                .msb_first(msb_first),
                 .data_in(spi_data_in[i]),
                 .spi_transfer_length(transfer_length),
                 .clock_polarity(clock_polarity),

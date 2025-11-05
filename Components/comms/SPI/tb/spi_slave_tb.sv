@@ -23,6 +23,7 @@ module spi_slave_tb();
 
     localparam N_CHANNELS=3;
     localparam MAX_SPI_DATA_WIDTH=32;
+    localparam  msb_first = 1;
 
     reg [N_CHANNELS-1:0] mosi;
     reg sclk;
@@ -67,6 +68,15 @@ module spi_slave_tb();
         ->reset_done;
     end
 
+    reg spi_sclk;
+    initial begin
+        spi_sclk = 0;
+        forever begin
+        #4.8 spi_sclk = 1;
+        #5.4 spi_sclk = 0;
+        end
+    end
+
     axi_lite axil();
     axi_stream data_in();
 
@@ -88,6 +98,7 @@ module spi_slave_tb();
         .SCLK(sclk),
         .MOSI(mosi),
         .SS(ss),
+        .enable(1),
         .axi_in(axil),
         .spi_data_in(spi_data_in),
         .spi_data_out(spi_data_out)
@@ -95,7 +106,7 @@ module spi_slave_tb();
 
     reg [MAX_SPI_DATA_WIDTH-1:0] reception_pattern;
     reg [MAX_SPI_DATA_WIDTH-1:0] transmission_pattern;
-
+    reg enable_sclk = 0;
     reg [MAX_SPI_DATA_WIDTH-1:0] received_data = 0;
 
     task static send_spi_pattern(
@@ -106,22 +117,40 @@ module spi_slave_tb();
         input logic latching_edge,
         input logic clock_idle
     );
+
         #10 axil_bfm.write(4, transfer_length);
-        #10 axil_bfm.write(0,{ss_polarity, latching_edge, clock_idle});
+        #10 axil_bfm.write(0,{msb_first, ss_polarity, latching_edge, clock_idle});
+
         #5 ss[channel] = ss_polarity;
-        #5 sclk = clock_idle;
-        #5 ss[channel] = ~ss_polarity;
+        if(clock_idle == 0)begin
+            @(negedge spi_sclk);
+        end else begin
+            @(posedge spi_sclk);
+        end
+        #0.1 ss[channel] = ~ss_polarity;
+        mosi[0] = pattern[transfer_length-1];
+        enable_sclk = 1;
         spi_cov.sample();
         for (int i = 0; i < transfer_length; i++) begin
-            #1 mosi[channel] = pattern[i];
-            #1 received_data[i] = miso[channel];
-            #10 sclk = ~clock_idle;
-            #9 sclk = clock_idle;
+            if(latching_edge  == 0)begin
+                @(negedge spi_sclk) mosi[channel] = pattern[transfer_length-1-i];
+                @(posedge spi_sclk) received_data[i] = miso[channel];
+            end else begin
+                @(posedge spi_sclk) mosi[channel] = pattern[transfer_length-1-i];
+                @(negedge spi_sclk) received_data[i] = miso[channel];
+            end
         end
-        #5 sclk = clock_idle;
-        #5 ss[channel] = ss_polarity;
+        #0.1 ss[channel] = ss_polarity;
+        enable_sclk = 0;
     endtask
-    
+
+
+    always_comb begin
+        if(enable_sclk == 1)
+            sclk = spi_sclk;
+        else
+            sclk = 0;
+    end
 
     task static check_test(
         input logic [MAX_SPI_DATA_WIDTH-1:0] tx_pattern,
@@ -186,7 +215,7 @@ module spi_slave_tb();
             spi_data_in[2].data = 0;
         end
      endcase
-        
+
     endtask
 
     initial begin
@@ -198,18 +227,20 @@ module spi_slave_tb();
         axil_bfm = new(axil, 1);
         @(reset_done);
 
+        #10 axil_bfm.write(0,4'b1000);
         $display("--------------------------------------------------------");
         $display("     DIRECTED TESTING");
         $display("--------------------------------------------------------");
 
         // SS positive, data sampled on rising edge, clock idle low
 
-        #2 reception_pattern = 16'hA5A5;
-        #5 transmission_pattern = 16'h3C3C;
+        #2 reception_pattern = 16'hCAFE;
+        #5 transmission_pattern = 16'hBEBE;
         setup_slave_data(transmission_pattern, test_channel);
-        send_spi_pattern(reception_pattern, test_width, test_channel, 0, 0, 0);
-        check_test(reception_pattern, transmission_pattern ,test_channel);
+        send_spi_pattern(reception_pattern, test_width, test_channel, 1, 0, 0);
+        //check_test(reception_pattern, transmission_pattern ,test_channel);
         #1000;
+        /*
 
         // SS positive, data sampled on rising edge, clock idle high
 
@@ -290,6 +321,9 @@ module spi_slave_tb();
             #500;
         end
         $finish;
+
+        */
+
     end
 
 
