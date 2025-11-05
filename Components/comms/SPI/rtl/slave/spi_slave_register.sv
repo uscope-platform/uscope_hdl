@@ -25,6 +25,7 @@ module spi_slave_register #(
     input wire SS,
     input wire MOSI,
     output reg MISO,
+    output reg slave_clock,
     input wire [7:0] spi_transfer_length,
     input wire clock_polarity,
     input wire latching_edge,
@@ -45,9 +46,9 @@ module spi_slave_register #(
         end
     endfunction
 
-    (* keep="true" *) reg [7:0] transfer_counter = 0;
+    reg [7:0] transfer_counter = 0;
 
-    (* keep="true" *) reg [REGISTERS_WIDTH-1:0] spi_register = '{default:0};
+    reg [REGISTERS_WIDTH-1:0] spi_register = '{default:0};
 
     reg ss_active = 0;
     reg ss_del = 0;
@@ -86,7 +87,7 @@ module spi_slave_register #(
     end
 
 
-    (* keep="true" *) enum logic [1:0] {
+    enum logic [1:0] {
         spi_idle = 0,
         spi_transfer = 1,
         spi_wait_deassert = 2
@@ -99,7 +100,10 @@ module spi_slave_register #(
     assign current_miso = latched_data_in[transfer_counter];
 
     always_ff @(posedge clock) begin
-        if(~reset) MISO <= 0;
+        if(~reset) begin
+            MISO <= 0;
+            slave_clock <= 0;
+        end
         sclk_del <= inner_sclk;
         ss_polarity_del <= ss_polarity;
         data_out.valid <= 0;
@@ -119,6 +123,7 @@ module spi_slave_register #(
                         ss_active <= 1;
                         spi_register <= 0;
                         transfer_counter <= 0;
+                        slave_clock <= 1;
                         MISO <= latched_data_in[0];
                     end
                 end
@@ -132,7 +137,11 @@ module spi_slave_register #(
                     spi_register[transfer_counter] <= MOSI;
                 end
                 if(~inner_sclk & sclk_del) begin
+                    slave_clock <= 1;
                     MISO <= current_miso;
+                end
+                if(inner_sclk & ~sclk_del) begin
+                    slave_clock <= 0;
                 end
             end
             spi_wait_deassert: begin

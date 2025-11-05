@@ -28,18 +28,11 @@ module SPI_slave#(
     input wire SCLK,
     input wire [N_CHANNELS-1:0] MOSI,
     input wire [N_CHANNELS-1:0] SS,
+    output wire slave_clock,
     axi_lite.slave axi_in,
     axi_stream.slave spi_data_in [N_CHANNELS],
     axi_stream.master spi_data_out [N_CHANNELS]
 );
-
-
-    (* keep="true" *) wire [31:0] waddr;
-    (* keep="true" *) wire [31:0] wdata;
-    (* keep="true" *) wire wvalid;
-    assign waddr = axi_in.AWADDR;
-    assign wdata = axi_in.WDATA;
-    assign wvalid = axi_in.WVALID;
 
 
     parameter N_REGISTERS = 4;
@@ -70,6 +63,10 @@ module SPI_slave#(
     assign transfer_length = cu_write_registers[1];
 
 
+    reg [N_CHANNELS-1:0] s_clks;
+
+    assign slave_clock = |s_clks;
+
     genvar i;
     generate
         for(i=0; i<N_CHANNELS; i=i+1) begin : gen_spi_slave_registers
@@ -82,6 +79,7 @@ module SPI_slave#(
                 .SS(SS[i]),
                 .MOSI(MOSI[i]),
                 .MISO(MISO[i]),
+                .slave_clock(s_clks[i]),
                 .enable(enable),
                 .msb_first(msb_first),
                 .data_in(spi_data_in[i]),
