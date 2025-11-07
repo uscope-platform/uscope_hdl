@@ -65,7 +65,7 @@ module SPI_slave#(
 
     reg [N_CHANNELS-1:0] s_clks;
 
-    assign slave_clock = |s_clks;
+    assign slave_clock = ~(|s_clks);
 
     genvar i;
     generate
