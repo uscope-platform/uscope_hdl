@@ -55,7 +55,7 @@ module ResolutionEnhancer #(
                 assign high_res_pulses[1] = hr_pulse_gating &  high_resolution_clock[0] & ~high_resolution_clock[1] & ~high_resolution_clock[2] & clock;
                 assign high_res_pulses[2] = hr_pulse_gating &  high_resolution_clock[0] &  high_resolution_clock[1] &  ~high_resolution_clock[2] & clock;
                 assign high_res_pulses[3] = hr_pulse_gating &  high_resolution_clock[0] &  high_resolution_clock[1] &  high_resolution_clock[2] & clock;
-                
+
                 assign high_res_pulses[4] = hr_pulse_gating &  high_resolution_clock[0] &  high_resolution_clock[1] &  high_resolution_clock[2] & ~clock;
                 assign high_res_pulses[5] = hr_pulse_gating & ~high_resolution_clock[0] &  high_resolution_clock[1] &  high_resolution_clock[2] & ~clock;
                 assign high_res_pulses[6] = hr_pulse_gating & ~high_resolution_clock[0] & ~high_resolution_clock[1] &  high_resolution_clock[2] & ~clock;
@@ -82,15 +82,15 @@ module ResolutionEnhancer #(
 
                 assign selected_delay_r = hr_pulse_gating_r &  high_res_extensions[7-count];
                 assign selected_delay_f = hr_pulse_gating_f &  ~high_res_extensions[7-count];
-                
+
                 assign out = in_del | selected_extension_r | selected_extension_f; 
 
             end else if(ENANCING_MODE=="DELAY") begin
-            
+
             reg delayed_out;
 
             assign out = delayed_out;
-            
+
             reg [7:0] delayed_in;
 
             always_ff@(posedge high_resolution_clock[0])begin

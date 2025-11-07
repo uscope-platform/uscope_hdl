@@ -17,7 +17,7 @@
 `include "interfaces.svh"
 
 module PwmGenerator #(
-    parameter BASE_ADDRESS = 32'h43c00000, 
+    parameter BASE_ADDRESS = 32'h43c00000,
     N_CHANNELS = 4,
     HR_ENABLE = "FALSE",
     ENANCING_MODE = "DUTY",
@@ -51,7 +51,7 @@ module PwmGenerator #(
 
     reg [N_CHAINS-1:0] stop_chain = 0;
     assign timebase = internal_timebase;
-    
+
 
     wire [15:0] sync_out_select;
     wire [15:0] sync_out_delay;
@@ -73,10 +73,10 @@ module PwmGenerator #(
         for(int i = 1; i<=N_CHAINS; i++)begin
             ADDR_CALC[N_CHAINS-i] = BASE_ADDRESS+'h100*i;
         end
-    endfunction 
+    endfunction
 
-    localparam [31:0] AXI_ADDRESSES [N_CHAINS:0] = ADDR_CALC(); 
-    
+    localparam [31:0] AXI_ADDRESSES [N_CHAINS:0] = ADDR_CALC();
+
 
     axi_lite internal_bus[N_CHAINS+1]();
 
@@ -149,10 +149,9 @@ module PwmGenerator #(
             internal_pwm_out[j*N_CHANNELS+:N_CHANNELS] = partial_pwm_out_a[(N_CHAINS-1)-j];
             internal_pwm_out[N_CHAINS*N_CHANNELS+j*N_CHANNELS+:N_CHANNELS] = partial_pwm_out_b[(N_CHAINS-1)-j];
         end
-    
     end
 
- 
+
     generate
         for( i = 0; i<N_CHAINS; i++)begin
             pwmChain #(
@@ -204,6 +203,6 @@ endmodule
                     "offset": "0x200",
                     "children":[]
                 }
-            ]    
+            ]
         }
     **/
