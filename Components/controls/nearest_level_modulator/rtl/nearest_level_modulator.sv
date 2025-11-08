@@ -1,5 +1,4 @@
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 
 module nearest_level_modulator #(
     parameter N_CELLS = 10

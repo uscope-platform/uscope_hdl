@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 
 module axi_stream_selector_2 #(parameter int DATA_WIDTH = 16, int REGISTERED = 1)(
     input wire clock,

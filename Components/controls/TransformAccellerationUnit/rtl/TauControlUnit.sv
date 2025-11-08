@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10 ns / 1 ns
-`include "interfaces.svh"
 
 module TauControlUnit #(parameter BASE_ADDRESS = 'h43c00000)(
     input wire     clock,

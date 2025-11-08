@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 
 module axi_stream_extractor #(parameter DATA_WIDTH = 16, DEST_WIDTH = 8, REGISTERED = 0)(
     input wire clock,

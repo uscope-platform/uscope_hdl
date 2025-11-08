@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 `timescale 10 ns / 1 ns
-`include "interfaces.svh"
 
 module sigma_delta_processor #(
     parameter N_CHANNELS = 2,

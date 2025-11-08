@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 
 
 module div_alu_wrapper (

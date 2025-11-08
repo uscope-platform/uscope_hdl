@@ -1,5 +1,4 @@
 `timescale 10ns / 100ps
-`include "interfaces.svh"
 import axi_vip_pkg::*;
 import vip_bd_axi_vip_0_0_pkg::*;
 

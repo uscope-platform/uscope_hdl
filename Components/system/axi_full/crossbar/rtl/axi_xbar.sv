@@ -20,8 +20,6 @@
 
 
 
-`include "interfaces.svh"
-
 module axi_xbar #(
         parameter integer DATA_WIDTH = 32,
         parameter integer ADDR_WIDTH = 32,

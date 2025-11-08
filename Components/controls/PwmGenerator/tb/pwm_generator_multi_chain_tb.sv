@@ -15,7 +15,6 @@
 
 `timescale 10ns / 1ns
 `include "axis_BFM.svh"
-`include "interfaces.svh"
 
 module pwm_generator_multi_chain_tb();
 

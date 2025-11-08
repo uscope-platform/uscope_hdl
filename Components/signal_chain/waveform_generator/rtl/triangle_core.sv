@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 
 module triangle_core #(
     integer N_PARAMETERS = 16

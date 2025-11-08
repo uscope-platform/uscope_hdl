@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 
 module axi_stream_mux_5 #(parameter DATA_WIDTH = 16)(
     input wire clock,

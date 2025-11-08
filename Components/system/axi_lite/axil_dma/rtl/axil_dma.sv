@@ -15,7 +15,6 @@
 
 
 `timescale 1 ns / 100 ps
-`include "interfaces.svh"
 
 module axil_dma #(
     parameter ADDR_WIDTH = 32,

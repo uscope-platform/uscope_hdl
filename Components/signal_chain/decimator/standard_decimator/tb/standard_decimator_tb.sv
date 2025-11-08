@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10 ns / 1 ns
-`include "interfaces.svh"
 `include "SPI_BFM.svh"
 
 module standard_decimator_tb();

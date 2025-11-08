@@ -14,7 +14,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 `timescale 1 ns / 100 ps
-`include "interfaces.svh"
 
 module DMA_manager # (
     parameter DMA_BASE_ADDRESS = 32'h40400000,

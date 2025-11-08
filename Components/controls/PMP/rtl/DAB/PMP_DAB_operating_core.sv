@@ -14,8 +14,6 @@
 // limitations under the License.
 
 `timescale 10 ns / 1 ns
-`include "interfaces.svh"
-
 module PMP_DAB_operating_core #(
     PWM_BASE_ADDR = 0,
     N_PWM_CHANNELS = 2

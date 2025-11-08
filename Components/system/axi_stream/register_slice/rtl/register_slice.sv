@@ -15,8 +15,6 @@
 // limitations under the License.
 
 `timescale 10 ns / 1 ns
-`include "interfaces.svh"
-
 
 module register_slice #(parameter DATA_WIDTH = 32, DEST_WIDTH = 32, USER_WIDTH = 32, N_STAGES = 1, READY_REG = 0)(
     input wire        clock,

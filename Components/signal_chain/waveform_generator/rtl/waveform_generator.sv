@@ -14,8 +14,6 @@
 // limitations under the License.
 
 `timescale 10ns / 1ns
-`include "interfaces.svh"
-
 module waveform_generator #(
     parameter int N_OUTPUTS = 2
 )(

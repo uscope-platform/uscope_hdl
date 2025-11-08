@@ -15,7 +15,6 @@
 // limitations under the License.
 
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 
 module i2c_test_tl (
 	inout wire i2c_scl,

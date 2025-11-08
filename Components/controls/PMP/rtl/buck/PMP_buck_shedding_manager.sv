@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10 ns / 1 ns
-`include "interfaces.svh"
 
 module PMP_buck_shedding_manager #(
     N_PHASES = 4

@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 
 module axi_stream_combiner_4 #(parameter INPUT_DATA_WIDTH = 16, OUTPUT_DATA_WIDTH = 32, DEST_WIDTH = 8, USER_WIDTH = 8, TLAST_PERIOD = 1024, MSB_DEST_SUPPORT = "TRUE")(
     input wire clock,

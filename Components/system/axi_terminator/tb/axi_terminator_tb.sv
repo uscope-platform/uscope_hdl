@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 
 import axi_vip_pkg::*;
 import vip_bd_axi_vip_0_0_pkg::*;

@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 
 module square_core #(
     parameter int COUNTER_WIDTH = 32,

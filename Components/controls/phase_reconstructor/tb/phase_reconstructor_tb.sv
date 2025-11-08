@@ -16,7 +16,6 @@
 `timescale 10 ns/100ps
 
 `include "axis_BFM.svh"
-`include "interfaces.svh"
 
 module phase_reconstructor_tb();
 

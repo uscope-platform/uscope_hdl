@@ -16,8 +16,6 @@
 // limitations under the License.
 
 `timescale 10 ns / 1 ns
-`include "interfaces.svh"
-
 
 module multichannel_axis_sync_repeater #(
     parameter DATA_WIDTH= 32, 

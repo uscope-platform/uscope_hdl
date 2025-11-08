@@ -14,8 +14,6 @@
 // limitations under the License.
 `timescale 10 ns / 1 ns
 `include "axi_lite_BFM.svh"
-`include "interfaces.svh"
-
 module AD2S1210_tb();
     reg clk, rst, start;
 

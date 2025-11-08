@@ -8,7 +8,6 @@
 //Purpose     : IP block netlist
 //--------------------------------------------------------------------------------
 `timescale 10 ns / 1 ps
-`include "interfaces.svh"
 
 module Zynq_wrapper(
     axi_lite.master axi_out,

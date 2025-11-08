@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 `timescale 10 ns / 1 ns
-`include "interfaces.svh"
 `include "axis_BFM.svh"
+
 module ADC_SPI_tb();
     
     logic clk, rst;

@@ -13,9 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-`timescale 10ns / 1ns
-`include "interfaces.svh"
-
+`timescale 10ns / 10ns
 module merging_core #(
     parameter DATA_WIDTH=32,
     parameter DEST_WIDTH=32,

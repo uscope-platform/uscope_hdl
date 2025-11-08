@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 
 module ultra_buffer_memory #(
 parameter ADDRESS_WIDTH=12,

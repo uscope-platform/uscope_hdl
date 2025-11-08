@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 
 module axi_stream_mux #(
     parameter integer N_STREAMS = 2,

@@ -96,7 +96,6 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "interfaces.svh"
 
 module	axi_xbar_inner #(
         parameter integer C_AXI_DATA_WIDTH = 32,

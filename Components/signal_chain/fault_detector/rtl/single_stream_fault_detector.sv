@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10 ns / 1 ns
-`include "interfaces.svh"
 
 module single_stream_fault_detector #(
     parameter N_CHANNELS = 4,

@@ -1,5 +1,4 @@
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 `include "axis_BFM.svh"
 `include "axi_lite_BFM.svh"
 `include "axi_full_bfm.svh"

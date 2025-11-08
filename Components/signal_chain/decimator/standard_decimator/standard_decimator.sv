@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 `timescale 1 ps / 1 ps
-`include "interfaces.svh"
 
 module standard_decimator #(
     parameter MAX_DECIMATION_RATIO = 16, 

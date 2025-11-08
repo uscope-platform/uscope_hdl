@@ -1,5 +1,4 @@
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 
 module noise_generator #(
     OUTPUT_WIDTH = 32,

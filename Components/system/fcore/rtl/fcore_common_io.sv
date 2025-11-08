@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 
 module fCore_common_io #(
     parameter REGISTER_WIDTH = 32,

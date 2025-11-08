@@ -14,7 +14,6 @@
 // See the License for the specific language governing prmissions and
 // limitations under the License.
 `timescale 10 ns / 1 ns
-`include "interfaces.svh"
 
 module fp_fti #(
     parameter FIXED_POINT_Q015 = 0

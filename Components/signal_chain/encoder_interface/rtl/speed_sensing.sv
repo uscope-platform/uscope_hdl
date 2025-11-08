@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10 ns / 1 ns
-`include "interfaces.svh"
 
 module speed_sensing #(
     parameter COUNTER_WIDTH = 24

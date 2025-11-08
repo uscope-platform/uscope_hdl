@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 `timescale 10 ns / 100 ps
-`include "interfaces.svh"
 
 module base_zynq #(
     parameter FCORE_PRESENT = 0

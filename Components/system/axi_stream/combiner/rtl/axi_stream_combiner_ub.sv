@@ -15,7 +15,6 @@
 
 
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 
 module axi_stream_combiner_ub #(
     parameter INPUT_DATA_WIDTH = 16, 

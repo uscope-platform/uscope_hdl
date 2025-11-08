@@ -15,7 +15,6 @@
 
 
 `timescale 1 ns / 100 ps
-`include "interfaces.svh"
 
 module axi_dma_bursting_mc #(
     parameter int N_CHANNELS = 6,

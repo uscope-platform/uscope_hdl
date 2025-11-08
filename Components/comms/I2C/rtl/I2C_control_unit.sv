@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 
 module I2CControlUnit #(parameter BASE_ADDRESS = 0)(
     input wire clock,

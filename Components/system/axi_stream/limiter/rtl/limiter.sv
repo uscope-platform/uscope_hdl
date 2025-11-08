@@ -15,7 +15,6 @@
 // limitations under the License.
 
 `timescale 10 ns / 1 ns
-`include "interfaces.svh"
 
 
 module axis_limiter #(parameter BASE_ADDRESS = 'h43c00000)(

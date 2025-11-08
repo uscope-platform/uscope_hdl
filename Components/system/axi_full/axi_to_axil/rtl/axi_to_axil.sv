@@ -14,8 +14,6 @@
 // limitations under the License.
 
 `timescale 10 ns / 1 ns
-`include "interfaces.svh"
-
 
 module axi_to_axil (
     input wire        clock,

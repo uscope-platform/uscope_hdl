@@ -15,7 +15,6 @@
 
 
 `timescale 1 ns / 100 ps
-`include "interfaces.svh"
 
 module axi_dma_bursting #(
     parameter ADDR_WIDTH = 32,

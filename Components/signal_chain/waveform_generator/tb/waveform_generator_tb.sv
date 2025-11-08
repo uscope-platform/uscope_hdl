@@ -1,6 +1,5 @@
 `timescale 10ns / 1ns
 `include "axi_lite_BFM.svh"
-`include "interfaces.svh"
 
 
 import reg_maps::*;

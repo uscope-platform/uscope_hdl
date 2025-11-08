@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 
 module multiphase_sinusoid_generator #(parameter N_PHASES=6, BASE_ADDRESS='h43c00000, DATA_WIDTH=16)(
     input wire clock,

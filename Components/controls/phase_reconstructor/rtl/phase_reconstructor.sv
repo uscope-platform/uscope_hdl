@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10 ns / 1 ns
-`include "interfaces.svh"
 
 module phase_reconstructor #(parameter N_PHASES = 6, MISSING_PHASE = 6, DATA_PATH_WIDTH = 16, TARGET_ADDRESS = 0)(
     input wire clock,

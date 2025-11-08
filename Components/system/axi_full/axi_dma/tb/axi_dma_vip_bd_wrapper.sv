@@ -1,6 +1,4 @@
 `timescale 1 ps / 1 ps
-`include "interfaces.svh"
-
 module axi_dma_vip_bd_wrapper (
     input wire clock,
     input wire reset,

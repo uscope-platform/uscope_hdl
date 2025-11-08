@@ -16,7 +16,6 @@
 // limitations under the License.
 
 `timescale 10 ns / 1 ns
-`include "interfaces.svh"
 
 module PID #(
     parameter INPUT_DATA_WIDTH = 12, 

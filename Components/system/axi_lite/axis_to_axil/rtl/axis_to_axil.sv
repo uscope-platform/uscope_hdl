@@ -15,7 +15,6 @@
 
 
 `timescale 1 ns / 100 ps
-`include "interfaces.svh"
 
 module axis_to_axil (
     input wire clock,

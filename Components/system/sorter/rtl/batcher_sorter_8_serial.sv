@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 
 module batcher_sorter_8_serial #(
     parameter DATA_WIDTH = 32,

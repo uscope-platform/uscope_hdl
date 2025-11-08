@@ -14,7 +14,6 @@
 // limitations under the License.
 `timescale 10 ns / 1 ns
 `include "axi_lite_BFM.svh"
-`include "interfaces.svh"
 module EnableGen_tb();
     
     logic clk, rst;

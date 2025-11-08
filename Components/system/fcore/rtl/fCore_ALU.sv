@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 
 module fCore_ALU #(OPCODE_WIDTH = 5, DATA_WIDTH = 32, REG_ADDR_WIDTH = 4) (
     input wire clock,

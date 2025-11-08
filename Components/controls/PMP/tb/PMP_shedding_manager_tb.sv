@@ -17,7 +17,6 @@
 
 `timescale 10 ns / 1 ns
 `include "axis_BFM.svh"
-`include "interfaces.svh"
 
 module PMP_shedding_manager_tb();
     reg clk, reset;

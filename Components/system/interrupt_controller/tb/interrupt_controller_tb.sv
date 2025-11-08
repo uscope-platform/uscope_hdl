@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License. 
 `timescale 10ns / 100ps
-`include "interfaces.svh"
 `include "axi_lite_BFM.svh"
 
 module interrupt_controller_tb();

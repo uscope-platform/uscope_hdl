@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 
 module axis_fifo_xpm #(
    parameter DATA_WIDTH = 32,

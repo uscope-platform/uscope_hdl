@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 
 module mc_scope_tl #(parameter BASE_ADDRESS = 'h43c00000)(
     input wire clock,

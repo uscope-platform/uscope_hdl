@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 
 module merge_sorter_control_unit #(
     parameter DATA_WIDTH=16,

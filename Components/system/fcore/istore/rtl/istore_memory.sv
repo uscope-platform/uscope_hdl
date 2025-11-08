@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 
 module istore_memory #(parameter DATA_WIDTH_A=32, DATA_WIDTH_B=64, parameter ADDR_WIDTH=8, FAST_DEBUG="FALSE", INIT_FILE = "") (
     input wire clock_in,

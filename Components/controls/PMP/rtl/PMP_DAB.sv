@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10 ns / 1 ns
-`include "interfaces.svh"
 
 module dab_pre_modulation_processor #(
     PWM_BASE_ADDR = 0,

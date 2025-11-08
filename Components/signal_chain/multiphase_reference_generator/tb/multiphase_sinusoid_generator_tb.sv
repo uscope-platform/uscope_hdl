@@ -15,7 +15,6 @@
 
 `timescale 10 ns / 1 ns
 `include "axi_lite_BFM.svh"
-`include "interfaces.svh"
 
 module multiphase_sinusoid_generator_tb();
     

@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 import fcore_isa::*;
 
 module fCore_logic_unit (

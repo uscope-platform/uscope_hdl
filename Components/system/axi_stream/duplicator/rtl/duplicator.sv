@@ -15,8 +15,6 @@
 // limitations under the License.
 
 `timescale 10 ns / 1 ns
-`include "interfaces.svh"
-
 
 module axis_duplicator #(
     parameter buffer="FALSE",

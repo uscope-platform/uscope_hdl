@@ -1,5 +1,4 @@
 `timescale 1 ps / 1 ps
-`include "interfaces.svh"
 
 module axi_to_axil_vip_bd_wrapper (
     input wire clock,

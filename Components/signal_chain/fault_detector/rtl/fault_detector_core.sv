@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10 ns / 1 ns
-`include "interfaces.svh"
 
 module fault_detector_core #(
     parameter N_CHANNELS = 4,

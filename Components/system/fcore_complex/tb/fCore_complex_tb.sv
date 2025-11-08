@@ -15,7 +15,6 @@
 `timescale 10 ns / 1 ns
 `include "axi_lite_BFM.svh"
 `include "axis_BFM.svh"
-`include "interfaces.svh"
 `include "axi_full_bfm.svh"
 
 module fcore_complex_tb();

@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10 ns / 1 ns
-//`include "interfaces.svh"
 
 module Integrator #(parameter DATA_WIDTH = 16)(
     input wire clock,

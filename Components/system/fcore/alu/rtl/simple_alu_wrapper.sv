@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10ns / 1ns
-`include "interfaces.svh"
 
 module simple_alu_wrapper #(parameter REGISTER_ADDR_WIDTH = 32) (
     input wire clock,

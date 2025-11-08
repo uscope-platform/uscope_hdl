@@ -14,7 +14,6 @@
 // limitations under the License.
 
 `timescale 10 ns / 1 ns
-`include "interfaces.svh"
 
 module PwmGenerator #(
     parameter BASE_ADDRESS = 32'h43c00000,

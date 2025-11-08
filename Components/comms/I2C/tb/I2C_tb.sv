@@ -14,7 +14,6 @@
 // limitations under the License.
 `timescale 10 ns / 1 ns
 `include "axis_BFM.svh"
-`include "interfaces.svh"
 
 module I2C_tb();
     
