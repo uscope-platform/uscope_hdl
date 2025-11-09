@@ -17,7 +17,8 @@
 `timescale 10 ns / 1 ns
 
 module spi_slave_register #(
-    parameter int REGISTERS_WIDTH=16
+    parameter int REGISTERS_WIDTH=16,
+    int OUTPUT_WIDTH = 32
     )(
     input wire clock,
     input wire reset,
@@ -36,12 +37,15 @@ module spi_slave_register #(
     axi_stream.master data_out
     );
 
-    function automatic [15:0]  invert_word;
-        input [15:0] data_in;
+    function automatic [OUTPUT_WIDTH-1:0] invert_word(
+        input [REGISTERS_WIDTH-1:0] data_in,
+        input [7:0] length
+    );
         integer i;
         begin
-            for (i = 0; i < 16; i = i + 1) begin
-                invert_word[i] = data_in[15 - i];
+        invert_word = 0;
+            for (i = 0; i < length; i = i + 1) begin
+                invert_word[i] = data_in[length-1- i];
             end
         end
     endfunction
@@ -97,7 +101,9 @@ module spi_slave_register #(
     reg [REGISTERS_WIDTH-1:0] latched_data_in = 0;
 
     wire current_miso;
-    assign current_miso = latched_data_in[transfer_counter];
+    assign current_miso = transmission_register[transfer_counter];
+
+    reg [REGISTERS_WIDTH-1:0] transmission_register;
 
     always_ff @(posedge clock) begin
         if(~reset) begin
@@ -111,11 +117,7 @@ module spi_slave_register #(
         case (state)
             spi_idle: begin
                 if(data_in.valid) begin
-                    if(msb_first)begin
-                        latched_data_in <= invert_word(data_in.data);
-                    end else begin
-                        latched_data_in <= data_in.data;
-                    end
+                    latched_data_in <= data_in.data;
                 end
                 if(enable)begin
                     if(inner_ss && ~ss_del && ~(ss_polarity_del ^ ss_polarity)) begin
@@ -124,7 +126,13 @@ module spi_slave_register #(
                         spi_register <= 0;
                         transfer_counter <= 0;
                         slave_clock <= 1;
-                        MISO <= latched_data_in[0];
+                        if(msb_first) begin
+                            transmission_register <= invert_word(latched_data_in, spi_transfer_length);
+                            MISO <= latched_data_in[spi_transfer_length-1];
+                        end else begin
+                            transmission_register <= latched_data_in;
+                            MISO <= latched_data_in[0];
+                        end
                     end
                 end
             end
@@ -147,7 +155,7 @@ module spi_slave_register #(
             spi_wait_deassert: begin
             if(~inner_ss && ss_del) begin
                 if(msb_first)begin
-                    data_out.data <= invert_word(spi_register);
+                    data_out.data <= invert_word(spi_register,spi_transfer_length);
                 end else begin
                     data_out.data <= spi_register;
                 end

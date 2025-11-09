@@ -70,7 +70,8 @@ module SPI_slave#(
     generate
         for(i=0; i<N_CHANNELS; i=i+1) begin : gen_spi_slave_registers
             spi_slave_register #(
-                .REGISTERS_WIDTH(REGISTERS_WIDTH)
+                .REGISTERS_WIDTH(REGISTERS_WIDTH),
+                .OUTPUT_WIDTH(OUTPUT_WIDTH)
             ) spi_reg(
                 .clock(clock),
                 .reset(reset),
