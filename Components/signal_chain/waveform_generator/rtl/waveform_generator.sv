@@ -15,7 +15,8 @@
 
 `timescale 10ns / 1ns
 module waveform_generator #(
-    parameter int N_OUTPUTS = 2
+    parameter int N_OUTPUTS = 2,
+    int TIMEBASE_WIDTH = 24
 )(
     input wire clock,
     input wire reset,
@@ -50,7 +51,7 @@ module waveform_generator #(
 
     reg [1:0] shape [N_OUTPUTS];
     wire [15:0] active_channels;
-    reg [31:0] parameters[N_OUTPUTS][N_PARAMETERS-1:0];
+    reg [31:0] parameters[N_OUTPUTS][N_PARAMETERS-1:0] = '{default:0};
     wire [7:0] output_selector;
     assign cu_read_registers = cu_write_registers;
 
@@ -84,7 +85,8 @@ module waveform_generator #(
         for (output_idx = 0; output_idx<N_OUTPUTS; output_idx++) begin
 
             square_core #(
-                .N_PARAMETERS(N_PARAMETERS)
+                .N_PARAMETERS(N_PARAMETERS),
+                .TIMEBASE_WIDTH(TIMEBASE_WIDTH)
             )square_gen(
                 .clock(clock),
                 .reset(reset),
@@ -94,7 +96,8 @@ module waveform_generator #(
             );
 
             sine_core #(
-                .N_PARAMETERS(N_PARAMETERS)
+                .N_PARAMETERS(N_PARAMETERS),
+                .TIMEBASE_WIDTH(TIMEBASE_WIDTH)
             )sine_gen(
                 .clock(clock),
                 .reset(reset),
@@ -104,7 +107,8 @@ module waveform_generator #(
             );
 
             triangle_core #(
-                .N_PARAMETERS(N_PARAMETERS)
+                .N_PARAMETERS(N_PARAMETERS),
+                .TIMEBASE_WIDTH(TIMEBASE_WIDTH)
             )triangle_gen(
                 .clock(clock),
                 .reset(reset),

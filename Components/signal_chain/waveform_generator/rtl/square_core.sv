@@ -16,7 +16,7 @@
 `timescale 10ns / 1ns
 
 module square_core #(
-    parameter int COUNTER_WIDTH = 32,
+    parameter int TIMEBASE_WIDTH = 32,
     parameter int N_PARAMETERS = 16
 )(
     input wire clock,
@@ -49,7 +49,7 @@ module square_core #(
     assign user_out = parameters[6];
 
 
-    reg[COUNTER_WIDTH-1:0] generator_counter = 0;
+    reg[TIMEBASE_WIDTH-1:0] generator_counter = 0;
     reg running = 0;
 
     initial begin
@@ -60,8 +60,11 @@ module square_core #(
         data_out.user = 0;
     end
 
+    wire [15:0] t_off;
+    assign t_off = period - t_on;
+
     wire output_status;
-    assign output_status = generator_counter > t_on;
+    assign output_status = running & (generator_counter > t_on);
 
     always_ff@(posedge clock)begin
 
@@ -70,13 +73,14 @@ module square_core #(
         if(!running)begin
             if(trigger)begin
                 running <= 1;
-                data_out.data <= output_status ? v_on : v_off;
+                data_out.data <= output_status ? v_off : v_on;
                 data_out.dest <= dest_out;
                 data_out.user <= user_out;
                 data_out.tlast <= 1;
                 data_out.valid <= 1;
             end
-            generator_counter <= t_delay;
+            if(period>=t_delay)generator_counter <= period- t_delay;
+            else generator_counter <= period;
         end else begin
             if(generator_counter==period-1)begin
                 generator_counter <= 0;

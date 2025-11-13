@@ -15,7 +15,8 @@
 
 `timescale 10ns / 1ns
 module sine_core #(
-    integer N_PARAMETERS = 16
+    integer N_PARAMETERS = 16,
+    integer TIMEBASE_WIDTH = 24
 )(
     input wire clock,
     input wire reset,

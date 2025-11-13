@@ -16,7 +16,8 @@
 `timescale 10ns / 1ns
 
 module triangle_core #(
-    integer N_PARAMETERS = 16
+    integer N_PARAMETERS = 16,
+    integer TIMEBASE_WIDTH = 24
 )(
     input wire clock,
     input wire reset,
@@ -51,7 +52,7 @@ module triangle_core #(
     assign user_out = parameters[7];
 
 
-    reg[23:0] generator_counter = 0;
+    reg[TIMEBASE_WIDTH-1:0] generator_counter = 0;
     reg running = 0;
 
     initial begin
