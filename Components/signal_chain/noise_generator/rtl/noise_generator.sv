@@ -48,10 +48,13 @@ module noise_generator #(
         .reset(reset),
         .input_registers(cu_read_registers),
         .output_registers(cu_write_registers),
-        .axil(axi_in)
+        .axil(axi_in),
+        .trigger_out()
     );
 
     axi_stream generator_out();
+    axi_stream reg_in();
+
 
     generate 
         if(FLOAT_OUT)begin
@@ -63,22 +66,33 @@ module noise_generator #(
                 .clock(clock),
                 .reset(reset),
                 .in(generator_out),
-                .out(data_out)
+                .out(reg_in)
             );
 
         end else begin
 
-            assign data_out.user = generator_out.user;
-            assign data_out.data = generator_out.data;
-            assign data_out.dest = generator_out.dest;
-            assign data_out.valid = generator_out.valid;
-            assign data_out.tlast = generator_out.tlast;
-            assign generator_out.ready = data_out.ready;
+            assign reg_in.user = generator_out.user;
+            assign reg_in.data = generator_out.data;
+            assign reg_in.dest = generator_out.dest;
+            assign reg_in.valid = generator_out.valid;
+            assign reg_in.tlast = generator_out.tlast;
+            assign generator_out.ready = reg_in.ready;
         end
 
     endgenerate
 
-
+    axis_skid_buffer #(
+        .REGISTER_OUTPUT(1),
+        .LATCHING(0),
+        .DATA_WIDTH(data_out.DATA_WIDTH),
+        .DEST_WIDTH(data_out.DEST_WIDTH),
+        .USER_WIDTH(data_out.USER_WIDTH)
+    ) output_reg (
+        .clock(clock),
+        .reset(reset),
+        .axis_in(reg_in),
+        .axis_out(data_out)
+    );
 
     assign cu_read_registers = cu_write_registers;
 
