@@ -46,8 +46,41 @@ module fCore_decoder #(
 
     //fcore_operations current_operation;
 
-    wire [OPCODE_WIDTH-1:0] opcode;
-    assign opcode = instruction_stream.data[OPCODE_WIDTH-1:0];
+
+
+    typedef enum logic [OPCODE_WIDTH-1:0] {
+        NOP = 0,
+        ADD = 1,
+        SUB = 2,
+        MUL = 3,
+        ITF = 4,
+        FTI = 5,
+        LDC = 6,
+        LDR = 7,
+        BGT = 8,
+        BLE = 9,
+        BEQ = 10,
+        BNE = 11,
+        STOP = 12,
+        LAND = 13,
+        LOR = 14,
+        LNOT = 15,
+        SATP = 16,
+        SATN = 17,
+        REC = 18,
+        POPCNT = 19,
+        ABS = 20,
+        EFI = 21,
+        BSET = 22,
+        BSEL = 25,
+        LXOR = 26,
+        CSEL = 27
+     } opcode_t;
+
+
+
+    opcode_t opcode;
+    assign opcode = opcode_t'(instruction_stream.data[OPCODE_WIDTH-1:0]);
 
     wire [REG_ADDR_WIDTH-1:0] operand_a;
     assign operand_a = instruction_stream.data[OPCODE_WIDTH+REG_ADDR_WIDTH-1:OPCODE_WIDTH];

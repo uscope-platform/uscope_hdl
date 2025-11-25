@@ -1,6 +1,6 @@
 {
     "general":{
-        "project_name":"fCore",
+        "project_name":"fCore2",
         "target_part":"xc7z020clg400",
         "synth_modules":[],
         "synth_tl": "fCore",
@@ -16,21 +16,62 @@
         {
             "name":"set_properties.tcl",
             "type": "tcl",
+            "function_mode": false,
             "arguments":[]
         },
         {
-            "name":"fcore_alu.py",
-            "type": "py",
-            "arguments":["fp_alu_div.tcl", "--reciprocal", "--name", "fcore_div_alu"],
-            "product_include":true,
-            "product_type":"tcl"
+            "name":"adder.tcl",
+            "type": "tcl",
+            "function_mode": true,
+            "arguments":[
+                {"name":"name","value":"fast_adder"},
+                {"name":"value","value":"5"}
+            ]
         },
         {
-            "name":"fcore_alu.py",
-            "type": "py",
-            "arguments":["fp_alu_simple.tcl", "--name", "fcore_simple_alu"],
-            "product_include":true,
-            "product_type":"tcl"
+            "name":"adder.tcl",
+            "type": "tcl",
+            "function_mode": true,
+            "arguments":[
+                {"name":"name","value":"slow_adder"},
+                {"name":"value","value":"8"}
+            ]
+        },
+        {
+            "name":"fti.tcl",
+            "type": "tcl",
+            "function_mode": true,
+            "arguments":[
+                {"name":"name","value":"fti"},
+                {"name":"value","value":"5"}
+            ]
+        },
+        {
+            "name":"itf.tcl",
+            "type": "tcl",
+            "function_mode": true,
+            "arguments":[
+                {"name":"name","value":"itf"},
+                {"name":"value","value":"5"}
+            ]
+        },
+        {
+            "name":"multiplier.tcl",
+            "type": "tcl",
+            "function_mode": true,
+            "arguments":[
+                {"name":"name","value":"mul"},
+                {"name":"value","value":"5"}
+            ]
+        },
+        {
+            "name":"reciprocal.tcl",
+            "type": "tcl",
+            "function_mode": true,
+            "arguments":[
+                {"name":"name","value":"rec"},
+                {"name":"value","value":"5"}
+            ]
         }
     ],
     "excluded_modules":[

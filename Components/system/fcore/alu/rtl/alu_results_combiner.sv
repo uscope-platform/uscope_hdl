@@ -1,0 +1,177 @@
+// Copyright 2021 University of Nottingham Ningbo China
+// Author: Filippo Savi <filssavi@gmail.com>
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+`timescale 10ns / 1ns
+
+module alu_results_combiner #(
+    REGISTERED = 0
+) (
+    input wire clock,
+    input wire reset,
+    axi_stream.slave add_result,
+    axi_stream.slave mul_result,
+    axi_stream.slave rec_result,
+    axi_stream.slave fti_result,
+    axi_stream.slave itf_result,
+    axi_stream.slave sat_result,
+    axi_stream.slave logic_result,
+    axi_stream.slave comparison_result,
+    axi_stream.slave load_result,
+    axi_stream.slave bitmanip_result,
+    axi_stream.slave abs_result,
+    axi_stream.slave csel_result,
+    axi_stream.master result
+);
+    generate
+        if(REGISTERED) begin
+            always_ff@(posedge clock) begin
+                result.valid <= 0;
+                result.user <= 0;
+                result.data <= 0;
+                if(add_result.valid) begin
+                    result.valid <= add_result.valid;
+                    result.user <= add_result.user;
+                    result.data <= add_result.data;
+                    result.dest <= add_result.dest;
+                end else if (mul_result.valid) begin
+                    result.valid <= mul_result.valid;
+                    result.user <= mul_result.user;
+                    result.data <= mul_result.data;
+                    result.dest <= mul_result.dest;
+                end else if (rec_result.valid) begin
+                    result.valid <= rec_result.valid;
+                    result.user <= rec_result.user;
+                    result.data <= rec_result.data;
+                    result.dest <= rec_result.dest;
+                end else if (fti_result.valid) begin
+                    result.valid <= fti_result.valid;
+                    result.user <= fti_result.user;
+                    result.data <= fti_result.data;
+                    result.dest <= fti_result.dest;
+                end else if (itf_result.valid) begin
+                    result.valid <= itf_result.valid;
+                    result.user <= itf_result.user;
+                    result.data <= itf_result.data;
+                    result.dest <= itf_result.dest;
+                end else if (sat_result.valid) begin
+                    result.valid <= sat_result.valid;
+                    result.user <= sat_result.user;
+                    result.data <= sat_result.data;
+                    result.dest <= sat_result.dest;
+                end else if (logic_result.valid) begin
+                    result.valid <= logic_result.valid;
+                    result.user <= logic_result.user;
+                    result.data <= logic_result.data;
+                    result.dest <= logic_result.dest;
+                end else if (comparison_result.valid) begin
+                    result.valid <= comparison_result.valid;
+                    result.user <= comparison_result.user;
+                    result.data <= comparison_result.data;
+                    result.dest <= comparison_result.dest;
+                end else if (load_result.valid) begin
+                    result.valid <= load_result.valid;
+                    result.user <= load_result.user;
+                    result.data <= load_result.data;
+                    result.dest <= load_result.dest;
+                end else if (bitmanip_result.valid) begin
+                    result.valid <= bitmanip_result.valid;
+                    result.user <= bitmanip_result.user;
+                    result.data <= bitmanip_result.data;
+                    result.dest <= bitmanip_result.dest;
+                end else if (abs_result.valid) begin
+                    result.valid <= abs_result.valid;
+                    result.user <= abs_result.user;
+                    result.data <= abs_result.data;
+                    result.dest <= abs_result.dest;
+                end else if (csel_result.valid) begin
+                    result.valid <= csel_result.valid;
+                    result.user <= csel_result.user;
+                    result.data <= csel_result.data;
+                    result.dest <= csel_result.dest;
+                end
+            end
+
+        end else begin
+            always_comb begin
+                if(add_result.valid) begin
+                    result.valid <= add_result.valid;
+                    result.user <= add_result.user;
+                    result.data <= add_result.data;
+                    result.dest <= add_result.dest;
+                end else if (mul_result.valid) begin
+                    result.valid <= mul_result.valid;
+                    result.user <= mul_result.user;
+                    result.data <= mul_result.data;
+                    result.dest <= mul_result.dest;
+                end else if (rec_result.valid) begin
+                    result.valid <= rec_result.valid;
+                    result.user <= rec_result.user;
+                    result.data <= rec_result.data;
+                    result.dest <= rec_result.dest;
+                end else if (fti_result.valid) begin
+                    result.valid <= fti_result.valid;
+                    result.user <= fti_result.user;
+                    result.data <= fti_result.data;
+                    result.dest <= fti_result.dest;
+                end else if (itf_result.valid) begin
+                    result.valid <= itf_result.valid;
+                    result.user <= itf_result.user;
+                    result.data <= itf_result.data;
+                    result.dest <= itf_result.dest;
+                end else if (sat_result.valid) begin
+                    result.valid <= sat_result.valid;
+                    result.user <= sat_result.user;
+                    result.data <= sat_result.data;
+                    result.dest <= sat_result.dest;
+                end else if (logic_result.valid) begin
+                    result.valid <= logic_result.valid;
+                    result.user <= logic_result.user;
+                    result.data <= logic_result.data;
+                    result.dest <= logic_result.dest;
+                end else if (comparison_result.valid) begin
+                    result.valid <= comparison_result.valid;
+                    result.user <= comparison_result.user;
+                    result.data <= comparison_result.data;
+                    result.dest <= comparison_result.dest;
+                end else if (load_result.valid) begin
+                    result.valid <= load_result.valid;
+                    result.user <= load_result.user;
+                    result.data <= load_result.data;
+                    result.dest <= load_result.dest;
+                end else if (bitmanip_result.valid) begin
+                    result.valid <= bitmanip_result.valid;
+                    result.user <= bitmanip_result.user;
+                    result.data <= bitmanip_result.data;
+                    result.dest <= bitmanip_result.dest;
+                end else if (abs_result.valid) begin
+                    result.valid <= abs_result.valid;
+                    result.user <= abs_result.user;
+                    result.data <= abs_result.data;
+                    result.dest <= abs_result.dest;
+                end else if (csel_result.valid) begin
+                    result.valid <= csel_result.valid;
+                    result.user <= csel_result.user;
+                    result.data <= csel_result.data;
+                    result.dest <= csel_result.dest;
+                end else begin
+                    result.valid <= 0;
+                    result.user <= 0;
+                    result.data <= 0;
+                    result.dest <= 0;
+                end
+            end
+        end
+    endgenerate
+endmodule

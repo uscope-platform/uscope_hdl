@@ -19,6 +19,7 @@ import fcore_isa::*;
 module fCore_logic_unit (
     input wire clock,
     input wire reset,
+    input wire enable,
     axi_stream.slave operand_a,
     axi_stream.slave operand_b,
     axi_stream.slave operand_c,
@@ -26,11 +27,11 @@ module fCore_logic_unit (
     axi_stream.master result 
 );
 
-    always@(posedge clock) begin
+    always_ff@(posedge clock) begin
         result.valid <= 0;
         result.user <= 0;
         result.data <= 0;
-        if(operand_a.valid)begin
+        if(operand_a.valid && enable)begin
             case(operation.data)
                 0:begin
                     result.data <= operand_a.data & operand_b.data;

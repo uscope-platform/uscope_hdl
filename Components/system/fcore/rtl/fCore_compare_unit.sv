@@ -17,11 +17,11 @@
 import fcore_isa::*;
 
 module fCore_compare_unit #(
-    FULL_COMPARE = 0,
-    PIPELINE_DEPTH = 5
+    FULL_COMPARE = 0
 )(
     input wire clock,
     input wire reset,
+    input wire enable,
     axi_stream.slave operand_a,
     axi_stream.slave operand_b,
     axi_stream.slave operand_c,
@@ -30,21 +30,6 @@ module fCore_compare_unit #(
 );
 
 
-
-    axi_stream early_compare_result();
-
-    register_slice #(
-        .DATA_WIDTH(32),
-        .DEST_WIDTH(32),
-        .USER_WIDTH(32),
-        .N_STAGES(PIPELINE_DEPTH-1),
-        .READY_REG(0)
-    ) compare_pipeline_adapter (
-        .clock(clock),
-        .reset(reset),
-        .in(early_compare_result),
-        .out(result)
-    );
 
     wire [31:0] comparison_result;
     generate 
@@ -57,48 +42,48 @@ module fCore_compare_unit #(
 
 
     always@(posedge clock) begin
-        early_compare_result.valid <= 0;
-        early_compare_result.user <= 0;
-        early_compare_result.data <= 0;
-        if(operand_a.valid)begin
+        result.valid <= 0;
+        result.user <= 0;
+        result.data <= 0;
+        if(operand_a.valid && enable)begin
             case(operation.data)
                 'b000001:begin // Conditional select
                     if(operand_a.data)
-                        early_compare_result.data <= operand_b.data;
+                        result.data <= operand_b.data;
                     else
-                        early_compare_result.data <= operand_c.data;
+                        result.data <= operand_c.data;
                 end
                 'b100100:begin // GREATER THAN
                     if($signed(operand_a.data) > $signed(operand_b.data)) begin 
-                        early_compare_result.data <= comparison_result;
+                        result.data <= comparison_result;
                     end else begin
-                        early_compare_result.data <= 0;
+                        result.data <= 0;
                     end
                 end
                 'b011100:begin // LESS THAN OR EQUAL
                     if($signed(operand_a.data) <= $signed(operand_b.data)) begin
-                        early_compare_result.data <= comparison_result;
+                        result.data <= comparison_result;
                     end else begin
-                        early_compare_result.data <= 0;
+                        result.data <= 0;
                     end
                 end
                 'b010100:begin // EQUAL
                   if(operand_a.data == operand_b.data) begin
-                        early_compare_result.data <= comparison_result;
+                        result.data <= comparison_result;
                     end else begin
-                        early_compare_result.data <= 0;
+                        result.data <= 0;
                     end
                 end
                 'b101100:begin // NOT EQUAL
                     if(operand_a.data != operand_b.data) begin
-                        early_compare_result.data <= comparison_result;
+                        result.data <= comparison_result;
                     end else begin
-                        early_compare_result.data <= 0;
+                        result.data <= 0;
                     end
                 end
             endcase
-            early_compare_result.user <= operand_a.user;
-            early_compare_result.valid <= 1;
+            result.user <= operand_a.user;
+            result.valid <= 1;
         end
     end
 

@@ -45,7 +45,7 @@ module fCore_FP_ALU #(
     assign result_select = result_select_dly[PIPELINE_LENGTH];
     
 
-    always@(posedge clock)begin
+    always_ff@(posedge clock)begin
 
         result_select_dly[0][OPCODE_WIDTH-1:0] <= opcode;
         for(integer i =0 ; i<PIPELINE_LENGTH; i= i+1) begin
@@ -84,28 +84,11 @@ module fCore_FP_ALU #(
 
     axi_stream #(
         .USER_WIDTH(REGISTER_ADDR_WIDTH)
-    ) early_logic_result();
-
-    axi_stream #(
-        .USER_WIDTH(REGISTER_ADDR_WIDTH)
     ) saturation_result();
-
-
-    axi_stream #(
-        .USER_WIDTH(REGISTER_ADDR_WIDTH)
-    ) ldr_operand_a();
-
-    axi_stream #(
-        .USER_WIDTH(REGISTER_ADDR_WIDTH)
-    ) ldc_adj_a();
 
     axi_stream #(
         .USER_WIDTH(REGISTER_ADDR_WIDTH)
     ) ldc_operand_a();
-
-    axi_stream #(
-        .USER_WIDTH(REGISTER_ADDR_WIDTH)
-    ) early_bitmanip_result();
 
     axi_stream #(
         .USER_WIDTH(REGISTER_ADDR_WIDTH)
@@ -117,171 +100,104 @@ module fCore_FP_ALU #(
  
     axi_stream #(
         .USER_WIDTH(REGISTER_ADDR_WIDTH)
-    ) early_abs_result();
-
-    axi_stream #(
-        .USER_WIDTH(REGISTER_ADDR_WIDTH)
     ) csel_result();
  
-    axi_stream #(
-        .USER_WIDTH(REGISTER_ADDR_WIDTH)
-    ) early_csel_result();
+
+        fcore_adder_ip adder (
+            .clock(clock),
+            .reset(reset),
+            .enable(opcode == fcore_isa::ADD | opcode == fcore_isa::SUB),
+            .operand_a(operand_a),
+            .operand_b(operand_b),
+            .operation(operation),
+            .result(add_result)
+        );
+
+        fcore_itf_ip itf (
+            .clock(clock),
+            .reset(reset),
+            .enable(opcode == fcore_isa::ITF),
+            .operand_a(operand_a),
+            .result(itf_result)
+        );
+
+
+        fcore_fti_ip fti (
+            .clock(clock),
+            .reset(reset),
+            .enable(opcode == fcore_isa::FTI),
+            .operand_a(operand_b),
+            .result(fti_result)
+        );
+
+        fcore_multiplier_ip multiplier (
+            .clock(clock),
+            .reset(reset),
+            .enable(opcode == fcore_isa::MUL),
+            .operand_a(operand_a),
+            .operand_b(operand_b),
+            .result(mul_result)
+        );
 
 
     generate 
         if(RECIPROCAL_PRESENT==1)begin
 
-        div_alu_wrapper div_alu (
-            .clock(clock),
-            .reset(reset),
-            .operand_a(operand_a),
-            .operand_b(operand_b),
-            .operation(operation),
-            .add_result(add_result),
-            .fti_result(fti_result),
-            .itf_result(itf_result),
-            .mul_result(mul_result),
-            .reciprocal_result(reciprocal_result)
-        );
-
-
-        end else begin
-
-            simple_alu_wrapper #(
-                .REGISTER_ADDR_WIDTH(REGISTER_ADDR_WIDTH)
-            ) simple_alu (
+        
+            fcore_reciprocal_ip reciprocal (
                 .clock(clock),
                 .reset(reset),
+                .enable(opcode == fcore_isa::REC),
                 .operand_a(operand_a),
-                .operand_b(operand_b),
-                .operation(operation),
-                .add_result(add_result),
-                .fti_result(fti_result),
-                .itf_result(itf_result),
-                .mul_result(mul_result)
-            );    
-        end
+                .result(reciprocal_result)
+            );
+
+        end 
         
     endgenerate  
 
-    always_comb begin
-
-        case (result_select)
-            fcore_isa::ADD,
-            fcore_isa::SUB: begin
-                result.data <= add_result.data;
-                result.dest <= add_result.user;
-                result.valid <= 1;
-            end
-            fcore_isa::MUL:begin
-                result.data <= mul_result.data;
-                result.dest <= mul_result.user;
-                result.valid <= 1;          
-            end
-            fcore_isa::REC:begin
-                result.data <= reciprocal_result.data;
-                result.dest <= reciprocal_result.user;
-                result.valid <= 1;       
-            end
-            fcore_isa::LDR:begin
-                result.data <= ldr_operand_a.dest;
-                result.dest <= ldr_operand_a.user;
-                result.valid <= 1;     
-            end
-            fcore_isa::LDC:begin
-                result.data <= ldc_operand_a.dest;
-                result.dest <= ldc_operand_a.user;
-                result.valid <= 1;
-            end
-            fcore_isa::BGT,
-            fcore_isa::BLE,
-            fcore_isa::BEQ,
-            fcore_isa::BNE: begin
-                result.data <= comparison_result.data;
-                result.dest <= comparison_result.user;
-                result.valid <= 1;
-            end
-            fcore_isa::FTI:begin
-                result.data <= fti_result.data;
-                result.dest <= fti_result.user;
-                result.valid <= 1;
-            end
-            fcore_isa::ITF: begin
-                result.data <= itf_result.data;
-                result.dest <= itf_result.user;
-                result.valid <= 1;
-            end
-            fcore_isa::ABS:begin
-                result.data <= abs_result.data;
-                result.dest <= abs_result.user;
-                result.valid <= 1;
-            end                
-            fcore_isa::LAND,
-            fcore_isa::LOR,
-            fcore_isa::LXOR,
-            fcore_isa::LNOT:begin
-                result.data <= logic_result.data;
-                result.dest <= logic_result.user;
-                result.valid <= 1;
-            end
-            fcore_isa::POPCNT,
-            fcore_isa::BSET,
-            fcore_isa::BSEL:begin
-                result.data <= bitmanip_result.data;
-                result.dest <= bitmanip_result.user;
-                result.valid <= 1;
-            end
-            fcore_isa::SATN,
-            fcore_isa::SATP:begin
-                result.data <= saturation_result.data;
-                result.dest <= saturation_result.user;
-                result.valid <= 1;
-            end
-            fcore_isa::CSEL:begin
-                result.data <= csel_result.data;
-                result.dest <= csel_result.user;
-                result.valid <= 1;
-            end
-            default: begin
-                result.data <= 0;
-                result.dest <= 0;
-                result.valid <= 0;
-            end
-        endcase
-    end
 
 
+    alu_results_combiner #(
+        .REGISTERED(0)
+    )combiner (
+        .clock(clock),
+        .reset(reset),
+        .add_result(add_result),
+        .mul_result(mul_result),
+        .rec_result(reciprocal_result),
+        .fti_result(fti_result),
+        .itf_result(itf_result),
+        .sat_result(saturation_result),
+        .logic_result(logic_result),
+        .comparison_result(comparison_result),
+        .load_result(ldc_operand_a),
+        .bitmanip_result(bitmanip_result),
+        .abs_result(abs_result),
+        .csel_result(csel_result),
+        .result(result)
+    );
+
+ 
+ 
     ////////////////////////////////////////////////
     //              ABSOLUTE VALUE                //
     ////////////////////////////////////////////////
     
-    always@(posedge clock) begin
-        early_abs_result.valid <= 0;
-        early_abs_result.user <= 0;
-        early_abs_result.data <= 0;
-        if(operand_a.valid)begin
+    always_ff@(posedge clock) begin
+        abs_result.valid <= 0;
+        abs_result.user <= 0;
+        abs_result.data <= 0;
+        if(operand_a.valid && opcode == fcore_isa::ABS)begin
             case(operation.data)
                 4:begin
-                    early_abs_result.valid <= 1;
-                    early_abs_result.user <= operand_a.user;
-                    early_abs_result.data <= {0, operand_a.data[30:0]};  
+                    abs_result.valid <= 1;
+                    abs_result.user <= operand_a.user;
+                    abs_result.data <= {0, operand_a.data[30:0]};  
                 end
             endcase
         end
     end
-
-   register_slice #(
-        .DATA_WIDTH(32),
-        .DEST_WIDTH(32),
-        .USER_WIDTH(32),
-        .N_STAGES(PIPELINE_DEPTH-1),
-        .READY_REG(0)
-   ) abs_pipeline_adapter (
-        .clock(clock),
-        .reset(reset),
-        .in(early_abs_result),
-        .out(abs_result)
-    );
 
 
     ////////////////////////////////////////////////
@@ -290,29 +206,17 @@ module fCore_FP_ALU #(
     
     generate
         if(CONDITIONAL_SELECT_IMPLEMENTED==1)begin
-            always@(posedge clock) begin
-                early_csel_result.valid <= 0;
-                early_csel_result.user <= 0;
-                early_csel_result.data <= 0;
-                if(operand_a.valid)begin
-                    early_csel_result.valid <= 1;
-                    early_csel_result.user <= operand_a.user;
-                    early_csel_result.data <= operand_a.data[0] ? operand_b.data : operand_c.data;  
+            always_ff@(posedge clock) begin
+                csel_result.valid <= 0;
+                csel_result.user <= 0;
+                csel_result.data <= 0;
+                if(operand_a.valid && fcore_isa::CSEL)begin
+                    csel_result.valid <= 1;
+                    csel_result.user <= operand_a.user;
+                    csel_result.data <= operand_a.data[0] ? operand_b.data : operand_c.data;  
                 end
             end
 
-            register_slice #(
-                .DATA_WIDTH(32),
-                .DEST_WIDTH(32),
-                .USER_WIDTH(32),
-                .N_STAGES(PIPELINE_DEPTH-1),
-                .READY_REG(0)
-            ) csel_pipeline_adapter (
-                .clock(clock),
-                .reset(reset),
-                .in(early_csel_result),
-                .out(csel_result)
-            );
         end
     endgenerate
 
@@ -324,25 +228,12 @@ module fCore_FP_ALU #(
             fCore_logic_unit logic_engine (
                 .clock(clock),
                 .reset(reset),
+                .enable(opcode == fcore_isa::LAND | opcode == fcore_isa::LOR | opcode == fcore_isa::LXOR | opcode == fcore_isa::LNOT),
                 .operand_a(operand_a),
                 .operand_b(operand_b),
                 .operand_c(operand_c),
                 .operation(operation),
-                .result(early_logic_result) 
-            );
-
-
-            register_slice #(
-                .DATA_WIDTH(32),
-                .DEST_WIDTH(32),
-                .USER_WIDTH(32),
-                .N_STAGES(PIPELINE_DEPTH-1),
-                .READY_REG(0)
-            ) logic_pipeline_adapter (
-                .clock(clock),
-                .reset(reset),
-                .in(early_logic_result),
-                .out(logic_result)
+                .result(logic_result) 
             );
         end
     endgenerate
@@ -352,11 +243,10 @@ module fCore_FP_ALU #(
     
     generate
         if(BITMANIP_IMPLEMENTED==1)begin
-            fCore_bitmanip_unit #(
-                .PIPELINE_DEPTH(PIPELINE_DEPTH)
-            ) bitmanip_engine (
+            fCore_bitmanip_unit  bitmanip_engine (
                 .clock(clock),
                 .reset(reset),
+                .enable(opcode == fcore_isa::POPCNT| opcode == fcore_isa::BSET | opcode == fcore_isa::BSEL),
                 .operand_a(operand_a),
                 .operand_b(operand_b),
                 .operand_c(operand_c),
@@ -374,11 +264,11 @@ module fCore_FP_ALU #(
     FP_saturator #(
         .DATA_WIDTH(32),
         .REG_ADDR_WIDTH(REGISTER_ADDR_WIDTH),
-        .PIPELINE_DEPTH(PIPELINE_DEPTH),
         .SELCTION_DEST(0)
     ) saturator(
         .clock(clock),
         .reset(reset),
+        .enable(opcode == fcore_isa::SATN | opcode == fcore_isa::SATP),
         .operand_a(operand_a.data),
         .operand_b(operand_b.data),
         .operation(operation),
@@ -390,11 +280,11 @@ module fCore_FP_ALU #(
     ////////////////////////////////////////////////
 
     fCore_compare_unit #(
-        .FULL_COMPARE(FULL_COMPARE),
-        .PIPELINE_DEPTH(PIPELINE_DEPTH)
+        .FULL_COMPARE(FULL_COMPARE)
     )compare_unit(
         .clock(clock),
         .reset(reset),
+        .enable(opcode == fcore_isa::BGT | opcode == fcore_isa::BLE | opcode == fcore_isa::BEQ | opcode == fcore_isa::BNE),
         .operand_a(operand_a),
         .operand_b(operand_b),
         .operand_c(operand_c),
@@ -406,40 +296,10 @@ module fCore_FP_ALU #(
     //                    LDC/LDR                 //
     ////////////////////////////////////////////////
 
-
-    register_slice #(
-        .DATA_WIDTH(32),
-        .DEST_WIDTH(32),
-        .USER_WIDTH(32),
-        .N_STAGES(PIPELINE_DEPTH),
-        .READY_REG(0)
-    ) load_register_pipeline (
-        .clock(clock),
-        .reset(reset),
-        .in(operand_a),
-        .out(ldr_operand_a)
-    );
-
-
-
-
-    assign ldc_adj_a.valid = operand_a.valid;
-    assign ldc_adj_a.dest = operand_a.dest;
+    assign ldc_operand_a.valid = operand_a.valid & (opcode == fcore_isa::LDC);
+    assign ldc_operand_a.data = operand_a.dest;
     always_ff@(posedge clock)begin
-        ldc_adj_a.user <= operand_a.user;
+        ldc_operand_a.dest <= operand_a.user;
     end
-
-    register_slice #(
-        .DATA_WIDTH(32),
-        .DEST_WIDTH(32),
-        .USER_WIDTH(32),
-        .N_STAGES(PIPELINE_DEPTH-2),
-        .READY_REG(0)
-    ) load_constant_pipeline (
-        .clock(clock),
-        .reset(reset),
-        .in(ldc_adj_a),
-        .out(ldc_operand_a)
-    );
 
 endmodule
