@@ -41,10 +41,10 @@ module fcore_multiplier_ip (
     assign operand_b.ready = enabled_operand_b.ready & enable;
 
 
-    vivado_axis_v1_0 a();
-    vivado_axis_v1_0 b();
-    vivado_axis_v1_0 op();
-    vivado_axis_v1_0 res();
+    vivado_axis_v1_0 #( .TDATA_NUM_BYTES(4), .TDEST_WIDTH(32), .TUSER_WIDTH(32)) a();
+    vivado_axis_v1_0 #( .TDATA_NUM_BYTES(4), .TDEST_WIDTH(32), .TUSER_WIDTH(32)) b();
+    vivado_axis_v1_0 #( .TDATA_NUM_BYTES(4), .TDEST_WIDTH(32), .TUSER_WIDTH(32)) op();
+    vivado_axis_v1_0 #( .TDATA_NUM_BYTES(4), .TDEST_WIDTH(32), .TUSER_WIDTH(32)) res();
 
 
 

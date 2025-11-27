@@ -1,0 +1,52 @@
+ldc r1, 0xAA
+ldc r2, 4.0
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+popcnt r1, r9
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+itf r9, r10
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+stop

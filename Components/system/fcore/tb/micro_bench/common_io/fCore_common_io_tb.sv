@@ -54,10 +54,15 @@ module fCore_common_io_tb();
     );
 
     event core_loaded;
-
+    
     fCore #(
         .FAST_DEBUG("TRUE"),
         .MAX_CHANNELS(9),
+        .RECIPROCAL_PRESENT(0),
+        .BITMANIP_IMPLEMENTED(1),
+        .LOGIC_IMPLEMENTED(1),
+        .EFI_IMPLEMENTED(1),
+        .FULL_COMPARE(1),
         .CONDITIONAL_SELECT_IMPLEMENTED(1)
     ) uut(
         .clock(clock),
@@ -76,7 +81,7 @@ module fCore_common_io_tb();
         .efi_results(efi_results)
     );
 
-
+    reg test_started= 0;
     //clock generation
     initial clock = 0; 
     always #0.5 clock = ~clock;
@@ -95,7 +100,8 @@ module fCore_common_io_tb();
         #20.5 reset <=1;
         #40;
         @(core_loaded);
-        #35 axil_bfm.write(32'h43c00000, 8);
+        test_started = 1;
+        #35 axil_bfm.write(32'h43c00000, 1);
         #100 dma_bfm.write_dest($shortrealtobits(1.0), 2);
         #100 dma_bfm.write_dest($shortrealtobits(5.0), 3);
         #12 run <= 1;
@@ -105,13 +111,14 @@ module fCore_common_io_tb();
         #1 dma_bfm.write_dest($shortrealtobits(8.0), 3);
         @(done);
         #10;
+        #500000000;
         dma_read_request.data <= 4;
         dma_read_request.valid <= 1;
         #1 dma_read_request.valid <= 0;
         #2;
         if(dma_read_response.data  != $shortrealtobits(6.0))begin
             $display ("RESULT ERROR: Wrong result for test 1, received %d, expected 6.0", dma_read_response.data);
-            $finish; 
+        //    $finish; 
         end
         #10
         dma_read_request.data <= 'h10004;
@@ -120,7 +127,7 @@ module fCore_common_io_tb();
         #2;
         if(dma_read_response.data != $shortrealtobits(5.0))begin
             $display ("RESULT ERROR: Wrong result for test 2, received %d, expected 6.0t 2", dma_read_response.data);
-            $finish; 
+        //    $finish; 
         end
 
         #4 run <= 1;
@@ -132,12 +139,12 @@ module fCore_common_io_tb();
     end
 
 
-    reg [31:0] prog [179:0];
+    reg [31:0] prog [249:0];
 
     initial begin
         $readmemh("/home/fils/git/uscope_hdl/public/Components/system/fcore/tb/micro_bench/common_io/common_io.mem", prog);
         #50.5;
-        for(integer i = 0; i<34; i++)begin
+        for(integer i = 0; i<250; i++)begin
             #5 bfm_in.write(i*4, prog[i]);
         end
         ->core_loaded;

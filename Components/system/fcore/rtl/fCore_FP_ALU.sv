@@ -37,7 +37,6 @@ module fCore_FP_ALU #(
     axi_stream.master result 
 );
 
-    localparam  PIPELINE_LENGTH = 5+3*RECIPROCAL_PRESENT;
 
     reg [OPCODE_WIDTH-1:0] opcode_del = 0;
 
@@ -94,10 +93,35 @@ module fCore_FP_ALU #(
     ) csel_result();
  
 
+    wire add_enable;
+    assign add_enable = (opcode_del == fcore_isa::ADD | opcode_del == fcore_isa::SUB);
+    wire rec_enable;
+    assign rec_enable = (opcode_del == fcore_isa::REC);
+    wire mul_enable;
+    assign mul_enable = (opcode_del == fcore_isa::MUL);
+    wire fti_enable;
+    assign fti_enable = (opcode_del == fcore_isa::FTI);
+    wire itf_enable;
+    assign itf_enable = (opcode_del == fcore_isa::ITF);
+    wire ldc_enable;
+    assign ldc_enable = (opcode_del == fcore_isa::LDC);
+    wire abs_enable;
+    assign abs_enable = (opcode_del == fcore_isa::ABS);
+    wire csel_enable;
+    assign csel_enable = (opcode_del == fcore_isa::CSEL);
+    wire logic_enable;
+    assign logic_enable = (opcode_del == fcore_isa::LAND | opcode_del == fcore_isa::LOR | opcode_del == fcore_isa::LXOR | opcode_del == fcore_isa::LNOT);
+    wire bitmanip_enable;
+    assign bitmanip_enable =  opcode_del == fcore_isa::POPCNT| opcode_del == fcore_isa::BSET | opcode_del == fcore_isa::BSEL;
+    wire sat_enable;
+    assign sat_enable = opcode_del == fcore_isa::SATN | opcode_del == fcore_isa::SATP;
+    wire compare_enable;
+    assign compare_enable = opcode_del == fcore_isa::BGT | opcode_del == fcore_isa::BLE | opcode_del == fcore_isa::BEQ | opcode_del == fcore_isa::BNE;
+
         fcore_adder_ip adder (
             .clock(clock),
             .reset(reset),
-            .enable(opcode_del == fcore_isa::ADD | opcode_del == fcore_isa::SUB),
+            .enable(add_enable),
             .operand_a(operand_a),
             .operand_b(operand_b),
             .operation(operation),
@@ -107,7 +131,7 @@ module fCore_FP_ALU #(
         fcore_itf_ip itf (
             .clock(clock),
             .reset(reset),
-            .enable(opcode_del == fcore_isa::ITF),
+            .enable(itf_enable),
             .operand_a(operand_a),
             .result(itf_result)
         );
@@ -116,7 +140,7 @@ module fCore_FP_ALU #(
         fcore_fti_ip fti (
             .clock(clock),
             .reset(reset),
-            .enable(opcode_del == fcore_isa::FTI),
+            .enable(fti_enable),
             .operand_a(operand_b),
             .result(fti_result)
         );
@@ -124,7 +148,7 @@ module fCore_FP_ALU #(
         fcore_multiplier_ip multiplier (
             .clock(clock),
             .reset(reset),
-            .enable(opcode_del == fcore_isa::MUL),
+            .enable(mul_enable),
             .operand_a(operand_a),
             .operand_b(operand_b),
             .result(mul_result)
@@ -138,7 +162,7 @@ module fCore_FP_ALU #(
             fcore_reciprocal_ip reciprocal (
                 .clock(clock),
                 .reset(reset),
-                .enable(opcode_del == fcore_isa::REC),
+                .enable(rec_enable),
                 .operand_a(operand_a),
                 .result(reciprocal_result)
             );
@@ -179,7 +203,7 @@ module fCore_FP_ALU #(
         abs_result.valid <= 0;
         abs_result.user <= 0;
         abs_result.data <= 0;
-        if(operand_a.valid && opcode_del == fcore_isa::ABS)begin
+        if(operand_a.valid & abs_enable)begin
             case(operation.data)
                 4:begin
                     abs_result.valid <= 1;
@@ -201,7 +225,7 @@ module fCore_FP_ALU #(
                 csel_result.valid <= 0;
                 csel_result.user <= 0;
                 csel_result.data <= 0;
-                if(operand_a.valid && opcode_del == fcore_isa::CSEL)begin
+                if(operand_a.valid & csel_enable)begin
                     csel_result.valid <= 1;
                     csel_result.user <= operand_a.user;
                     csel_result.data <= operand_a.data[0] ? operand_b.data : operand_c.data;  
@@ -219,7 +243,7 @@ module fCore_FP_ALU #(
             fCore_logic_unit logic_engine (
                 .clock(clock),
                 .reset(reset),
-                .enable(opcode_del == fcore_isa::LAND | opcode_del == fcore_isa::LOR | opcode_del == fcore_isa::LXOR | opcode_del == fcore_isa::LNOT),
+                .enable(logic_enable),
                 .operand_a(operand_a),
                 .operand_b(operand_b),
                 .operand_c(operand_c),
@@ -237,7 +261,7 @@ module fCore_FP_ALU #(
             fCore_bitmanip_unit  bitmanip_engine (
                 .clock(clock),
                 .reset(reset),
-                .enable(opcode_del == fcore_isa::POPCNT| opcode_del == fcore_isa::BSET | opcode_del == fcore_isa::BSEL),
+                .enable(bitmanip_enable),
                 .operand_a(operand_a),
                 .operand_b(operand_b),
                 .operand_c(operand_c),
@@ -259,7 +283,7 @@ module fCore_FP_ALU #(
     ) saturator(
         .clock(clock),
         .reset(reset),
-        .enable(opcode_del == fcore_isa::SATN | opcode_del == fcore_isa::SATP),
+        .enable(sat_enable),
         .operand_a(operand_a.data),
         .operand_b(operand_b.data),
         .operation(operation),
@@ -275,7 +299,7 @@ module fCore_FP_ALU #(
     )compare_unit(
         .clock(clock),
         .reset(reset),
-        .enable(opcode_del == fcore_isa::BGT | opcode_del == fcore_isa::BLE | opcode_del == fcore_isa::BEQ | opcode_del == fcore_isa::BNE),
+        .enable(compare_enable),
         .operand_a(operand_a),
         .operand_b(operand_b),
         .operand_c(operand_c),
@@ -287,7 +311,7 @@ module fCore_FP_ALU #(
     //                    LDC/LDR                 //
     ////////////////////////////////////////////////
     always_ff@(posedge clock) begin
-        ldc_operand_a.valid <= operand_a.valid & (opcode_del == fcore_isa::LDC);
+        ldc_operand_a.valid <= operand_a.valid & ldc_enable;
         ldc_operand_a.data <= operand_a.dest;
         ldc_operand_a.dest <= operand_a.user;
     end

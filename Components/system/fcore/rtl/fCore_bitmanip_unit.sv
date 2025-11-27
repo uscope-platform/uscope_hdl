@@ -46,9 +46,9 @@ module fCore_bitmanip_unit#(
     assign popcount_in_partition_0 = operand_a.data[15:0];
     assign popcount_in_partition_1 = operand_a.data[31:16];
 
-    reg [5:0] popcount_partials [1:0];
+    reg [5:0] popcount_partials [1:0] = '{default:0};
 
-    reg [31:0] popcount_user;
+    reg [31:0] popcount_user = 0;
             
     always_ff @(posedge clock) begin
         bitmanip_result.valid <= 0;

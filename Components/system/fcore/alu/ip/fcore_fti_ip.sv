@@ -32,8 +32,8 @@ module fcore_itf_ip (
     assign operand_a.ready = enabled_operand_a.ready & enable;
 
 
-    vivado_axis_v1_0 a();
-    vivado_axis_v1_0 res();
+    vivado_axis_v1_0 #( .TDATA_NUM_BYTES(4), .TDEST_WIDTH(32), .TUSER_WIDTH(32)) a();
+    vivado_axis_v1_0 #( .TDATA_NUM_BYTES(4), .TDEST_WIDTH(32), .TUSER_WIDTH(32)) res();
 
 
 
