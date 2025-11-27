@@ -42,64 +42,64 @@ module alu_results_combiner #(
                 result.data <= 0;
                 if(add_result.valid) begin
                     result.valid <= add_result.valid;
-                    result.user <= add_result.user;
+                    result.user <= 0;
                     result.data <= add_result.data;
-                    result.dest <= add_result.dest;
+                    result.dest <= add_result.user;
                 end else if (mul_result.valid) begin
                     result.valid <= mul_result.valid;
-                    result.user <= mul_result.user;
+                    result.user <= 0;
                     result.data <= mul_result.data;
-                    result.dest <= mul_result.dest;
+                    result.dest <= mul_result.user;
                 end else if (rec_result.valid) begin
                     result.valid <= rec_result.valid;
-                    result.user <= rec_result.user;
+                    result.user <= 0;
                     result.data <= rec_result.data;
-                    result.dest <= rec_result.dest;
+                    result.dest <= rec_result.user;
                 end else if (fti_result.valid) begin
                     result.valid <= fti_result.valid;
-                    result.user <= fti_result.user;
+                    result.user <= 0;
                     result.data <= fti_result.data;
-                    result.dest <= fti_result.dest;
+                    result.dest <= fti_result.user;
                 end else if (itf_result.valid) begin
                     result.valid <= itf_result.valid;
-                    result.user <= itf_result.user;
+                    result.user <= 0;
                     result.data <= itf_result.data;
-                    result.dest <= itf_result.dest;
+                    result.dest <= itf_result.user;
                 end else if (sat_result.valid) begin
                     result.valid <= sat_result.valid;
-                    result.user <= sat_result.user;
+                    result.user <= 0;
                     result.data <= sat_result.data;
-                    result.dest <= sat_result.dest;
+                    result.dest <= sat_result.user;
                 end else if (logic_result.valid) begin
                     result.valid <= logic_result.valid;
-                    result.user <= logic_result.user;
+                    result.user <= 0;
                     result.data <= logic_result.data;
-                    result.dest <= logic_result.dest;
+                    result.dest <= logic_result.user;
                 end else if (comparison_result.valid) begin
                     result.valid <= comparison_result.valid;
-                    result.user <= comparison_result.user;
+                    result.user <= 0;
                     result.data <= comparison_result.data;
-                    result.dest <= comparison_result.dest;
+                    result.dest <= comparison_result.user;
                 end else if (load_result.valid) begin
                     result.valid <= load_result.valid;
-                    result.user <= load_result.user;
+                    result.user <= 0;
                     result.data <= load_result.data;
                     result.dest <= load_result.dest;
                 end else if (bitmanip_result.valid) begin
                     result.valid <= bitmanip_result.valid;
-                    result.user <= bitmanip_result.user;
+                    result.user <= 0;
                     result.data <= bitmanip_result.data;
-                    result.dest <= bitmanip_result.dest;
+                    result.dest <= bitmanip_result.user;
                 end else if (abs_result.valid) begin
                     result.valid <= abs_result.valid;
-                    result.user <= abs_result.user;
+                    result.user <= 0;
                     result.data <= abs_result.data;
-                    result.dest <= abs_result.dest;
+                    result.dest <= abs_result.user;
                 end else if (csel_result.valid) begin
                     result.valid <= csel_result.valid;
-                    result.user <= csel_result.user;
+                    result.user <= 0;
                     result.data <= csel_result.data;
-                    result.dest <= csel_result.dest;
+                    result.dest <= csel_result.user;
                 end
             end
 
@@ -107,64 +107,64 @@ module alu_results_combiner #(
             always_comb begin
                 if(add_result.valid) begin
                     result.valid <= add_result.valid;
-                    result.user <= add_result.user;
+                    result.user <= 0;
                     result.data <= add_result.data;
-                    result.dest <= add_result.dest;
+                    result.dest <= add_result.user;
                 end else if (mul_result.valid) begin
                     result.valid <= mul_result.valid;
-                    result.user <= mul_result.user;
+                    result.user <= 0;
                     result.data <= mul_result.data;
-                    result.dest <= mul_result.dest;
+                    result.dest <= mul_result.user;
                 end else if (rec_result.valid) begin
                     result.valid <= rec_result.valid;
-                    result.user <= rec_result.user;
+                    result.user <= 0;
                     result.data <= rec_result.data;
-                    result.dest <= rec_result.dest;
+                    result.dest <= rec_result.user;
                 end else if (fti_result.valid) begin
                     result.valid <= fti_result.valid;
-                    result.user <= fti_result.user;
+                    result.user <= 0;
                     result.data <= fti_result.data;
-                    result.dest <= fti_result.dest;
+                    result.dest <= fti_result.user;
                 end else if (itf_result.valid) begin
                     result.valid <= itf_result.valid;
-                    result.user <= itf_result.user;
+                    result.user <= 0;
                     result.data <= itf_result.data;
-                    result.dest <= itf_result.dest;
+                    result.dest <= itf_result.user;
                 end else if (sat_result.valid) begin
                     result.valid <= sat_result.valid;
-                    result.user <= sat_result.user;
+                    result.user <= 0;
                     result.data <= sat_result.data;
-                    result.dest <= sat_result.dest;
+                    result.dest <= sat_result.user;
                 end else if (logic_result.valid) begin
                     result.valid <= logic_result.valid;
-                    result.user <= logic_result.user;
+                    result.user <= 0;
                     result.data <= logic_result.data;
-                    result.dest <= logic_result.dest;
+                    result.dest <= logic_result.user;
                 end else if (comparison_result.valid) begin
                     result.valid <= comparison_result.valid;
-                    result.user <= comparison_result.user;
+                    result.user <= 0;
                     result.data <= comparison_result.data;
-                    result.dest <= comparison_result.dest;
+                    result.dest <= comparison_result.user;
                 end else if (load_result.valid) begin
                     result.valid <= load_result.valid;
-                    result.user <= load_result.user;
+                    result.user <= 0;
                     result.data <= load_result.data;
                     result.dest <= load_result.dest;
                 end else if (bitmanip_result.valid) begin
                     result.valid <= bitmanip_result.valid;
-                    result.user <= bitmanip_result.user;
+                    result.user <= 0;
                     result.data <= bitmanip_result.data;
-                    result.dest <= bitmanip_result.dest;
+                    result.dest <= bitmanip_result.user;
                 end else if (abs_result.valid) begin
                     result.valid <= abs_result.valid;
-                    result.user <= abs_result.user;
+                    result.user <= 0;
                     result.data <= abs_result.data;
-                    result.dest <= abs_result.dest;
+                    result.dest <= abs_result.user;
                 end else if (csel_result.valid) begin
                     result.valid <= csel_result.valid;
-                    result.user <= csel_result.user;
+                    result.user <= 0;
                     result.data <= csel_result.data;
-                    result.dest <= csel_result.dest;
+                    result.dest <= csel_result.user;
                 end else begin
                     result.valid <= 0;
                     result.user <= 0;

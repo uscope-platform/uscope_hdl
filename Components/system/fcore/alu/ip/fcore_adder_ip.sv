@@ -24,7 +24,7 @@ module fcore_adder_ip (
     axi_stream.master result 
 );
 
-    axi_stream enabled_operand_a();
+    axi_stream  enabled_operand_a();
     assign enabled_operand_a.valid = operand_a.valid & enable;
     assign enabled_operand_a.data = operand_a.data;
     assign enabled_operand_a.dest = operand_a.dest;
@@ -52,10 +52,10 @@ module fcore_adder_ip (
 
 
 
-    vivado_axis_v1_0 a();
-    vivado_axis_v1_0 b();
-    vivado_axis_v1_0 op();
-    vivado_axis_v1_0 res();
+    vivado_axis_v1_0 #( .TDATA_NUM_BYTES(4), .TDEST_WIDTH(32), .TUSER_WIDTH(32)) a();
+    vivado_axis_v1_0 #( .TDATA_NUM_BYTES(4), .TDEST_WIDTH(32), .TUSER_WIDTH(32)) b();
+    vivado_axis_v1_0 #( .TDATA_NUM_BYTES(4), .TDEST_WIDTH(32), .TUSER_WIDTH(32)) op();
+    vivado_axis_v1_0 #( .TDATA_NUM_BYTES(4), .TDEST_WIDTH(32), .TUSER_WIDTH(32)) res();
 
 
 
