@@ -4,10 +4,8 @@
         "target_part":"xc7z020clg400",
         "synth_modules":[],
         "synth_tl": "fCore",
-        "sim_modules":[
-            "fCore_conditional_select_tb"
-        ],
-        "sim_tl":"fCore_tb",
+        "sim_modules":[],
+        "sim_tl":"fCore_common_io_tb",
         "include_paths":[
             "Components/Common"
         ]
@@ -24,17 +22,8 @@
             "type": "tcl",
             "function_mode": true,
             "arguments":[
-                {"name":"name","value":"fast_adder"},
+                {"name":"name","value":"adder"},
                 {"name":"value","value":"5"}
-            ]
-        },
-        {
-            "name":"adder.tcl",
-            "type": "tcl",
-            "function_mode": true,
-            "arguments":[
-                {"name":"name","value":"slow_adder"},
-                {"name":"value","value":"8"}
             ]
         },
         {
@@ -77,8 +66,12 @@
     "excluded_modules":[
         "fCore_PS_bd",
         "fp_alu",
-        "fcore_simple_alu",
-        "fcore_div_alu"
+        "vivado_axis_v1_0",
+        "adder_sv",
+        "itf_sv",
+        "fti_sv",
+        "mul_sv",
+        "rec_sv"
     ],
     "constraints": []
 }

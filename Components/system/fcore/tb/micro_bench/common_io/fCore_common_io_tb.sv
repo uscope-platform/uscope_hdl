@@ -18,7 +18,7 @@
 `include "axis_BFM.svh"
 `include "axi_full_bfm.svh"
 
-module fCore_common_io_tb();
+module fCore_common_io_tb#(parameter EXECUTABLE = "")();
 
 
     reg clock, reset, run, done, efi_start;
@@ -94,6 +94,8 @@ module fCore_common_io_tb();
         axil_bfm = new(axi_master,1);
         bfm_in = new(axi_programmer, 1);
         
+        dma_read_request.valid <= 0;
+        dma_read_request.data <= 0;
         reset <=0;
         run <= 0;
         #10.5;
@@ -111,10 +113,10 @@ module fCore_common_io_tb();
         #1 dma_bfm.write_dest($shortrealtobits(8.0), 3);
         @(done);
         #10;
-        #500000000;
         dma_read_request.data <= 4;
         dma_read_request.valid <= 1;
         #1 dma_read_request.valid <= 0;
+        #500000000;
         #2;
         if(dma_read_response.data  != $shortrealtobits(6.0))begin
             $display ("RESULT ERROR: Wrong result for test 1, received %d, expected 6.0", dma_read_response.data);
@@ -140,9 +142,10 @@ module fCore_common_io_tb();
 
 
     reg [31:0] prog [249:0];
-
+    string file_path;
     initial begin
-        $readmemh("/home/fils/git/uscope_hdl/public/Components/system/fcore/tb/micro_bench/common_io/common_io.mem", prog);
+        file_path = $sformatf("%s/tb/micro_bench/common_io/common_io.mem", EXECUTABLE);
+        $readmemh(file_path, prog);
         #50.5;
         for(integer i = 0; i<250; i++)begin
             #5 bfm_in.write(i*4, prog[i]);

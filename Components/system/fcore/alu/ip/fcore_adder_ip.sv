@@ -82,7 +82,7 @@ module fcore_adder_ip (
 
 
 
-    fast_adder_sv adder_ip (
+    adder_sv adder_ip (
         .aclk(clock),
         .aresetn(reset),
         .S_AXIS_A(a),

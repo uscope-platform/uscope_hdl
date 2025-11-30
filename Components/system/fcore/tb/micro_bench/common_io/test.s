@@ -1,5 +1,6 @@
-ldc r1, 0xAA
-ldc r2, 4.0
+ldc r1, 0xA
+nop
+ldc r2, 0xB0
 nop
 nop
 nop
@@ -7,18 +8,10 @@ nop
 nop
 nop
 nop
-popcnt r1, r9
+or r1, r2, r9
 nop
 nop
-nop
-nop
-nop
-nop
-nop
-nop
-nop
-nop
-itf r9, r10
+itf r9, r4
 nop
 nop
 nop

@@ -47,8 +47,8 @@ module fCore_bitmanip_unit#(
     assign popcount_in_partition_1 = operand_a.data[31:16];
 
     reg [5:0] popcount_partials [1:0] = '{default:0};
-
     reg [31:0] popcount_user = 0;
+    reg s1_popcount_valid = 0;
             
     always_ff @(posedge clock) begin
         bitmanip_result.valid <= 0;
@@ -57,30 +57,38 @@ module fCore_bitmanip_unit#(
         popcount_result.valid <= 0;
         popcount_result.user <= 0;
         popcount_result.data <= 0;
-        if(operand_a.valid && enable)begin
-            case(operation.data)
-                3:begin
-                    popcount_partials[0] <= popcount_in_partition_0[0] + popcount_in_partition_0[1] + popcount_in_partition_0[2] + popcount_in_partition_0[3] + popcount_in_partition_0[4] + popcount_in_partition_0[4] + popcount_in_partition_0[5] + popcount_in_partition_0[6] + popcount_in_partition_0[7] + popcount_in_partition_0[8] + popcount_in_partition_0[9] + popcount_in_partition_0[10] + popcount_in_partition_0[11] + popcount_in_partition_0[12] + popcount_in_partition_0[13] + popcount_in_partition_0[14] + popcount_in_partition_0[15];
-                    popcount_partials[1] <= popcount_in_partition_1[0] + popcount_in_partition_1[1] + popcount_in_partition_1[2] + popcount_in_partition_1[3] + popcount_in_partition_1[4] + popcount_in_partition_1[4] + popcount_in_partition_1[5] + popcount_in_partition_1[6] + popcount_in_partition_1[7] + popcount_in_partition_1[8] + popcount_in_partition_1[9] + popcount_in_partition_1[10] + popcount_in_partition_1[11] + popcount_in_partition_1[12] + popcount_in_partition_1[13] + popcount_in_partition_1[14] + popcount_in_partition_1[15];
-                    popcount_user <= operand_a.user;
-                    popcount_result.data <= popcount_partials[0] + popcount_partials[1];
-                    popcount_result.valid <= 1;
-                    popcount_result.user <= popcount_user;
-                end
-                5:begin
-                    bitmanip_result.valid <= 1;
-                    bitmanip_result.user <= operand_a.user;
-                    bitmanip_result.data <= operand_a.data[31:0];
-                    bitmanip_result.data <= operand_a.data[operand_b.data];  
-                end
-                7:begin
-                    bitmanip_result.valid <= 1;
-                    bitmanip_result.user <= operand_a.user;
-                    bitmanip_result.data <= operand_a.data[31:0];
-                    bitmanip_result.data[operand_b.data] <= operand_c.data;
-                end
-            endcase
+        if(enable)begin
+            if(operand_a.valid) begin
+                case(operation.data)
+                    3:begin
+                        popcount_partials[0] <= popcount_in_partition_0[0] + popcount_in_partition_0[1] + popcount_in_partition_0[2] + popcount_in_partition_0[3] + popcount_in_partition_0[4] + popcount_in_partition_0[5] + popcount_in_partition_0[6] + popcount_in_partition_0[7] + popcount_in_partition_0[8] + popcount_in_partition_0[9] + popcount_in_partition_0[10] + popcount_in_partition_0[11] + popcount_in_partition_0[12] + popcount_in_partition_0[13] + popcount_in_partition_0[14] + popcount_in_partition_0[15];
+                        popcount_partials[1] <= popcount_in_partition_1[0] + popcount_in_partition_1[1] + popcount_in_partition_1[2] + popcount_in_partition_1[3] + popcount_in_partition_1[4] + popcount_in_partition_1[5] + popcount_in_partition_1[6] + popcount_in_partition_1[7] + popcount_in_partition_1[8] + popcount_in_partition_1[9] + popcount_in_partition_1[10] + popcount_in_partition_1[11] + popcount_in_partition_1[12] + popcount_in_partition_1[13] + popcount_in_partition_1[14] + popcount_in_partition_1[15];
+                        popcount_user <= operand_a.user;
+                        s1_popcount_valid <= 1;
+                    end
+                    5:begin
+                        bitmanip_result.valid <= 1;
+                        bitmanip_result.user <= operand_a.user;
+                        bitmanip_result.data <= operand_a.data[31:0];
+                        bitmanip_result.data <= operand_a.data[operand_b.data];  
+                    end
+                    7:begin
+                        bitmanip_result.valid <= 1;
+                        bitmanip_result.user <= operand_a.user;
+                        bitmanip_result.data <= operand_a.data[31:0];
+                        bitmanip_result.data[operand_b.data] <= operand_c.data;
+                    end
+                endcase
+            end else begin
+                s1_popcount_valid <= 0;
+            end
         end
+        if(s1_popcount_valid)begin
+            popcount_result.data <= popcount_partials[0] + popcount_partials[1];
+            popcount_result.valid <= 1;
+            popcount_result.user <= popcount_user;
+            s1_popcount_valid <= 0;
+        end 
     end
 
 endmodule
