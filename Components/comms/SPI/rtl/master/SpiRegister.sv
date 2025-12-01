@@ -16,19 +16,19 @@
 `timescale 10 ns / 1 ns
 
 module SpiRegister #(parameter N_CHANNELS=3)(
-    input logic clock,
-    input logic shift_clock,
-    input logic reset,
-    input logic enable,
-    input logic serial_in,
-    input logic latching_edge,
-    input logic register_direction,
-    input logic [4:0] spi_transfer_length,
-    input logic register_load,
-    input logic [31:0] parallel_in,
-    output logic parallel_out_valid,
-    output logic [31:0] parallel_out,
-    output logic serial_out
+    input wire clock,
+    input wire shift_clock,
+    input wire reset,
+    input wire enable,
+    input wire serial_in,
+    input wire latching_edge,
+    input wire register_direction,
+    input wire [4:0] spi_transfer_length,
+    input wire register_load,
+    input wire [31:0] parallel_in,
+    output reg parallel_out_valid,
+    output reg [31:0] parallel_out,
+    output reg serial_out
 );
     localparam serial_msb_out_first = 0, serial_lsb_out_first = 1;
 

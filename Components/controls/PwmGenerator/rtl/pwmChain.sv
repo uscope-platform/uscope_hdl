@@ -97,7 +97,7 @@ module pwmChain #(
         .fast_count(fast_count),
         .shift(timebase_shift),
         .timebase(timebase),
-        .run(external_counter_run & ~stop_request),   
+        .run(external_counter_run & ~stop_request),
         .mode(counter_mode),
         .counter_start_data(counter_start_data),
         .counter_stop_data(counter_stop_data),
@@ -133,7 +133,7 @@ module pwmChain #(
             .outB(pin_out_b[i])
         );
         //%%DeadTimeGenerator%%
-        DeadTimeGenerator deadtime(
+        DeadTimeGenerator deadtime_gen(
             .clock(clock),
             .reset(reset),
             .enable(deadtime_enable[i]),
@@ -143,7 +143,7 @@ module pwmChain #(
             .out_a(dt_out_a[i]),
             .out_b(dt_out_b[i])
         );
-                
+
         ResolutionEnhancer #(
             .ENABLE(HR_ENABLE),
             .ENANCING_MODE(ENANCING_MODE)
@@ -155,7 +155,7 @@ module pwmChain #(
             .count(timebase_shift[2:0]),
             .out(out_a[i])
         );
-            
+
         ResolutionEnhancer #(
             .ENABLE(HR_ENABLE),
             .ENANCING_MODE(ENANCING_MODE)
@@ -169,5 +169,5 @@ module pwmChain #(
         );
     end
     endgenerate
-    
+
 endmodule

@@ -34,7 +34,7 @@ module encoder_interface #(
 
     reg [31:0] cu_read_registers [5:0];
     reg [31:0] cu_write_registers [5:0];
-    
+
     axil_simple_register_cu #(
         .N_READ_REGISTERS(6),
         .N_WRITE_REGISTERS(6),
@@ -58,8 +58,8 @@ module encoder_interface #(
     wire [31:0] speed_dest;
     wire [23:0] max_count;
     wire enable_index_tracking;
-    
-    
+
+
     assign angle_dest = cu_write_registers[0];
     assign speed_dest = cu_write_registers[1];
     assign max_count = cu_write_registers[2];
@@ -78,7 +78,7 @@ module encoder_interface #(
         .angle(angle),
         .angle_out(angle_out)
     );
-    
+
 
     speed_sensing #(
         .COUNTER_WIDTH(COUNTER_WIDTH)

@@ -22,11 +22,11 @@ module spi_adc_interface #(
     parameter [31:0] DESTINATIONS [N_CHANNELS-1:0] = '{N_CHANNELS{0}},
     PRAGMA_MKFG_MODULE_TOP = "SPI"
 )(
-    input logic clock,
-    input logic reset,
-    input logic [N_CHANNELS-1:0] MISO,
-    output logic SCLK,
-    output logic SS,
+    input wire clock,
+    input wire reset,
+    input wire [N_CHANNELS-1:0] MISO,
+    output wire SCLK,
+    output wire SS,
     input wire sample,
     axi_lite.slave axi_in,
     axi_stream.master data_out

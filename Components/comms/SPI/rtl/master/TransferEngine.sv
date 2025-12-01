@@ -16,24 +16,24 @@
 `timescale 10 ns / 1 ns
 
 module TransferEngine #(parameter N_CHANNELS=3, OUTPUT_WIDTH=32) (
-    input logic clock,
-    input logic reset,
-    input logic [4:0] spi_transfer_length,
-    input logic [31:0] spi_delay,
-    input logic [2:0] divider_setting,
-    input logic spi_start_transfer,
-    input logic ss_deassert_delay_enable,
-    input logic [31:0] cu_data_out [N_CHANNELS-1:0],
-    input logic [OUTPUT_WIDTH-1:0] reg_data_out [N_CHANNELS-1:0],
-    input logic reg_data_out_valid,
+    input wire clock,
+    input wire reset,
+    input wire [4:0] spi_transfer_length,
+    input wire [31:0] spi_delay,
+    input wire [2:0] divider_setting,
+    input wire spi_start_transfer,
+    input wire ss_deassert_delay_enable,
+    input wire [31:0] cu_data_out [N_CHANNELS-1:0],
+    input wire [OUTPUT_WIDTH-1:0] reg_data_out [N_CHANNELS-1:0],
+    input wire reg_data_out_valid,
     input wire sync,
-    output logic enable_clockgen,
-    output logic [OUTPUT_WIDTH-1:0] cu_data_in [N_CHANNELS-1:0],
-    output logic [31:0] reg_data_in [N_CHANNELS-1:0],
-    output logic register_load,
-    output logic register_enable,
-    output logic transfer_done,
-    output logic ss_blanking
+    output reg enable_clockgen,
+    output reg [OUTPUT_WIDTH-1:0] cu_data_in [N_CHANNELS-1:0],
+    output reg [31:0] reg_data_in [N_CHANNELS-1:0],
+    output reg register_load,
+    output reg register_enable,
+    output reg transfer_done,
+    output reg ss_blanking
 );
 
     //FSM STATE CONTROL REGISTERS

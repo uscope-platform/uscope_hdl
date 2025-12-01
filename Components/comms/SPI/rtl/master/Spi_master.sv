@@ -21,15 +21,15 @@ module SPI_master #(
     OUTPUT_WIDTH=32,
     PRAGMA_MKFG_MODULE_TOP = "SPI"
 )(
-    input logic clock,
-    input logic reset,
-    input logic [4:0] external_transfer_length,
-    output logic data_valid,
-    output logic [OUTPUT_WIDTH-1:0] data_out [N_CHANNELS-1:0],
-    input logic [N_CHANNELS-1:0] MISO,
-    output logic SCLK,
-    output logic [N_CHANNELS-1:0] MOSI,
-    output logic SS,
+    input wire clock,
+    input wire reset,
+    input wire [4:0] external_transfer_length,
+    output reg data_valid,
+    output reg [OUTPUT_WIDTH-1:0] data_out [N_CHANNELS-1:0],
+    input wire [N_CHANNELS-1:0] MISO,
+    output reg SCLK,
+    output reg [N_CHANNELS-1:0] MOSI,
+    output reg SS,
     axi_lite.slave axi_in,
     axi_stream.slave external_spi_transfer
 );
