@@ -98,10 +98,10 @@ module fCore_decoder #(
 
     wire [IMMEDIATE_WIDTH-1:0] load_reg_val;
     assign load_reg_val = instruction_stream.data[OPCODE_WIDTH+REG_ADDR_WIDTH+12:OPCODE_WIDTH+REG_ADDR_WIDTH];
-                    
+
     wire [CHANNEL_ADDR_WIDTH-1:0] channel_address;
     assign channel_address = instruction_stream.dest;
-    
+
 
     fCore_pipeline_tracker #(
         .OPCODE_WIDTH(OPCODE_WIDTH),
@@ -384,24 +384,25 @@ module fCore_decoder #(
                     operand_b_if.dest <= 0;
                     operand_b_if.user <= 0;
                     operand_b_if.valid <= 0;
-                    
+
                     operand_c_if.dest <= 0;
                     operand_c_if.user <= 0;
                     operand_c_if.valid <= 0;
-                    
+
                     operation_if.data <= 0;
                     operation_if.dest <= 0;
                     operation_if.valid <= 0;
                     operation_if.user <= 0;
                 end
-            endcase                        
+            endcase
         end else begin
             common_io_sel_a <= 0;
             common_io_sel_b <= 0;
+            common_io_sel_c <= 0;
             operand_a_if.dest <= 0;
             operand_a_if.user <= 0;
             operand_a_if.valid <= 0;
-            
+
             operand_b_if.dest <= 0;
             operand_b_if.user <= 0;
             operand_b_if.valid <= 0;
@@ -411,12 +412,12 @@ module fCore_decoder #(
             operand_c_if.valid <= 0;
 
             operation_if.data <= 0;
-            operation_if.dest <= 0;            
+            operation_if.dest <= 0;
             operation_if.valid <= 0;
             operation_if.user <= 0;
         end
-        
+
     end
 
-    
+
 endmodule

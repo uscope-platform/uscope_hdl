@@ -26,7 +26,7 @@ module fCore_bitmanip_unit#(
     axi_stream.slave operand_b,
     axi_stream.slave operand_c,
     axi_stream.slave operation,
-    axi_stream.master result 
+    axi_stream.master result
 );
 
     axi_stream bitmanip_result();
@@ -40,7 +40,7 @@ module fCore_bitmanip_unit#(
     assign bitmanip_result.ready = result.ready;
     assign popcount_result.ready = result.ready;
 
-    
+
     wire [15:0] popcount_in_partition_0;
     wire [15:0] popcount_in_partition_1;
     assign popcount_in_partition_0 = operand_a.data[15:0];
@@ -49,7 +49,7 @@ module fCore_bitmanip_unit#(
     reg [5:0] popcount_partials [1:0] = '{default:0};
     reg [31:0] popcount_user = 0;
     reg s1_popcount_valid = 0;
-            
+
     always_ff @(posedge clock) begin
         bitmanip_result.valid <= 0;
         bitmanip_result.user <= 0;
@@ -70,7 +70,7 @@ module fCore_bitmanip_unit#(
                         bitmanip_result.valid <= 1;
                         bitmanip_result.user <= operand_a.user;
                         bitmanip_result.data <= operand_a.data[31:0];
-                        bitmanip_result.data <= operand_a.data[operand_b.data];  
+                        bitmanip_result.data <= operand_a.data[operand_b.data];
                     end
                     7:begin
                         bitmanip_result.valid <= 1;

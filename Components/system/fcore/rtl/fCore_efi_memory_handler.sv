@@ -27,13 +27,13 @@ module fCore_efi_memory_handler #(
     input wire send_arguments,
     input wire [REG_ADDR_WIDTH-1:0] arguments_base_address,
     input wire [REG_ADDR_WIDTH-1:0] return_base_address,
-    input wire [CH_ADDRESS_WIDTH-1:0] channel_address, 
+    input wire [CH_ADDRESS_WIDTH-1:0] channel_address,
     input wire [7:0] length,
     output reg [1:0] mem_efi_enable,
     output reg [REG_ADDR_WIDTH-1:0] mem_address,
     input wire [DATAPATH_WIDTH-1:0] mem_read_data,
     axi_stream.master efi_arguments,
-    axi_stream.slave efi_results, 
+    axi_stream.slave efi_results,
     axi_stream.master result_writeback
 );
 
@@ -48,11 +48,11 @@ module fCore_efi_memory_handler #(
         fsm_send_args = 1,
         fsm_wait_execution = 2
     } handler_fsm = fsm_idle;
-    
+
     reg [7:0] arguments_counter = 0;
 
     assign efi_arguments.data = handler_fsm==fsm_idle ? 0 : mem_read_data; 
-    
+
     always_ff @(posedge clock) begin
         send_args_del <= send_arguments;
         case (handler_fsm)
@@ -81,7 +81,6 @@ module fCore_efi_memory_handler #(
                 if(arguments_counter == working_length)begin
                     handler_fsm <= fsm_wait_execution;
                     efi_arguments.tlast <= 1;
-                    
                 end else begin
                     arguments_counter <= arguments_counter + 1;
                 end

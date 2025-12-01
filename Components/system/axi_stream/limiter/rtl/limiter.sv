@@ -72,7 +72,6 @@ module axis_limiter #(parameter BASE_ADDRESS = 'h43c00000)(
                 out.tlast <= in.tlast;
             end else
                 out.valid <= 0;
-            
         end
     end
 

@@ -55,22 +55,22 @@ module fCore #(
     axi_stream.master axis_dma_read_response
 );
 
-   
-   
+
+
     // Maximum number of supported channels
 
     // Width of the instruction address
     localparam ADDR_WIDTH = $clog2(INSTRUCTION_STORE_SIZE);
-    
+
     // Width of the address for the single channel register file
     localparam BASE_REG_ADDR_WIDTH = $clog2(REGISTER_FILE_DEPTH);
-    
+
     // Additional register address width due to the channelisation
     localparam CH_ADDRESS_WIDTH = $clog2(MAX_CHANNELS);
-    
+
     // Overall register address width
     localparam REG_ADDR_WIDTH = BASE_REG_ADDR_WIDTH+CH_ADDRESS_WIDTH;
-    
+
     // Size of the register file
     localparam REG_FILE_SIZE = REGISTER_FILE_DEPTH*MAX_CHANNELS;
 
@@ -86,11 +86,11 @@ module fCore #(
 
     axi_stream operand_b();
     axi_stream operand_b_dly();
-    
+
     axi_stream operand_c();
     axi_stream operand_c_dly();
 
-    
+
     axi_stream #(
         .DATA_WIDTH(8)
     ) operation();
@@ -110,11 +110,11 @@ module fCore #(
 
     wire [DATAPATH_WIDTH-1:0] operand_data_a;
     wire [DATAPATH_WIDTH-1:0] operand_data_b;
-    wire [DATAPATH_WIDTH-1:0] operand_data_c;    
+    wire [DATAPATH_WIDTH-1:0] operand_data_c;
 
     wire [DATAPATH_WIDTH-1:0] constant_data_a;
-    wire [DATAPATH_WIDTH-1:0] constant_data_b; 
-    wire [DATAPATH_WIDTH-1:0] constant_data_c; 
+    wire [DATAPATH_WIDTH-1:0] constant_data_b;
+    wire [DATAPATH_WIDTH-1:0] constant_data_c;
 
     wire [REG_ADDR_WIDTH-1:0] dma_read_addr;
     wire [DATAPATH_WIDTH-1:0] dma_read_data;
@@ -199,7 +199,7 @@ module fCore #(
 
     reg common_io_sel_a_dly, common_io_sel_b_dly, common_io_sel_c_dly;
 
-    always@(posedge clock)begin
+    always_ff@(posedge clock)begin
         common_io_sel_a_dly <= common_io_sel_a;
         common_io_sel_b_dly <= common_io_sel_b;
         common_io_sel_c_dly <= common_io_sel_c;
@@ -234,7 +234,7 @@ module fCore #(
 
 
             assign operand_c_dly.data = common_io_sel_c_dly ? constant_data_c: operand_data_c;
-            
+
             always@(posedge clock)begin
                 operand_c_dly.dest <= operand_c.dest;
                 operand_c_dly.user <= operand_c.user;
@@ -266,11 +266,10 @@ module fCore #(
     );
 
 
-    
     ///////////////////////////////
     //      AUXILIARY BLOCKS     //
     ///////////////////////////////
-        
+
     axi_stream efi_writeback();
     generate
         if(EFI_IMPLEMENTED == 1) begin
@@ -299,7 +298,7 @@ module fCore #(
             assign mem_efi_enable = 0;
         end
     endgenerate
-    
+
     axi_stream dma_write();
     axi_stream common_io_dma();
 

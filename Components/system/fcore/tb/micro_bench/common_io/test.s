@@ -1,17 +1,14 @@
-ldc r1, 0xA
-nop
-ldc r2, 0xB0
-nop
+ldc r3, 5.0
+ldc r5, 1.0
 nop
 nop
 nop
 nop
 nop
 nop
-or r1, r2, r9
 nop
-nop
-itf r9, r4
+efi r3, r1, r6
+mul r6, r5, r9
 nop
 nop
 nop

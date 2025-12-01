@@ -54,11 +54,11 @@ module fCore_common_io_tb#(parameter EXECUTABLE = "")();
     );
 
     event core_loaded;
-    
+
     fCore #(
         .FAST_DEBUG("TRUE"),
         .MAX_CHANNELS(9),
-        .RECIPROCAL_PRESENT(0),
+        .RECIPROCAL_PRESENT(1),
         .BITMANIP_IMPLEMENTED(1),
         .LOGIC_IMPLEMENTED(1),
         .EFI_IMPLEMENTED(1),
@@ -83,9 +83,32 @@ module fCore_common_io_tb#(parameter EXECUTABLE = "")();
 
     reg test_started= 0;
     //clock generation
-    initial clock = 0; 
+    initial clock = 0;
     always #0.5 clock = ~clock;
+    reg[31:0] tmp_arg = 232;
 
+    always_ff @(posedge clock) begin
+        efi_arguments.ready  <= 1;
+        if(efi_arguments.valid) tmp_arg = efi_arguments.data;
+    end
+
+    initial begin
+    efi_results.dest = 0;
+    @(core_loaded);
+    efi_results.tlast = 0;
+    efi_results.valid = 0;
+    efi_results.data = 0;
+    @(negedge efi_arguments.valid)
+
+    #5;
+    efi_results.data = tmp_arg;
+    efi_results.tlast = 1;
+    efi_results.valid = 1;
+    #1;
+    efi_results.data = 0;
+    efi_results.tlast = 0;
+    efi_results.valid = 0;
+    end
 
     reg [31:0] reg_readback;
     // reset generation
@@ -93,7 +116,7 @@ module fCore_common_io_tb#(parameter EXECUTABLE = "")();
         dma_bfm = new(axis_dma_write,1);
         axil_bfm = new(axi_master,1);
         bfm_in = new(axi_programmer, 1);
-        
+
         dma_read_request.valid <= 0;
         dma_read_request.data <= 0;
         reset <=0;
