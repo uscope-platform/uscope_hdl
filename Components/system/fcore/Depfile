@@ -32,7 +32,7 @@
             "function_mode": true,
             "arguments":[
                 {"name":"name","value":"fti"},
-                {"name":"value","value":"5"}
+                {"name":"value","value":"3"}
             ]
         },
         {
@@ -41,7 +41,7 @@
             "function_mode": true,
             "arguments":[
                 {"name":"name","value":"itf"},
-                {"name":"value","value":"5"}
+                {"name":"value","value":"3"}
             ]
         },
         {
