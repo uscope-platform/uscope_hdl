@@ -14,6 +14,8 @@
 // limitations under the License.
 
 `timescale 10 ns / 1 ns
+`include "helpers.svh"
+
 
 
 module uscope_data_gen #(

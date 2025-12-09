@@ -13,8 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 `timescale 10ns / 1ns
+`include "helpers.svh"
+
 
 module uscope_testing_logic (
     input wire clock,
@@ -28,7 +29,7 @@ module uscope_testing_logic (
     axi_lite #(.INTERFACE_NAME("TIMEBASE")) timebase_axi();
     axi_lite #(.INTERFACE_NAME("SCOPE")) scope_axi();
     axi_lite #(.INTERFACE_NAME("GPIO")) gpio_axi();
-    
+
 
     localparam timebase_addr = 'h43c00000;
     localparam scope_addr = 'h43c10000;
@@ -88,7 +89,7 @@ module uscope_testing_logic (
         if(sampling_sync)begin
             scope_in.data <= data_ctr + 100*channel_ctr;
             scope_in.dest <= channel_ctr;
-            
+
             channel_ctr <= channel_ctr + 1;
             if(channel_ctr == 5) begin
                 channel_ctr <= 0;

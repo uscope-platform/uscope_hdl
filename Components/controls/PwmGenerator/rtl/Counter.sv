@@ -17,7 +17,7 @@
 /* Module: Counter
 
     Selectable UP/DOWN/UP-DOWN counter with asynchronous reset.
-    
+
     Modes of operation:
         1) continuous up counter
         0) continuous down counter
@@ -25,7 +25,7 @@
 
     the counter will automatically reload the appropriate value and restart until stopped
 
-    Inputs: 
+    Inputs:
         timebase:       Counter clock
         reset:          Counter asynchronous reset
         start:          counter run
@@ -42,7 +42,7 @@ module Counter #(
     input wire         reset,
     input wire         fast_count,
     input wire         run, 
-    input wire  [COUNTER_WIDTH-1:0] shift,  
+    input wire  [COUNTER_WIDTH-1:0] shift,
     input wire  [1:0]  mode,
     input wire         sync,
     input wire [COUNTER_WIDTH-1:0] counter_start_data,
@@ -64,15 +64,15 @@ module Counter #(
     always@(posedge clock)begin
         if(~reset) begin
             reload_compare<=1;
-        end else begin 
+        end else begin
             if(counter==0) begin
                 reload_compare<=1;
-            end else 
+            end else
                 reload_compare <=0;
         end
     end
 
-    
+
     always@(posedge clock) begin : output_logic
             // divided logic
             if(timebase) begin

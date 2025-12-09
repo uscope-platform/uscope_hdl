@@ -9,7 +9,7 @@
         ],
         "sim_tl":"fp_itf_tb",
         "include_paths":[
-            "Components/Common"
+            "/public/Components/Common"
         ]
     },
     "scripts":[

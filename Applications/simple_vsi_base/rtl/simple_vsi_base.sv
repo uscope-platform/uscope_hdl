@@ -1,4 +1,3 @@
-
 module simple_vsi_base (
     output wire user_led_a,
     output wire user_led_b,
@@ -25,38 +24,39 @@ module simple_vsi_base (
     output wire dc_spi_cs,
     input wire dc_spi_data_v,
     input wire dc_spi_data_i,
-
+    output wire pmod_0,
     output wire pmod_1,
     output wire pmod_2,
     output wire pmod_3,
     output wire pmod_4,
     output wire pmod_5,
     output wire pmod_6,
-    output wire pmod_7,
-    output wire pmod_8
-  
+    output wire pmod_7
+
 );
 
     wire clock, reset;
-    
+
     axi_lite control_axi();
-    AXI data_axi();
+    AXI scope_axi();
+    AXI fcore_rom_link();
 
     wire irq;
 
-    simple_vsi_PS_wrapper PS (
+    zynqmp_PS_wrapper PS (
         .logic_clock(clock),
+        .io_clock(),
         .reset(reset),
-        .control_axi(control_axi),
-        .data_axi(data_axi),
+        .scope(scope_axi),
+        .axi_out(control_axi),
+        .fcore_axi(fcore_rom_link),
         .dma_done(irq)
     );
 
-        
-    hped_drive_logic innards(
+
+    simple_vsi_logic innards(
         .clock(clock),
         .reset(reset),
-        .data_axi(data_axi),
         .control_axi(control_axi),
         .irq(irq),
 
@@ -77,22 +77,18 @@ module simple_vsi_base (
         .ph_spi_data_i_a(ph_spi_data_i_a),
         .ph_spi_data_i_b(ph_spi_data_i_b),
         .ph_spi_data_i_c(ph_spi_data_i_c),
-
-
         .dc_spi_clk(dc_spi_clk),
         .dc_spi_cs(dc_spi_cs),
         .dc_spi_data_v(dc_spi_data_v),
         .dc_spi_data_i(dc_spi_data_i),
+        .pmod_0(pmod_0),
         .pmod_1(pmod_1),
         .pmod_2(pmod_2),
         .pmod_3(pmod_3),
         .pmod_4(pmod_4),
         .pmod_5(pmod_5),
         .pmod_6(pmod_6),
-        .pmod_7(pmod_7),
-        .pmod_8(pmod_8)
-    
+        .pmod_7(pmod_7)
     );
-
 
 endmodule

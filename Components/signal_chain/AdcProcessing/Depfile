@@ -7,7 +7,7 @@
         "sim_modules":["AdcProcessing_denoise_tb"],
         "sim_tl":"AdcProcessing_tb",
         "include_paths":[
-            "Components/Common"
+            "/public/Components/Common"
         ]
     },
     "scripts":[

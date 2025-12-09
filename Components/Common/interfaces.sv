@@ -44,20 +44,6 @@ interface axi_lite #(DATA_WIDTH = 32, ADDR_WIDTH = 32, INTERFACE_NAME = "IF");
 
 endinterface
 
-
-function [15:0] get_axis_metadata (input [4:0] size,input is_signed, input is_float);
-reg [3:0] biased_size;
-begin
-    biased_size = size -8;
-    get_axis_metadata = { 10'h0, is_float, is_signed, biased_size};
-end
-endfunction
-
-function  is_axis_float (input [15:0] data);
-begin
-    is_axis_float = data[5];
-end
-endfunction
 interface axi_stream #(DATA_WIDTH = 32, USER_WIDTH = 32, DEST_WIDTH = 32);
     logic [DATA_WIDTH-1:0] data;
     logic [USER_WIDTH-1:0] user;

@@ -7,7 +7,7 @@
         "sim_modules":[],
         "sim_tl":"axi_stream_combiner_tb",
         "include_paths":[
-            "Components/Common"
+            "/public/Components/Common"
         ]
     },
     "scripts":[

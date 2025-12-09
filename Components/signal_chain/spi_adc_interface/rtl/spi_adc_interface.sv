@@ -14,6 +14,8 @@
 // limitations under the License.
 
 `timescale 10 ns / 1 ns
+`include "helpers.svh"
+
 
 module spi_adc_interface #(
     parameter N_CHANNELS=3,

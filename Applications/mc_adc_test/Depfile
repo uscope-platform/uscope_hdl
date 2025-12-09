@@ -7,7 +7,7 @@
         "sim_modules":[],
         "sim_tl":"mc_scope_tb",
         "include_paths":[
-            "Components/Common"
+            "/public/Components/Common"
         ]
     },
     "scripts":[

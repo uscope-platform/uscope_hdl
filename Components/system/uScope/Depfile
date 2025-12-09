@@ -9,7 +9,7 @@
         ],
         "sim_tl":"uScope_tb",
         "include_paths":[
-            "Components/Common"
+            "/public/Components/Common"
         ]
     },
     "scripts":[

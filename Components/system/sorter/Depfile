@@ -12,7 +12,7 @@
         ],
         "sim_tl":"sorter_tb",
         "include_paths":[
-            "Components/Common"
+            "/public/Components/Common"
         ]
     },
     "scripts":[

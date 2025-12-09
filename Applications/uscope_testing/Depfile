@@ -7,7 +7,7 @@
         "sim_tl":"uscope_testing_tb",
         "sim_modules":[],
         "include_paths":[
-            "Components/Common"
+            "/public/Components/Common"
         ]
     },
     "bus":{

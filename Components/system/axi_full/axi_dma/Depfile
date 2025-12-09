@@ -9,7 +9,7 @@
         ],
         "sim_tl":"axi_dma_tb",
         "include_paths":[
-            "Components/Common"
+            "/public/Components/Common"
         ]
     },
     "scripts":[

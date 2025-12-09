@@ -7,7 +7,7 @@
         "sim_modules":[],
         "sim_tl":"sigma_delta_processor_tb",
         "include_paths":[
-            "Components/Common"
+            "/public/Components/Common"
         ]
     },
     "scripts":[

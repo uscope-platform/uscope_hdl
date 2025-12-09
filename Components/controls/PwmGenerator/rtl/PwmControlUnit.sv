@@ -36,7 +36,7 @@ module PwmControlUnit #(
 
     reg [31:0] cu_write_registers [2:0];
     reg [31:0] cu_read_registers [2:0];
-    
+
     wire [31:0] control_register;
 
     assign control_register = cu_write_registers[0];

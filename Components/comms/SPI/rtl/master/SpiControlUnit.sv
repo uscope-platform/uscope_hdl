@@ -121,14 +121,14 @@ module SpiControlUnit #(
 
     generate
         for(genvar i = 0; i < N_CHANNELS;  i = i+1)begin
-            assign cu_read_registers[i+4] = spi_data_in[i];   
+            assign cu_read_registers[i+4] = spi_data_in[i];
         end
     endgenerate
 
     assign bus_start_transfer = trigger_transfer;
 
 
-    
+
     always_ff @(posedge clock) begin
         if(!reset)begin
             unit_busy <= 0;
@@ -150,7 +150,7 @@ module SpiControlUnit #(
                 external_spi_transfer.ready <= 1;
             end
         end
-        
+
     end
 
 

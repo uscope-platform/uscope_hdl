@@ -7,7 +7,7 @@
         "sim_modules":[],
         "sim_tl":"AD2S1210_tb",
         "include_paths":[
-            "Components/Common"
+            "/public/Components/Common"
         ]
     },
     "scripts":[

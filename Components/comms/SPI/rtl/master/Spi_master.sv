@@ -96,7 +96,7 @@ module SPI_master #(
             end
         end
     end
-    
+
     generate
         genvar i;
         for (i = 0; i < N_CHANNELS; i=i+1) begin

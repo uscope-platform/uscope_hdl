@@ -7,7 +7,7 @@
         "sim_modules":["PMP_shedding_manager_tb"],
         "sim_tl":"PMP_tb",
         "include_paths":[
-            "Components/Common"
+            "/public/Components/Common"
         ]
     },
     "scripts":[

@@ -4,7 +4,7 @@
 `include "axi_full_bfm.svh"
 
 
-module hped_base_tb();
+module simple_vsi_tb();
 
     reg clk, reset;
 
@@ -39,7 +39,7 @@ module hped_base_tb();
     wire dc_clk, dc_ss;
     reg v_data, i_data;
 
-    
+
 
     task dc_adc_write_data;
         input logic [13:0] dcv;
@@ -125,7 +125,7 @@ module hped_base_tb();
     end
 
     reg a,b,z;
-    
+
     initial begin
         a = 0;
         forever begin
@@ -135,11 +135,11 @@ module hped_base_tb();
     end
 
     initial begin
-        a = 0; 
+        a = 0;
         #7;
         forever begin
             #14 b = 1;
-            #14 b = 0;   
+            #14 b = 0;
         end
     end
 
@@ -151,17 +151,15 @@ module hped_base_tb();
             #5;
             z <= 0;
             #(1202*7-5);
-            
         end
     end
 
 
     axi_lite_BFM axil_bfm;
 
-    hped_drive_logic uut(
+    simple_vsi_logic uut(
         .clock(clk),
         .reset(reset),
-        .data_axi(data_axi),
         .control_axi(axi_master),
         .dc_spi_clk(dc_clk),
         .dc_spi_cs(dc_ss),
@@ -184,7 +182,7 @@ module hped_base_tb();
 
     event cfg_done;
 
-    initial begin  
+    initial begin 
         axil_bfm = new(axi_master,  1);
 
         //Initial status
@@ -195,30 +193,37 @@ module hped_base_tb();
 
         // PWM
 
-        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.tresh_0l,      350);
-        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.tresh_1l,      400);
-        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.tresh_2l,      450);
+        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.tresh_0l, 350);
+        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.tresh_1l, 350);
+        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.tresh_2l, 350);
 
-        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.tresh_0h,      650);
-        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.tresh_1h,      600);
-        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.tresh_2h,      550);
+        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.tresh_0h, 650);
+        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.tresh_1h, 650);
+        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.tresh_2h, 650);
 
-        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.deadtime_0,    0);
-        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.deadtime_1,    0);
-        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.deadtime_2,    0);
+        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.deadtime_0, 0);
+        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.deadtime_1, 0);
+        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.deadtime_2, 0);
 
-        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.start,         0);
-        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.stop,          1000);
-        
+        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.start, 0);
+        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.stop, 1000);
+
         #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.tb_shift, 0);
         #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.out_en,   'h3F);
         #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.dt_en,    0);
 
         #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.control,  1);
 
-        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.sync_select, 0);    
+        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.sync_select, 0);
         #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.sync_delay, 50);
-        
+
+        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_1 + reg_maps::pwm_chain_3_regs.tresh_0l, 350);
+        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_1 + reg_maps::pwm_chain_3_regs.tresh_0h, 650);
+        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_1 + reg_maps::pwm_chain_3_regs.stop, 1000);
+        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_0 + reg_maps::pwm_chain_3_regs.tb_shift, 340);
+        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_1 + reg_maps::pwm_chain_3_regs.out_en,   'h3F);
+        #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.chain_1 + reg_maps::pwm_chain_3_regs.control,  1);
+
         #10 axil_bfm.write(PWM_BASE_ADDR + reg_maps::pwm_gen_map_regs.timebase, 'h28);
 
         // DC SENSING 
@@ -245,8 +250,7 @@ module hped_base_tb();
         #10 axil_bfm.write(ENCODER_IF + reg_maps::encoder_if.speed_dest,  1);
 
 
-        #10 axil_bfm.write(GPIO_BASE_ADDR,  9);
-        #10 axil_bfm.write(GPIO_BASE_ADDR,  0);
+        #10 axil_bfm.write(GPIO_BASE_ADDR,  'hF);
 
         #10 axil_bfm.write(IRQC,  1);
         ->cfg_done;

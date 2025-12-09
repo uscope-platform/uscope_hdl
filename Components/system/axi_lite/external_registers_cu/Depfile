@@ -7,7 +7,7 @@
         "sim_modules":[],
         "sim_tl":"axil_external_registers_cu_tb",
         "include_paths":[
-            "Components/Common"
+            "/public/Components/Common"
         ]
     },
     "scripts":[

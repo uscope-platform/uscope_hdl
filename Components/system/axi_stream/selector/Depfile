@@ -7,7 +7,7 @@
         "sim_modules":[],
         "sim_tl":"axi_stream_selector_2",
         "include_paths":[
-            "Components/Common"
+            "/public/Components/Common"
         ]
     },
     "scripts":[

@@ -2,13 +2,13 @@
     "general":{
         "project_name":"simple_vsi_base",
         "target_part":"xc7z020clg400",
-        "board":"xilinx.com:k26c:part0:1.4",
+        "board":"xilinx.com:kd240_som:part0:1.1",
 	    "synth_modules":[],
-        "synth_tl": "hped_base",
+        "synth_tl": "simple_vsi_base",
         "sim_modules":[],
-        "sim_tl":"hped_base_tb",
+        "sim_tl":"simple_vsi_tb",
         "include_paths":[
-            "Components/Common"
+            "/public/Components/Common"
         ]
     },
     "scripts":[
@@ -18,14 +18,15 @@
             "arguments":[]
         },
         {
-            "name":"base_zynqmp_xvc.tcl",
+            "name":"kd240_ps.tcl",
             "type": "tcl",
             "arguments":[]
         }
     ],
     "excluded_modules":[
-        "ps_system"
+        "ps"
     ],
     "constraints": [
+        "simple_vsi_base.xdc"
     ]
 }

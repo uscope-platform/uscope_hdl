@@ -1,7 +1,7 @@
 {
     "general": {
         "include_paths": [
-            "Components/Common"
+            "/public/Components/Common"
         ],
         "project_name": "waveform_generator",
         "sim_modules": [],

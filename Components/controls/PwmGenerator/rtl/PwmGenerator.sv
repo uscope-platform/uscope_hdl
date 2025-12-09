@@ -66,18 +66,18 @@ module PwmGenerator #(
 
     assign selected_timebase = internal_timebase;
 
+    axi_lite internal_bus[N_CHAINS+1]();
     typedef logic [31:0] addr_init_t [N_CHAINS+1];
     function addr_init_t ADDR_CALC();
-        ADDR_CALC[N_CHAINS] = BASE_ADDRESS;
+        ADDR_CALC[0] = BASE_ADDRESS;
         for(int i = 1; i<=N_CHAINS; i++)begin
-            ADDR_CALC[N_CHAINS-i] = BASE_ADDRESS+'h100*i;
+            ADDR_CALC[i] = BASE_ADDRESS+'h100*i;
         end
     endfunction
 
     localparam [31:0] AXI_ADDRESSES [N_CHAINS:0] = ADDR_CALC();
 
 
-    axi_lite internal_bus[N_CHAINS+1]();
 
     axil_crossbar_interface #(
         .DATA_WIDTH(32),
@@ -123,7 +123,7 @@ module PwmGenerator #(
         .sync_out_select(sync_out_select),
         .sync_out_delay(sync_out_delay),
         .counter_stopped_state(counter_stopped_state),
-        .axi_in(internal_bus[N_CHAINS])
+        .axi_in(internal_bus[0])
     );
 
     wire fast_count;
@@ -145,8 +145,8 @@ module PwmGenerator #(
 
     always_comb begin
         for (int j=0; j < N_CHAINS; j++)begin
-            internal_pwm_out[j*N_CHANNELS+:N_CHANNELS] = partial_pwm_out_a[(N_CHAINS-1)-j];
-            internal_pwm_out[N_CHAINS*N_CHANNELS+j*N_CHANNELS+:N_CHANNELS] = partial_pwm_out_b[(N_CHAINS-1)-j];
+            internal_pwm_out[j*N_CHANNELS+:N_CHANNELS] = partial_pwm_out_a[j];
+            internal_pwm_out[N_CHAINS*N_CHANNELS+j*N_CHANNELS+:N_CHANNELS] = partial_pwm_out_b[j];
         end
     end
 
@@ -171,7 +171,7 @@ module PwmGenerator #(
                 .sync_out(chains_sync_out[i]),
                 .out_a(partial_pwm_out_a[i]),
                 .out_b(partial_pwm_out_b[i]),
-                .axi_in(internal_bus[i])
+                .axi_in(internal_bus[1+i])
             );
         end
     endgenerate

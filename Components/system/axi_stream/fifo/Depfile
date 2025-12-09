@@ -7,7 +7,7 @@
         "sim_modules":[],
         "sim_tl":"prioritised_fifo_tb",
         "include_paths":[
-            "Components/Common"
+            "/public/Components/Common"
         ]
     },
     "scripts":[

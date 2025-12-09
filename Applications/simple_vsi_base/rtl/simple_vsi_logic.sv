@@ -2,7 +2,6 @@
 module simple_vsi_logic (
     input wire clock,
     input wire reset,
-    AXI.master data_axi, 
     axi_lite.slave control_axi,
     output wire irq,
 
@@ -32,19 +31,17 @@ module simple_vsi_logic (
     input wire dc_spi_data_v,
     input wire dc_spi_data_i,
 
+    output wire pmod_0,
     output wire pmod_1,
     output wire pmod_2,
     output wire pmod_3,
     output wire pmod_4,
     output wire pmod_5,
     output wire pmod_6,
-    output wire pmod_7,
-    output wire pmod_8
-  
-  
+    output wire pmod_7
 );
 
-    wire pwm_sync;
+    wire pwm_sync, multi_chain_pwm;
 
     axi_lite pwm_axi();
     axi_lite gpio_axi();
@@ -58,7 +55,7 @@ module simple_vsi_logic (
     axi_lite encoder_tb_axi();
     axi_lite mmio_axi();
     axi_lite irqc_axi();
-    
+
     parameter PWM_BASE_ADDR = 'hA0000000;
     parameter GPIO_BASE_ADDR = 'hA0010000;
     parameter PHASE_TB = 'hA0020000;
@@ -72,7 +69,7 @@ module simple_vsi_logic (
     parameter MMIO_TB = 'hA00A0000;
     parameter IRQC = 'hA00B0000;
 
-    
+
 
     parameter [48:0] AXI_ADDRESSES [11:0] = '{
         PWM_BASE_ADDR,
@@ -87,8 +84,8 @@ module simple_vsi_logic (
         ENCODER_TB,
         MMIO_TB,
         IRQC
-    }; 
-    
+    };
+
     axil_crossbar_interface #(
         .DATA_WIDTH(32),
         .ADDR_WIDTH(49),
@@ -110,12 +107,12 @@ module simple_vsi_logic (
             ph_processing_axi,
             dc_processing_axi,
             encoder_if_axi,
-            encoder_tb_axi, 
+            encoder_tb_axi,
             mmio_axi,
             irqc_axi
         })
     );
-        
+
 
     wire [31:0] ctrl_word;
 
@@ -161,7 +158,7 @@ module simple_vsi_logic (
     );
 
     axi_stream raw_ph_data();
-    
+
 
     spi_adc_interface #(
         .N_CHANNELS(6),
@@ -226,7 +223,7 @@ module simple_vsi_logic (
         .enable_out(dc_sense_trg),
         .axil(dc_tb_axi)
     );
-    
+
     axi_stream raw_dc_data();
 
     spi_adc_interface #(
@@ -281,7 +278,9 @@ module simple_vsi_logic (
     axi_stream #(.DATA_WIDTH(16)) speed();
     axi_stream #(.DATA_WIDTH(16)) angle();
 
-    encoder_interface enc_if(
+    encoder_interface #(
+        .COUNTER_WIDTH(32)
+    )enc_if(
         .clock(clock),
         .reset(reset),
         .a(encoder_a),
@@ -309,9 +308,9 @@ module simple_vsi_logic (
     axi_stream mmio_data();
 
     axi_stream_combiner #(
-        .INPUT_DATA_WIDTH(16), 
-        .OUTPUT_DATA_WIDTH(32), 
-        .DEST_WIDTH(mmio_data.DEST_WIDTH), 
+        .INPUT_DATA_WIDTH(16),
+        .OUTPUT_DATA_WIDTH(32),
+        .DEST_WIDTH(mmio_data.DEST_WIDTH),
         .USER_WIDTH(mmio_data.USER_WIDTH),
         .N_STREAMS(6)
     )data_combiner(
@@ -341,11 +340,13 @@ module simple_vsi_logic (
         .irq(irq),
         .axi_in(irqc_axi)
     );
-    
-    assign gate_a = pwm[0];
-    assign gate_b = pwm[1];
-    assign gate_c = pwm[2];
 
+
+    assign multi_chain_pwm = ctrl_word[3];
+
+    assign gate_a = multi_chain_pwm ? pwm[0] : pwm[0];
+    assign gate_b = multi_chain_pwm ? pwm[1] : pwm[1];
+    assign gate_c = multi_chain_pwm ? pwm[3] : pwm[2];
 
     assign gates_en = ctrl_word[2];
 
@@ -355,13 +356,14 @@ module simple_vsi_logic (
     assign dc_sensing_en = ctrl_word[0];
     assign user_led_b = dc_sensing_en;
 
-    assign pmod_1 = ph_spi_clk;
-    assign pmod_2 = ph_spi_cs;
-    assign pmod_3 = dc_spi_clk;
-    assign pmod_4 = dc_spi_cs;
-    assign pmod_3 = ph_spi_data_v_a;
+    assign pmod_0 = dc_spi_clk;
+    assign pmod_1 = dc_spi_cs;
+    assign pmod_2 = ph_spi_clk;
+    assign pmod_3 = ph_spi_cs;
     assign pmod_4 = dc_spi_data_v;
-
+    assign pmod_5 = ph_spi_data_v_a;
+    assign pmod_6 = ph_spi_data_v_b;
+    assign pmod_7 = pwm_sync;
 
 
 endmodule

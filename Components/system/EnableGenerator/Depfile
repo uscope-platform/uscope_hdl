@@ -11,7 +11,7 @@
         ],
         "sim_tl":"enable_generator_param_tb",
         "include_paths":[
-            "Components/Common"
+            "/public/Components/Common"
         ]
     },
     "scripts":[

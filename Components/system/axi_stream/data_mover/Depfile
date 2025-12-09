@@ -7,7 +7,7 @@
         "sim_modules":["axis_dynamic_data_mover_tb"],
         "sim_tl":"axis_data_mover_tb",
         "include_paths":[
-            "Components/Common"
+            "/public/Components/Common"
         ]
     },
     "scripts":[
