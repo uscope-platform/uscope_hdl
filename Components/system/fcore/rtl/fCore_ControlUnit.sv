@@ -143,7 +143,11 @@ module fCore_ControlUnit #(
         if(state==RUN)begin
              
             if(load_blanking)begin
-                instruction_stream.data <= load_instr;
+                if(n_channels==1) begin
+                     instruction_stream.data <= 0;
+                end else begin
+                    instruction_stream.data <= load_instr;
+                end
             end else if(opcode == fcore_isa::LDC)begin
                 load_blanking <= 1;
                 load_instr <= instr_1;
