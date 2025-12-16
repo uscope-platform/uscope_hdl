@@ -18,7 +18,7 @@
 `include "axis_BFM.svh"
 `include "axi_full_bfm.svh"
 
-module fCore_generic_2_inputs#(parameter EXECUTABLE = "")();
+module fCore_generic_2_inputs_tb#(parameter EXECUTABLE = "/home/filssavi/git/uplatform-hdl/public/Components/system/fcore")();
 
 
     reg clock, reset, run, done, efi_start;
@@ -109,7 +109,9 @@ module fCore_generic_2_inputs#(parameter EXECUTABLE = "")();
     efi_results.tlast = 0;
     efi_results.valid = 0;
     end
-
+    event send_inputs;
+    event inputs_ready;
+    event output_done;
     reg [31:0] reg_readback;
     // reset generation
     initial begin
@@ -125,49 +127,24 @@ module fCore_generic_2_inputs#(parameter EXECUTABLE = "")();
         #20.5 reset <=1;
         #40;
         @(core_loaded);
-        test_started = 1;
-        #35 axil_bfm.write(32'h43c00000, 2);
-        #100 dma_bfm.write_dest($shortrealtobits(1.0), 2);
-        #100 dma_bfm.write_dest($shortrealtobits(5.0), 3);
-        #12 run <= 1;
-        #1 run <=  0;
-        #1
-        #1 dma_bfm.write_dest($shortrealtobits(7.0), 3);
-        #1 dma_bfm.write_dest($shortrealtobits(8.0), 3);
-        @(done);
-        #10;
-        dma_read_request.data <= 4;
-        dma_read_request.valid <= 1;
-        #1 dma_read_request.valid <= 0;
-        #500000000;
-        #2;
-        if(dma_read_response.data  != $shortrealtobits(6.0))begin
-            $display ("RESULT ERROR: Wrong result for test 1, received %d, expected 6.0", dma_read_response.data);
-        //    $finish; 
-        end
-        #10
-        dma_read_request.data <= 'h10004;
-        dma_read_request.valid <= 1;
-        #1 dma_read_request.valid <= 0;
-        #2;
-        if(dma_read_response.data != $shortrealtobits(5.0))begin
-            $display ("RESULT ERROR: Wrong result for test 2, received %d, expected 6.0t 2", dma_read_response.data);
-        //    $finish; 
-        end
+        #35 axil_bfm.write(32'h43c00000, 4);
 
-        #4 run <= 1;
-        #1 run <=  0;
-        #1
-        #1 dma_bfm.write_dest($shortrealtobits(1.0), 3);
-        #1 dma_bfm.write_dest($shortrealtobits(74.0), 3);
+        forever begin
+            #100;
+            ->send_inputs;
+            @(inputs_ready);
+            run <=1;
+            #1;
+            run <=0;
+            @(output_done);
+        end
 
     end
 
-
-    reg [31:0] prog [249:0];
+    reg [31:0] prog [249:0] = '{default:0};
     string file_path;
     initial begin
-        file_path = $sformatf("%s/tb/micro_bench/common_io/common_io.mem", EXECUTABLE);
+        file_path = $sformatf("%s/tb/micro_bench/generic_2_input/generic_2.mem", EXECUTABLE);
         $readmemh(file_path, prog);
         #50.5;
         for(integer i = 0; i<250; i++)begin
@@ -176,6 +153,66 @@ module fCore_generic_2_inputs#(parameter EXECUTABLE = "")();
         ->core_loaded;
     end
 
+    event a_ready;
 
+    reg [31:0] in_counter = 0;
+    reg [31:0] op_a [249:0] = '{default:0};
+    reg [31:0] op_b [249:0] = '{default:0};
+    reg [31:0] op_c [249:0] = '{default:0};
+    string file_path_a, file_path_b;
+    initial begin
+        file_path_a = $sformatf("%s/tb/micro_bench/generic_2_input/op_a.mem", EXECUTABLE);
+        $readmemh(file_path_a, op_a);
+        forever begin
+            @(send_inputs);
+            #1 dma_bfm.write_dest(op_a[in_counter], 2);
+            #1 dma_bfm.write_dest(op_a[in_counter], 'h10002);
+            ->a_ready;
+        end
+    end
+
+
+    initial begin
+        file_path_b = $sformatf("%s/tb/micro_bench/generic_2_input/op_b.mem", EXECUTABLE);
+        $readmemh(file_path_b, op_b);
+        forever begin
+            @(a_ready);
+            #1 dma_bfm.write_dest(op_b[in_counter], 3);
+            #1 dma_bfm.write_dest(op_b[in_counter], 'h10003);
+            in_counter <= in_counter + 1;
+            #2;
+            ->inputs_ready;
+        end
+    end
+
+
+    initial begin
+        file_path_b = $sformatf("%s/tb/micro_bench/generic_2_input/op_b.mem", EXECUTABLE);
+        $readmemh(file_path_b, op_b);
+        forever begin
+            @(a_ready);
+            #1 dma_bfm.write_dest(op_b[in_counter], 3);
+            #1 dma_bfm.write_dest(op_b[in_counter], 'h10003);
+            in_counter <= in_counter + 1;
+            #2;
+            ->inputs_ready;
+        end
+    end
+
+    always begin
+        @(posedge done);
+        dma_read_request.data <= 4;
+        dma_read_request.valid <= 1;
+        #1 dma_read_request.valid <= 0;
+        #5;
+        ->output_done;
+    end
+
+    always begin
+        @(posedge dma_read_response.valid);
+        #0.5;
+        $display("Received output %d for input index %d", dma_read_response.data, in_counter-1);
+        op_c[in_counter-1] <= dma_read_response.data;
+    end
 
 endmodule
