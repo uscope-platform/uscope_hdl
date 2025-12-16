@@ -174,4 +174,48 @@ module alu_results_combiner #(
             end
         end
     endgenerate
+
+    // Assert that no two valid signals are high at the same time
+
+    wire [11:0] valid_vec;
+
+    assign valid_vec = {
+        add_result.valid,
+        mul_result.valid,
+        rec_result.valid,
+        fti_result.valid,
+        itf_result.valid,
+        sat_result.valid,
+        logic_result.valid,
+        comparison_result.valid,
+        load_result.valid,
+        bitmanip_result.valid,
+        abs_result.valid,
+        csel_result.valid
+    };
+
+    assert_no_valid_collision: assert property (
+        @(posedge clock)
+        disable iff (!reset)
+        $onehot0(valid_vec)
+    ) else begin
+        $display("---------------------------------------------------------------------------------------------------------");
+        $display( "ALU result collision: multiple valid signals asserted: %b", valid_vec);
+
+            if (add_result.valid)        $display("  --> add_result        user=0x%0h", add_result.user);
+            if (mul_result.valid)        $display("  --> mul_result        user=0x%0h", mul_result.user);
+            if (rec_result.valid)        $display("  --> rec_result        user=0x%0h", rec_result.user);
+            if (fti_result.valid)        $display("  --> fti_result        user=0x%0h", fti_result.user);
+            if (itf_result.valid)        $display("  --> itf_result        user=0x%0h", itf_result.user);
+            if (sat_result.valid)        $display("  --> sat_result        user=0x%0h", sat_result.user);
+            if (logic_result.valid)      $display("  --> logic_result      user=0x%0h", logic_result.user);
+            if (comparison_result.valid) $display("  --> comparison_result user=0x%0h", comparison_result.user);
+            if (load_result.valid)       $display("  --> load_result       user=0x%0h", load_result.user);
+            if (bitmanip_result.valid)   $display("  --> bitmanip_result   user=0x%0h", bitmanip_result.user);
+            if (abs_result.valid)        $display("  --> abs_result        user=0x%0h", abs_result.user);
+            if (csel_result.valid)       $display("  --> csel_result       user=0x%0h", csel_result.user);
+        $display("---------------------------------------------------------------------------------------------------------");
+    end
+
+
 endmodule
