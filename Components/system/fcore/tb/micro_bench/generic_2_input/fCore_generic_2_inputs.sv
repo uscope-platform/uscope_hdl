@@ -127,7 +127,7 @@ module fCore_generic_2_inputs_tb#(parameter EXECUTABLE = "/home/filssavi/git/upl
         #20.5 reset <=1;
         #40;
         @(core_loaded);
-        #35 axil_bfm.write(32'h43c00000, 4);
+        #35 axil_bfm.write(32'h43c00000, 1);
 
         forever begin
             #100;

@@ -8,7 +8,8 @@
     "dma_io": {
         "a":{"type": "input", "address":2, "common_io":false},
         "b":{"type": "input", "address":3, "common_io":false},
-        "c":{"type": "output", "address":4, "common_io":false}
+        "c":{"type": "output", "address":4, "common_io":false},
+        "d":{"type": "output", "address":5, "common_io":false}
     },
-    "channels": 4
+    "channels": 1
 }
