@@ -1,6 +1,6 @@
 {
     "general":{
-        "project_name":"fCore2",
+        "project_name":"fCore",
         "target_part":"xc7z020clg400",
         "synth_modules":[],
         "synth_tl": "fCore",

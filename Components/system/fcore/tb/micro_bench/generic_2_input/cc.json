@@ -1,0 +1,14 @@
+{
+    "input_file": "generic_2.c",
+    "output": {
+        "format":"mem",
+        "file": "generic_2.mem"
+    },
+    "force": true,
+    "dma_io": {
+        "a":{"type": "input", "address":2, "common_io":false},
+        "b":{"type": "input", "address":3, "common_io":true},
+        "c":{"type": "output", "address":4, "common_io":false}
+    },
+    "channels": 2
+}
