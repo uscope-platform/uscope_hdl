@@ -12,7 +12,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
+`ifndef __HELPERS_SV__
+`define __HELPERS_SV__
 function [15:0] get_axis_metadata (input [4:0] size,input is_signed, input is_float);
 reg [3:0] biased_size;
 begin
@@ -26,3 +27,5 @@ begin
     is_axis_float = data[5];
 end
 endfunction
+
+`endif 
