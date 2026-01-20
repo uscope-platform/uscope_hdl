@@ -67,7 +67,8 @@ module PwmGenerator #(
     assign selected_timebase = internal_timebase;
 
     axi_lite internal_bus[N_CHAINS+1]();
-    typedef logic [31:0] addr_init_t [N_CHAINS+1];
+
+    typedef logic [31:0] addr_init_t [N_CHAINS+1:0];
     function addr_init_t ADDR_CALC();
         ADDR_CALC[0] = BASE_ADDRESS;
         for(int i = 1; i<=N_CHAINS; i++)begin

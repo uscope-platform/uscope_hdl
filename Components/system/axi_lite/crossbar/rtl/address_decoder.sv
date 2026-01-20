@@ -96,7 +96,7 @@ module address_decoder #(
 
     reg [NS:0] int_o_decode;
     assign o_decode = int_o_decode;
-    
+
     reg [AW-1:0] int_o_addr;
     assign o_addr = int_o_addr;
 
