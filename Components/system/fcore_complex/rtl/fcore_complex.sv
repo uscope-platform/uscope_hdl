@@ -58,7 +58,7 @@ module fcore_complex #(
     axi_stream.slave core_dma_in,
     axi_stream.master core_dma_out
 );
-    
+
     if(ENABLE_ASSERTIONS)begin
         start_request_pulse: assert property(@(posedge core_clock) start |=> !start) else begin
             $display("-----------------------------------------------------------------");
@@ -78,7 +78,7 @@ module fcore_complex #(
         end
 
     end
-    
+
 
 
     axi_stream efi_arguments();
@@ -138,7 +138,7 @@ module fcore_complex #(
         DMA_BASE_ADDRESS + 'h1000,
         DMA_BASE_ADDRESS
         };
-    
+
     axil_crossbar_interface #(
         .DATA_WIDTH(32),
         .ADDR_WIDTH(AXI_ADDR_WIDTH),
@@ -153,7 +153,7 @@ module fcore_complex #(
         .masters({constants_axi, dma_axi, fcore_axi})
     );
 
-    genvar n;        
+    genvar n;
 
     wire [7:0] n_active_constants;
 
@@ -184,10 +184,10 @@ module fcore_complex #(
         .stream_in('{constants_out, core_dma_in}),
         .stream_out(merged_out)
     );
-    
+
     reg [7:0] start_delay = 0;
     reg start_core = 0;
-    
+
     always_ff @(posedge core_clock) begin
         start_core <= 0;
 
@@ -203,7 +203,7 @@ module fcore_complex #(
                 start_delay <= start_delay + 1;
             end
         end
-        
+
     end
 
     fCore #(
