@@ -89,7 +89,7 @@ module axilxbar #(
         // SLAVE_ADDR is a bit vector containing ADDR_WIDTH bits for each of the
         // slaves indicating the base address of the slave.  This
         // goes with SLAVE_MASK below.
-        parameter [ADDR_WIDTH-1:0] SLAVE_ADDR [NS-1:0] = '{NS{0}},    
+        parameter [ADDR_WIDTH-1:0] SLAVE_ADDR [NS-1:0] = '{NS{0}},
         //
         // SLAVE_MASK indicates which bits in the SLAVE_ADDR bit vector
         // need to be checked to determine if a given address request
@@ -265,7 +265,7 @@ module axilxbar #(
         m_axi_wvalid[NS-1:0]  = M_AXI_WVALID;
         m_axi_wready[NS-1:0]  = M_AXI_WREADY;
         m_axi_bvalid[NS-1:0]  = M_AXI_BVALID;
-        
+
         for(integer int_m1=0; int_m1<NS; int_m1=int_m1+1) begin
             m_axi_bresp[int_m1] = M_AXI_BRESP[int_m1* 2 +:  2];
 
@@ -303,7 +303,7 @@ module axilxbar #(
             );
 
 
-         
+
 
             // write address decoding
             address_decoder #(
@@ -328,7 +328,7 @@ module axilxbar #(
             );
 
             // wskid
-            
+
             // awskid
             axil_skid_buffer #(
                 .REGISTER_OUTPUT(OPT_SKID_INPUT),
@@ -480,10 +480,10 @@ module axilxbar #(
                 end else if (S_AXI_RVALID[N] && !S_AXI_RREADY[N]) begin
                     slave_raccepts[N] = 1'b0;
                 end
-                    
+
             end
-        end 
-        
+        end
+
         for (N=NM; N<NMFULL; N=N+1) begin : UNUSED_RSKID_BUFFERS
             assign m_arvalid[N] = 0;
             assign m_araddr[N] = 0;
@@ -497,7 +497,7 @@ module axilxbar #(
         for(integer int_n =1; int_n<NM ; int_n=int_n+1) begin
             wrequested[int_n] = 0;
         end
-            
+
 
         // Vivado may complain about too many bits for wrequested.
         // This is (currrently) expected.  swindex is used to index
@@ -555,7 +555,7 @@ module axilxbar #(
     end
 
     // mwgrant, mrgrant
-    generate 
+    generate
         for(M=0; M<NS; M=M+1) begin
             always_comb begin
                 mwgrant[M] = 0;
@@ -570,7 +570,7 @@ module axilxbar #(
                 mrgrant[M] = 0;
                 for(integer int_n=0; int_n<NM; int_n=int_n+1) begin
                     if (rgrant[int_n][M]) begin
-                        mrgrant[M] = 1;    
+                        mrgrant[M] = 1;
                     end
                 end
             end
@@ -601,12 +601,12 @@ module axilxbar #(
                 if (wrequest[N][NS])begin
                     requested_channel_is_available = 1;
                 end
-                    
+
 
                 if (NM < 2) begin
                     requested_channel_is_available = m_awvalid[N];
                 end
-                    
+
             end
 
 
@@ -665,7 +665,7 @@ module axilxbar #(
                         swgrant[N] <= 1'b0;
                         wgrant[N]  <= 0;
                     end
-                end    
+                end
             end
 
             // requested_index
@@ -684,15 +684,15 @@ module axilxbar #(
             always_ff @(posedge clock) begin
                 if (!stay_on_channel && requested_channel_is_available) begin
                     r_swindex <= requested_index;
-                end    
+                end
             end
 
             assign swindex[N] = r_swindex;
-        end 
+        end
 
         for (N=NM; N<NMFULL; N=N+1) begin
             assign swindex[N] = 0;
-        end 
+        end
     endgenerate
 
     generate 
@@ -711,7 +711,7 @@ module axilxbar #(
                 if (srgrant[N] && !srempty[N]) begin
                     stay_on_channel = 1;
                 end
-                    
+
             end
 
             // requested_channel_is_available
@@ -720,7 +720,7 @@ module axilxbar #(
                 if (rrequest[N][NS]) begin
                     requested_channel_is_available = 1;
                 end
-                    
+
                 if (NM < 2) begin
                     requested_channel_is_available = m_arvalid[N];
                 end
@@ -747,7 +747,7 @@ module axilxbar #(
                         r_linger <= 0;
                     end
                 end
-                
+
                 assign linger = r_linger;
             end
 
@@ -760,7 +760,7 @@ module axilxbar #(
                     // else asks for the channel
                     leave_channel = 1;
                 end
-                    
+
                 if (m_arvalid[N] && !rrequest[N][srindex[N]]) begin
                     // Need to leave this channel to connect
                     // to any other channel
@@ -783,16 +783,16 @@ module axilxbar #(
                         srgrant[N] <= 1'b0;
                         rgrant[N]  <= 0;
                     end
-                end    
+                end
             end
-            
+
 
             // requested_index
             always_ff @(rrequest[N]) begin
                 requested_index = 0;
                 for(integer int_im=0; int_im<=NS; int_im=int_im+1) begin
                     if (rrequest[N][int_im]) begin
-                        requested_index = requested_index|int_im[LGNS-1:0];        
+                        requested_index = requested_index|int_im[LGNS-1:0];
                     end
                 end
             end
@@ -806,10 +806,10 @@ module axilxbar #(
             end
 
             assign srindex[N] = r_srindex;
-        end 
+        end
         for (N=NM; N<NMFULL; N=N+1) begin
             assign srindex[N] = 0;
-        end 
+        end
     endgenerate
 
     // Calculate mwindex
@@ -837,14 +837,14 @@ module axilxbar #(
                         r_mwindex <= reswindex;
                     end
                 end
-          
+
                 assign mwindex[M] = r_mwindex;
             end
-        end 
+        end
 
         for (M=NS; M<NSFULL; M=M+1) begin
             assign mwindex[M] = 0;
-        end 
+        end
     endgenerate
 
 
@@ -872,13 +872,14 @@ module axilxbar #(
                         r_mrindex <= resrindex;
                     end
                 end
-   
+
                 assign mrindex[M] = r_mrindex;
             end
-        end 
+        end
+
         for (M=NS; M<NSFULL; M=M+1) begin
             assign mrindex[M] = 0;
-        end 
+        end
     endgenerate
 
     // Assign outputs to the various slaves
@@ -907,8 +908,8 @@ module axilxbar #(
                 end else if (!sawstall) begin
                     axi_awvalid <= m_awvalid[mwindex[M]] &&(slave_awaccepts[mwindex[M]]);
                 end
-            end 
-            
+            end
+
 
             // axi_awaddr, axi_awprot
             always_ff @(posedge clock) begin
@@ -926,7 +927,7 @@ module axilxbar #(
                         axi_awaddr  <= 0;
                         axi_awprot  <= 0;
                     end
-                end        
+                end
             end
 
             // axi_wvalid
@@ -935,7 +936,7 @@ module axilxbar #(
                     axi_wvalid <= 0;
                 end else if (!swstall) begin
                     axi_wvalid <= (m_wvalid[mwindex[M]]) && (slave_waccepts[mwindex[M]]);
-                end    
+                end
             end
 
 
@@ -955,7 +956,7 @@ module axilxbar #(
                         axi_wdata  <= 0;
                         axi_wstrb  <= 0;
                     end
-                end    
+                end
             end
 
 
@@ -966,7 +967,7 @@ module axilxbar #(
                 end else if (!mbstall) begin
                     axi_bready <= 1;
                 end else if (M_AXI_BVALID[M]) begin
-                    axi_bready <= 0; 
+                    axi_bready <= 0;
                 end
             end
 
@@ -1030,7 +1031,7 @@ module axilxbar #(
                     end
                 end
             end
-            
+
 
             // axi_rready
             always_ff @(posedge clock) begin
@@ -1069,7 +1070,7 @@ module axilxbar #(
                     i_axi_bvalid = m_axi_bvalid[swindex[N]];
                 end
             end
-            
+
             assign i_axi_bresp = m_axi_bresp[swindex[N]];
             assign mbstall = S_AXI_BVALID[N] && !S_AXI_BREADY[N];
 
@@ -1083,7 +1084,7 @@ module axilxbar #(
                     r_bvalid[N] <= 1'b0;
                 end
             end
-            
+
 
             // r_bresp
             always_ff @(posedge clock) begin
@@ -1097,16 +1098,16 @@ module axilxbar #(
                     end else begin
                         r_bresp[N] <= 0;
                     end
-                end    
+                end
             end
-            
+
 
             // axi_bvalid
             always_ff @(posedge clock) begin
                 if (!reset)begin
                     axi_bvalid <= 0;
                 end else if (!mbstall) begin
-                    axi_bvalid <= swgrant[N] && (r_bvalid[N] || i_axi_bvalid);    
+                    axi_bvalid <= swgrant[N] && (r_bvalid[N] || i_axi_bvalid);
                 end
             end
 
@@ -1124,7 +1125,7 @@ module axilxbar #(
                     end else begin
                         axi_bresp <= 0;
                     end
-                        
+
                     if (wgrant[N][NS] && (!OPT_LOWPOWER || i_axi_bvalid)) begin
                         axi_bresp <= INTERCONNECT_ERROR;
                     end
@@ -1162,7 +1163,7 @@ module axilxbar #(
                 if (rgrant[N][NS])begin
                     i_axi_rvalid = m_arvalid[N] && slave_raccepts[N];
                 end else begin
-                    i_axi_rvalid = m_axi_rvalid[srindex[N]];    
+                    i_axi_rvalid = m_axi_rvalid[srindex[N]];
                 end
             end 
 
@@ -1206,7 +1207,7 @@ module axilxbar #(
                 if (!reset) begin
                     axi_rvalid <= 0;
                 end else if (!srstall) begin
-                    axi_rvalid <= srgrant[N] && (r_rvalid[N] || i_axi_rvalid);    
+                    axi_rvalid <= srgrant[N] && (r_rvalid[N] || i_axi_rvalid);
                 end
             end
 
@@ -1229,7 +1230,7 @@ module axilxbar #(
                             axi_rresp <= m_axi_rresp[srindex[N]];
                             axi_rdata <= m_axi_rdata[srindex[N]];
                         end
-    
+
                         if (rgrant[N][NS]) begin
                             axi_rresp <= INTERCONNECT_ERROR;
                         end
@@ -1239,7 +1240,7 @@ module axilxbar #(
                     end
                 end
             end
-            
+
 
             assign S_AXI_RVALID[N] = axi_rvalid;
             assign S_AXI_RRESP[N*2 +: 2] = axi_rresp;
@@ -1274,7 +1275,7 @@ module axilxbar #(
                         swempty[N] <= 0;
                         swfull[N] <= &awpending[LGMAXBURST-1:1];
                     end
-                    default: begin 
+                    default: begin
                     end
                 endcase
             end
@@ -1287,10 +1288,10 @@ module axilxbar #(
                 case ({(m_wvalid[N] && slave_waccepts[N]),(S_AXI_BVALID[N] && S_AXI_BREADY[N])})
                     2'b01: wpending <= wpending - 1;
                     2'b10: wpending <= wpending + 1;
-                    default: begin 
+                    default: begin
                     end
                 endcase
-            end 
+            end
         end
 
         always_ff @(posedge clock) begin
@@ -1300,14 +1301,14 @@ module axilxbar #(
                 missing_wdata <= missing_wdata
                     +((m_awvalid[N] && slave_awaccepts[N])? 1:0)
                     -((m_wvalid[N] && slave_waccepts[N])? 1:0);
-            end    
+            end
         end
 
         always_ff @(posedge clock) begin
             if (!reset)begin
                 r_wdata_expected <= 0;
             end else begin
-                case({ m_awvalid[N] && slave_awaccepts[N],m_wvalid[N] && slave_waccepts[N] })            
+                case({ m_awvalid[N] && slave_awaccepts[N],m_wvalid[N] && slave_waccepts[N] })
                     2'b10: r_wdata_expected <= 1;
                     2'b01: r_wdata_expected <= (missing_wdata > 1);
                     default: begin

@@ -53,11 +53,11 @@ module axil_crossbar_interface #(
     wire [NM*2-1:0] S_AXI_RRESP;
     wire [NM*3-1:0] S_AXI_AWPROT;
     wire [NM*3-1:0] S_AXI_ARPROT;
-    
+
     genvar i;
     generate
         for(i = 0; i< NM; i = i + 1) begin
-            
+
             // WRITE ADDRESS CHANNEL FLATTENING
             assign S_AXI_AWVALID[i] =  slaves[i].AWVALID;
             assign slaves[i].AWREADY = S_AXI_AWREADY[i];
@@ -75,19 +75,19 @@ module axil_crossbar_interface #(
             assign slaves[i].WREADY = S_AXI_WREADY[i];
             assign S_AXI_WDATA[i*DATA_WIDTH +: DATA_WIDTH] = slaves[i].WDATA;
             assign S_AXI_WSTRB[i*STROBE_WIDTH +: STROBE_WIDTH] = slaves[i].WSTRB;
-            
+
             // READ DATA/RESPONSE CHANNEL FLATTENING
             assign slaves[i].RDATA = S_AXI_RDATA[i*DATA_WIDTH +: DATA_WIDTH];
             assign slaves[i].RVALID = S_AXI_RVALID[i];
             assign S_AXI_RREADY[i] = slaves[i].RREADY;
             assign slaves[i].RRESP = S_AXI_RRESP[i*2 +: 2];
-            
+
             // WRITE RESPONSE CHANNEL
             assign slaves[i].BVALID = S_AXI_BVALID[i];
             assign S_AXI_BREADY[i] = slaves[i].BREADY;
             assign slaves[i].BRESP = S_AXI_BRESP[i*2 +: 2];
-            
-        end    
+
+        end
     endgenerate
 
     // MASTER INTERFACES FLATTENING
@@ -129,19 +129,19 @@ module axil_crossbar_interface #(
             assign M_AXI_WREADY[i] = masters[i].WREADY;
             assign masters[i].WDATA = M_AXI_WDATA[i*DATA_WIDTH +: DATA_WIDTH];
             assign masters[i].WSTRB = M_AXI_WSTRB[i*STROBE_WIDTH +: STROBE_WIDTH];
-            
+
             // READ DATA/RESPONSE CHANNEL FLATTENING
             assign M_AXI_RDATA[i*DATA_WIDTH +: DATA_WIDTH] = masters[i].RDATA;
             assign M_AXI_RVALID[i] = masters[i].RVALID;
             assign masters[i].RREADY = M_AXI_RREADY[i];
             assign M_AXI_RRESP[i*2 +: 2] = masters[i].RRESP;
-            
+
             // WRITE RESPONSE CHANNEL
             assign M_AXI_BVALID[i] = masters[i].BVALID;
             assign masters[i].BREADY = M_AXI_BREADY[i];
             assign M_AXI_BRESP[i*2 +: 2] = masters[i].BRESP;
-            
-        end    
+
+        end
     endgenerate
 
     axilxbar #(
@@ -197,9 +197,5 @@ module axil_crossbar_interface #(
         .M_AXI_RVALID(M_AXI_RVALID),
         .M_AXI_RREADY(M_AXI_RREADY)
     );
-
-
-
-    
 
 endmodule

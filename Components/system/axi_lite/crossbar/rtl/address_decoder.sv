@@ -4,7 +4,7 @@
 // {{{
 // Project: WB2AXIPSP: bus bridges and other odds and ends
 //
-// Purpose: 
+// Purpose:
 //
 // Creator: Dan Gisselquist, Ph.D.
 // Gisselquist Technology, LLC
@@ -114,7 +114,7 @@ module address_decoder #(
     always_comb begin
         for(integer int_m=0; int_m<NS; int_m=int_m+1) begin
             prerequest[int_m] = (((i_addr ^ SLAVE_ADDR[int_m]) &SLAVE_MASK[int_m])==0) &&(ACCESS_ALLOWED[int_m]);
-        end    
+        end
     end
 
     // request
@@ -128,7 +128,7 @@ module address_decoder #(
                 for(integer int_m=0; int_m<NS; int_m=int_m+1) begin
                     r_request[int_m] = i_valid && prerequest[int_m];
                 end
-                   
+
                 if (!OPT_NONESEL && (NS > 1 && |prerequest[NS-1:1])) begin
                     r_request[0] = 1'b0;
                 end
@@ -155,12 +155,12 @@ module address_decoder #(
 
             assign request[NS-1:0] = r_request;
 
-        end 
+        end
     endgenerate
 
 
     // request[NS]
-    generate 
+    generate
         if (OPT_NONESEL) begin
             reg r_request_NS, r_none_sel;
 
@@ -212,7 +212,7 @@ module address_decoder #(
                 end else if (OPT_LOWPOWER && !i_stall) begin
                     int_o_addr   <= 0;
                     int_o_data   <= 0;
-                end 
+                end
             end
 
 
@@ -241,7 +241,7 @@ module address_decoder #(
                 int_o_addr  = i_addr;
                 int_o_data  = i_data;
 
-                int_o_decode = request; 
+                int_o_decode = request;
             end
 
         end

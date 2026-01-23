@@ -15,7 +15,7 @@
 
 `timescale 10ns / 1ns
 `include "axis_BFM.svh"
-`include "axi_lite_BFM.svh"						
+`include "axi_lite_BFM.svh"
 
 module multichannel_constant_tb();
 
@@ -23,12 +23,12 @@ module multichannel_constant_tb();
 
     axi_lite axil();
     axi_lite_BFM axil_bfm;
-    
+
     axi_stream out();
-    
+
     //clock generation
-    initial clk = 0; 
-    always #0.5 clk = ~clk; 
+    initial clk = 0;
+    always #0.5 clk = ~clk;
 
 
     reg sync;
@@ -71,47 +71,46 @@ module multichannel_constant_tb();
         #10 axil_bfm.write(active_channels, 3);
 
         //Write constants
-        #1 axil_bfm.write(selector,{16'h0,16'h0}); 
+        #1 axil_bfm.write(selector,{16'h0,16'h0});
         #1 axil_bfm.write(dest, 7);
-        #1 axil_bfm.write(const_low, 32'h55); 
-        
-        #1 axil_bfm.write(selector,{16'h1,16'h0}); 
+        #1 axil_bfm.write(const_low, 32'h55);
+
+        #1 axil_bfm.write(selector,{16'h1,16'h0});
         #1 axil_bfm.write(dest, 9);
-        #1 axil_bfm.write(const_low, 32'h56); 
-        
-        #1 axil_bfm.write(selector,{16'h2,16'h0}); 
+        #1 axil_bfm.write(const_low, 32'h56);
+
+        #1 axil_bfm.write(selector,{16'h2,16'h0});
         #1 axil_bfm.write(dest, 1);
-        #1 axil_bfm.write(const_low, 32'h57); 
-        
+        #1 axil_bfm.write(const_low, 32'h57);
 
 
 
-        #1 axil_bfm.write(selector,{16'h0,16'h1}); 
+        #1 axil_bfm.write(selector,{16'h0,16'h1});
         #1 axil_bfm.write(dest, 12);
-        #1 axil_bfm.write(const_low, 32'h65); 
-        
-        #1 axil_bfm.write(selector,{16'h1,16'h1}); 
+        #1 axil_bfm.write(const_low, 32'h65);
+
+        #1 axil_bfm.write(selector,{16'h1,16'h1});
         #1 axil_bfm.write(dest, 37);
-        #1 axil_bfm.write(const_low, 32'h66); 
-        
-        #1 axil_bfm.write(selector,{16'h2,16'h1}); 
+        #1 axil_bfm.write(const_low, 32'h66);
+
+        #1 axil_bfm.write(selector,{16'h2,16'h1});
         #1 axil_bfm.write(dest, 2);
-        #1 axil_bfm.write(const_low, 32'h67); 
+        #1 axil_bfm.write(const_low, 32'h67);
 
 
 
 
-        #1 axil_bfm.write(selector,{16'h0,16'h2}); 
+        #1 axil_bfm.write(selector,{16'h0,16'h2});
         #1 axil_bfm.write(dest, 4);
-        #1 axil_bfm.write(const_low, 32'h75); 
-        
-        #1 axil_bfm.write(selector,{16'h1,16'h2}); 
+        #1 axil_bfm.write(const_low, 32'h75);
+
+        #1 axil_bfm.write(selector,{16'h1,16'h2});
         #1 axil_bfm.write(dest, 44);
-        #1 axil_bfm.write(const_low, 32'h76); 
-        
-        #1 axil_bfm.write(selector,{16'h2,16'h2}); 
+        #1 axil_bfm.write(const_low, 32'h76);
+
+        #1 axil_bfm.write(selector,{16'h2,16'h2});
         #1 axil_bfm.write(dest, 6);
-        #1 axil_bfm.write(const_low, 32'h77); 
+        #1 axil_bfm.write(const_low, 32'h77);
     end
 
 endmodule
