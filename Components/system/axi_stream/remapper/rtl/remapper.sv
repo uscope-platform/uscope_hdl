@@ -24,7 +24,7 @@ module axis_remapper #(
     REMAP_TYPE = "DYNAMIC",
     REMAP_OFFSET = 0,
     INPUT_DATA_WIDTH = 16,
-    OUTPUT_DATA_WIDTH = 16, 
+    OUTPUT_DATA_WIDTH = 16,
     USER_WIDTH = 32,
     DEST_WIDTH = 32
     ) (
@@ -35,24 +35,24 @@ module axis_remapper #(
 
 
     axi_stream #(
-        .DATA_WIDTH(OUTPUT_DATA_WIDTH), 
+        .DATA_WIDTH(OUTPUT_DATA_WIDTH),
         .USER_WIDTH(USER_WIDTH),
         .DEST_WIDTH(DEST_WIDTH)
     ) inner_out();
 
     generate
-    
+
         if ((REMAP != "TRUE") && (REMAP != "FALSE")) begin
             $error($sformatf("Illegal value for parameter REMAP (%s), it must be either TRUE or FALSE",REMAP));
         end
-    
+
         if ((REMAP_TYPE != "DYNAMIC") && (REMAP_TYPE != "STATIC")) begin
             $error($sformatf("Illegal value for parameter REMAP_TYPE (%s), it must be either STATIC or DYNAMIC",REMAP_TYPE));
         end
 
         if(REGISTER_OUT == "TRUE")begin
             always_ff @( posedge clock ) begin
-                
+
                 out.data <= inner_out.data;
                 out.dest <= inner_out.dest;
                 out.valid <= inner_out.valid;
@@ -68,7 +68,7 @@ module axis_remapper #(
         end
 
 
-    
+
         if(OUTPUT_DATA_WIDTH>INPUT_DATA_WIDTH)begin
             assign inner_out.data = {{OUTPUT_DATA_WIDTH-INPUT_DATA_WIDTH{in.data[INPUT_DATA_WIDTH-1]}},in.data};
         end else begin
@@ -90,10 +90,10 @@ module axis_remapper #(
             assign in.ready = out.ready;
         end
     endgenerate
-    
+
 
     assign inner_out.user = in.user;
     assign inner_out.valid = in.valid;
     assign inner_out.tlast = in.tlast;
-    
+
 endmodule

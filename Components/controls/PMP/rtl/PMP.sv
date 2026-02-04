@@ -237,7 +237,7 @@ module pre_modulation_processor #(
 
             assign vsi_done = 0;
             assign buck_done = 0;
-            
+
             assign vsi_modulator_status = 0;
             assign buck_modulator_status = 0;
 

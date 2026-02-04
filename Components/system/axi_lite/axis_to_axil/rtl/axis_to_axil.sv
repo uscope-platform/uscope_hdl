@@ -18,7 +18,7 @@
 
 module axis_to_axil (
     input wire clock,
-    input wire reset, 
+    input wire reset,
     axi_stream.slave axis_write,
     axi_stream.slave axis_read_request,
     axi_stream.master axis_read_response,

@@ -18,7 +18,7 @@
 `timescale 10 ns / 1 ns
 
 
-module axis_packet_remapper #(
+module axis_packet_remapper_decoupled #(
     parameter DATA_WIDTH= 32,
     DEST_WIDTH = 8,
     USER_WIDTH = 8,
@@ -29,7 +29,7 @@ module axis_packet_remapper #(
     input wire        reset,
     input wire        sync,
     axi_stream.slave in,
-    axi_stream.master out
+    axi_stream.watcher out
 );
 
     axi_stream registered_stream();
@@ -59,7 +59,7 @@ module axis_packet_remapper #(
     reg transmitting = 0;
     reg [15:0] packet_counter  = 0;
 
-    assign registered_stream.ready = out.ready;
+    assign registered_stream.ready = 1;
     always_ff@(posedge clock)begin
         if(~reset)begin
             out.valid <= 0;

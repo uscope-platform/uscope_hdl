@@ -42,13 +42,13 @@ module axil_external_registers_cu_tb();
         #0.5 clk = 1'b0;
         #0.5;
     end
-    
+
     reg [31:0] write_shadow_register [2:0] = {0,0,0};
     reg [31:0] CU_write_register [2:0] = {0,0,0};
     reg [31:0] write_address;
     reg [31:0] write_data;
 
-    initial begin  
+    initial begin
         read_addr.ready = 1;
         write_data_stream.ready = 1;
         read_data_stream.initialize();
