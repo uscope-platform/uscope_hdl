@@ -18,7 +18,8 @@
 module SPI_slave#(
     N_CHANNELS=3,
     REGISTERS_WIDTH=16,
-    OUTPUT_WIDTH=32
+    OUTPUT_WIDTH=32,
+    DEFAULT_LENGTH = 16
 )(
     input wire clock,
     input wire reset,
@@ -34,7 +35,7 @@ module SPI_slave#(
 );
 
 
-    parameter N_REGISTERS = 4;
+    parameter N_REGISTERS = 2;
 
     reg [31:0] cu_write_registers [N_REGISTERS-1:0];
     reg [31:0] cu_read_registers [N_REGISTERS-1:0];
@@ -43,7 +44,11 @@ module SPI_slave#(
         .N_READ_REGISTERS(N_REGISTERS),
         .N_WRITE_REGISTERS(N_REGISTERS),
         .REGISTERS_WIDTH(32),
-        .ADDRESS_MASK('h3f)
+        .ADDRESS_MASK('h3f),
+        .INITIAL_OUTPUT_VALUES('{
+            DEFAULT_LENGTH,
+            0
+        })
     ) axi_if(
         .clock(clock),
         .reset(reset),

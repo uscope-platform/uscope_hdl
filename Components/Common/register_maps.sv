@@ -476,6 +476,11 @@ package reg_maps;
         int parameter_15 = 'h44;
     } waveform_generator;
 
+     struct {
+        int control = 0;
+        int transfer_length = 'h4;
+     } SPI_slave_regs;
+
 
 
 endpackage

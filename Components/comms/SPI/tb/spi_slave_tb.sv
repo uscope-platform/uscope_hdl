@@ -156,7 +156,7 @@ module spi_slave_tb();
         else
             sclk = default_clock;
     end
-    
+
 
     task static check_test(
         input logic [MAX_SPI_DATA_WIDTH-1:0] tx_pattern,
