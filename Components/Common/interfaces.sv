@@ -44,7 +44,7 @@ interface axi_lite #(DATA_WIDTH = 32, ADDR_WIDTH = 32, INTERFACE_NAME = "IF");
 
 endinterface
 
-interface axi_stream #(DATA_WIDTH = 32, USER_WIDTH = 32, DEST_WIDTH = 32);
+interface axi_stream #(DATA_WIDTH = 32, USER_WIDTH = 32, DEST_WIDTH = 32, CLOCK_PERIOD = 1);
     logic [DATA_WIDTH-1:0] data;
     logic [USER_WIDTH-1:0] user;
     logic [DEST_WIDTH-1:0] dest;
@@ -64,15 +64,22 @@ interface axi_stream #(DATA_WIDTH = 32, USER_WIDTH = 32, DEST_WIDTH = 32);
         tlast <= 0;
     endtask
 
-    task write (input logic [31:0] wr_data, real clk_per);
+    task write_dest(input logic [31:0] destination, logic [31:0] write_data);
+        data <= write_data;
+        dest <= destination;
+        wait(ready) valid <= 1'b1;
+        #(CLOCK_PERIOD) valid <= 1'b0;
+    endtask
+
+    task write (input logic [31:0] wr_data);
         //WRITE ADDR
         if(ready) begin
             data <= wr_data;
             valid <= 1;
-            #clk_per valid <= 0;    
+            #(CLOCK_PERIOD) valid <= 0;
         end;
     endtask
-    
+
 endinterface
 
 interface APB;
