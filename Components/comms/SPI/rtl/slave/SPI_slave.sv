@@ -39,16 +39,17 @@ module SPI_slave#(
 
     reg [31:0] cu_write_registers [N_REGISTERS-1:0];
     reg [31:0] cu_read_registers [N_REGISTERS-1:0];
+    parameter [31:0] INITIAL_OUTPUT_VALUES [N_REGISTERS-1:0] = '{
+        DEFAULT_LENGTH,
+        0
+    };
 
     axil_simple_register_cu #(
         .N_READ_REGISTERS(N_REGISTERS),
         .N_WRITE_REGISTERS(N_REGISTERS),
         .REGISTERS_WIDTH(32),
         .ADDRESS_MASK('h3f),
-        .INITIAL_OUTPUT_VALUES('{
-            DEFAULT_LENGTH,
-            0
-        })
+        .INITIAL_OUTPUT_VALUES(INITIAL_OUTPUT_VALUES)
     ) axi_if(
         .clock(clock),
         .reset(reset),

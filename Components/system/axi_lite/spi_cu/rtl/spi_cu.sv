@@ -15,7 +15,7 @@
 `timescale 10 ns / 1 ns
 
 module spi_cu #(
-    parameter HIGH_RANGE_START = 15
+    parameter HIGH_RANGE_BIT = 0
 ) (
     input wire clock,
     input wire reset,
@@ -85,7 +85,7 @@ module spi_cu #(
                 data_l: begin
                      if(rx_data.valid)begin
                         data <= {16'h0, rx_data.data};
-                        if(address[HIGH_RANGE_START])begin
+                        if(address[HIGH_RANGE_BIT])begin
                             cu_state <= address_h;
                         end else begin
                             cu_state <= write;

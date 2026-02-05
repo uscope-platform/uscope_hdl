@@ -22,7 +22,7 @@ module spi_cu_tb();
     axi_lite test_axi();
 
     spi_cu #(
-        .HIGH_RANGE_START(15)
+        .HIGH_RANGE_BIT(0)
     ) UUT (
         .clock(clk),
         .reset(reset),
@@ -103,7 +103,6 @@ module spi_cu_tb();
             @(check_done);
             #20;
         end else begin
-            test_address[15] = 1;
             current_transmission = test_address[15:0];
             ->send_data;
             @(transmission_done);
