@@ -15,7 +15,6 @@
 `timescale 10 ns / 1 ns
 
 module sigma_delta_modulator #(
-    parameter N_CHANNELS = 2,
     INPUT_WIDTH = 16
 )(
     input wire clock,
@@ -24,7 +23,10 @@ module sigma_delta_modulator #(
     output reg data_out,
     axi_stream.slave data_in
 );
-    parameter [INPUT_WIDTH-1:0] REFERENCE = 1<<INPUT_WIDTH-1;
+
+    localparam signed [INPUT_WIDTH-1:0] REFERENCE_P = {1'b0, {(INPUT_WIDTH-1){1'b1}}};
+    localparam signed [INPUT_WIDTH-1:0] REFERENCE_N = -REF_POS;
+    
     reg modulator_clock_delay;
     reg signed [INPUT_WIDTH-1:0] latched_input = 0;
     reg signed [INPUT_WIDTH+4:0] integrator_1 = 0;
@@ -32,10 +34,9 @@ module sigma_delta_modulator #(
     reg signed [INPUT_WIDTH+4:0] comparator_in = 0;
     wire signed [INPUT_WIDTH-1:0] feedback;
 
+    assign feedback = data_out ? REFERENCE_P : REFERENCE_N;
 
-    assign feedback = comparator_in > REFERENCE ? REFERENCE : 0;
-
-    assign data_out = comparator_in > REFERENCE;
+    assign data_out = comparator_in > 0;
 
     assign data_in.ready = 1;
 
@@ -43,9 +44,9 @@ module sigma_delta_modulator #(
         if(data_in.valid) latched_input <= data_in.data;
         modulator_clock_delay <= modulator_clock;
         if(modulator_clock & ~modulator_clock_delay)begin
-            integrator_1 <= latched_input- feedback + integrator_1;
-            integrator_2 <= integrator_2 + integrator_1;
-            comparator_in <= integrator_1 + integrator_2 + latched_input;
+            integrator_1 <= integrator_1 +  latched_input- feedback;
+            integrator_2 <= integrator_2 + integrator_1 - feedback;
+            data_out <= integrator_2 >= 0;
         end
     end
 
