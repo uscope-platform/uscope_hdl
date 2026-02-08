@@ -28,13 +28,13 @@ module sigma_delta_modulator_tb();
     
     wire bitstream;
 
-    reg [3:0] clk_divider = 0;
+    reg [15:0] clk_divider = 0;
     always_ff @(posedge clock) begin
         if (!reset) begin
             clk_divider <= 0;
             control_clock <= 0;
         end else begin
-            if (clk_divider == 4) begin
+            if (clk_divider == 256) begin
                 clk_divider <= 0;
                 control_clock <= ~control_clock;
             end else begin
@@ -76,9 +76,8 @@ module sigma_delta_modulator_tb();
     real amplitude   = 32000;      
     real sine = 0;
     real phase = 0;
-
+    event test_start;
     initial begin
-        enable <= 1;
         data_in.initialize();
         reset <=1'h1;
         #10 reset <=1'h0;
@@ -86,7 +85,12 @@ module sigma_delta_modulator_tb();
         #20.5 reset <=1'h1;
 
         #50;
-        
+        ->test_start;       
+    end
+
+    initial begin
+        enable <= 1;
+        @(test_start);
         forever begin
             data_in.write($rtoi(sine), 1);
             sine = amplitude * $sin(phase);
@@ -98,10 +102,7 @@ module sigma_delta_modulator_tb();
 
             #20;
         end
-       
     end
-
-
 
 
 
