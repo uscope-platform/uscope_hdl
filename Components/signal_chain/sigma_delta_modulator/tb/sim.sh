@@ -1,14 +1,35 @@
 #!/bin/bash
 
+
+PROJ_ROOT=$(pwd)
+BUILD_DIR="$PROJ_ROOT/sim"
 TOP="sigma_delta_modulator_tb"
-INC_DIR="/home/vivado/hdl/public/Components/Common"
-OUT_DIR="sim_build"
+INC_DIR=$(realpath "../../Common/")
+SIM_FILE=$(realpath "tb/sim.tcl")
 
-rm -rf $OUT_DIR
-mkdir $OUT_DIR
 
-xvlog -sv /home/vivado/hdl/public/Components/Common/interfaces.sv rtl/*.sv tb/*.sv  -i $INC_DIR -log $OUT_DIR/compile.log
+# List of files to compile
+FILES=(
+    "../../Common/interfaces.sv"
+    "rtl/*.sv"
+    "tb/*.sv"
+    "../SigmaDeltaProcessor/rtl/*.sv"
+    "../../system/axi_lite/simple_register_cu/rtl/*.sv"
+    "../../system/axi_lite/skid_buffer/rtl/*.sv"
+    "../../system/axi_stream/combiner/rtl/*.sv"
+)
 
-xelab -debug typical -top $TOP -snapshot sim_snapshot -log $OUT_DIR/elab.log
+FILES_EXPANDED=$(realpath ${FILES[@]})
 
-xsim sim_snapshot -tclbatch tb/sim.tcl
+mkdir -p $BUILD_DIR
+(
+    cd "$BUILD_DIR" || exit
+
+    xvlog -sv $FILES_EXPANDED -i $INC_DIR
+
+    xelab -debug typical -top $TOP -snapshot sim_snapshot  -timescale 10ns/1ps
+
+    xsim sim_snapshot -tclbatch $SIM_FILE 
+
+)
+

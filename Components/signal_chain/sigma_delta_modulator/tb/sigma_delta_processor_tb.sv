@@ -18,7 +18,7 @@
 
 module sigma_delta_modulator_tb();
 
-    reg  clock, modulator_clock, reset;
+    reg  clock, control_clock, reset, enable, modulation_clock;
 
     always begin
         clock = 1'b1;
@@ -32,11 +32,11 @@ module sigma_delta_modulator_tb();
     always_ff @(posedge clock) begin
         if (!reset) begin
             clk_divider <= 0;
-            modulator_clock <= 0;
+            control_clock <= 0;
         end else begin
             if (clk_divider == 4) begin
                 clk_divider <= 0;
-                modulator_clock <= ~modulator_clock;
+                control_clock <= ~control_clock;
             end else begin
                 clk_divider <= clk_divider + 1;
             end
@@ -50,9 +50,26 @@ module sigma_delta_modulator_tb();
     )UUT(
         .clock(clock),
         .reset(reset),
-        .modulator_clock(modulator_clock),
+        .modulator_clock(modulation_clock),
         .data_out(bitstream),
         .data_in(data_in)
+    );
+
+    axi_lite ctrl();
+    axi_stream ctrl_out();
+
+
+    sigma_delta_processor #(
+        .N_CHANNELS(1)
+    ) processor (
+        .clock(clock),
+        .reset(reset),
+        .enable(enable),
+        .data_in(bitstream),
+        .clock_out(modulation_clock),
+        .sync(control_clock),
+        .data_out(ctrl_out),
+        .axi_in(ctrl)
     );
 
     // 1kHz Sine Generation for Testbench
@@ -61,6 +78,7 @@ module sigma_delta_modulator_tb();
     real phase = 0;
 
     initial begin
+        enable <= 1;
         data_in.initialize();
         reset <=1'h1;
         #10 reset <=1'h0;
