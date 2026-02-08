@@ -33,3 +33,5 @@ mkdir -p $BUILD_DIR
 
 )
 
+mv $BUILD_DIR/dump.vcd .
+rm -r $BUILD_DIR

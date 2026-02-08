@@ -48,11 +48,14 @@ module sigma_delta_modulator #(
        integrate_2 = 2,
        bit_output = 3
     } modulator_state = idle;
- 
-
+    
     always_ff @(posedge clock) begin
         if(~reset)begin
+            latched_input <= 0;
             data_out <= 0;
+            integrator_1 <= 0;
+            integrator_2 <= 0;
+            comparator_in <= 0;
         end else begin
             modulator_clock_delay <= modulator_clock;
             if(data_in.valid) latched_input <= data_in.data;

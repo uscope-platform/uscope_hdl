@@ -34,9 +34,10 @@ module sigma_delta_modulator_tb();
             clk_divider <= 0;
             control_clock <= 0;
         end else begin
+            control_clock <= 0;
             if (clk_divider == 256) begin
                 clk_divider <= 0;
-                control_clock <= ~control_clock;
+                control_clock <= 1;
             end else begin
                 clk_divider <= clk_divider + 1;
             end
@@ -56,7 +57,7 @@ module sigma_delta_modulator_tb();
     );
 
     axi_lite ctrl();
-    axi_stream ctrl_out();
+    axi_stream #(.DATA_WIDTH(16)) ctrl_out();
 
 
     sigma_delta_processor #(
