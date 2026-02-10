@@ -28,7 +28,7 @@ module sigma_delta_modulator #(
 
     localparam signed [INPUT_WIDTH-1:0] REFERENCE_P = {1'b0, {(INPUT_WIDTH-1){1'b1}}};
     localparam signed [INPUT_WIDTH-1:0] REFERENCE_N = -REFERENCE_P;
-    
+
     reg modulator_clock_delay;
     reg signed [INPUT_WIDTH-1:0] latched_input = 0;
     reg signed [INPUT_WIDTH+GUARD_BITS-1:0] integrator_1 = 0;

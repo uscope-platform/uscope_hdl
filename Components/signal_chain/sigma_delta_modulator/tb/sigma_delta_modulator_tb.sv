@@ -25,7 +25,7 @@ module sigma_delta_modulator_tb();
         #0.5 clock = 1'b0;
         #0.5;
     end
-    
+
     wire bitstream;
 
     reg [15:0] clk_divider = 0;
@@ -74,7 +74,7 @@ module sigma_delta_modulator_tb();
     );
 
     // 1kHz Sine Generation for Testbench
-    real amplitude   = 32000;      
+    real amplitude   = 32000;
     real sine = 0;
     real phase = 0;
     event test_start;
@@ -86,7 +86,7 @@ module sigma_delta_modulator_tb();
         #20.5 reset <=1'h1;
 
         #50;
-        ->test_start;       
+        ->test_start;
     end
 
     initial begin
@@ -96,8 +96,7 @@ module sigma_delta_modulator_tb();
             data_in.write($rtoi(sine), 1);
             sine = amplitude * $sin(phase);
             // Explicitly increment phase by the constant step
-            phase = phase + 0.001256637; 
-            
+            phase = phase + 0.001256637;
             // Keep phase bounded to prevent eventual overflow (though not your current issue)
             if (phase >= 6.283185) phase = phase - 6.283185;
 
