@@ -35,6 +35,7 @@ module axis_multichannel_combiner #(
     generate
         for (i =0 ; i<N_CHANNELS; i++) begin
             always_ff @(posedge clock)begin
+                data_in[i].ready <= 1;
                 if(data_in[i].valid)begin
                     latched_data[i] <= data_in[i].data;
                     latched_dest[i] <= data_in[i].dest;
@@ -42,12 +43,12 @@ module axis_multichannel_combiner #(
                 end
             end
         end
-        
+
     endgenerate
 
     reg [$clog2(N_CHANNELS)-1:0]outputs_counter = 0;
 
-    enum reg [2:0] { 
+    enum reg [2:0] {
         init_output = 0,
         wait_data = 1,
         combining = 2

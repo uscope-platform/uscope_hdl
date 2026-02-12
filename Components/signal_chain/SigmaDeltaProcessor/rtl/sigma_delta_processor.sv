@@ -59,10 +59,10 @@ module sigma_delta_processor #(
 
     reg [31:0] cu_write_registers [N_REGISTERS-1:0];
     reg [31:0] cu_read_registers [N_REGISTERS-1:0];
-    
+
 
     localparam [31:0] INIT_VAL [N_REGISTERS-1:0] = '{default:0};
-    
+
     axil_simple_register_cu #(
         .N_READ_REGISTERS(N_REGISTERS),
         .N_WRITE_REGISTERS(N_REGISTERS),
@@ -84,7 +84,7 @@ module sigma_delta_processor #(
     wire signed [31:0] high_tresholds [N_CHANNELS-1:0];
     wire signed [31:0] low_tresholds [N_CHANNELS-1:0];
     wire [31:0] offsets [N_CHANNELS-1:0];
-    
+
     genvar n;
     generate
         for(n=0; n<N_CHANNELS; n = n+1)begin
@@ -109,7 +109,7 @@ module sigma_delta_processor #(
     localparam [7:0] comparator_filter_resolution = filter_width_map[comparator_clock_selector];
     localparam [7:0] comparator_result_resolution = output_width_map[comparator_clock_selector];
     localparam [7:0] comparator_output_shift = output_shift_map[comparator_clock_selector];
-    
+
     wire main_sampling_clock, comparator_sampling_clock;
 
 
@@ -139,6 +139,8 @@ module sigma_delta_processor #(
     wire [N_CHANNELS-1:0] high_faults;
     wire [N_CHANNELS-1:0] low_faults;
 
+    reg [31:0] sim_vis_currents[N_CHANNELS-1:0] = '{default:0};
+
     generate
         for (i = 0; i<N_CHANNELS; i++) begin
             sigma_delta_channel #(
@@ -158,11 +160,16 @@ module sigma_delta_processor #(
                 .output_clock(main_sampling_clock),
                 .data_out(main_data_out[i])
             );
+
+            always_ff @( posedge clock ) begin : blockName
+                if(main_data_out[i].valid)
+                    sim_vis_currents[i] <= main_data_out[i].data;
+            end
         end
-        
+
     if(comparator_enabled)begin
 
-      
+
         for (i = 0; i<N_CHANNELS; i++) begin
             sigma_delta_channel #(
                 .PROCESSING_RESOLUTION(comparator_filter_resolution),
@@ -181,16 +188,16 @@ module sigma_delta_processor #(
                 .output_clock(comparator_sampling_clock),
                 .data_out(comparator_data_out[i])
             );
-            
+
             assign channel_faults[i] = high_faults[i] | low_faults[i];
         end
 
-        
+
     end
 
     endgenerate
 
-    
+
     /////////////////////////////////////////////////////////////////////
     //             COMPARATORS AND OUTPUT SECTION                      //
     /////////////////////////////////////////////////////////////////////
@@ -249,5 +256,5 @@ endmodule
                 "fields":[]
             }
         ]
-    }   
+    }
  **/

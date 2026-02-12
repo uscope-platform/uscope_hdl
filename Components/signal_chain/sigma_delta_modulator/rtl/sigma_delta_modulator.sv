@@ -41,14 +41,14 @@ module sigma_delta_modulator #(
 
     assign data_in.ready = 1;
 
-    
+
     enum logic [1:0] {
        idle = 0,
        integrate_1 = 1,
        integrate_2 = 2,
        bit_output = 3
     } modulator_state = idle;
-    
+
     always_ff @(posedge clock) begin
         if(~reset)begin
             latched_input <= 0;
