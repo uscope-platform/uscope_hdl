@@ -307,6 +307,7 @@ package reg_maps;
         int ch_6 = 'h18;
     } uscope_mux;
 
+
     struct {
         int n_ch = 0;
         int buffer_fill_data = 4;
@@ -345,47 +346,11 @@ package reg_maps;
         int user_15 = 'h88;
     } axis_dynamic_dma_regs;
 
-    struct {
-        int tresh_0l = 0;
-        int tresh_1l = 'h4;
-        int tresh_2l = 'h8;
-        int tresh_3l = 'hC;
-        int tresh_4l = 'h10;
-        int tresh_5l = 'h14;
-        int tresh_6l = 'h18;
-        int tresh_7l = 'h1c;
-        int tresh_8l = 'h20;
-        int tresh_9l = 'h24;
-        int tresh_10l = 'h28;
-        int tresh_11l = 'h2c;
-
-        int tresh_0h = 'h30;
-        int tresh_1h = 'h34;
-        int tresh_2h = 'h38;
-        int tresh_3h = 'h3C;
-        int tresh_4h = 'h40;
-        int tresh_5h = 'h44;
-        int tresh_6h = 'h48;
-        int tresh_7h = 'h4c;
-        int tresh_8h = 'h50;
-        int tresh_9h = 'h54;
-        int tresh_10h= 'h58;
-        int tresh_11h = 'h5c;
-
-
-        int offset_0 = 'h60;
-        int offset_1 = 'h64;
-        int offset_2 = 'h68;
-        int offset_3 = 'h6C;
-        int offset_4 = 'h70;
-        int offset_5 = 'h74;
-        int offset_6 = 'h78;
-        int offset_7 = 'h7c;
-        int offset_8 = 'h80;
-        int offset_9 = 'h84;
-        int offset_10 = 'h88;
-        int offset_11 = 'h8c;
-    } sd_filter_12;
+    class sd_filter #(parameter int NUM = 12);
+        static function int tresh_l(int i); return i * 4; endfunction
+        static function int tresh_h(int i); return (NUM + i) * 4; endfunction
+        static function int offset(int i); return (2*NUM + i) * 4; endfunction
+    endclass
 
     struct {
         int slow_tresh_low = 0;

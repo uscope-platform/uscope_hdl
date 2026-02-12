@@ -69,6 +69,7 @@ interface axi_stream #(DATA_WIDTH = 32, USER_WIDTH = 32, DEST_WIDTH = 32, CLOCK_
         dest <= destination;
         wait(ready) valid <= 1'b1;
         #(CLOCK_PERIOD) valid <= 1'b0;
+        wait(ready==1);
     endtask
 
     task write (input logic [31:0] wr_data);
@@ -77,6 +78,7 @@ interface axi_stream #(DATA_WIDTH = 32, USER_WIDTH = 32, DEST_WIDTH = 32, CLOCK_
             data <= wr_data;
             valid <= 1;
             #(CLOCK_PERIOD) valid <= 0;
+            wait(ready==1);
         end;
     endtask
 
