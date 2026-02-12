@@ -62,7 +62,7 @@ module SPI_master #(
 
     assign data_out = cu_in;
     assign data_valid = transfer_done;
-    
+
     enable_generator_core ENG(
         .clock(clock),
         .reset(reset),
@@ -80,8 +80,8 @@ module SPI_master #(
         .dividerSetting(divider_setting),
         .timebaseOut(clock_cont)
     );
-    
-    
+
+
     assign clockgen_out = clock_cont & enable_clockgen;
 
     always@(posedge clock)begin
@@ -119,7 +119,7 @@ module SPI_master #(
             );
         end
     endgenerate
-    
+
 
     TransferEngine #(
         .N_CHANNELS(N_CHANNELS),

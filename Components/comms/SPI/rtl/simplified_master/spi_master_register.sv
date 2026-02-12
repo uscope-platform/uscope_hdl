@@ -16,8 +16,9 @@
 
 `timescale 10 ns / 1 ns
 
-module spi_slave_register #(
+module spi_master_register #(
     parameter int REGISTERS_WIDTH=16,
+    int N_CHANNELS=16,
     int OUTPUT_WIDTH = 32
 )(
     input wire clock,
@@ -26,26 +27,26 @@ module spi_slave_register #(
     input wire SS,
     input wire MOSI,
     output reg MISO,
-    output reg slave_clock,
     input wire [7:0] spi_transfer_length,
     input wire clock_polarity,
     input wire latching_edge,
     input wire msb_first,
     input wire ss_polarity,
-    input wire enable,
-    axi_stream.slave data_in,
-    axi_stream.master data_out
+    input wire start,
+    output reg done,
+    input wire [REGISTERS_WIDTH-1:0] data_in[N_CHANNELS-1:0],
+    input reg [REGISTERS_WIDTH-1:0] data_out[N_CHANNELS-1:0]
 );
 
     function automatic [OUTPUT_WIDTH-1:0] invert_word(
-        input [REGISTERS_WIDTH-1:0] data_in,
+        input [REGISTERS_WIDTH-1:0] data,
         input [7:0] length
     );
         integer i;
         begin
         invert_word = 0;
             for (i = 0; i < length; i = i + 1) begin
-                invert_word[i] = data_in[length-1- i];
+                invert_word[i] = data[length-1- i];
             end
         end
     endfunction
@@ -83,22 +84,15 @@ module spi_slave_register #(
     end
 
     initial begin
-        data_out.data <= 0;
-        data_out.valid <= 0;
-        data_out.dest <= 0;
-        data_out.user <= 0;
-        data_out.tlast <= 0;
+        data_out = '{default:0};
     end
 
 
     enum logic [1:0] {
         spi_idle = 0,
-        spi_transfer = 1,
-        spi_wait_deassert = 2
+        spi_transfer = 1
     } state = spi_idle;
 
-
-    reg [REGISTERS_WIDTH-1:0] latched_data_in = 0;
 
     wire current_miso;
     assign current_miso = transmission_register[transfer_counter];
@@ -108,64 +102,23 @@ module spi_slave_register #(
     always_ff @(posedge clock) begin
         if(~reset) begin
             MISO <= 0;
-            slave_clock <= 0;
         end
         sclk_del <= inner_sclk;
         ss_polarity_del <= ss_polarity;
-        data_out.valid <= 0;
         ss_del <= inner_ss;
         case (state)
             spi_idle: begin
-                if(data_in.valid) begin
-                    latched_data_in <= data_in.data;
-                end
-                if(enable)begin
-                    if(inner_ss && ~ss_del && ~(ss_polarity_del ^ ss_polarity)) begin
-                        state <= spi_transfer;
-                        ss_active <= 1;
-                        spi_register <= 0;
-                        transfer_counter <= 0;
-                        slave_clock <= 1;
-                        if(msb_first) begin
-                            transmission_register <= invert_word(latched_data_in, spi_transfer_length);
-                            MISO <= latched_data_in[spi_transfer_length-1];
-                        end else begin
-                            transmission_register <= latched_data_in;
-                            MISO <= latched_data_in[0];
-                        end
-                    end
+                if(start)begin
+                    state <= spi_transfer;
                 end
             end
             spi_transfer: begin
                 if(inner_sclk & ~sclk_del) begin
                     if(transfer_counter == spi_transfer_length-1) begin
-                        state <= spi_wait_deassert;
+                        state <= spi_idle;
                     end
                     transfer_counter <= transfer_counter +1;
-                    spi_register[transfer_counter] <= MOSI;
                 end
-                if(~inner_sclk & sclk_del) begin
-                    slave_clock <= 1;
-                    MISO <= current_miso;
-                end
-                if(inner_sclk & ~sclk_del) begin
-                    slave_clock <= 0;
-                end
-            end
-            spi_wait_deassert: begin
-            if(~inner_ss && ss_del) begin
-                if(msb_first)begin
-                    data_out.data <= invert_word(spi_register,spi_transfer_length);
-                end else begin
-                    data_out.data <= spi_register;
-                end
-
-                data_out.valid <= 1;
-                state <= spi_idle;
-                ss_active <= 0;
-                transfer_counter <= spi_transfer_length-1;
-                spi_register <= '0;
-            end
             end
         endcase
     end

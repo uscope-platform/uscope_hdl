@@ -58,7 +58,7 @@ module ClockGen (
     assign sync = internal_sync;
 
     always@(*) begin
-		timebases[0]<=clockIn;
+    timebases[0]<=clockIn;
         // Clock/4 generation
         if (count4==1 | count4==2) begin
             timebases[2]<=1'b1;
@@ -84,7 +84,7 @@ module ClockGen (
             timebases[5]<=1'b0;
         end
     end
-    
+
     always @(posedge clockIn) begin
         if(enable & ~running) begin
             justEnabled <= 1'b1;
@@ -123,10 +123,10 @@ module ClockGen (
                     end
                 default:  state <= S0;
             endcase
-        end 
+        end
     end
 
-  
+
     always @ (*) begin
         if(~reset) begin
             int_timebase <=1'b0;
@@ -138,20 +138,20 @@ module ClockGen (
                         int_timebase <= timebases[dividerSetting];
                     end else begin
                         int_timebase <= 1'b0;
-						running <= 1'b0;
+                        running <= 1'b0;
                     end
                 S1: if(running & enable) begin
-						running <= 1'b1;
+                        running <= 1'b1;
                         int_timebase <= timebases[dividerSetting];
                     end else begin
-						running <= 1'b1;
+                        running <= 1'b1;
                         int_timebase <= 1'b0;
                     end
                 S2: if (~enable) begin
                         running <=1'b0;
                         int_timebase <= 1'b0;
                     end else begin
-					    running <=1'b0;
+                        running <=1'b0;
                         int_timebase <= 1'b0;
                     end
                 default:begin
