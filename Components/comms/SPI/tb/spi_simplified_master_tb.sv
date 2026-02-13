@@ -29,7 +29,7 @@ module spi_simplified_master_tb();
 
     initial clock = 1;
     always #0.5 clock = ~clock;
-    event reset_done;
+    event reset_done, config_done;
 
     axi_lite ctrl_axi();
     axi_stream spi_in();
@@ -54,15 +54,29 @@ module spi_simplified_master_tb();
 
 
     initial begin
+        ctrl_axi.initialize_master();
         reset <=1;
         #3 reset<=0;
         #5 reset <=1;
         ->reset_done;
+        #10;
+        ctrl_axi.write(0, 0);
+        ctrl_axi.write(4, 'h20002);
+        ctrl_axi.write(8, 16);
+        ->config_done;
     end
 
     initial begin
+        spi_in.initialize();
+        spi_out.ready <= 1;
         miso <= 0;
-        @(reset_done);
+        @(config_done);
+        spi_in.write_dest(0, 'hCAFE);
+        spi_in.write_dest(1, 'hBEBE);
+        spi_in.write_dest(2, 'hDEAD);
+        spi_in.tlast <= 1;
+        spi_in.write_dest(3, 'hBEAF);
+        spi_in.tlast <= 0;
     end
 
 

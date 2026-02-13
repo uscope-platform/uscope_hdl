@@ -103,6 +103,7 @@ module spi_master_register #(
         if(~reset) begin
             MISO <= 0;
         end
+        done <=0;
         sclk_del <= inner_sclk;
         ss_polarity_del <= ss_polarity;
         ss_del <= inner_ss;
@@ -116,6 +117,7 @@ module spi_master_register #(
                 if(inner_sclk & ~sclk_del) begin
                     if(transfer_counter == spi_transfer_length-1) begin
                         state <= spi_idle;
+                        done <= 1;
                     end
                     transfer_counter <= transfer_counter +1;
                 end

@@ -27,7 +27,7 @@ module spi_simplified_master#(
     input wire [N_CHANNELS-1:0] miso,
     output wire sclk,
     output reg [N_CHANNELS-1:0] mosi,
-    output reg [N_CHANNELS-1:0] ss,
+    output reg ss,
 
     axi_lite.slave axi_in,
     axi_stream.slave spi_data_in,
@@ -35,8 +35,8 @@ module spi_simplified_master#(
 );
 
 
-    wire [15:0] assert_delay = 0;
-    wire [15:0] deassert_delay = 0;
+    wire [15:0] assert_delay;
+    wire [15:0] deassert_delay;
     wire [7:0] spi_divider;
     wire ss_polarity, sclk_polarity, latching_edge, msb_first;
     wire [7:0] transfer_length;
@@ -57,28 +57,28 @@ module spi_simplified_master#(
 
 
     assign spi_divider = cu_registers[0][7:0];
-    assign assert_delay = cu_registers[1][15:0];
     assign ss_polarity = cu_registers[0][8];
     assign sclk_polarity = cu_registers[0][9];
     assign latching_edge = cu_registers[0][10];
     assign msb_first = cu_registers[0][11];
-    assign deassert_delay = cu_registers[1][31:16];
+    assign assert_delay = cu_registers[1][15:0];
     assign deassert_delay = cu_registers[1][31:16];
     assign transfer_length = cu_registers[2];
 
 
     reg inner_ss = 0;
+    reg sclk_enable = 0;
     reg generated_sclk = 0;
 
 
-    assign sclk = sclk_polarity ? ~generated_sclk : generated_sclk;
-    assign ss = ss_polarity ? ~inner_ss : inner_ss;
+    assign sclk = sclk_polarity ? ~(generated_sclk & sclk_enable): (generated_sclk & sclk_enable);
+    assign ss = ss_polarity ? ~inner_ss  : inner_ss;
 
     /////////////////////////////////////////////////////////
     //         Input latching and input control            //
     /////////////////////////////////////////////////////////
     initial begin
-        spi_data_in.ready = 0;
+        spi_data_in.ready = 1;
     end
 
     reg[REGISTERS_WIDTH-1:0] transmit_data [N_CHANNELS-1:0] = '{default:0};
@@ -138,6 +138,7 @@ module spi_simplified_master#(
     reg [15:0] ss_delay_ctr = 0;
 
     always_ff @(posedge clock)begin
+        transmission_done <= 0;
         case(spi_state)
         idle: begin
             if(transmission_start)begin
@@ -146,9 +147,10 @@ module spi_simplified_master#(
             end
         end
         wait_ss_assert:begin
-            if(ss_delay_ctr == assert_delay-1)begin
+            if((ss_delay_ctr == assert_delay-1) || (assert_delay  == 0))begin
                 spi_state <= transfer;
                 start_register<= 1;
+                sclk_enable <= 1;
                 ss_delay_ctr <= 0;
             end else begin
                 ss_delay_ctr <= ss_delay_ctr + 1;
@@ -156,11 +158,16 @@ module spi_simplified_master#(
         end
         transfer:begin
             start_register<= 0;
+            if(register_done) begin
+                sclk_enable <= 0;
+                spi_state <= wait_ss_deassert;
+            end
         end
         wait_ss_deassert:begin
-            if(ss_delay_ctr == assert_delay-1)begin
+            if((ss_delay_ctr == assert_delay-1) || (assert_delay  == 0))begin
                 spi_state <= idle;
                 inner_ss <= 0;
+                transmission_done <=1;
                 ss_delay_ctr <= 0;
             end else begin
                 ss_delay_ctr <= ss_delay_ctr + 1;
