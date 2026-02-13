@@ -15,7 +15,7 @@
 `ifndef INTERFACES_SV
 `define INTERFACES_SV
 
-interface axi_lite #(DATA_WIDTH = 32, ADDR_WIDTH = 32, INTERFACE_NAME = "IF");
+interface axi_lite #(DATA_WIDTH = 32, ADDR_WIDTH = 32, INTERFACE_NAME = "IF", CLOCK_PERIOD = 1);
     logic [ADDR_WIDTH-1:0] ARADDR;
     logic [2:0] ARPROT;
     logic ARREADY;
@@ -37,10 +37,73 @@ interface axi_lite #(DATA_WIDTH = 32, ADDR_WIDTH = 32, INTERFACE_NAME = "IF");
     logic [DATA_WIDTH/8-1:0] WSTRB;
     logic [ADDR_WIDTH-1:0] BASE_ADDRESS;
 
-    modport master (input AWREADY, WREADY, BRESP, BVALID, ARREADY, RDATA, RRESP, RVALID, 
-    output AWADDR, AWPROT, AWVALID, WDATA, WVALID, WSTRB, BREADY, ARADDR, ARPROT, ARVALID, RREADY, BASE_ADDRESS);
+    modport master (input AWREADY, WREADY, BRESP, BVALID, ARREADY, RDATA, RRESP, RVALID,
+    output AWADDR, AWPROT, AWVALID, WDATA, WVALID, WSTRB, BREADY, ARADDR, ARPROT, ARVALID, RREADY, BASE_ADDRESS,
+    import read, write, initialize_master, initialize_slave);
     modport slave (output AWREADY, WREADY, BRESP, BVALID, ARREADY, RDATA, RRESP, RVALID,
-    input AWADDR, AWPROT, AWVALID, WDATA, WVALID, WSTRB, BREADY, ARADDR, ARPROT, ARVALID, RREADY, BASE_ADDRESS);
+    input AWADDR, AWPROT, AWVALID, WDATA, WVALID, WSTRB, BREADY, ARADDR, ARPROT, ARVALID, RREADY, BASE_ADDRESS,
+    import read, write, initialize_master, initialize_slave);
+
+    task initialize_master();
+        AWADDR = 0;
+        AWPROT = 0;
+        AWVALID = 0;
+        WDATA = 0;
+        WVALID = 0;
+        WSTRB = 0;
+        BREADY = 0;
+        ARADDR = 0;
+        ARPROT = 0;
+        ARVALID = 0;
+        RREADY = 0;
+    endtask
+
+    task initialize_slave();
+        AWREADY = 0;
+        WREADY = 0;
+        BRESP = 0;
+        BVALID = 0;
+        ARREADY = 0;
+        RDATA = 0;
+        RRESP = 0;
+        RVALID = 0;
+    endtask
+
+
+    task write(input logic [ADDR_WIDTH-1:0] address, input logic [DATA_WIDTH-1:0] data);
+
+        AWADDR <= address;
+        AWVALID <= 1;
+        #(CLOCK_PERIOD);
+        AWVALID <= 0;
+        WDATA <= data;
+        WVALID <= 1;
+        WSTRB <= 'hF;
+        #(CLOCK_PERIOD);
+        BREADY <= 1;
+
+        WVALID <= 0;
+
+        AWADDR <= 0;
+        WDATA <= 0;
+        WSTRB <= 0;
+        @(BVALID);
+        #(CLOCK_PERIOD);
+    endtask
+
+    task  read(input logic [ADDR_WIDTH-1:0] address, output logic [DATA_WIDTH-1:0] data);
+        ARADDR <= address;
+        ARVALID <= 1;
+        RREADY <= 1;
+        wait(ARREADY);
+        #(CLOCK_PERIOD);
+        ARVALID <= 0;
+        wait(RVALID);
+        #(CLOCK_PERIOD);
+        data = RDATA;
+
+        RREADY <= 0;
+    endtask
 
 endinterface
 
