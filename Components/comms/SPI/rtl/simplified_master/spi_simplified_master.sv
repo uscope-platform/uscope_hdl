@@ -38,7 +38,7 @@ module spi_simplified_master#(
     wire [15:0] assert_delay;
     wire [15:0] deassert_delay;
     wire [7:0] spi_divider;
-    wire ss_polarity, sclk_polarity, latching_edge, msb_first;
+    wire ss_polarity, sclk_polarity, latching_edge, lsb_first;
     wire [7:0] transfer_length;
     wire [31:0] cu_registers [N_CHANNELS-1:0];
 
@@ -60,7 +60,7 @@ module spi_simplified_master#(
     assign ss_polarity = cu_registers[0][8];
     assign sclk_polarity = cu_registers[0][9];
     assign latching_edge = cu_registers[0][10];
-    assign msb_first = cu_registers[0][11];
+    assign lsb_first = cu_registers[0][11];
     assign assert_delay = cu_registers[1][15:0];
     assign deassert_delay = cu_registers[1][31:16];
     assign transfer_length = cu_registers[2];
@@ -81,26 +81,32 @@ module spi_simplified_master#(
         spi_data_in.ready = 1;
     end
 
+    wire register_done;
+
     reg[REGISTERS_WIDTH-1:0] transmit_data [N_CHANNELS-1:0] = '{default:0};
     wire[REGISTERS_WIDTH-1:0] received_data [N_CHANNELS-1:0];
-    reg transmission_start, transmission_done;
-
+    reg transmission_start = 0;
+    reg transmission_done = 0;
+    reg to_start = 0;
     always_ff @(posedge clock)begin
         transmission_start <= 0;
         if(spi_data_in.valid)begin
             transmit_data[spi_data_in.dest] <= spi_data_in.data;
             if(spi_data_in.tlast)begin
-                transmission_start<=1;
+                to_start<=1;
                 spi_data_in.ready <= 0;
             end
         end
-        if(transmission_done)begin
+        if(register_done)begin
             spi_data_in.ready <= 1;
+        end
+        if(to_start & ~generated_sclk)begin
+            transmission_start <= 1;
+            to_start <= 0;
         end
     end
 
     reg start_register = 0;
-    wire register_done;
 
     spi_master_register #(
         .REGISTERS_WIDTH(16),
@@ -109,16 +115,17 @@ module spi_simplified_master#(
     )shrs(
         .clock(clock),
         .reset(reset),
-        .SCLK(sclk),
-        .SS(ss),
-        .MOSI(mosi),
-        .MISO(miso),
+        .sclk(generated_sclk),
+        .mosi(mosi),
+        .miso(miso),
+        .ss_delay({deassert_delay, assert_delay}),
+        .ss(inner_ss),
+        .sclk_enable(sclk_enable),
         .spi_transfer_length(transfer_length),
         .clock_polarity(sclk_polarity),
         .latching_edge(latching_edge),
-        .msb_first(msb_first),
-        .ss_polarity(ss_polarity),
-        .start(start_register),
+        .lsb_first(lsb_first),
+        .start(transmission_start),
         .done(register_done),
         .data_in(transmit_data),
         .data_out(received_data)
@@ -134,47 +141,6 @@ module spi_simplified_master#(
         transfer = 2,
         wait_ss_deassert =3
     } spi_state = idle;
-
-    reg [15:0] ss_delay_ctr = 0;
-
-    always_ff @(posedge clock)begin
-        transmission_done <= 0;
-        case(spi_state)
-        idle: begin
-            if(transmission_start)begin
-                spi_state <= wait_ss_assert;
-                inner_ss <= 1;
-            end
-        end
-        wait_ss_assert:begin
-            if((ss_delay_ctr == assert_delay-1) || (assert_delay  == 0))begin
-                spi_state <= transfer;
-                start_register<= 1;
-                sclk_enable <= 1;
-                ss_delay_ctr <= 0;
-            end else begin
-                ss_delay_ctr <= ss_delay_ctr + 1;
-            end
-        end
-        transfer:begin
-            start_register<= 0;
-            if(register_done) begin
-                sclk_enable <= 0;
-                spi_state <= wait_ss_deassert;
-            end
-        end
-        wait_ss_deassert:begin
-            if((ss_delay_ctr == assert_delay-1) || (assert_delay  == 0))begin
-                spi_state <= idle;
-                inner_ss <= 0;
-                transmission_done <=1;
-                ss_delay_ctr <= 0;
-            end else begin
-                ss_delay_ctr <= ss_delay_ctr + 1;
-            end
-        end
-        endcase
-    end
 
 
     /////////////////////////////////////////////////////////

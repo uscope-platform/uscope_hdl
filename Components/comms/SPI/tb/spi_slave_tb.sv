@@ -133,7 +133,7 @@ module spi_slave_tb();
         mosi[channel] = pattern[transfer_length-1];
 
         enable_sclk = 1;
-        
+
         spi_cov.sample();
         for (int i = 0; i < transfer_length; i++) begin
             if(latching_edge  == 0)begin
@@ -337,7 +337,7 @@ module spi_slave_tb();
             end
             $finish;
 
-        
+
 
     end
 

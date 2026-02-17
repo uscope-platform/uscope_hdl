@@ -60,23 +60,47 @@ module spi_simplified_master_tb();
         #5 reset <=1;
         ->reset_done;
         #10;
-        ctrl_axi.write(0, 0);
-        ctrl_axi.write(4, 'h20002);
+        ctrl_axi.write(0, 2);
+        ctrl_axi.write(4, 'h10001);
         ctrl_axi.write(8, 16);
         ->config_done;
     end
+
+    event transmission_start, transmission_done;
 
     initial begin
         spi_in.initialize();
         spi_out.ready <= 1;
         miso <= 0;
         @(config_done);
-        spi_in.write_dest(0, 'hCAFE);
-        spi_in.write_dest(1, 'hBEBE);
-        spi_in.write_dest(2, 'hDEAD);
-        spi_in.tlast <= 1;
-        spi_in.write_dest(3, 'hBEAF);
-        spi_in.tlast <= 0;
+        forever begin
+            spi_in.write_dest(0, 'hCAFE);
+            spi_in.write_dest(1, 'hBEBE);
+            spi_in.write_dest(2, 'hDEAD);
+            spi_in.tlast <= 1;
+            ->transmission_start;
+            spi_in.write_dest(3, 'hBEAF);
+            spi_in.tlast <= 0;
+            @(transmission_done);
+            #100;
+        end
+
+    end
+
+    reg [15:0] received_data [N_CHANNELS-1:0];
+    reg current_ss = 0;
+    always begin
+        @(transmission_start);
+        //current_ss = ss;
+        //wait(ss != current_ss);
+        @(posedge ss);
+        for(int i  = 0; i< 16; i++)begin
+            @(negedge sclk);
+            for(int j = 0; j < N_CHANNELS; j++)begin
+                received_data[j][15-i] = mosi[j];
+            end
+        end
+        ->transmission_done;
     end
 
 

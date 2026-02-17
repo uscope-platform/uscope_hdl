@@ -17,7 +17,7 @@
 `include "axis_BFM.svh"
 
 module SPI_tb();
-    
+
     logic clk, rst;
 
     logic mosi, sclk;
@@ -34,11 +34,10 @@ module SPI_tb();
     parameter spi_mode_master = 0, spi_mode_slave = 1;
 
     //clock generation
-    initial clk = 1; 
-    always #0.5 clk = ~clk; 
-    
+    initial clk = 1;
+    always #0.5 clk = ~clk;
 
-    
+
     // reset generation
     initial begin
         rst <=1;
@@ -47,7 +46,7 @@ module SPI_tb();
     end
 
     axi_lite axil();
-    
+
     axis_BFM write_BFM;
     axis_BFM read_req_BFM;
     axis_BFM read_resp_BFM;
@@ -81,7 +80,7 @@ module SPI_tb();
 
 
     initial begin
-        
+
         //TEST MASTER MODE
         #10 write_BFM.write_dest(32'h101c4, 32'h43C00000);
         #5 write_BFM.write_dest(32'h1c, 32'h43C00004);

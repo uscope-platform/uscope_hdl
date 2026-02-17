@@ -23,30 +23,34 @@ module spi_master_register #(
 )(
     input wire clock,
     input wire reset,
-    input wire SCLK,
-    input wire SS,
-    input wire MOSI,
-    output reg MISO,
+    input wire sclk,
+    input wire [N_CHANNELS-1:0] miso,
+    output reg [N_CHANNELS-1:0] mosi,
+    output reg sclk_enable,
+    output reg ss,
     input wire [7:0] spi_transfer_length,
+    input wire [31:0] ss_delay,
     input wire clock_polarity,
     input wire latching_edge,
-    input wire msb_first,
-    input wire ss_polarity,
+    input wire lsb_first,
     input wire start,
     output reg done,
     input wire [REGISTERS_WIDTH-1:0] data_in[N_CHANNELS-1:0],
     input reg [REGISTERS_WIDTH-1:0] data_out[N_CHANNELS-1:0]
 );
 
-    function automatic [OUTPUT_WIDTH-1:0] invert_word(
-        input [REGISTERS_WIDTH-1:0] data,
+    typedef logic [REGISTERS_WIDTH-1:0] io_bus_t [N_CHANNELS-1:0];
+    function io_bus_t invert_word(
+        input io_bus_t data,
         input [7:0] length
     );
-        integer i;
+        integer i, j;
         begin
-        invert_word = 0;
-            for (i = 0; i < length; i = i + 1) begin
-                invert_word[i] = data[length-1- i];
+            for(j = 0; j<N_CHANNELS; j++)begin
+                invert_word[j] = 0;
+                for (i = 0; i < length; i = i + 1) begin
+                    invert_word[j][i] = data[j][length-1- i];
+                end
             end
         end
     endfunction
@@ -55,31 +59,13 @@ module spi_master_register #(
 
     reg [REGISTERS_WIDTH-1:0] spi_register = '{default:0};
 
-    reg ss_active = 0;
-    reg ss_del = 0;
-
     reg inner_sclk, sclk_del;
-    reg inner_ss;
-    reg ss_polarity_del;
 
-    always_comb begin : io_conditioning
-        if(ss_polarity)begin
-            inner_ss= ~SS;
-        end else begin
-            inner_ss = SS;
-        end
-        if(clock_polarity) begin
-            if(latching_edge) begin // CPOL=1, CPHA=1
-                inner_sclk = ~SCLK;
-            end else begin // CPOL=1, CPHA=0
-                inner_sclk = SCLK;
-            end
-        end else begin
-            if(latching_edge) begin // CPOL=0, CPHA=1
-                inner_sclk = ~SCLK;
-            end else begin // CPOL=0, CPHA=0
-                inner_sclk = SCLK;
-            end
+    always_comb begin
+        if(latching_edge) begin // CPOL=0, CPHA=1
+            inner_sclk = ~sclk;
+        end else begin // CPOL=0, CPHA=0
+            inner_sclk = sclk;
         end
     end
 
@@ -88,38 +74,101 @@ module spi_master_register #(
     end
 
 
-    enum logic [1:0] {
+    enum logic [2:0] {
         spi_idle = 0,
-        spi_transfer = 1
+        spi_assert_delay = 1,
+        spi_enable_clock = 2,
+        spi_transfer = 3,
+        spi_disable_clock = 4,
+        spi_deassert_delay = 5
     } state = spi_idle;
 
+    reg [REGISTERS_WIDTH-1:0] transmission_register [N_CHANNELS-1:0] = '{default:0};
 
-    wire current_miso;
-    assign current_miso = transmission_register[transfer_counter];
+    reg current_mosi [N_CHANNELS-1:0];
+    genvar i;
+    generate
+        for ( i = 0; i<N_CHANNELS; i++) begin
+            assign current_mosi[i] = transmission_register[i][transfer_counter];
+        end
+    endgenerate
 
-    reg [REGISTERS_WIDTH-1:0] transmission_register;
+    wire [N_CHANNELS-1:0] first_mosi;
+    generate
+        for ( i = 0; i<N_CHANNELS; i++) begin
+            assign first_mosi[i] = lsb_first ? data_in[i][0] : data_in[i][spi_transfer_length-1];
+        end
+    endgenerate
+
+    reg [15:0] assert_counter = 0;
+
 
     always_ff @(posedge clock) begin
-        if(~reset) begin
-            MISO <= 0;
-        end
         done <=0;
         sclk_del <= inner_sclk;
-        ss_polarity_del <= ss_polarity;
-        ss_del <= inner_ss;
         case (state)
             spi_idle: begin
+                sclk_enable<= 0;
+                transfer_counter <= 0;
+                mosi <= '{default:0};
                 if(start)begin
+                    state <= spi_assert_delay;
+                    ss <=1;
+                    if(lsb_first) begin
+                        transmission_register <= data_in;
+                    end else begin
+                        transmission_register <= invert_word(data_in, spi_transfer_length);
+                    end
+                    mosi[0] <= first_mosi;
+                    mosi[1] <= first_mosi;
+                    mosi[2] <= first_mosi;
+                    mosi[3] <= first_mosi;
+                end
+            end
+            spi_assert_delay:begin
+                if(inner_sclk & ~sclk_del) begin
+                    if(assert_counter == ss_delay[15:0])begin
+                        state <= spi_enable_clock;
+                        assert_counter<= 0;
+                    end else begin
+                        assert_counter <= assert_counter+1;
+                    end
+                end
+            end
+            spi_enable_clock: begin
+                if(~inner_sclk & sclk_del)begin
+                    sclk_enable <= 1;
                     state <= spi_transfer;
                 end
             end
             spi_transfer: begin
                 if(inner_sclk & ~sclk_del) begin
+                    mosi[0] <= current_mosi[0];
+                    mosi[1] <= current_mosi[1];
+                    mosi[2] <= current_mosi[2];
+                    mosi[3] <= current_mosi[3];
                     if(transfer_counter == spi_transfer_length-1) begin
-                        state <= spi_idle;
-                        done <= 1;
+                        state <= spi_disable_clock;
                     end
                     transfer_counter <= transfer_counter +1;
+                end
+            end
+            spi_disable_clock: begin
+                if(~inner_sclk & sclk_del)begin
+                    sclk_enable <= 0;
+                    state <= spi_deassert_delay;
+                end
+            end
+            spi_deassert_delay: begin
+                if(inner_sclk & ~sclk_del) begin
+                    if(assert_counter == ss_delay[31:16])begin
+                        state <= spi_idle;
+                        ss <= 0;
+                        done <= 1;
+                        assert_counter<= 0;
+                    end else begin
+                        assert_counter <= assert_counter+1;
+                    end
                 end
             end
         endcase

@@ -17,7 +17,7 @@
 `include "SPI_BFM.svh"
 
 module SPI_bfm_tb();
-    
+
     logic clk, rst;
 
     event master_task_start;
