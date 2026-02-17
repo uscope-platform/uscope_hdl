@@ -54,7 +54,7 @@ module SPI_master #(
 
     assign chosen_spi_transfer_length = transfer_length_choice ? external_transfer_length : bus_transfer_length;
 
-    assign SCLK = generated_sclk; 
+    assign SCLK = generated_sclk;
 
     assign master_ss = register_enable & ~ss_blanking;
     assign transfer_start = int_transfer_start | internal_start;

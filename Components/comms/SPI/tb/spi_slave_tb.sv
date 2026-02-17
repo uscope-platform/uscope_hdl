@@ -43,13 +43,13 @@ module spi_slave_tb();
 
     covergroup spi_config_cg @(posedge clk);
 
-        coverpoint test_channel { 
-            bins channels[] = {[0:2]}; 
+        coverpoint test_channel {
+            bins channels[] = {[0:2]};
         }
 
         coverpoint test_config[0] { bins clock_idle[] = {0,1}; }
         coverpoint test_config[1] { bins latching_edge[] = {0,1}; }
-        coverpoint test_config[2] { bins ss_polarity[] = {0,1}; } 
+        coverpoint test_config[2] { bins ss_polarity[] = {0,1}; }
 
         // Cover width (8–16)
         coverpoint test_width {

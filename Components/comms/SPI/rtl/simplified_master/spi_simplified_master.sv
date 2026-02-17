@@ -25,7 +25,7 @@ module spi_simplified_master#(
     input wire reset,
 
     input wire [N_CHANNELS-1:0] miso,
-    output wire sclk,
+    output reg sclk,
     output reg [N_CHANNELS-1:0] mosi,
     output reg ss,
 
@@ -70,8 +70,10 @@ module spi_simplified_master#(
     reg sclk_enable = 0;
     reg generated_sclk = 0;
 
+    always_ff @(posedge clock)begin
+        sclk <= sclk_polarity ? ~(generated_sclk & sclk_enable): (generated_sclk & sclk_enable);
+    end
 
-    assign sclk = sclk_polarity ? ~(generated_sclk & sclk_enable): (generated_sclk & sclk_enable);
     assign ss = ss_polarity ? ~inner_ss  : inner_ss;
 
     /////////////////////////////////////////////////////////

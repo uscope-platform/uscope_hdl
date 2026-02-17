@@ -62,11 +62,7 @@ module spi_master_register #(
     reg inner_sclk, sclk_del;
 
     always_comb begin
-        if(latching_edge) begin // CPOL=0, CPHA=1
-            inner_sclk = ~sclk;
-        end else begin // CPOL=0, CPHA=0
-            inner_sclk = sclk;
-        end
+        inner_sclk = sclk;
     end
 
     initial begin
@@ -102,6 +98,8 @@ module spi_master_register #(
 
     reg [15:0] assert_counter = 0;
 
+    wire shift_event = ~inner_sclk & sclk_del;
+    wire latch_event = inner_sclk & ~sclk_del;
 
     always_ff @(posedge clock) begin
         done <=0;
@@ -136,7 +134,7 @@ module spi_master_register #(
                 end
             end
             spi_enable_clock: begin
-                if(~inner_sclk & sclk_del)begin
+                if(shift_event)begin
                     sclk_enable <= 1;
                     state <= spi_transfer;
                 end
@@ -154,7 +152,7 @@ module spi_master_register #(
                 end
             end
             spi_disable_clock: begin
-                if(~inner_sclk & sclk_del)begin
+                if(shift_event)begin
                     sclk_enable <= 0;
                     state <= spi_deassert_delay;
                 end

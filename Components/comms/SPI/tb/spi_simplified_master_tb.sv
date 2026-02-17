@@ -20,7 +20,7 @@ module spi_simplified_master_tb();
     logic clock, reset;
 
     localparam N_CHANNELS=4;
-    localparam  msb_first = 1;
+    localparam randomized_test = 1;
 
     wire [N_CHANNELS-1:0] mosi;
     wire sclk;
@@ -60,46 +60,95 @@ module spi_simplified_master_tb();
         #5 reset <=1;
         ->reset_done;
         #10;
-        ctrl_axi.write(0, 2);
-        ctrl_axi.write(4, 'h10001);
-        ctrl_axi.write(8, 16);
         ->config_done;
     end
 
     event transmission_start, transmission_done;
 
+    reg [15:0] sent_data [N_CHANNELS-1:0];
+
+    reg [15:0] ss_delay = 3;
+    reg [15:0] transfer_length = 16;
+    reg [7:0] spi_divider = 2;
+    reg ss_polarity = 0;
+    reg sclk_polarity = 0;
+    reg latching_edge = 0;
+    reg lsb_first = 0;
+
+    wire [31:0] control_register;
+    assign control_register = {lsb_first,latching_edge,sclk_polarity,ss_polarity,spi_divider};
+
     initial begin
+        sent_data = '{default:0};
         spi_in.initialize();
-        spi_out.ready <= 1;
-        miso <= 0;
+        spi_out.ready = 1;
+        miso = 0;
         @(config_done);
         forever begin
-            spi_in.write_dest(0, 'hCAFE);
-            spi_in.write_dest(1, 'hBEBE);
-            spi_in.write_dest(2, 'hDEAD);
-            spi_in.tlast <= 1;
-            ->transmission_start;
-            spi_in.write_dest(3, 'hBEAF);
-            spi_in.tlast <= 0;
+            if(randomized_test)begin
+                ss_delay = $urandom() % 8;
+                spi_divider = $urandom() % 8;
+                ss_polarity = $urandom_range(0,1);
+                sclk_polarity = $urandom_range(0,1);
+                latching_edge = $urandom_range(0,1);
+                lsb_first = $urandom_range(0,1);
+                transfer_length = 8 + ($urandom() % 9);
+            end
+
+            #10 ctrl_axi.write(0, control_register);
+            #10 ctrl_axi.write(4, {ss_delay, ss_delay});
+            #10 ctrl_axi.write(8, transfer_length);
+            for(int i = 0; i<N_CHANNELS; i++) begin
+                sent_data[i] =  $urandom_range(0, (1<<transfer_length)-1);
+                spi_in.write_tlast(i, sent_data[i], i == N_CHANNELS-1);
+                if(i == N_CHANNELS-1) ->transmission_start;
+                end
             @(transmission_done);
-            #100;
+            #30;
         end
 
     end
 
+
     reg [15:0] received_data [N_CHANNELS-1:0];
-    reg current_ss = 0;
     always begin
         @(transmission_start);
-        //current_ss = ss;
-        //wait(ss != current_ss);
-        @(posedge ss);
-        for(int i  = 0; i< 16; i++)begin
-            @(negedge sclk);
+        if(ss_polarity)
+            @(negedge ss);
+        else
+            @(posedge ss);
+        received_data = '{default:0};
+        for(int i  = 0; i< transfer_length; i++)begin
+            if(sclk_polarity && ~latching_edge)
+                @(posedge sclk);
+            else if(~sclk_polarity && ~latching_edge)
+                @(negedge sclk);
+            if(sclk_polarity && latching_edge)
+                @(negedge sclk);
+            else if(~sclk_polarity && latching_edge)
+                @(posedge sclk);
+
             for(int j = 0; j < N_CHANNELS; j++)begin
-                received_data[j][15-i] = mosi[j];
+                if(~lsb_first)
+                    received_data[j][transfer_length-1-i] = mosi[j];
+                else
+                    received_data[j][i] = mosi[j];
             end
         end
+        assert (received_data == sent_data)
+        else begin
+            for(int k = 0; k < N_CHANNELS; k++) begin
+                if (received_data[k] !== sent_data[k]) begin
+                    $display("  Channel [%0d]: Sent 0x%h, Received 0x%h",
+                             k, sent_data[k], received_data[k]);
+                    $stop();
+                end
+            end
+        end
+        if(ss_polarity)
+            @(posedge ss);
+        else
+            @(negedge ss);
         ->transmission_done;
     end
 
