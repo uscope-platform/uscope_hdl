@@ -21,6 +21,7 @@ module spi_simplified_master_tb();
 
     localparam N_CHANNELS=4;
     localparam randomized_test = 1;
+    localparam packet_start = 37;
 
     wire [N_CHANNELS-1:0] mosi;
     wire sclk;
@@ -39,7 +40,8 @@ module spi_simplified_master_tb();
         .N_CHANNELS(4),
         .REGISTERS_WIDTH(16),
         .OUTPUT_WIDTH(32),
-        .DEFAULT_LENGTH(16)
+        .DEFAULT_LENGTH(16),
+        .STARTING_DEST(packet_start)
     )UUT(
         .clock(clock),
         .reset(reset),
@@ -100,7 +102,7 @@ module spi_simplified_master_tb();
             #10 ctrl_axi.write(8, transfer_length);
             for(int i = 0; i<N_CHANNELS; i++) begin
                 sent_data[i] =  $urandom_range(0, (1<<transfer_length)-1);
-                spi_in.write_tlast(i, sent_data[i], i == N_CHANNELS-1);
+                spi_in.write_tlast(i+packet_start, sent_data[i], i == N_CHANNELS-1);
                 if(i == N_CHANNELS-1) ->transmission_start;
                 end
             @(transmission_done);

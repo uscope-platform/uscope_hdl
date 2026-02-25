@@ -19,7 +19,8 @@ module spi_simplified_master#(
     N_CHANNELS=3,
     REGISTERS_WIDTH=16,
     OUTPUT_WIDTH=32,
-    DEFAULT_LENGTH = 16
+    DEFAULT_LENGTH = 16,
+    STARTING_DEST = 0
 )(
     input wire clock,
     input wire reset,
@@ -85,21 +86,25 @@ module spi_simplified_master#(
 
     wire register_done;
 
-    reg[REGISTERS_WIDTH-1:0] transmit_data [N_CHANNELS-1:0] = '{default:0};
-    wire[REGISTERS_WIDTH-1:0] received_data [N_CHANNELS-1:0];
+    reg [15:0] packet_length = 0;
+
+    reg  [REGISTERS_WIDTH-1:0] transmit_data [N_CHANNELS-1:0] = '{default:0};
+    wire [REGISTERS_WIDTH-1:0] received_data [N_CHANNELS-1:0];
     reg transmission_start = 0;
     reg transmission_done = 0;
     reg to_start = 0;
     always_ff @(posedge clock)begin
         transmission_start <= 0;
         if(spi_data_in.valid)begin
-            transmit_data[spi_data_in.dest] <= spi_data_in.data;
+            packet_length <= packet_length+1;
+            transmit_data[spi_data_in.dest-STARTING_DEST] <= spi_data_in.data;
             if(spi_data_in.tlast)begin
                 to_start<=1;
                 spi_data_in.ready <= 0;
             end
         end
         if(register_done)begin
+            packet_length <= 0;
             spi_data_in.ready <= 1;
         end
         if(to_start & ~generated_sclk)begin
