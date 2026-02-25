@@ -84,6 +84,13 @@ module spi_simplified_master#(
         spi_data_in.ready = 1;
     end
 
+    enum logic [2:0] {
+        idle = 0,
+        start_delay = 1,
+        transmission = 2
+    } packet_sender_state = idle;
+
+
     wire register_done;
 
     reg [15:0] packet_length = 0;
@@ -93,24 +100,34 @@ module spi_simplified_master#(
     reg transmission_start = 0;
     reg transmission_done = 0;
     reg to_start = 0;
+
     always_ff @(posedge clock)begin
-        transmission_start <= 0;
-        if(spi_data_in.valid)begin
-            packet_length <= packet_length+1;
-            transmit_data[spi_data_in.dest-STARTING_DEST] <= spi_data_in.data;
-            if(spi_data_in.tlast)begin
-                to_start<=1;
-                spi_data_in.ready <= 0;
+        case (packet_sender_state)
+            idle:begin
+                if(spi_data_in.valid)begin
+                packet_length <= packet_length+1;
+                transmit_data[spi_data_in.dest-STARTING_DEST] <= spi_data_in.data;
+                if(spi_data_in.tlast)begin
+                    packet_sender_state<= start_delay;
+                    spi_data_in.ready <= 0;
+                end
+        end
             end
-        end
-        if(register_done)begin
-            packet_length <= 0;
-            spi_data_in.ready <= 1;
-        end
-        if(to_start & ~generated_sclk)begin
-            transmission_start <= 1;
-            to_start <= 0;
-        end
+            start_delay: begin
+                if(~generated_sclk)begin
+                    packet_sender_state<= transmission;
+                    transmission_start <= 1;
+                end
+            end
+            transmission: begin
+                transmission_start <= 0;
+                if(register_done)begin
+                    packet_sender_state<= idle;
+                    packet_length <= 0;
+                    spi_data_in.ready <= 1;
+                end
+            end
+        endcase
     end
 
     reg start_register = 0;
@@ -137,18 +154,6 @@ module spi_simplified_master#(
         .data_in(transmit_data),
         .data_out(received_data)
     );
-
-    /////////////////////////////////////////////////////////
-    //                transmission control                 //
-    /////////////////////////////////////////////////////////
-
-    enum logic [2:0]{
-        idle = 0,
-        wait_ss_assert = 1,
-        transfer = 2,
-        wait_ss_deassert =3
-    } spi_state = idle;
-
 
     /////////////////////////////////////////////////////////
     //                  clock generation                   //
