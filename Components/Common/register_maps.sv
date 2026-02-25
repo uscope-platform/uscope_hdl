@@ -447,5 +447,12 @@ package reg_maps;
      } SPI_slave_regs;
 
 
+     struct {
+        int control = 0;
+        int ss_delay = 'h4;
+        int transfer_length = 'h8;
+     } SPI_simple_master_regs;
+
+
 
 endpackage
