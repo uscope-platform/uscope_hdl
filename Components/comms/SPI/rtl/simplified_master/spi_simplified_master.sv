@@ -20,7 +20,8 @@ module spi_simplified_master#(
     REGISTERS_WIDTH=16,
     OUTPUT_WIDTH=32,
     DEFAULT_LENGTH = 16,
-    STARTING_DEST = 0
+    STARTING_DEST = 0,
+    MAX_PACKET_SIZE = N_CHANNELS
 )(
     input wire clock,
     input wire reset,
@@ -94,41 +95,51 @@ module spi_simplified_master#(
     wire register_done;
 
     reg [15:0] packet_length = 0;
+    reg [15:0] transfered_words = 0;
+
+    reg [REGISTERS_WIDTH-1:0] input_buffer [MAX_PACKET_SIZE-1:0] = '{default:0};
 
     reg  [REGISTERS_WIDTH-1:0] transmit_data [N_CHANNELS-1:0] = '{default:0};
     wire [REGISTERS_WIDTH-1:0] received_data [N_CHANNELS-1:0];
     reg transmission_start = 0;
-    reg transmission_done = 0;
-    reg to_start = 0;
 
-    always_ff @(posedge clock)begin
-        case (packet_sender_state)
-            idle:begin
-                if(spi_data_in.valid)begin
-                packet_length <= packet_length+1;
-                transmit_data[spi_data_in.dest-STARTING_DEST] <= spi_data_in.data;
-                if(spi_data_in.tlast)begin
-                    packet_sender_state<= start_delay;
-                    spi_data_in.ready <= 0;
+always_ff @(posedge clock)begin
+            case (packet_sender_state)
+                idle:begin
+                    transfered_words <= 0;
+                    if(spi_data_in.valid)begin
+                        packet_length <= packet_length+1;
+                        input_buffer[spi_data_in.dest-STARTING_DEST] <= spi_data_in.data;
+                        if(spi_data_in.tlast)begin
+                            packet_sender_state<= start_delay;
+                            spi_data_in.ready <= 0;
+                        end
+                    end
                 end
+                start_delay: begin
+                    for(int i = 0; i< N_CHANNELS; i++)begin
+                        transmit_data[i] <= input_buffer[transfered_words+i];
+                    end
+                    if(~generated_sclk)begin
+                        packet_sender_state<= transmission;
+                        transfered_words <= transfered_words+N_CHANNELS;
+                        transmission_start <= 1;
+                    end
+                end
+                transmission: begin
+                    transmission_start <= 0;
+                    if(register_done)begin
+                        if(transfered_words >= packet_length) begin
+                            packet_sender_state<= idle;
+                            packet_length <= 0;
+                            spi_data_in.ready <= 1;
+                        end else begin
+                            packet_sender_state<= start_delay;
+                        end
+                    end
+                end
+            endcase
         end
-            end
-            start_delay: begin
-                if(~generated_sclk)begin
-                    packet_sender_state<= transmission;
-                    transmission_start <= 1;
-                end
-            end
-            transmission: begin
-                transmission_start <= 0;
-                if(register_done)begin
-                    packet_sender_state<= idle;
-                    packet_length <= 0;
-                    spi_data_in.ready <= 1;
-                end
-            end
-        endcase
-    end
 
     reg start_register = 0;
 

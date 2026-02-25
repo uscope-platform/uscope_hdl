@@ -22,6 +22,7 @@ module spi_simplified_master_tb();
     localparam N_CHANNELS=4;
     localparam randomized_test = 1;
     localparam packet_start = 37;
+    localparam max_packet_size = 16;
 
     wire [N_CHANNELS-1:0] mosi;
     wire sclk;
@@ -41,7 +42,8 @@ module spi_simplified_master_tb();
         .REGISTERS_WIDTH(16),
         .OUTPUT_WIDTH(32),
         .DEFAULT_LENGTH(16),
-        .STARTING_DEST(packet_start)
+        .STARTING_DEST(packet_start),
+        .MAX_PACKET_SIZE(127)
     )UUT(
         .clock(clock),
         .reset(reset),
@@ -67,7 +69,7 @@ module spi_simplified_master_tb();
 
     event transmission_start, transmission_done;
 
-    reg [15:0] sent_data [N_CHANNELS-1:0];
+    reg [15:0] sent_data [max_packet_size-1:0];
 
     reg [15:0] ss_delay = 3;
     reg [15:0] transfer_length = 16;
@@ -76,6 +78,7 @@ module spi_simplified_master_tb();
     reg sclk_polarity = 0;
     reg latching_edge = 0;
     reg lsb_first = 0;
+    reg [$clog2(max_packet_size)-1:0] packet_length = 8;
 
     wire [31:0] control_register;
     assign control_register = {lsb_first,latching_edge,sclk_polarity,ss_polarity,spi_divider};
@@ -95,15 +98,16 @@ module spi_simplified_master_tb();
                 latching_edge = $urandom_range(0,1);
                 lsb_first = $urandom_range(0,1);
                 transfer_length = 8 + ($urandom() % 9);
+                packet_length = 8;
             end
 
             #10 ctrl_axi.write(0, control_register);
             #10 ctrl_axi.write(4, {ss_delay, ss_delay});
             #10 ctrl_axi.write(8, transfer_length);
-            for(int i = 0; i<N_CHANNELS; i++) begin
+            for(int i = 0; i<packet_length; i++) begin
                 sent_data[i] =  $urandom_range(0, (1<<transfer_length)-1);
-                spi_in.write_tlast(i+packet_start, sent_data[i], i == N_CHANNELS-1);
-                if(i == N_CHANNELS-1) ->transmission_start;
+                spi_in.write_tlast(i+packet_start, sent_data[i], i == packet_length-1);
+                if(i == packet_length-1) ->transmission_start;
                 end
             @(transmission_done);
             #30;
@@ -112,34 +116,40 @@ module spi_simplified_master_tb();
     end
 
 
-    reg [15:0] received_data [N_CHANNELS-1:0];
+    reg [15:0] received_data [max_packet_size-1:0];
+    reg [15:0] transfers_counter = 0;
     always begin
         @(transmission_start);
-        if(ss_polarity)
-            @(negedge ss);
-        else
-            @(posedge ss);
         received_data = '{default:0};
-        for(int i  = 0; i< transfer_length; i++)begin
-            if(sclk_polarity && ~latching_edge)
-                @(posedge sclk);
-            else if(~sclk_polarity && ~latching_edge)
-                @(negedge sclk);
-            if(sclk_polarity && latching_edge)
-                @(negedge sclk);
-            else if(~sclk_polarity && latching_edge)
-                @(posedge sclk);
+        transfers_counter = 0;
+        while (transfers_counter < packet_length) begin
+            if(ss_polarity)
+                @(negedge ss);
+            else
+                @(posedge ss);
+            for(int i  = 0; i< transfer_length; i++)begin
+                if(sclk_polarity && ~latching_edge)
+                    @(posedge sclk);
+                else if(~sclk_polarity && ~latching_edge)
+                    @(negedge sclk);
+                if(sclk_polarity && latching_edge)
+                    @(negedge sclk);
+                else if(~sclk_polarity && latching_edge)
+                    @(posedge sclk);
 
-            for(int j = 0; j < N_CHANNELS; j++)begin
-                if(~lsb_first)
-                    received_data[j][transfer_length-1-i] = mosi[j];
-                else
-                    received_data[j][i] = mosi[j];
+                for(int j = 0; j < N_CHANNELS; j++)begin
+                    if(~lsb_first)
+                        received_data[j+transfers_counter][transfer_length-1-i] = mosi[j];
+                    else
+                        received_data[j+transfers_counter][i] = mosi[j];
+                end
             end
+            transfers_counter = transfers_counter+ N_CHANNELS;
         end
+
         assert (received_data == sent_data)
         else begin
-            for(int k = 0; k < N_CHANNELS; k++) begin
+            for(int k = 0; k < packet_length; k++) begin
                 if (received_data[k] !== sent_data[k]) begin
                     $display("  Channel [%0d]: Sent 0x%h, Received 0x%h",
                              k, sent_data[k], received_data[k]);
