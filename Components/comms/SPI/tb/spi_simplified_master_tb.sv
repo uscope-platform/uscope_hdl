@@ -98,7 +98,7 @@ module spi_simplified_master_tb();
                 latching_edge = $urandom_range(0,1);
                 lsb_first = $urandom_range(0,1);
                 transfer_length = 8 + ($urandom() % 9);
-                packet_length = 8;
+                packet_length = 4*$urandom_range(1,3);
             end
 
             #10 ctrl_axi.write(0, control_register);
