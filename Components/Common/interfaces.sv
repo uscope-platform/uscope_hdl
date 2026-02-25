@@ -71,7 +71,6 @@ interface axi_lite #(DATA_WIDTH = 32, ADDR_WIDTH = 32, INTERFACE_NAME = "IF", CL
 
 
     task write(input logic [ADDR_WIDTH-1:0] address, input logic [DATA_WIDTH-1:0] data);
-
         AWADDR <= address;
         AWVALID <= 1;
         #(CLOCK_PERIOD);
@@ -91,7 +90,7 @@ interface axi_lite #(DATA_WIDTH = 32, ADDR_WIDTH = 32, INTERFACE_NAME = "IF", CL
         #(CLOCK_PERIOD);
     endtask
 
-    task  read(input logic [ADDR_WIDTH-1:0] address, output logic [DATA_WIDTH-1:0] data);
+    task read(input logic [ADDR_WIDTH-1:0] address, output logic [DATA_WIDTH-1:0] data);
         ARADDR <= address;
         ARVALID <= 1;
         RREADY <= 1;

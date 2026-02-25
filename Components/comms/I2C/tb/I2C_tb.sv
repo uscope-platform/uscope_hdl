@@ -34,15 +34,8 @@ module I2C_tb();
 
     assign scl_in = i2c_scl;
 
-    axi_lite axi_master();
-
-    axi_stream read_req();
-    axi_stream read_resp();
     axi_stream write();
 
-    axis_BFM write_BFM;
-    axis_BFM read_req_BFM;
-    axis_BFM read_resp_BFM;
 
     si5351_config configurator(
         .clock(clk),
@@ -52,18 +45,8 @@ module I2C_tb();
         .config_out(write)
     );
 
-    axis_to_axil WRITER(
-        .clock(clk),
-        .reset(rst), 
-        .axis_write(write),
-        .axis_read_request(read_req),
-        .axis_read_response(read_resp),
-        .axi_out(axi_master)
-    );
-    
-    I2c #(
-        .FIXED_PERIOD("TRUE")
-    ) UUT(
+
+    I2c UUT(
         .clock(clk),
         .reset(rst),
         .i2c_scl_in(scl_in),
@@ -72,7 +55,7 @@ module I2C_tb();
         .i2c_sda_in(sda_in),
         .i2c_sda_out(sda_out),
         .i2c_scl_out_en(i2c_scl_en),
-        .axi_in(axi_master)
+        .message_if(write)
     );
 
 
@@ -81,26 +64,16 @@ module I2C_tb();
     
     //clock generation
     initial clk = 0; 
-    always #1.25 clk = ~clk; 
+    always #0.5 clk = ~clk; 
     
     // reset generation
     initial begin
         readdata = 0;
-        write_BFM = new(write,1);
-        read_req_BFM = new(read_req, 1);
-        read_resp_BFM = new(read_resp, 1);
-        read_resp.ready = 1;
         start = 0;
         rst =1;
         slave_disable =0;
-        #3.5 rst = 0;
+        #10 rst = 0;
         #10.5 rst = 1;
-        
-        write_BFM.write_dest(32'h30, 8'h4);
-        
-        #20 read_req_BFM.write( 8'h4);
-        #5 read_resp_BFM.read(readdata);
-        
 
         #30 start <= 1;
         #1.5 start <= 0;

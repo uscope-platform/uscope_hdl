@@ -14,7 +14,6 @@
 // limitations under the License.
 
 module I2c #(
-    parameter FIXED_PERIOD ="FALSE",
     FIXED_PERIOD_WIDTH = 1000,
     SCL_TIMEBASE_DELAY = 15,
     PRAGMA_MKFG_MODULE_TOP = "I2C"
@@ -27,21 +26,19 @@ module I2c #(
     input wire i2c_sda_in,
     output wire i2c_sda_out,
     output wire i2c_sda_out_en,
-    axi_lite.slave axi_in,
     axi_stream.slave message_if
 );
 
-    
 
-
-    wire [7:0] data;
-    wire [7:0] slave_address;
-    wire [7:0] register_address;
-    wire [31:0] period;
-    wire timebase, direction, start;
+    reg [7:0] data;
+    reg [7:0] slave_address;
+    reg [7:0] register_address;
+    reg direction, start;
+    wire timebase;
     wire send_slave_address, send_register, send_data, done, timebase_enable;
     wire i2c_sda_data, i2c_sda_control;
     wire i2c_scl_control;
+    wire transfer_done;
 
     reg delayed_timebase;
     reg previous_timebase;
@@ -53,6 +50,7 @@ module I2c #(
 
     assign i2c_scl_out_en = ~i2c_scl_control;
     assign i2c_sda_out_en = ~i2c_sda_control;
+
 
     always@(posedge clock)begin
         if(~reset) begin
@@ -82,48 +80,37 @@ module I2c #(
         end
     end
 
+    reg in_flight = 0;
 
-	generate
-		if (FIXED_PERIOD =="FALSE") begin
-			
-            enable_generator_core #(
-                .COUNTER_WIDTH(16),
-                .CLOCK_MODE("TRUE")
-            ) tb_core(
-				.clock(clock),
-				.reset(reset),
-				.gen_enable_in(timebase_enable),
-				.period(period),
-				.enable_out(timebase)
-			);
-		end else begin
-			enable_generator_core #(
-                .COUNTER_WIDTH(16),
-                .CLOCK_MODE("TRUE")
-            ) tb_core(
-				.clock(clock),
-				.reset(reset),
-				.gen_enable_in(timebase_enable),
-				.period(FIXED_PERIOD_WIDTH),
-				.enable_out(timebase)
-			);
-		end
-	endgenerate
+    initial begin
+        message_if.ready = 1;
+    end
+    always_ff @(posedge clock)begin
+        start <= 0;
+        if(message_if.valid  &  ~in_flight)begin
+            direction  <= message_if.data[24];
+            slave_address <= message_if.data[15:8];
+            register_address <= message_if.data[7:0];
+            data <= message_if.data[23:16];
+            start <= 1;
+            in_flight <= 1;
+            message_if.ready <= 0;
+        end
+        if(done)begin
+            in_flight <= 0;
+            message_if.ready <= 1;
+        end
+    end
 
-
-    I2CControlUnit #(
-        .BASE_ADDRESS(0)
-    ) control_unit(
+    enable_generator_core #(
+        .COUNTER_WIDTH(16),
+        .CLOCK_MODE("TRUE")
+    ) tb_core(
         .clock(clock),
         .reset(reset),
-        .done(done),
-        .axi_in(axi_in),
-        .direction(direction),
-        .prescale(period),
-        .slave_adress(slave_address),
-        .register_adress(register_address),
-        .data(data),
-        .start(start)
+        .gen_enable_in(timebase_enable),
+        .period(FIXED_PERIOD_WIDTH),
+        .enable_out(timebase)
     );
 
 
