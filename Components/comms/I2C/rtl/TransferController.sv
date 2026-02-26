@@ -17,16 +17,16 @@
 module TransferController #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, BUS_FREE_DELAY = 300)(
     input wire clock,
     input wire reset,
-    input wire start_transfert,
+    
     input wire transfer_step_done,
     input wire ack,
-    output reg send_slave_address,
     output reg timebase_enable,
-    output reg send_register_address,
-    output reg send_data,
+    output reg start_transfer,
     output reg i2c_sda_control,
     output reg i2c_scl_control,
-    output reg transfert_done
+    output reg transfert_done,
+    output reg [7:0] outgoing_data,
+    axi_stream.slave write_req
 );
 
     
@@ -48,6 +48,10 @@ module TransferController #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, 
     transfer_controller_fsm state = idle_state;
     transfer_controller_fsm next_phase = idle_state;
 
+    reg [7:0] data = 0;
+    reg [7:0] slave_address = 0;
+    reg [7:0] register_address = 0;
+
     always_ff @(posedge clock)begin
         if(~reset)begin
             wait_timer <= 0;
@@ -63,9 +67,7 @@ module TransferController #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, 
     // Determine the next state
     always_ff @ (posedge clock) begin : control_state_machine
         if (~reset) begin
-            send_register_address <= 0;
-            send_slave_address <= 0;
-            send_data <= 0;
+            start_transfer <= 0;
             wait_for_ack <= 0;
             i2c_sda_control <= 1;
             timebase_enable <= 0;
@@ -75,7 +77,11 @@ module TransferController #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, 
         end else begin
             case (state)
                 idle_state: begin
-                    if(start_transfert)begin
+                    if(write_req.valid)begin
+                        slave_address <={write_req.dest[6:0], 1'b0};
+                        register_address <= write_req.user[7:0];
+                        data <= write_req.data[7:0];
+                        write_req.ready <= 0;
                         state <= start_state;
                         i2c_sda_control <=0;
                     end
@@ -95,9 +101,10 @@ module TransferController #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, 
                     wait_for_ack <= 0;
                     i2c_sda_control <= 0;
                     wait_timer_enabled <=0;
-                    send_slave_address <= 1;
+                    start_transfer <= 1;
+                    outgoing_data <= slave_address;
                     if(transfer_step_done)begin
-                        send_slave_address <= 0;
+                        start_transfer <= 0;
                         wait_for_ack <= 1;
                         wait_timer_enabled <=1;
                         state <= wait_ack_state;
@@ -108,9 +115,10 @@ module TransferController #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, 
                     wait_for_ack <= 0;
                     i2c_sda_control <= 0;
                     wait_timer_enabled <=0;
-                    send_register_address <= 1;
+                    start_transfer <= 1;
+                    outgoing_data <= register_address;
                     if(transfer_step_done)begin
-                        send_register_address <= 0;
+                        start_transfer <= 0;
                         wait_for_ack <= 1;
                         wait_timer_enabled <=1;
                         state <= wait_ack_state;
@@ -120,9 +128,10 @@ module TransferController #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, 
                 data_state_state: begin
                     wait_for_ack <= 0;
                     i2c_sda_control <= 0;
-                    send_data <= 1;
+                    start_transfer <= 1;
+                    outgoing_data <= data;
                     if(transfer_step_done)begin
-                        send_data <= 0;
+                        start_transfer <= 0;
                         wait_for_ack <= 1;
                         wait_timer_enabled <=1;
                         state <= wait_ack_state;
@@ -156,6 +165,7 @@ module TransferController #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, 
                     wait_timer_enabled <= 1;
                     if(wait_timer == BUS_FREE_DELAY)begin
                         state <= idle_state;
+                        write_req.ready <= 0;
                         transfert_done <= 1;
                     end
                 end

@@ -26,16 +26,14 @@ module I2c #(
     input wire i2c_sda_in,
     output wire i2c_sda_out,
     output wire i2c_sda_out_en,
-    axi_stream.slave message_if
+    axi_stream.slave write_req
 );
 
 
-    reg [7:0] data;
-    reg [7:0] slave_address;
-    reg [7:0] register_address;
-    reg direction, start;
+    reg [7:0] write_data;
+    wire start_transfer;
     wire timebase;
-    wire send_slave_address, send_register, send_data, done, timebase_enable;
+    wire done, timebase_enable;
     wire i2c_sda_data, i2c_sda_control;
     wire i2c_scl_control;
     wire transfer_done;
@@ -80,27 +78,6 @@ module I2c #(
         end
     end
 
-    reg in_flight = 0;
-
-    initial begin
-        message_if.ready = 1;
-    end
-    always_ff @(posedge clock)begin
-        start <= 0;
-        if(message_if.valid  &  ~in_flight)begin
-            direction  <= message_if.data[24];
-            slave_address <= message_if.data[15:8];
-            register_address <= message_if.data[7:0];
-            data <= message_if.data[23:16];
-            start <= 1;
-            in_flight <= 1;
-            message_if.ready <= 0;
-        end
-        if(done)begin
-            in_flight <= 0;
-            message_if.ready <= 1;
-        end
-    end
 
     enable_generator_core #(
         .COUNTER_WIDTH(16),
@@ -117,16 +94,15 @@ module I2c #(
     TransferController TC(
         .clock(clock),
         .reset(reset),
-        .start_transfert(start),
         .transfer_step_done(transfer_done),
         .ack(i2c_sda_in),
-        .send_slave_address(send_slave_address),
-        .send_register_address(send_register),
-        .send_data(send_data),
         .i2c_sda_control(i2c_sda_control),
         .i2c_scl_control(i2c_scl_control),
         .transfert_done(done),
-        .timebase_enable(timebase_enable)
+        .timebase_enable(timebase_enable),
+        .write_req(write_req),
+        .start_transfer(start_transfer),
+        .outgoing_data(write_data)
     );
 
     
@@ -134,13 +110,8 @@ module I2c #(
         .clock(clock),
         .reset(reset),
         .timebase(timebase),
-        .direction(direction),
-        .slave_address(slave_address),
-        .register_address(register_address),
-        .data(data),
-        .send_slave_address(send_slave_address),
-        .send_register(send_register),
-        .send_data(send_data),
+        .data(write_data),
+        .start_transfer(start_transfer),
         .transfer_done(transfer_done),
         .i2c_sda(i2c_sda_data)
     );

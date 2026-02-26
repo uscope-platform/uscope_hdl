@@ -51,10 +51,11 @@ module tmp100 (
     assign reg_addr = cu_write_registers[1];
     assign data = cu_write_registers[2];
 
-    wire [31:0] write_data;
-    assign write_data = {data, slave_addr, reg_addr};
     
-    assign i2c_write.data = write_data;
+    assign i2c_write.data = data;
+    assign i2c_write.dest = slave_addr;
+    assign i2c_write.user = reg_addr;
+
 
     reg [31:0] transmission_ctr = 0;
 
@@ -77,7 +78,7 @@ module tmp100 (
         .reset(reset),
         .SDA(SDA),
         .SCL(SCL),
-        .message_if(i2c_write)
+        .write_req(i2c_write)
     );
 
 endmodule
