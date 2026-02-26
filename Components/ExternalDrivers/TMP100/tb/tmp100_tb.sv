@@ -57,13 +57,80 @@ module tmp100_tb();
         #10;
         enable <= 1;
         forever begin
-            i2c_axi.write(0, 'hbe);
-            i2c_axi.write(4, 'hfe);
-            i2c_axi.write(8, 'hca);
+            i2c_axi.write(0, 'h4e);
+            i2c_axi.write(4, 'h01);
+            i2c_axi.write(8, 'h60);
             #100;
         end
         
     end
+
+    reg scl_prev, sda_prev;
+    
+    wire scl_negedge = scl_prev & ~SCL;
+    wire scl_posedge = ~scl_prev & SCL;
+
+    wire sda_negedge = sda_prev & ~SDA;
+    wire sda_posedge = ~sda_prev & SDA;
+
+
+    always_ff @(posedge clock)begin
+        scl_prev <= SCL;
+        sda_prev <= SDA;
+    end
+
+
+    integer bit_count = 0;
+    reg in_transmission = 0;
+    wire in_ack_period = bit_count == 8;
+    reg [7:0] captured_data = 8'h00;
+
+    reg [7:0] address = 8'h00;
+    reg [7:0] register = 8'h00;
+    reg [7:0] data = 8'h00;
+    
+    enum logic [1:0] { 
+        slave_addr = 0,
+        register_addr = 1,
+        data_phase = 2
+    } rx_phase = slave_addr;
+    
+    always_ff @(posedge clock)begin
+        if(SCL & sda_negedge)begin
+            in_transmission <= 1;
+            bit_count<= 0;
+            captured_data <= 0;
+        end
+        if(scl_posedge)begin
+            if(bit_count < 8) begin
+                captured_data <= {captured_data[6:0], SDA};
+            end
+
+            if(bit_count == 7)begin
+                bit_count++;
+            end else if(bit_count == 8) begin
+                bit_count <= 0;
+                if(rx_phase == slave_addr) begin
+                    rx_phase <= register_addr;
+                    address <= captured_data [7:1];
+                end else if(rx_phase == register_addr)begin
+                    rx_phase <= data_phase;
+                    register <= captured_data;
+                end else begin
+                    data <= captured_data;
+                end
+            end else begin
+                bit_count++;
+            end
+        end
+        if(SCL & sda_posedge)begin
+
+            rx_phase <= slave_addr;
+            in_transmission <= 0;
+        end
+        
+    end
+
 
 
 endmodule
