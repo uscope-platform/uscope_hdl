@@ -95,12 +95,23 @@ module tmp100_tb();
         data_phase = 2
     } rx_phase = slave_addr;
     
+    always_ff @(negedge SCL or negedge in_transmission) begin
+        if (!in_transmission) begin
+            sda_drive <= 1'bz;
+        end else if (bit_count == 8) begin
+            sda_drive <= 0;    // Pull down for ACK
+        end else begin
+            sda_drive <= 1'bz; // Release for data bits
+        end
+    end
+
     always_ff @(posedge clock)begin
         if(SCL & sda_negedge)begin
             in_transmission <= 1;
-            bit_count<= 0;
+            bit_count <= 0;
             captured_data <= 0;
         end
+
         if(scl_posedge)begin
             if(bit_count < 8) begin
                 captured_data <= {captured_data[6:0], SDA};
@@ -128,7 +139,6 @@ module tmp100_tb();
             rx_phase <= slave_addr;
             in_transmission <= 0;
         end
-        
     end
 
 
