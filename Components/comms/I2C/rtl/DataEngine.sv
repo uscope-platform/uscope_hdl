@@ -30,65 +30,42 @@ module DataEngine #(parameter SETUP_DELAY = 35)(
 );
 
 
-    reg send_in_progress;
-    reg [7:0] latched_data;
-    reg [3:0] transfer_counter;
-    reg previous_timebase;
+    reg send_in_progress = 0;
+    reg [7:0] latched_data = 0;
+    reg [3:0] transfer_counter = 0;
+    reg previous_timebase = 0;
 
-    always@(posedge clock) begin
-        if(~reset) begin
-            i2c_sda <= 0;
-            transfer_counter <= 0;
-            transfer_done <=0;
-        end else begin
-            if(send_in_progress)begin
-                if(timebase & ~previous_timebase)begin
-                    if(transfer_counter==7)begin
-                        transfer_done <=1;
-                    end
-                    transfer_counter <= transfer_counter +1;
-                    i2c_sda <= latched_data[7-transfer_counter];
+    initial begin
+        i2c_sda = 0;
+        transfer_done =0;
+    end
 
-                end           
-            end else begin
-                if(timebase& ~previous_timebase) transfer_counter <= 0;
-                transfer_done <=0;
-                if(transfer_counter == 0) i2c_sda <= 0;
+    always_ff @(posedge clock) begin
+        previous_timebase <= timebase;
+        if(send_in_progress)begin
+            if(timebase & ~previous_timebase)begin
+                if(transfer_counter==7)begin
+                    transfer_done <=1;
+                end
+                transfer_counter <= transfer_counter +1;
+                i2c_sda <= latched_data[7-transfer_counter];
+            end           
+            if(transfer_done) begin
+                send_in_progress <= 0;
             end
-        end
-    end
-
-
-    always @(posedge clock ) begin
-        if (~reset) begin
-            previous_timebase <= 0;
         end else begin
-            previous_timebase <= timebase;
-        end
-    end
-
-
-
-    always@(posedge clock) begin
-        if(~reset)begin
-            send_in_progress <= 0;
-            latched_data <= 0;
-        end else begin
-            if(~send_in_progress)begin
-                if(send_slave_address)begin
-                    latched_data <= {slave_address, direction};
-                    send_in_progress <= 1;
-                end else if(send_register) begin
-                    latched_data <= register_address;
-                    send_in_progress <= 1;
-                end else if(send_data) begin
-                    latched_data <= data;
-                    send_in_progress <= 1;
-                end
-            end else begin
-                if(transfer_done) begin
-                    send_in_progress <= 0;
-                end
+            if(timebase& ~previous_timebase) transfer_counter <= 0;
+            transfer_done <=0;
+            if(transfer_counter == 0) i2c_sda <= 0;
+            if(send_slave_address)begin
+                send_in_progress <= 1;
+                latched_data <= {slave_address, direction};
+            end else if(send_register) begin
+                send_in_progress <= 1;
+                latched_data <= register_address;
+            end else if(send_data) begin
+                send_in_progress <= 1;
+                latched_data <= data;
             end
         end
     end

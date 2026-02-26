@@ -14,44 +14,27 @@
 // limitations under the License.
 
 module I2C_tristate #(
-    SCL_TIMEBASE_DELAY = 15,
-    LOOPBACK_MODE = "TRUE"
+    SCL_TIMEBASE_DELAY = 15
 )(
     input wire clock,
     input wire reset,
     inout wire SDA,
     inout wire SCL,
-    axi_lite.slave axi_in,
     axi_stream.slave message_if
 );
 
     wire scl_in, scl_out, sda_in, sda_out, scl_en, sda_en;
-    
-    generate
-        if(LOOPBACK_MODE == "TRUE")begin
-            assign SDA = sda_en ? sda_out : 1'b1;
-            assign sda_in = SDA;
 
-            assign SCL = scl_en & ~scl_out ? 0 : 1'b1;
+    assign SDA = sda_en  & (sda_out == 1'b0) ? 1'b0 : 1'bz;
+    assign sda_in = SDA;
 
-            assign scl_in = SCL;
-        end else begin
-
-            assign SDA = (sda_out == 1'b0) ? 1'b0 : 1'bz;
-            assign sda_in = SDA;
-
-            assign SCL = (scl_out == 1'b0) ? 1'b0 : 1'bz;
-            assign scl_in = SCL;  
-
-        end
-    endgenerate
+    assign SCL = scl_en  & (scl_out == 1'b0) ? 1'b0 : 1'bz;
+    assign scl_in = SCL;  
 
 
-        
-
-    I2c_reader #(
+    I2c #(
         .SCL_TIMEBASE_DELAY(SCL_TIMEBASE_DELAY)
-    )I2C_delay(
+    )i2c_interface(
         .clock(clock),
         .reset(reset),
         .i2c_scl_in(scl_in),
@@ -60,7 +43,6 @@ module I2C_tristate #(
         .i2c_sda_in(sda_in),
         .i2c_sda_out(sda_out),
         .i2c_sda_out_en(sda_en),
-        .axi_in(axi_in),
         .message_if(message_if)
     );
 

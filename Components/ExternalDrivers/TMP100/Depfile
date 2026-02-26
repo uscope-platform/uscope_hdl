@@ -1,0 +1,32 @@
+{
+    "general":{
+        "project_name":"TMP100",
+        "target_part":"xc7z020clg400",
+        "board":"xilinx.com:k26c:part0:1.4",
+        "synth_modules":[],
+        "synth_tl": "tmp100_tl",
+        "sim_modules":[],
+        "sim_tl":"tmp100_tb",
+        "include_paths":[
+            "/public/Components/Common"
+        ]
+    },
+    "scripts":[
+        {
+            "name":"set_properties.tcl",
+            "type": "tcl",
+            "arguments":[]
+        },
+        {
+            "name":"base_zynqmp_xvc.tcl",
+            "type": "tcl",
+            "arguments":[]
+        }
+    ],
+    "excluded_modules":[
+        "ps"
+    ],
+    "constraints": [
+        "TMP100.xdc"
+    ]
+}
