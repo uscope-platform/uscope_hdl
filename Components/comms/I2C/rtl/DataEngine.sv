@@ -24,6 +24,11 @@ module DataEngine #(parameter SETUP_DELAY = 35)(
 );
 
 
+    enum logic [2:0] {  
+        idle = 0,
+        transmission = 1
+    } state = idle;
+
     reg busy = 0;
     reg [3:0] transfer_counter = 0;
     reg previous_timebase = 0;
@@ -35,26 +40,29 @@ module DataEngine #(parameter SETUP_DELAY = 35)(
 
     always_ff @(posedge clock) begin
         previous_timebase <= timebase;
-        if(~busy)begin
-            if(timebase& ~previous_timebase) 
-                transfer_counter <= 0;
-            transfer_done <=0;
-            if(transfer_counter == 0) i2c_sda <= 0;
-            if(start_transfer) begin
-                busy <= 1;
-            end
-        end else begin
-            if(timebase & ~previous_timebase)begin
-                if(transfer_counter==7)begin
-                    transfer_done <=1;
+        case (state)
+            idle:begin
+                if(timebase& ~previous_timebase) 
+                    transfer_counter <= 0;
+                transfer_done <=0;
+                if(transfer_counter == 0) i2c_sda <= 0;
+                if(start_transfer) begin
+                    state <= transmission;
                 end
-                transfer_counter <= transfer_counter +1;
-                i2c_sda <= data[7-transfer_counter];
-            end           
-            if(transfer_done) begin
-                busy <= 0;
             end
-        end
+            transmission: begin
+                if(timebase & ~previous_timebase)begin
+                    if(transfer_counter==7)begin
+                        transfer_done <=1;
+                    end
+                    transfer_counter <= transfer_counter +1;
+                    i2c_sda <= data[7-transfer_counter];
+                end           
+                if(transfer_done) begin
+                    state <= idle;
+                end
+            end
+        endcase
     end
 
 
