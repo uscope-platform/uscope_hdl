@@ -18,7 +18,6 @@ module TransferController #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, 
     input wire clock,
     input wire reset,
     input wire start_transfert,
-    input wire timebase,
     input wire transfer_step_done,
     input wire ack,
     output reg send_slave_address,
@@ -38,9 +37,9 @@ module TransferController #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, 
     typedef enum logic [2:0]{
         idle_state = 0,
         start_state = 1,
-        slave_address = 2,
-        register_address = 3,
-        data_state = 4,
+        slave_address_state = 2,
+        register_address_state = 3,
+        data_state_state = 4,
         wait_ack_state = 5,
         stop_state = 6,
         bus_free_state = 7
@@ -49,7 +48,7 @@ module TransferController #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, 
     transfer_controller_fsm state = idle_state;
     transfer_controller_fsm next_phase = idle_state;
 
-    always@(posedge clock)begin
+    always_ff @(posedge clock)begin
         if(~reset)begin
             wait_timer <= 0;
         end else begin
@@ -62,7 +61,7 @@ module TransferController #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, 
     end
 
     // Determine the next state
-    always @ (posedge clock) begin : control_state_machine
+    always_ff @ (posedge clock) begin : control_state_machine
         if (~reset) begin
             send_register_address <= 0;
             send_slave_address <= 0;
@@ -79,59 +78,55 @@ module TransferController #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, 
                     if(start_transfert)begin
                         state <= start_state;
                         i2c_sda_control <=0;
-                    end else begin
-                        state <= idle_state;
                     end
                     wait_for_ack <= 0;
+                    transfert_done <= 0;
+                    wait_timer_enabled <=0;
                 end
                 start_state: begin
                     if(wait_timer == START_STOP_DELAY)begin
-                        state <= slave_address;
+                        state <= slave_address_state;
                         i2c_scl_control <= 0;
                         timebase_enable <= 1;
-                    end else begin
-                        state <= start_state;
                     end
+                    wait_timer_enabled <=1;
                 end
-                slave_address: begin
+                slave_address_state: begin
                     wait_for_ack <= 0;
                     i2c_sda_control <= 0;
                     wait_timer_enabled <=0;
+                    send_slave_address <= 1;
                     if(transfer_step_done)begin
                         send_slave_address <= 0;
                         wait_for_ack <= 1;
                         wait_timer_enabled <=1;
                         state <= wait_ack_state;
-                        next_phase <= register_address;
-                    end else begin
-                        state <= slave_address;
+                        next_phase <= register_address_state;
                     end
                 end
-                register_address: begin
+                register_address_state: begin
                     wait_for_ack <= 0;
                     i2c_sda_control <= 0;
                     wait_timer_enabled <=0;
+                    send_register_address <= 1;
                     if(transfer_step_done)begin
                         send_register_address <= 0;
                         wait_for_ack <= 1;
                         wait_timer_enabled <=1;
                         state <= wait_ack_state;
-                        next_phase <= data_state;
-                    end else begin
-                        state <= register_address;
+                        next_phase <= data_state_state;
                     end
                 end
-                data_state: begin
+                data_state_state: begin
                     wait_for_ack <= 0;
                     i2c_sda_control <= 0;
+                    send_data <= 1;
                     if(transfer_step_done)begin
                         send_data <= 0;
                         wait_for_ack <= 1;
                         wait_timer_enabled <=1;
                         state <= wait_ack_state;
                         next_phase <= stop_state;
-                    end else begin
-                        state <= data_state;
                     end
                 end
                 wait_ack_state: begin
@@ -144,20 +139,17 @@ module TransferController #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, 
                             state <= next_phase;
                         else
                             state <= next_phase;
-                    end else begin
-                        state <= wait_ack_state;
-                    end
+                    end 
                 end
                 stop_state: begin
                     wait_timer_enabled <=1;
                     i2c_sda_control <= 0;
+                    if(wait_timer == 157) i2c_scl_control <= 1;
                     if(wait_timer == START_STOP_DELAY)begin
                         state <= bus_free_state;
                         timebase_enable <= 0;
                         wait_timer_enabled <= 0;
                         i2c_sda_control <= 1;
-                    end else begin
-                        state <= stop_state;
                     end
                 end
                 bus_free_state: begin
@@ -165,36 +157,7 @@ module TransferController #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, 
                     if(wait_timer == BUS_FREE_DELAY)begin
                         state <= idle_state;
                         transfert_done <= 1;
-                    end else begin
-                        state <= bus_free_state;
                     end
-                end
-            endcase
-            
-            case (state)
-                idle_state:  begin
-                    transfert_done <= 0;
-                    wait_timer_enabled <=0;
-                end
-                start_state: begin
-                    wait_timer_enabled <=1;
-                end
-                slave_address: begin
-                    if(~transfer_step_done) send_slave_address <= 1;
-                end
-                register_address: begin
-                    if(~transfer_step_done) send_register_address <= 1;
-                end
-                data_state: begin
-                    if(~transfer_step_done) send_data <= 1;
-                end
-                wait_ack_state: begin
-                end
-                stop_state: begin
-                    if(wait_timer == 157) i2c_scl_control <= 1;
-                end
-                bus_free_state:begin
-  
                 end
             endcase
         end

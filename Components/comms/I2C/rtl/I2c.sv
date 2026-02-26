@@ -118,7 +118,6 @@ module I2c #(
         .clock(clock),
         .reset(reset),
         .start_transfert(start),
-        .timebase(timebase),
         .transfer_step_done(transfer_done),
         .ack(i2c_sda_in),
         .send_slave_address(send_slave_address),
