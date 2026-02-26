@@ -50,7 +50,7 @@ module I2c #(
     assign i2c_sda_out_en = ~i2c_sda_control;
 
 
-    always@(posedge clock)begin
+    always_ff @(posedge clock)begin
         if(~reset) begin
             delay_counter <= 0;
             previous_timebase <=0;
