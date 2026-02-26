@@ -16,7 +16,6 @@
 
 module DataEngine #(parameter SETUP_DELAY = 35)(
     input wire clock,
-    input wire reset,
     input wire timebase,
     input wire [7:0] data,
     input wire start_transfer,

@@ -79,15 +79,14 @@ module I2c #(
     end
 
 
-    enable_generator_core #(
-        .COUNTER_WIDTH(16),
-        .CLOCK_MODE("TRUE")
+    i2c_scl_generator #(
+        .COUNTER_WIDTH(16)
     ) tb_core(
         .clock(clock),
         .reset(reset),
-        .gen_enable_in(timebase_enable),
+        .enable(timebase_enable),
         .period(FIXED_PERIOD_WIDTH),
-        .enable_out(timebase)
+        .timebase(timebase)
     );
 
 
@@ -108,7 +107,6 @@ module I2c #(
     
     DataEngine DE(
         .clock(clock),
-        .reset(reset),
         .timebase(timebase),
         .data(write_data),
         .start_transfer(start_transfer),
