@@ -20,7 +20,8 @@ module i2c_scl_generator #(parameter COUNTER_WIDTH = 32)(
     input wire       reset,
     input wire      enable,
     input wire [COUNTER_WIDTH-1:0] period,
-    output reg       timebase
+    output reg       timebase,
+    output reg       sampling_tb
 );
 
 
@@ -53,13 +54,22 @@ module i2c_scl_generator #(parameter COUNTER_WIDTH = 32)(
     always_ff @(posedge clock)begin
         if(~reset)begin
             timebase <=0;
+            sampling_tb<= 0;
         end else begin
             if(enable & internal_period != 0) begin
+                if(enable_counter>2*time_unit-1)begin
+                    sampling_tb <= 1;
+                end else begin
+                    sampling_tb <= 0;
+                end
                 if(enable_counter>time_unit-1 && enable_counter<3*time_unit-1)begin
                     timebase <= 1;
                 end else begin
                     timebase <= 0;
                 end
+            end else begin
+                timebase <= 0;
+                sampling_tb <= 0;
             end
         end
     end

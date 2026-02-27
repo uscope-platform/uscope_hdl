@@ -50,9 +50,7 @@ module tmp100_tb();
         .axi_in(i2c_axi)
     );
 
-    event transfer_done;
 
-    reg write_test, read_test;
 
     initial begin
         i2c_axi.initialize_master();
@@ -60,40 +58,14 @@ module tmp100_tb();
         @(reset_done);
         #10;
         enable <= 1;
-        forever begin
-            if(write_test)begin
-                i2c_axi.write(4, 'h01);
-                i2c_axi.write(8, 'h60);
-                i2c_axi.write(0, 'h4e);
-            end
 
-            if(read_test)begin
-                i2c_axi.write(4, 'h02);
-                i2c_axi.write(8, 'h00);
-                i2c_axi.write(0, 'h14e);
-            end
-            @(transfer_done);
-            #10000;    
-        end
+        i2c_axi.write(4, 'h01);
+        i2c_axi.write(8, 'h60);
+        i2c_axi.write(0, 'h4e);
         
     end
 
     int write_count = 0;
-    initial begin
-        write_test = 1;
-        read_test = 0;
-        @(reset_done);
-        while(write_count<3)begin
-            @(transfer_done);
-            write_count++;
-        end
-
-        write_test = 0;
-        read_test = 1;
-        
-    end
-
-
     reg scl_prev, sda_prev;
     
     wire scl_negedge = scl_prev & ~SCL;
@@ -156,7 +128,6 @@ module tmp100_tb();
             end
         end
         if(SCL & sda_posedge)begin
-            ->transfer_done;
             rx_phase <= slave_addr;
             in_transmission <= 0;
         end

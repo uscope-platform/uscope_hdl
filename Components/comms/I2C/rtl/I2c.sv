@@ -34,7 +34,7 @@ module I2c #(
     wire [7:0] write_data;
     wire [7:0] read_data;
     wire start_transfer;
-    wire timebase;
+    wire timebase, sampling_tb;
     wire done;
     wire i2c_sda_data, i2c_sda_control;
     wire i2c_scl_control;
@@ -89,7 +89,8 @@ module I2c #(
         .reset(reset),
         .enable(i2c_scl_control),
         .period(FIXED_PERIOD_WIDTH),
-        .timebase(timebase)
+        .timebase(timebase),
+        .sampling_tb(sampling_tb)
     );
 
 
@@ -111,6 +112,7 @@ module I2c #(
     i2c_phy phy(
         .clock(clock),
         .timebase(timebase),
+        .sampling_tb(sampling_tb),
         .write_data(write_data),
         .start_beat(start_beat),
         .start_read(start_read),

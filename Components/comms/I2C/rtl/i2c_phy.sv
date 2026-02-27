@@ -17,6 +17,7 @@
 module i2c_phy #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
     input wire clock,
     input wire timebase,
+    input wire sampling_tb,
     input wire i2c_sda_in,
     input wire start_beat,
     input wire last_beat,
@@ -45,6 +46,7 @@ module i2c_phy #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
 
     reg [3:0] transfer_counter = 0;
     reg previous_timebase = 0;
+    reg prev_sampling_tb = 0;
 
     initial begin
         i2c_sda_out = 0;
@@ -78,6 +80,7 @@ module i2c_phy #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
         case (state)
             idle:begin
                 ack <= 0;
+                received_data <= 0;
                 if(tb_posedge) 
                     transfer_counter <= 0;
                 transfer_done <=0;
@@ -98,13 +101,11 @@ module i2c_phy #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
             read_reception:begin
                 in_read <= 1;
                 if(tb_posedge)begin
+                    received_data[7-transfer_counter] <= i2c_sda_in;
                     transfer_counter <= transfer_counter +1;
                     if(transfer_counter==7)begin
                         state <= wait_ack;
                     end
-                end
-                if(tb_negedge)begin
-                    received_data[transfer_counter] <= i2c_sda_in;
                 end
             end
             send_ack: begin
@@ -128,6 +129,7 @@ module i2c_phy #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
             end
             write_transmission: begin
                 in_read <= 0;
+                received_data = 0;
                 if(tb_posedge)begin
                     if(transfer_counter==7)begin
                         state <= wait_ack;
