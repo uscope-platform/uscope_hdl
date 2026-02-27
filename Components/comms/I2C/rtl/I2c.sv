@@ -37,6 +37,7 @@ module I2c #(
     wire i2c_sda_data, i2c_sda_control;
     wire i2c_scl_control;
     wire transfer_done;
+    wire start_beat, last_beat;
 
     reg delayed_timebase;
     reg previous_timebase;
@@ -46,8 +47,8 @@ module I2c #(
     assign i2c_sda_out = i2c_sda_data;
     assign i2c_scl_out = delayed_timebase; 
 
-    assign i2c_scl_out_en = ~i2c_scl_control;
-    assign i2c_sda_out_en = ~i2c_sda_control;
+    assign i2c_scl_out_en = i2c_scl_control;
+    assign i2c_sda_out_en = i2c_sda_control;
 
 
     always_ff @(posedge clock)begin
@@ -84,7 +85,7 @@ module I2c #(
     ) tb_core(
         .clock(clock),
         .reset(reset),
-        .enable(~i2c_scl_control),
+        .enable(i2c_scl_control),
         .period(FIXED_PERIOD_WIDTH),
         .timebase(timebase)
     );
@@ -94,10 +95,10 @@ module I2c #(
         .clock(clock),
         .reset(reset),
         .transfer_step_done(transfer_done),
-        .i2c_sda_control(i2c_sda_control),
-        .i2c_scl_control(i2c_scl_control),
         .transfert_done(done),
         .write_req(write_req),
+        .start_beat(start_beat),
+        .last_beat(last_beat),
         .start_transfer(start_transfer),
         .outgoing_data(write_data)
     );
@@ -107,10 +108,15 @@ module I2c #(
         .clock(clock),
         .timebase(timebase),
         .data(write_data),
+        .start_beat(start_beat),
+        .last_beat(last_beat),
         .start_transfer(start_transfer),
         .transfer_done(transfer_done),
         .i2c_sda_in(i2c_sda_in),
-        .i2c_sda_out(i2c_sda_data)
+        .i2c_sda_out(i2c_sda_data),
+        .scl_enable(i2c_scl_control),
+        .sda_enable(i2c_sda_control),
+        .ack()
     );
 
 

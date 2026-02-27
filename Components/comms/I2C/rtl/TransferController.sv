@@ -18,9 +18,9 @@ module TransferController #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, 
     input wire clock,
     input wire reset,
     input wire transfer_step_done,
+    output reg start_beat,
+    output reg last_beat,
     output reg start_transfer,
-    output reg i2c_sda_control,
-    output reg i2c_scl_control,
     output reg transfert_done,
     output reg [7:0] outgoing_data,
     axi_stream.slave write_req
@@ -61,9 +61,9 @@ module TransferController #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, 
     end
 
     initial begin
+        start_beat = 0;
+        last_beat = 0;
         start_transfer = 0;
-        i2c_sda_control = 1;
-        i2c_scl_control = 1;
         transfert_done = 0;
         wait_timer_enabled =0;
     end
@@ -76,39 +76,31 @@ module TransferController #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, 
                     register_address <= write_req.user[7:0];
                     data <= write_req.data[7:0];
                     write_req.ready <= 0;
-                    state <= start_state;
-                    i2c_sda_control <=0;
+                    state <= slave_address_state;
+                    start_beat <= 1;
+                    start_transfer <= 1;
                 end
                 transfert_done <= 0;
                 wait_timer_enabled <=0;
             end
-            start_state: begin
-                wait_timer_enabled <=1;
-                if(wait_timer == START_STOP_DELAY)begin
-                    state <= slave_address_state;
-                    start_transfer <= 1;
-                    i2c_scl_control <= 0;
-                    wait_timer_enabled <=0;
-                end
-            end
             slave_address_state: begin
-                i2c_sda_control <= 0;
                 outgoing_data <= slave_address;
                 if(transfer_step_done)begin
                     start_transfer <= 1;
+                    start_beat <= 0;
                     state <= register_address_state;
                 end
             end
             register_address_state: begin
-                i2c_sda_control <= 0;
                 outgoing_data <= register_address;
                 if(transfer_step_done)begin
                     start_transfer <= 1;
+                    last_beat <= 1;
                     state <= data_state_state;
                 end
             end
             data_state_state: begin
-                i2c_sda_control <= 0;
+                last_beat <= 0;
                 outgoing_data <= data;
                 if(transfer_step_done)begin
                     wait_timer_enabled <=1;
@@ -117,12 +109,9 @@ module TransferController #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, 
             end
             stop_state: begin
                 wait_timer_enabled <=1;
-                i2c_sda_control <= 0;
-                if(wait_timer == 157) i2c_scl_control <= 1;
                 if(wait_timer == START_STOP_DELAY)begin
                     state <= bus_free_state;
                     wait_timer_enabled <= 0;
-                    i2c_sda_control <= 1;
                 end
             end
             bus_free_state: begin

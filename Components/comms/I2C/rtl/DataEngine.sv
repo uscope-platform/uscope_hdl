@@ -14,23 +14,29 @@
 // limitations under the License.
 `timescale 10 ns / 1 ns
 
-module DataEngine #(parameter SETUP_DELAY = 35)(
+module DataEngine #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
     input wire clock,
     input wire timebase,
     input wire i2c_sda_in,
+    input wire start_beat,
+    input wire last_beat,
     input wire [7:0] data,
     input wire start_transfer,
     output reg transfer_done,
     output reg i2c_sda_out,
+    output reg sda_enable,
+    output reg scl_enable,
     output reg ack
 );
 
 
     enum logic [2:0] {  
         idle = 0,
-        transmission = 1,
-        wait_ack = 2,
-        sample_ack = 3
+        start=1,
+        transmission = 2,
+        wait_ack = 3,
+        sample_ack = 4,
+        stop=5
     } state = idle;
 
     reg busy = 0;
@@ -40,6 +46,8 @@ module DataEngine #(parameter SETUP_DELAY = 35)(
     initial begin
         i2c_sda_out = 0;
         transfer_done =0;
+        scl_enable = 0;
+        sda_enable = 0;
     end
 
     wire tb_posedge;
@@ -48,6 +56,17 @@ module DataEngine #(parameter SETUP_DELAY = 35)(
     assign tb_posedge = timebase& ~previous_timebase;
     assign tb_negedge = ~timebase& previous_timebase;
 
+    reg [15:0] wait_timer;
+    always_ff @(posedge clock)begin
+        if(state == start || state == stop)begin
+            wait_timer <= wait_timer+1;
+        end else begin
+            wait_timer <= 0;
+        end
+    end
+
+
+    reg stop_needed = 0;
     always_ff @(posedge clock) begin
         previous_timebase <= timebase;
         transfer_done <=0;
@@ -59,6 +78,18 @@ module DataEngine #(parameter SETUP_DELAY = 35)(
                 transfer_done <=0;
                 if(transfer_counter == 0) i2c_sda_out <= 0;
                 if(start_transfer) begin
+                    stop_needed <= last_beat;
+                    if(start_beat)begin
+                        state <= start;
+                    end else begin
+                        state <= transmission;
+                    end
+                end
+            end
+            start:begin
+                sda_enable<= 1;
+                if(wait_timer == START_STOP_DELAY-1)begin
+                    scl_enable <= 1;
                     state <= transmission;
                 end
             end
@@ -80,8 +111,22 @@ module DataEngine #(parameter SETUP_DELAY = 35)(
             sample_ack:begin
                 if(tb_negedge)begin
                     transfer_done <=1;
-                    state <= idle;
+                    if(stop_needed)begin
+                        state <= stop;
+                    end else begin
+                        state <= idle;
+                    end
+                    
                     ack <= !i2c_sda_in;
+                end
+            end
+            stop:begin
+                if(wait_timer>START_STOP_DELAY/2) begin
+                    scl_enable<= 0;
+                end
+                if(wait_timer == START_STOP_DELAY-1)begin
+                    sda_enable <= 0;
+                    state <= idle;
                 end
             end
             
