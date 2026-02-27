@@ -34,7 +34,7 @@ module I2C_tristate #(
 
     I2c #(
         .SCL_TIMEBASE_DELAY(SCL_TIMEBASE_DELAY)
-    )i2c_interface(
+    )i2c_impl(
         .clock(clock),
         .reset(reset),
         .i2c_scl_in(scl_in),

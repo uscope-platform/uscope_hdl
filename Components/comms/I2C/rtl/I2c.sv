@@ -111,7 +111,8 @@ module I2c #(
         .data(write_data),
         .start_transfer(start_transfer),
         .transfer_done(transfer_done),
-        .i2c_sda(i2c_sda_data)
+        .i2c_sda_in(i2c_sda_in),
+        .i2c_sda_out(i2c_sda_data)
     );
 
 

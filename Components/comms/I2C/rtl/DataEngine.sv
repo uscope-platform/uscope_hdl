@@ -17,16 +17,20 @@
 module DataEngine #(parameter SETUP_DELAY = 35)(
     input wire clock,
     input wire timebase,
+    input wire i2c_sda_in,
     input wire [7:0] data,
     input wire start_transfer,
     output reg transfer_done,
-    output reg i2c_sda
+    output reg i2c_sda_out,
+    output reg ack
 );
 
 
     enum logic [2:0] {  
         idle = 0,
-        transmission = 1
+        transmission = 1,
+        wait_ack = 2,
+        sample_ack = 3
     } state = idle;
 
     reg busy = 0;
@@ -34,34 +38,54 @@ module DataEngine #(parameter SETUP_DELAY = 35)(
     reg previous_timebase = 0;
 
     initial begin
-        i2c_sda = 0;
+        i2c_sda_out = 0;
         transfer_done =0;
     end
+
+    wire tb_posedge;
+    wire tb_negedge;
+
+    assign tb_posedge = timebase& ~previous_timebase;
+    assign tb_negedge = ~timebase& previous_timebase;
 
     always_ff @(posedge clock) begin
         previous_timebase <= timebase;
         case (state)
             idle:begin
-                if(timebase& ~previous_timebase) 
+                ack <= 0;
+                if(tb_posedge) 
                     transfer_counter <= 0;
                 transfer_done <=0;
-                if(transfer_counter == 0) i2c_sda <= 0;
+                if(transfer_counter == 0) i2c_sda_out <= 0;
                 if(start_transfer) begin
                     state <= transmission;
                 end
             end
             transmission: begin
-                if(timebase & ~previous_timebase)begin
+                if(tb_posedge)begin
                     if(transfer_counter==7)begin
                         transfer_done <=1;
                     end
                     transfer_counter <= transfer_counter +1;
-                    i2c_sda <= data[7-transfer_counter];
+                    i2c_sda_out <= data[7-transfer_counter];
                 end           
                 if(transfer_done) begin
-                    state <= idle;
+                    state <= wait_ack;
                 end
             end
+            wait_ack: begin
+                if(tb_posedge)begin
+                    transfer_counter <= 0;
+                    state <= sample_ack;
+                end
+            end
+            sample_ack:begin
+                if(tb_negedge)begin
+                    state <= idle;
+                    ack <= !i2c_sda_in;
+                end
+            end
+            
         endcase
     end
 
