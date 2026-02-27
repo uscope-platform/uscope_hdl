@@ -33,7 +33,7 @@ module I2c #(
     reg [7:0] write_data;
     wire start_transfer;
     wire timebase;
-    wire done, timebase_enable;
+    wire done;
     wire i2c_sda_data, i2c_sda_control;
     wire i2c_scl_control;
     wire transfer_done;
@@ -84,7 +84,7 @@ module I2c #(
     ) tb_core(
         .clock(clock),
         .reset(reset),
-        .enable(timebase_enable),
+        .enable(~i2c_scl_control),
         .period(FIXED_PERIOD_WIDTH),
         .timebase(timebase)
     );
@@ -94,11 +94,9 @@ module I2c #(
         .clock(clock),
         .reset(reset),
         .transfer_step_done(transfer_done),
-        .ack(i2c_sda_in),
         .i2c_sda_control(i2c_sda_control),
         .i2c_scl_control(i2c_scl_control),
         .transfert_done(done),
-        .timebase_enable(timebase_enable),
         .write_req(write_req),
         .start_transfer(start_transfer),
         .outgoing_data(write_data)
