@@ -27,19 +27,14 @@ module i2c_mac #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, BUS_FREE_DE
 );
 
     
-    reg wait_timer_enabled;
-    
-    reg [15:0] wait_timer;
+    reg [15:0] bus_free_timer = 0;
 
     typedef enum logic [2:0]{
         idle_state = 0,
-        start_state = 1,
-        slave_address_state = 2,
-        register_address_state = 3,
-        data_state_state = 4,
-        wait_ack_state = 5,
-        stop_state = 6,
-        bus_free_state = 7
+        slave_address_state = 1,
+        register_address_state = 2,
+        data_state_state = 3,
+        bus_free_state = 4
     }transfer_controller_fsm;
 
     transfer_controller_fsm state = idle_state;
@@ -48,24 +43,11 @@ module i2c_mac #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, BUS_FREE_DE
     reg [7:0] slave_address = 0;
     reg [7:0] register_address = 0;
 
-    always_ff @(posedge clock)begin
-        if(~reset)begin
-            wait_timer <= 0;
-        end else begin
-            if(wait_timer_enabled)begin
-                wait_timer <= wait_timer+1;
-            end else begin
-                wait_timer <= 0;
-            end
-        end
-    end
-
     initial begin
         start_beat = 0;
         last_beat = 0;
         start_transfer = 0;
         transfert_done = 0;
-        wait_timer_enabled =0;
     end
     always_ff @ (posedge clock) begin : control_state_machine
         start_transfer <= 0;
@@ -81,7 +63,6 @@ module i2c_mac #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, BUS_FREE_DE
                     start_transfer <= 1;
                 end
                 transfert_done <= 0;
-                wait_timer_enabled <=0;
             end
             slave_address_state: begin
                 outgoing_data <= slave_address;
@@ -103,23 +84,17 @@ module i2c_mac #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, BUS_FREE_DE
                 last_beat <= 0;
                 outgoing_data <= data;
                 if(transfer_step_done)begin
-                    wait_timer_enabled <=1;
-                    state <= stop_state;
-                end
-            end
-            stop_state: begin
-                wait_timer_enabled <=1;
-                if(wait_timer == START_STOP_DELAY)begin
                     state <= bus_free_state;
-                    wait_timer_enabled <= 0;
                 end
             end
             bus_free_state: begin
-                wait_timer_enabled <= 1;
-                if(wait_timer == BUS_FREE_DELAY)begin
+                if(bus_free_timer == BUS_FREE_DELAY)begin
                     state <= idle_state;
                     write_req.ready <= 0;
+                    bus_free_timer <= 0;
                     transfert_done <= 1;
+                end else begin
+                    bus_free_timer<= bus_free_timer+1;
                 end
             end
         endcase
