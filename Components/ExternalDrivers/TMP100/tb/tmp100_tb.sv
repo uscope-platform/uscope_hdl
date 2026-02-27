@@ -18,7 +18,7 @@ module tmp100_tb();
 
 
     wire SDA, SCL;
-    reg sda_drive = 1'bz; 
+    wire sda_drive; 
     assign SDA = sda_drive;
 
     pullup(SDA);
@@ -50,6 +50,10 @@ module tmp100_tb();
         .axi_in(i2c_axi)
     );
 
+    event transfer_done;
+
+    reg write_test, read_test;
+
     initial begin
         i2c_axi.initialize_master();
         enable <= 0;
@@ -57,13 +61,38 @@ module tmp100_tb();
         #10;
         enable <= 1;
         forever begin
-            i2c_axi.write(0, 'h4e);
-            i2c_axi.write(4, 'h01);
-            i2c_axi.write(8, 'h60);
-            #100;
+            if(write_test)begin
+                i2c_axi.write(4, 'h01);
+                i2c_axi.write(8, 'h60);
+                i2c_axi.write(0, 'h4e);
+            end
+
+            if(read_test)begin
+                i2c_axi.write(4, 'h02);
+                i2c_axi.write(8, 'h00);
+                i2c_axi.write(0, 'h14e);
+            end
+            @(transfer_done);
+            #10000;    
         end
         
     end
+
+    int write_count = 0;
+    initial begin
+        write_test = 1;
+        read_test = 0;
+        @(reset_done);
+        while(write_count<3)begin
+            @(transfer_done);
+            write_count++;
+        end
+
+        write_test = 0;
+        read_test = 1;
+        
+    end
+
 
     reg scl_prev, sda_prev;
     
@@ -95,15 +124,7 @@ module tmp100_tb();
         data_phase = 2
     } rx_phase = slave_addr;
     
-    always_ff @(negedge SCL or negedge in_transmission) begin
-        if (!in_transmission) begin
-            sda_drive <= 1'bz;
-        end else if (in_ack_period) begin
-            sda_drive <= 0;    // Pull down for ACK
-        end else begin
-            sda_drive <= 1'bz; // Release for data bits
-        end
-    end
+    assign sda_drive = (in_transmission && in_ack_period) ? 1'b0 : 1'bz;
 
     always_ff @(posedge clock)begin
         if(SCL & sda_negedge)begin
@@ -135,7 +156,7 @@ module tmp100_tb();
             end
         end
         if(SCL & sda_posedge)begin
-
+            ->transfer_done;
             rx_phase <= slave_addr;
             in_transmission <= 0;
         end

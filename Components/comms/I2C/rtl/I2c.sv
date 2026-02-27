@@ -26,18 +26,20 @@ module I2c #(
     input wire i2c_sda_in,
     output wire i2c_sda_out,
     output wire i2c_sda_out_en,
-    axi_stream.slave write_req
+    axi_stream.slave transfer_req,
+    axi_stream.master read_response
 );
 
 
-    reg [7:0] write_data;
+    wire [7:0] write_data;
+    wire [7:0] read_data;
     wire start_transfer;
     wire timebase;
     wire done;
     wire i2c_sda_data, i2c_sda_control;
     wire i2c_scl_control;
     wire transfer_done;
-    wire start_beat, last_beat;
+    wire start_beat, last_beat, start_read;
 
     reg delayed_timebase;
     reg previous_timebase;
@@ -93,22 +95,25 @@ module I2c #(
 
     i2c_mac transfer_sequencer(
         .clock(clock),
-        .reset(reset),
         .transfer_step_done(transfer_done),
         .transfert_done(done),
-        .write_req(write_req),
+        .transfer_req(transfer_req),
         .start_beat(start_beat),
+        .start_read(start_read),
         .last_beat(last_beat),
         .start_transfer(start_transfer),
-        .outgoing_data(write_data)
+        .outgoing_data(write_data),
+        .incoming_data(read_data),
+        .read_response(read_response)
     );
 
     
     i2c_phy phy(
         .clock(clock),
         .timebase(timebase),
-        .data(write_data),
+        .write_data(write_data),
         .start_beat(start_beat),
+        .start_read(start_read),
         .last_beat(last_beat),
         .start_transfer(start_transfer),
         .transfer_done(transfer_done),
@@ -116,7 +121,8 @@ module I2c #(
         .i2c_sda_out(i2c_sda_data),
         .scl_enable(i2c_scl_control),
         .sda_enable(i2c_sda_control),
-        .ack()
+        .ack(),
+        .read_data(read_data)
     );
 
 

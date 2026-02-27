@@ -20,7 +20,8 @@ module I2C_tristate #(
     input wire reset,
     inout wire SDA,
     inout wire SCL,
-    axi_stream.slave write_req
+    axi_stream.slave transfer_req,
+    axi_stream.master read_response
 );
 
     wire scl_in, scl_out, sda_in, sda_out, scl_en, sda_en;
@@ -43,7 +44,8 @@ module I2C_tristate #(
         .i2c_sda_in(sda_in),
         .i2c_sda_out(sda_out),
         .i2c_sda_out_en(sda_en),
-        .write_req(write_req)
+        .transfer_req(transfer_req),
+        .read_response(read_response)
     );
 
 
