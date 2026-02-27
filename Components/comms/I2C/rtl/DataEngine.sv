@@ -50,6 +50,7 @@ module DataEngine #(parameter SETUP_DELAY = 35)(
 
     always_ff @(posedge clock) begin
         previous_timebase <= timebase;
+        transfer_done <=0;
         case (state)
             idle:begin
                 ack <= 0;
@@ -64,13 +65,10 @@ module DataEngine #(parameter SETUP_DELAY = 35)(
             transmission: begin
                 if(tb_posedge)begin
                     if(transfer_counter==7)begin
-                        transfer_done <=1;
+                        state <= wait_ack;
                     end
                     transfer_counter <= transfer_counter +1;
                     i2c_sda_out <= data[7-transfer_counter];
-                end           
-                if(transfer_done) begin
-                    state <= wait_ack;
                 end
             end
             wait_ack: begin
@@ -81,6 +79,7 @@ module DataEngine #(parameter SETUP_DELAY = 35)(
             end
             sample_ack:begin
                 if(tb_negedge)begin
+                    transfer_done <=1;
                     state <= idle;
                     ack <= !i2c_sda_in;
                 end
