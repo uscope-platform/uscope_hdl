@@ -14,7 +14,7 @@
 // limitations under the License.
 `timescale 10 ns / 1 ns
 
-module TransferController #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, BUS_FREE_DELAY = 300)(
+module i2c_mac #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, BUS_FREE_DELAY = 300)(
     input wire clock,
     input wire reset,
     input wire transfer_step_done,

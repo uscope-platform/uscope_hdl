@@ -91,7 +91,7 @@ module I2c #(
     );
 
 
-    TransferController TC(
+    i2c_mac transfer_sequencer(
         .clock(clock),
         .reset(reset),
         .transfer_step_done(transfer_done),
@@ -104,7 +104,7 @@ module I2c #(
     );
 
     
-    DataEngine DE(
+    i2c_phy phy(
         .clock(clock),
         .timebase(timebase),
         .data(write_data),

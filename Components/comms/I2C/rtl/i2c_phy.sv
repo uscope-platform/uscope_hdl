@@ -14,7 +14,7 @@
 // limitations under the License.
 `timescale 10 ns / 1 ns
 
-module DataEngine #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
+module i2c_phy #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
     input wire clock,
     input wire timebase,
     input wire i2c_sda_in,
