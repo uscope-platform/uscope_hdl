@@ -19,6 +19,8 @@ module tmp100_tl (
     inout wire SCL
 );
 
+    localparam n_axi_slaves = 3;
+
     wire clock, reset, dma_done;
     AXI #(.ADDR_WIDTH(36)) fcore_rom_link();
 
@@ -36,48 +38,12 @@ module tmp100_tl (
         .dma_done(dma_done)
     );
 
-    parameter [48:0] AXI_ADDRESSES [1:0] = '{
-        'h400000000,
-        'h400010000
-    };
-    axi_lite i2c_axi();
-    axi_lite gpio_axi();
-
-    axil_crossbar_interface #(
-        .DATA_WIDTH(32),
-        .ADDR_WIDTH(49),
-        .NM(1),
-        .NS(2),
-        .SLAVE_ADDR(AXI_ADDRESSES),
-        .SLAVE_MASK('{2{32'hf0000}})
-    ) control_interconnect (
+    tmp100_standalone_reader reader (
         .clock(clock),
         .reset(reset),
-        .slaves('{control_axi}),
-        .masters({
-            i2c_axi,
-            gpio_axi
-        })
-    );
-
-    wire [31:0] control_word;
-
-    gpio ctrl(
-        .clock(clock),
-        .reset(reset),
-        .axil(gpio_axi),
-        .gpio_i(control_word),
-        .gpio_o(control_word)
-    );
-
-    tmp100 driver(
-        .clock(clock),
-        .reset(reset),
-        .enable(control_word[0]),
         .SDA(SDA),
         .SCL(SCL),
-        .axi_in(i2c_axi)
+        .control_axi(control_axi)
     );
-
 
 endmodule

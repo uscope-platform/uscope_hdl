@@ -56,6 +56,8 @@ module i2c_mac #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, BUS_FREE_DE
         start_read = 0;
         transfert_done = 0;
     end
+
+    assign transfer_req.ready = state ==  idle_state;
     
     reg [31:0] read_value = 0;
 
@@ -70,7 +72,6 @@ module i2c_mac #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, BUS_FREE_DE
                     direction <= transfer_req.dest[8];
                     register_address <= transfer_req.user[7:0];
                     data <= transfer_req.data[7:0];
-                    transfer_req.ready <= 0;
                     state <= slave_address_state;
                     start_beat <= 1;
                     start_transfer <= 1;
@@ -128,7 +129,6 @@ module i2c_mac #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, BUS_FREE_DE
             bus_free_state: begin
                 if(bus_free_timer == BUS_FREE_DELAY)begin
                     state <= idle_state;
-                    transfer_req.ready <= 0;
                     bus_free_timer <= 0;
                     transfert_done <= 1;
                 end else begin

@@ -18,6 +18,7 @@ module tmp100 (
     input wire clock,
     input wire reset,
     input wire enable,
+    input wire trigger,
     inout wire SDA,
     inout wire SCL,
     axi_lite.slave axi_in
@@ -48,40 +49,75 @@ module tmp100 (
     axi_stream i2c_write();
     axi_stream i2c_read();
 
-    wire [15:0] slave_addr;
-    wire [15:0] reg_addr;
-    wire [15:0] tx_data;
+    wire [7:0] slave_addr;
     reg [31:0] rx_data = 0;
 
     assign slave_addr = cu_write_registers[0];
-    assign reg_addr = cu_write_registers[1];
-    assign tx_data = cu_write_registers[2];
     assign cu_read_registers[2:0] = cu_write_registers[2:0];
     assign cu_read_registers[3] = rx_data;
     
-    assign i2c_write.data = tx_data;
-    assign i2c_write.dest = slave_addr;
-    assign i2c_write.user = reg_addr;
 
     reg [31:0] transmission_ctr = 0;
 
+    
+
+
+    enum logic [3:0] {  
+        idle = 0,
+        wait_resolution_config =1,
+        resolution_config =2,
+        wait_read_setup = 3,
+        read_setup = 4,
+        read = 5
+    } state = idle;
+
     always_ff @(posedge clock)begin
+        i2c_write.valid <= 0;
+        case (state)
+            idle : begin
+                if(enable && i2c_write.ready)begin
+                    state <= wait_resolution_config;
+                    i2c_write.data <= 'h60;
+                    i2c_write.dest <= slave_addr;
+                    i2c_write.user <= 1;
+                    i2c_write.valid <= 1;
+                end
+            end
+            wait_resolution_config :begin
+                if(~i2c_write.ready) begin
+                    state <= resolution_config;
+                end
+            end
+            resolution_config: begin
+                if(i2c_write.ready) begin
+                    state <= wait_read_setup;
+                    i2c_write.user <= 0;
+                    i2c_write.dest <= slave_addr;
+                    i2c_write.valid <= 1;
+                end
+            end
+            wait_read_setup: begin
+                 if(~i2c_write.ready) begin
+                    state <= read_setup;
+                end
+            end
+            read_setup: begin
+                if(i2c_write.ready) begin
+                    state <= read;
+                end
+            end
+            read:begin
+                if(trigger && i2c_write.ready)begin
+                    i2c_write.valid <= 1;
+                    i2c_write.dest <= {1'b1,slave_addr};
+                end
+            end
+        endcase
         if(i2c_read.valid)begin
             rx_data <= i2c_read.data;
         end
-        if(enable)begin
-            i2c_write.valid <= 0;
-            if(transmission_ctr  == 400000)begin
-                transmission_ctr <= 0;
-                i2c_write.valid <= 1;
-            end else begin
-                transmission_ctr <= transmission_ctr+1;
-            end
-        end
-
     end
-
-
+    
     I2C_tristate i2c_interface(
         .clock(clock),
         .reset(reset),

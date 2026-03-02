@@ -152,10 +152,10 @@ module i2c_phy #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
             end
             sample_ack:begin
                 if(tb_negedge)begin
-                    transfer_done <=1;
                     if(stop_needed)begin
                         state <= stop;
                     end else begin
+                        transfer_done <=1;
                         state <= idle;
                     end
                     
@@ -169,6 +169,7 @@ module i2c_phy #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
                 end
                 if(wait_timer == START_STOP_DELAY-1)begin
                     sda_enable <= 0;
+                    transfer_done <=1;
                     state <= idle;
                 end
             end

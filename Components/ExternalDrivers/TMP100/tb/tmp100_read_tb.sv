@@ -38,17 +38,32 @@ module tmp100_read_tb();
         ->reset_done;
     end
 
+
     axi_lite i2c_axi();
 
-    reg enable;
+    reg enable, trigger;
     tmp100 driver(
         .clock(clock),
         .reset(reset),
         .enable(enable),
+        .trigger(trigger),
         .SDA(SDA),
         .SCL(SCL),
         .axi_in(i2c_axi)
     );
+
+
+    event config_done;
+    initial begin
+        @(config_done);
+        forever begin
+            trigger<= 1;
+            #1 trigger<= 0;
+            #100000;
+        end
+        
+        
+    end
 
     initial begin
         i2c_axi.initialize_master();
@@ -59,8 +74,8 @@ module tmp100_read_tb();
 
         i2c_axi.write(4, 'h02);
         i2c_axi.write(8, 'h00);
-        i2c_axi.write(0, 'h14e);
-        
+        i2c_axi.write(0, 'h4e);
+        ->config_done; 
     end
 
 

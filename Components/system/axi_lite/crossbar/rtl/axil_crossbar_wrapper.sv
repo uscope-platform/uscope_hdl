@@ -20,7 +20,7 @@ module axil_crossbar_interface #(
         parameter NM = 4,
         parameter NS = 8,
         parameter [ADDR_WIDTH-1:0] SLAVE_ADDR [NS-1:0] = '{NS{0}},
-        parameter [ADDR_WIDTH-1:0] SLAVE_MASK [NS-1:0] =  '{NS{0}},
+        parameter [ADDR_WIDTH-1:0] SLAVE_MASK [NS-1:0] =  '{NS{32'hf0000}},
         parameter [0:0] OPT_LOWPOWER = 1,
         parameter OPT_LINGER = 4,
         parameter LGMAXBURST = 5
