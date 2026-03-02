@@ -76,7 +76,9 @@ module tmp100_standalone_reader (
         .axil(tb_axi)
     );
 
-    tmp100 driver(
+    tmp100 #(
+        .RESOLUTION(12)
+    ) driver(
         .clock(clock),
         .reset(reset),
         .enable(enable),

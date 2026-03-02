@@ -14,7 +14,7 @@
 // limitations under the License.
 
 module I2C_tristate #(
-    SCL_TIMEBASE_DELAY = 15
+    SCL_TIMEBASE_DELAY = 25
 )(
     input wire clock,
     input wire reset,

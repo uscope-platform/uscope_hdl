@@ -14,7 +14,10 @@
 // limitations under the License.
 `timescale 10 ns / 1 ns
 
-module tmp100 (
+module tmp100 #(
+    parameter RESOLUTION = 12,
+    parameter RESOLUTION_BITS = RESOLUTION  -9
+)(
     input wire clock,
     input wire reset,
     input wire enable,
@@ -23,6 +26,14 @@ module tmp100 (
     inout wire SCL,
     axi_lite.slave axi_in
 );
+
+    generate
+        if (RESOLUTION < 9 || RESOLUTION > 12) begin : gen_res_check
+            initial begin
+                $error("FATAL: RESOLUTION parameter must be between 9 and 12. Received: %0d", RESOLUTION);
+            end
+        end
+    endgenerate
 
     localparam N_REGISTERS = 4;
     reg [31:0] cu_write_registers [N_REGISTERS-1:0];
@@ -62,6 +73,7 @@ module tmp100 (
     wire signed [11:0] raw_sensor_output;
     assign raw_sensor_output = i2c_read.data>>4;
 
+    reg [1:0] resolution = 2'b11;
 
     enum logic [3:0] {  
         idle = 0,
@@ -78,7 +90,7 @@ module tmp100 (
             idle : begin
                 if(enable && i2c_write.ready)begin
                     state <= wait_resolution_config;
-                    i2c_write.data <= 'h60;
+                    i2c_write.data <= {1'b0,RESOLUTION_BITS, 5'b0};
                     i2c_write.dest <= slave_addr;
                     i2c_write.user <= 1;
                     i2c_write.valid <= 1;

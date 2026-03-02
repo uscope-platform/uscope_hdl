@@ -38,6 +38,7 @@ module tmp100_tl (
         .dma_done(dma_done)
     );
 
+
     tmp100_standalone_reader reader (
         .clock(clock),
         .reset(reset),
