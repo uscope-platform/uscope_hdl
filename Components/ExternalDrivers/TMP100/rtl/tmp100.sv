@@ -59,7 +59,8 @@ module tmp100 (
 
     reg [31:0] transmission_ctr = 0;
 
-    
+    wire signed [11:0] raw_sensor_output;
+    assign raw_sensor_output = i2c_read.data>>4;
 
 
     enum logic [3:0] {  
@@ -114,7 +115,7 @@ module tmp100 (
             end
         endcase
         if(i2c_read.valid)begin
-            rx_data <= i2c_read.data;
+            rx_data <= (raw_sensor_output*125)/2;
         end
     end
     
