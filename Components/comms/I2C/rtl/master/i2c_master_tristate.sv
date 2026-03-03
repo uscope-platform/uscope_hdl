@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-module I2C_tristate #(
+module i2c_master_tristate #(
     SCL_TIMEBASE_DELAY = 25
 )(
     input wire clock,
@@ -33,7 +33,7 @@ module I2C_tristate #(
     assign scl_in = SCL;  
 
 
-    I2c #(
+    i2c_master #(
         .SCL_TIMEBASE_DELAY(SCL_TIMEBASE_DELAY)
     )i2c_impl(
         .clock(clock),

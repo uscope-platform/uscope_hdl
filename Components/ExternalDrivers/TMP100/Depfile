@@ -2,7 +2,7 @@
     "general":{
         "project_name":"TMP100",
         "target_part":"xc7z020clg400",
-        "board":"xilinx.com:k26c:part0:1.4",
+        "board":"xilinx.com:kd240_som:part0:1.1",
         "synth_modules":[],
         "synth_tl": "tmp100_tl",
         "sim_modules":[],

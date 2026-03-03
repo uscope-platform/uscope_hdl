@@ -26,7 +26,8 @@ module tmp100 #(
     input wire trigger,
     inout wire SDA,
     inout wire SCL,
-    axi_lite.slave axi_in
+    axi_lite.slave axi_in,
+    axi_stream.master temperature
 );
 
     generate
@@ -37,38 +38,10 @@ module tmp100 #(
         end
     endgenerate
 
-    localparam N_REGISTERS = 4;
-    reg [31:0] cu_write_registers [N_REGISTERS-1:0];
-    reg [31:0] cu_read_registers [N_REGISTERS-1:0];
-
-    wire trigger_transfer;
-
-    axil_simple_register_cu #(
-        .N_READ_REGISTERS(N_REGISTERS),
-        .N_WRITE_REGISTERS(N_REGISTERS),
-        .REGISTERS_WIDTH(32),
-        .ADDRESS_MASK('hf),
-        .N_TRIGGER_REGISTERS(1),
-        .TRIGGER_REGISTERS_IDX({0})
-    ) CU (
-        .clock(clock),
-        .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
-        .trigger_out(trigger_transfer),
-        .axil(axi_in)
-    );
 
     axi_stream i2c_write();
     axi_stream i2c_read();
 
-    wire [7:0] slave_addr;
-    reg [31:0] rx_data = 0;
-
-    assign slave_addr = cu_write_registers[0];
-    assign cu_read_registers[2:0] = cu_write_registers[2:0];
-    assign cu_read_registers[3] = rx_data;
-    
 
     reg [31:0] transmission_ctr = 0;
 
@@ -156,12 +129,15 @@ module tmp100 #(
                 i2c_write.dest <= {1'b1,8'(ADDRESSES[sensors_ctr])};
             end
         endcase
+
         if(i2c_read.valid)begin
-            rx_data <= (raw_sensor_output*125)/2;
+            temperature.data <= (raw_sensor_output*125)/2;
+            temperature.valid <= 1;
+            temperature.dest <= 1;
         end
     end
     
-    I2C_tristate i2c_interface(
+    i2c_master_tristate i2c_interface(
         .clock(clock),
         .reset(reset),
         .SDA(SDA),

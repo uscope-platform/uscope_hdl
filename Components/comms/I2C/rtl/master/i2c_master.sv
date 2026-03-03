@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-module I2c #(
+module i2c_master #(
     FIXED_PERIOD_WIDTH = 1000,
     SCL_TIMEBASE_DELAY = 15,
     PRAGMA_MKFG_MODULE_TOP = "I2C"
