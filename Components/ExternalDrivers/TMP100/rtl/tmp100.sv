@@ -16,7 +16,9 @@
 
 module tmp100 #(
     parameter RESOLUTION = 12,
-    parameter RESOLUTION_BITS = RESOLUTION  -9
+    parameter RESOLUTION_BITS = RESOLUTION  -9,
+    parameter N_SENSORS = 1,
+    parameter [6:0] ADDRESSES [N_SENSORS-1:0]= '{default:0}
 )(
     input wire clock,
     input wire reset,
@@ -75,55 +77,83 @@ module tmp100 #(
 
     reg [1:0] resolution = 2'b11;
 
-    enum logic [3:0] {  
+    typedef enum logic [3:0] {  
         idle = 0,
-        wait_resolution_config =1,
-        resolution_config =2,
-        wait_read_setup = 3,
-        read_setup = 4,
-        read = 5
-    } state = idle;
+        resolution_config =1,
+        read_setup = 2,
+        wait_transmission_start = 3,
+        wait_transmission_end = 4,
+        wait_trigger = 5,
+        read = 6
+    } driver_state;
+    
+    reg [6:0] sensors_ctr = 0;
+
+    driver_state state = idle;
+    driver_state next_state = idle;
 
     always_ff @(posedge clock)begin
         i2c_write.valid <= 0;
         case (state)
             idle : begin
                 if(enable && i2c_write.ready)begin
-                    state <= wait_resolution_config;
-                    i2c_write.data <= {1'b0,RESOLUTION_BITS, 5'b0};
-                    i2c_write.dest <= slave_addr;
-                    i2c_write.user <= 1;
-                    i2c_write.valid <= 1;
-                end
-            end
-            wait_resolution_config :begin
-                if(~i2c_write.ready) begin
                     state <= resolution_config;
                 end
             end
             resolution_config: begin
-                if(i2c_write.ready) begin
-                    state <= wait_read_setup;
-                    i2c_write.user <= 0;
-                    i2c_write.dest <= slave_addr;
-                    i2c_write.valid <= 1;
+                if(sensors_ctr == N_SENSORS-1)begin
+                    next_state <= read_setup;
+                    sensors_ctr <= 0;
+                end else begin
+                    sensors_ctr <= sensors_ctr +1;
+                    next_state <= resolution_config;
                 end
-            end
-            wait_read_setup: begin
-                 if(~i2c_write.ready) begin
-                    state <= read_setup;
-                end
+                i2c_write.data <= {1'b0,RESOLUTION_BITS, 5'b0};
+                i2c_write.dest <= ADDRESSES[sensors_ctr];
+                i2c_write.user <= 1;
+                i2c_write.valid <= 1;
+                state <= wait_transmission_start;
             end
             read_setup: begin
-                if(i2c_write.ready) begin
-                    state <= read;
+                if(sensors_ctr == N_SENSORS-1)begin
+                    next_state <= wait_trigger;
+                    sensors_ctr <= 0;
+                end else begin
+                    sensors_ctr <= sensors_ctr +1;
+                    next_state <= read_setup;
+                end
+                i2c_write.data <= 0;
+                i2c_write.user <= 0;
+                i2c_write.dest <= ADDRESSES[sensors_ctr];
+                i2c_write.valid <= 1;
+                state <= wait_transmission_start;
+            end
+            wait_transmission_start: begin
+                if(~i2c_write.ready) 
+                    state <= wait_transmission_end;
+            end
+            wait_transmission_end: begin
+                i2c_write.valid <= 0;
+                if(i2c_write.ready)begin
+                    state <= next_state;
                 end
             end
+            wait_trigger: begin
+                if(trigger)
+                    state <= read;
+            end
             read:begin
-                if(trigger && i2c_write.ready)begin
-                    i2c_write.valid <= 1;
-                    i2c_write.dest <= {1'b1,slave_addr};
+               if(sensors_ctr == N_SENSORS-1)begin
+                    sensors_ctr <= 0;
+                    next_state <= wait_trigger;
+                end else begin
+                    sensors_ctr <= sensors_ctr +1;
+                    next_state <= read;
                 end
+                state <= wait_transmission_start;
+
+                i2c_write.valid <= 1;
+                i2c_write.dest <= {1'b1,8'(ADDRESSES[sensors_ctr])};
             end
         endcase
         if(i2c_read.valid)begin

@@ -57,7 +57,7 @@ module i2c_mac #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, BUS_FREE_DE
         transfert_done = 0;
     end
 
-    assign transfer_req.ready = state ==  idle_state;
+    assign transfer_req.ready = state == idle_state ;
     
     reg [31:0] read_value = 0;
 

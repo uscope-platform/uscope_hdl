@@ -111,11 +111,11 @@ module i2c_phy #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
             send_ack: begin
                 read_data <= received_data;
                 if(tb_posedge)begin
-                    transfer_done <=1;
                     sda_enable<= 0;
                     if(stop_needed)begin
                         state <= stop;
                     end else begin
+                        transfer_done <=1;
                         state <= idle;
                     end
                 end

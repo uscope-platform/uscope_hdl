@@ -44,6 +44,7 @@ module standalone_reader_tb();
 
     axi_lite reader();
 
+
     tmp100_standalone_reader DUT(
         .clock(clock),
         .reset(reset),
@@ -51,6 +52,9 @@ module standalone_reader_tb();
         .SCL(SCL),
         .control_axi(reader)
     );
+
+    defparam DUT.driver.N_SENSORS = 2;
+    defparam DUT.driver.ADDRESSES = '{7'h4e, 7'h43};
 
     initial begin
         reader.initialize_master();
@@ -62,7 +66,6 @@ module standalone_reader_tb();
         #10 reader.write(tb + 8, 10);
         #10 reader.write(tb , 1);
     end
-
 
 
 endmodule
