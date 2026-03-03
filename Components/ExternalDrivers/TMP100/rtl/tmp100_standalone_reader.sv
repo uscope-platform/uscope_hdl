@@ -76,6 +76,8 @@ module tmp100_standalone_reader (
         .axil(tb_axi)
     );
 
+    axi_stream temperature();
+
     tmp100 #(
         .RESOLUTION(12),
         .N_SENSORS(6),
@@ -87,7 +89,8 @@ module tmp100_standalone_reader (
         .trigger(read_tmp),
         .SDA(SDA),
         .SCL(SCL),
-        .axi_in(i2c_axi)
+        .axi_in(i2c_axi),
+        .temperature(temperature)
     );
 
 

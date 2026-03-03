@@ -133,6 +133,7 @@ module i2c_phy #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
                 if(tb_posedge)begin
                     if(transfer_counter==7)begin
                         state <= wait_ack;
+                        sda_enable <= 0;
                     end
                     transfer_counter <= transfer_counter +1;
                     i2c_sda_out <= write_data[7-transfer_counter];
@@ -146,6 +147,7 @@ module i2c_phy #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
                         sda_enable<= 1;
                     end else begin
                         state <= sample_ack;
+                        sda_enable <= 0;
                     end
                     
                 end
