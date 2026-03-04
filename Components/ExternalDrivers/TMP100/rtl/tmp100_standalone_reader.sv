@@ -31,9 +31,9 @@ module tmp100_standalone_reader (
         'h400020000
     };
 
-    axi_lite i2c_axi();
     axi_lite gpio_axi();
     axi_lite tb_axi();
+    axi_lite temperature_axi();
 
     axil_crossbar_interface #(
         .DATA_WIDTH(32),
@@ -46,9 +46,9 @@ module tmp100_standalone_reader (
         .reset(reset),
         .slaves('{control_axi}),
         .masters({
-            i2c_axi,
             gpio_axi,
-            tb_axi
+            tb_axi,
+            temperature_axi
         })
     );
 
@@ -89,8 +89,31 @@ module tmp100_standalone_reader (
         .trigger(read_tmp),
         .SDA(SDA),
         .SCL(SCL),
-        .axi_in(i2c_axi),
         .temperature(temperature)
+    );
+
+    reg [31:0] current_temps [5:0];
+
+    always_ff @(posedge  clock)begin
+        if(temperature.valid)begin
+            current_temps[temperature.dest] <=  temperature.data;
+        end
+    end
+
+
+    wire [31:0] write_regs [5:0];
+
+    axil_simple_register_cu #(
+        .N_READ_REGISTERS(6),
+        .N_WRITE_REGISTERS(6),
+        .REGISTERS_WIDTH(32),
+        .ADDRESS_MASK('hf)
+    ) CU (
+        .clock(clock),
+        .reset(reset),
+        .input_registers(current_temps),
+        .output_registers(write_regs),
+        .axil(temperature_axi)
     );
 
 

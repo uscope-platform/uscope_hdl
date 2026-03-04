@@ -26,7 +26,6 @@ module tmp100 #(
     input wire trigger,
     inout wire SDA,
     inout wire SCL,
-    axi_lite.slave axi_in,
     axi_stream.master temperature
 );
 
@@ -67,6 +66,7 @@ module tmp100 #(
 
     always_ff @(posedge clock)begin
         i2c_write.valid <= 0;
+        temperature.valid <= 0;
         case (state)
             idle : begin
                 if(enable && i2c_write.ready)begin
@@ -133,8 +133,16 @@ module tmp100 #(
         if(i2c_read.valid)begin
             temperature.data <= (raw_sensor_output*125)/2;
             temperature.valid <= 1;
-            temperature.dest <= 1;
+            temperature.dest <= sensors_ctr;
         end
+    end
+
+    initial begin
+        temperature.data = 0;
+        temperature.valid = 0;
+        temperature.dest = 0;
+        temperature.tlast = 0;
+        temperature.user = 0;
     end
     
     i2c_master_tristate i2c_interface(

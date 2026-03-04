@@ -58,14 +58,15 @@ module i2c_scl_generator #(parameter COUNTER_WIDTH = 32)(
         end else begin
             if(enable & internal_period != 0) begin
                 if(enable_counter>2*time_unit-1)begin
-                    sampling_tb <= 1;
-                end else begin
-                    sampling_tb <= 0;
-                end
-                if(enable_counter>time_unit-1 && enable_counter<3*time_unit-1)begin
                     timebase <= 1;
                 end else begin
                     timebase <= 0;
+                end
+
+                if(enable_counter>time_unit-1 && enable_counter<3*time_unit-1)begin
+                    sampling_tb <= 1;
+                end else begin
+                    sampling_tb <= 0;
                 end
             end else begin
                 timebase <= 0;

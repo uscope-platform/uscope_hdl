@@ -16,9 +16,8 @@
 module standalone_reader_tb();
     reg clock, reset;
     
-    localparam tmp100 = 'h400000000;
-    localparam gpio = 'h400010000;
-    localparam tb = 'h400020000;
+    localparam gpio = 'h400000000;
+    localparam tb = 'h400010000;
 
 
     wire SDA, SCL;
@@ -42,7 +41,7 @@ module standalone_reader_tb();
         ->reset_done;
     end
 
-    axi_lite reader();
+    axi_lite #(.ADDR_WIDTH(39)) reader();
 
 
     tmp100_standalone_reader DUT(
@@ -59,13 +58,22 @@ module standalone_reader_tb();
     initial begin
         reader.initialize_master();
         @(reset_done);
-        
-        #10 reader.write(tmp100, 'h4e);
+    
         #10 reader.write(gpio, 'h1);
-        #10 reader.write(tb + 4, 100e6/1e3);
+        #10 reader.write(tb + 4, 100000);
         #10 reader.write(tb + 8, 10);
         #10 reader.write(tb , 1);
     end
+
+    axi_stream  slave_rx();
+    i2c_slave_tristate tmp_emulator(
+        .clock(clock),
+        .SCL(SCL),
+        .SDA(SDA),
+        .data_in(8'hca),
+        .data_out(slave_rx)
+    );  
+
 
 
 endmodule
