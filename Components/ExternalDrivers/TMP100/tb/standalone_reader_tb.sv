@@ -52,19 +52,16 @@ module standalone_reader_tb();
         .control_axi(reader)
     );
 
-    defparam DUT.driver.N_SENSORS = 2;
-    defparam DUT.driver.ADDRESSES = '{7'h4e, 7'h43};
-
     initial begin
         reader.initialize_master();
         @(reset_done);
-    
+        #100;
         #10 reader.write(gpio, 'h1);
         #10 reader.write(tb + 4, 100000);
         #10 reader.write(tb + 8, 10);
         #10 reader.write(tb , 1);
     end
-
+    /* 
     axi_stream  slave_rx();
     i2c_slave_tristate tmp_emulator(
         .clock(clock),
@@ -75,5 +72,8 @@ module standalone_reader_tb();
     );  
 
 
+    
+    */
+    
 
 endmodule

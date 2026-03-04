@@ -61,6 +61,13 @@ module i2c_phy #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
     assign tb_posedge = timebase& ~previous_timebase;
     assign tb_negedge = ~timebase& previous_timebase;
 
+
+    wire sampling_posedge;
+    wire sampling_negedge;
+
+    assign sampling_posedge = sampling_tb & ~prev_sampling_tb;
+    assign sampling_negedge = ~sampling_tb & prev_sampling_tb;
+
     reg [15:0] wait_timer;
     always_ff @(posedge clock)begin
         if(state == start || state == stop)begin
@@ -76,12 +83,14 @@ module i2c_phy #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
     reg in_read = 0;
     always_ff @(posedge clock) begin
         previous_timebase <= timebase;
+        prev_sampling_tb <= sampling_tb;
+        
         transfer_done <=0;
         case (state)
             idle:begin
                 ack <= 0;
                 received_data <= 0;
-                if(tb_posedge) 
+                if(sampling_posedge) 
                     transfer_counter <= 0;
                 transfer_done <=0;
                 if(transfer_counter == 0) i2c_sda_out <= 0;
@@ -100,8 +109,8 @@ module i2c_phy #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
             end
             read_reception:begin
                 in_read <= 1;
-                if(tb_posedge)begin
-                    received_data[7-transfer_counter] <= i2c_sda_in;
+                if(sampling_negedge) received_data[7-transfer_counter] <= i2c_sda_in;
+                if(sampling_posedge)begin
                     transfer_counter <= transfer_counter +1;
                     if(transfer_counter==7)begin
                         state <= wait_ack;
@@ -110,7 +119,7 @@ module i2c_phy #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
             end
             send_ack: begin
                 read_data <= received_data;
-                if(tb_posedge)begin
+                if(sampling_posedge)begin
                     sda_enable<= 0;
                     if(stop_needed)begin
                         state <= stop;
@@ -130,16 +139,18 @@ module i2c_phy #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
             write_transmission: begin
                 in_read <= 0;
                 received_data = 0;
-                if(tb_posedge)begin
+                if(sampling_posedge)begin
+                    i2c_sda_out <= write_data[7-transfer_counter];
+                end
+                if(sampling_negedge)begin
                     if(transfer_counter==7)begin
                         state <= wait_ack;
                     end
                     transfer_counter <= transfer_counter +1;
-                    i2c_sda_out <= write_data[7-transfer_counter];
                 end
             end
             wait_ack: begin
-                if(tb_posedge)begin
+                if(sampling_posedge)begin
                     transfer_counter <= 0;
                     sda_enable <= 0;
                     if(in_read)begin

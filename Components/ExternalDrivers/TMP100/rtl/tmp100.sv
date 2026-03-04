@@ -56,14 +56,15 @@ module tmp100 #(
         wait_transmission_start = 3,
         wait_transmission_end = 4,
         wait_trigger = 5,
-        read = 6
+        read = 6, 
+        wait_free = 7
     } driver_state;
     
     reg [6:0] sensors_ctr = 0;
 
     driver_state state = idle;
     driver_state next_state = idle;
-
+    reg [15:0] wait_ctr=0;
     always_ff @(posedge clock)begin
         i2c_write.valid <= 0;
         temperature.valid <= 0;
@@ -108,7 +109,7 @@ module tmp100 #(
             wait_transmission_end: begin
                 i2c_write.valid <= 0;
                 if(i2c_write.ready)begin
-                    state <= next_state;
+                    state <= wait_free;
                 end
             end
             wait_trigger: begin
@@ -127,6 +128,14 @@ module tmp100 #(
 
                 i2c_write.valid <= 1;
                 i2c_write.dest <= {1'b1,8'(ADDRESSES[sensors_ctr])};
+            end
+            wait_free:begin
+                if(wait_ctr  ==  10000)begin
+                    state <= next_state;
+                    wait_ctr <= 0;
+                end else begin
+                    wait_ctr <= wait_ctr+1;
+                end
             end
         endcase
 
