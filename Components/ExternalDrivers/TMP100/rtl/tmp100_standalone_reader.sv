@@ -23,7 +23,7 @@ module tmp100_standalone_reader (
 );
 
     localparam n_axi_slaves = 3;
-
+    localparam n_sensors = 6;
 
     parameter [48:0] AXI_ADDRESSES [n_axi_slaves-1:0] = '{
         'h400000000,
@@ -80,7 +80,7 @@ module tmp100_standalone_reader (
 
     tmp100 #(
         .RESOLUTION(12),
-        .N_SENSORS(6),
+        .N_SENSORS(n_sensors),
         .ADDRESSES('{7'h4d, 7'h4c, 7'h48, 7'h49, 7'h4A, 7'h4E})
     ) driver(
         .clock(clock),
@@ -92,7 +92,7 @@ module tmp100_standalone_reader (
         .temperature(temperature)
     );
 
-    reg [31:0] current_temps [5:0];
+    (* keep="true" *) reg [31:0] current_temps [n_sensors-1:0];
 
     always_ff @(posedge  clock)begin
         if(temperature.valid)begin
@@ -101,13 +101,13 @@ module tmp100_standalone_reader (
     end
 
 
-    wire [31:0] write_regs [5:0];
+    wire [31:0] write_regs [n_sensors-1:0];
 
     axil_simple_register_cu #(
         .N_READ_REGISTERS(6),
         .N_WRITE_REGISTERS(6),
         .REGISTERS_WIDTH(32),
-        .ADDRESS_MASK('hf)
+        .ADDRESS_MASK('hff)
     ) CU (
         .clock(clock),
         .reset(reset),
