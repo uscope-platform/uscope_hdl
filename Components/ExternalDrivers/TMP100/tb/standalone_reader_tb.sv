@@ -21,15 +21,15 @@ module standalone_reader_tb();
 
 
     wire SDA, SCL;
-    reg sda_drive =  1'bz; 
+    reg sda_drive =  1'bz;
     assign SDA = sda_drive;
 
     pullup(SDA);
     pullup(SCL);
 
     //clock generation
-    initial clock = 0; 
-    always #0.5 clock = ~clock; 
+    initial clock = 0;
+    always #0.5 clock = ~clock;
 
     event reset_done;
     // reset generation
@@ -62,15 +62,14 @@ module standalone_reader_tb();
         #10 reader.write(tb , 1);
     end
 
-    axi_stream slave_rx();
-    i2c_slave_tristate  #(
-        .SLAVE_ADDRESS(8'h4e)
-    ) tmp_emulator(
+
+
+    tmp100_emulator emu (
         .clock(clock),
-        .SCL(SCL),
+        .reset(reset),
         .SDA(SDA),
-        .data_in('{8'h90, 8'h17}),
-        .data_out(slave_rx)
+        .SCL(SCL)
     );
+
 
 endmodule
