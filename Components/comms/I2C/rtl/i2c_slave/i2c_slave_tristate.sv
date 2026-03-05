@@ -14,12 +14,13 @@
 // limitations under the License.
 
 module i2c_slave_tristate #(
-    parameter reg [7:0] SLAVE_ADDRESS = 8'h00
+    parameter reg [7:0] SLAVE_ADDRESS = 8'h00,
+    parameter integer MAX_PACKET_LENGHT = 2
 ) (
     input wire clock,
     input wire SCL,
-    input wire [7:0] data_in,
     inout wire SDA,
+    input wire [7:0] data_in[MAX_PACKET_LENGHT-1:0],
     axi_stream.slave data_out
 );
 
@@ -31,7 +32,8 @@ module i2c_slave_tristate #(
 
 
     i2c_slave #(
-        .SLAVE_ADDRESS(SLAVE_ADDRESS)
+        .SLAVE_ADDRESS(SLAVE_ADDRESS),
+        .MAX_PACKET_LENGHT(MAX_PACKET_LENGHT)
     ) i2c_impl (
         .clock(clock),
         .scl_in(SCL),

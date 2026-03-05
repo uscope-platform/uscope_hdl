@@ -14,11 +14,12 @@
 // limitations under the License.
 
 module i2c_slave #(
-    parameter reg [7:0] SLAVE_ADDRESS = 8'h00
+    parameter reg [7:0] SLAVE_ADDRESS = 8'h00,
+    parameter integer MAX_PACKET_LENGHT = 2
 ) (
     input wire clock,
     input wire scl_in,
-    input wire [7:0] data_in,
+    input wire [7:0] data_in[MAX_PACKET_LENGHT-1:0],
     input wire sda_in,
     output reg sda_out,
     output reg sda_en,
@@ -77,12 +78,15 @@ initial begin
     data_out.tlast =  0;
 end
 
+reg [$clog2(MAX_PACKET_LENGHT)-1:0] packet_counter  =0;
+
 always_ff @(posedge clock) begin
     push_rx_result <= 0;
     data_out.valid <= 0;
     case (state)
         idle: begin
             sda_en<= 0;
+            packet_counter <= 0;
             if(start)begin
                 state <= address_phase;
                 rx_slave_address <= 0;
@@ -133,7 +137,7 @@ always_ff @(posedge clock) begin
         tx_data_phase: begin
             sda_en <= 1;
             if(~scl_in)begin
-                sda_out  <= data_in[7-bit_counter];
+                sda_out  <= data_in[packet_counter][7-bit_counter];
             end
             if(scl_posedge)begin
                 if(bit_counter == 7) begin
@@ -168,10 +172,12 @@ always_ff @(posedge clock) begin
         receive_ack_phase: begin
             sda_en <= 0;
             if(scl_posedge)begin
-                if(~sda_in)
+                if(~sda_in) begin
                     state <= tx_data_phase;
-                else
+                    packet_counter <= packet_counter+1;
+                end else begin
                     state <= wait_stop;
+                end
             end
         end
         wait_stop: begin
