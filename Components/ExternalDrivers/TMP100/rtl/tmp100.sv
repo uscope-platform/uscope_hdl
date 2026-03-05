@@ -16,9 +16,7 @@
 
 module tmp100 #(
     parameter integer RESOLUTION = 12,
-    parameter integer RESOLUTION_BITS = RESOLUTION  -9,
-    parameter integer N_SENSORS = 1,
-    parameter reg [6:0] ADDRESSES [N_SENSORS-1:0]= '{default:0}
+    parameter integer RESOLUTION_BITS = RESOLUTION  -9
 )(
     input wire clock,
     input wire reset,
@@ -26,6 +24,7 @@ module tmp100 #(
     input wire trigger,
     inout wire SDA,
     inout wire SCL,
+    output reg [7:0] active_sensors,
     axi_stream.master temperature
 );
 
@@ -77,7 +76,7 @@ module tmp100 #(
                 end
             end
             resolution_config: begin
-                if(sensors_ctr == N_SENSORS-1)begin
+                if(sensors_ctr == 7)begin
                     next_state <= read_setup;
                     sensors_ctr <= 0;
                 end else begin
@@ -86,13 +85,13 @@ module tmp100 #(
                 end
                 current_sensor <= sensors_ctr;
                 i2c_write.data <= {1'b0,RESOLUTION_BITS, 5'b0};
-                i2c_write.dest <= ADDRESSES[sensors_ctr];
+                i2c_write.dest <= 7'h48 + sensors_ctr;
                 i2c_write.user <= 1;
                 i2c_write.valid <= 1;
                 state <= wait_transmission_start;
             end
             read_setup: begin
-                if(sensors_ctr == N_SENSORS-1)begin
+                if(sensors_ctr == 7)begin
                     next_state <= wait_trigger;
                     sensors_ctr <= 0;
                 end else begin
@@ -101,7 +100,7 @@ module tmp100 #(
                 end
                 i2c_write.data <= 0;
                 i2c_write.user <= 0;
-                i2c_write.dest <= ADDRESSES[sensors_ctr];
+                i2c_write.dest <= 7'h48 + sensors_ctr;
                 i2c_write.valid <= 1;
                 state <= wait_transmission_start;
             end
@@ -120,7 +119,7 @@ module tmp100 #(
                     state <= read;
             end
             read:begin
-               if(sensors_ctr == N_SENSORS-1)begin
+               if(sensors_ctr == 7)begin
                     sensors_ctr <= 0;
                     next_state <= wait_trigger;
                 end else begin
@@ -131,7 +130,7 @@ module tmp100 #(
                 state <= wait_transmission_start;
 
                 i2c_write.valid <= 1;
-                i2c_write.dest <= {1'b1,8'(ADDRESSES[sensors_ctr])};
+                i2c_write.dest <= {1'b1,8'(7'h48 + sensors_ctr)};
             end
             wait_free:begin
                 if(wait_ctr  ==  10000)begin
@@ -143,14 +142,22 @@ module tmp100 #(
             end
         endcase
 
+
+
         if(i2c_read.valid)begin
-            temperature.data <= (raw_sensor_output*1250)/2;
-            temperature.valid <= 1;
-            temperature.dest <= current_sensor;
+            if(i2c_read.user != 1) begin
+                temperature.data <= (raw_sensor_output*1250)/2;
+                temperature.valid <= 1;
+                temperature.dest <= current_sensor;
+                active_sensors[current_sensor] <= 1;
+            end else begin
+                active_sensors[current_sensor] <= 0;
+            end
         end
     end
 
     initial begin
+        active_sensors <= 0;
         temperature.data = 0;
         temperature.valid = 0;
         temperature.dest = 0;

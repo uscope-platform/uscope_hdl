@@ -136,6 +136,7 @@ module i2c_mac #(
                     if(transfers_counter== 1)begin
                         state <= bus_free_state;
                         response.data <=  32'({read_value, incoming_data});
+                        response.user <=  0;
                         response.valid <= 1;
                         read_value <= 0;
                         transfers_counter <= 0;
