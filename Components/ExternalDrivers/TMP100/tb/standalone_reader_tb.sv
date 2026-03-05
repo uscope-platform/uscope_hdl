@@ -15,7 +15,7 @@
 `timescale 10 ns / 1 ns
 module standalone_reader_tb();
     reg clock, reset;
-    
+
     localparam gpio = 'h400000000;
     localparam tb = 'h400010000;
 
@@ -62,7 +62,7 @@ module standalone_reader_tb();
         #10 reader.write(tb , 1);
     end
 
-    axi_stream  slave_rx();
+    axi_stream slave_rx();
     i2c_slave_tristate  #(
         .SLAVE_ADDRESS(8'h4e)
     ) tmp_emulator(

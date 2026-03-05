@@ -61,6 +61,12 @@ module i2c_mac #(
 
         start_read = 0;
         transfert_done = 0;
+        response.valid = 0;
+        response.user = 0;
+        response.dest = 0;
+        response.tlast =0;
+        response.data =0;
+
     end
 
     assign transfer_req.ready = state == idle_state ;
@@ -101,6 +107,7 @@ module i2c_mac #(
                         state<= idle_state;
                         immediate_stop <= 1;
                         response.dest <= slave_address;
+                        response.data <=  0;
                         response.user <=  1;
                         response.valid <= 1;
                     end

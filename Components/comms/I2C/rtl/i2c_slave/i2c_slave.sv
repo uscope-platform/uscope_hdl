@@ -66,7 +66,7 @@ reg [7:0] rx_data = 0;
 
 reg push_rx_result  = 0;
 
-wire ack = SLAVE_ADDRESS ==rx_slave_address;
+wire ack_out = SLAVE_ADDRESS ==rx_slave_address;
 
 initial begin
     sda_en<= 0;
@@ -155,8 +155,8 @@ always_ff @(posedge clock) begin
             end
         end
         send_ack_phase: begin
-            sda_out <= ~ack;
-            if(ack)begin
+            sda_out <= ~ack_out;
+            if(ack_out)begin
                 if(scl_negedge) begin
                     state <= next_state;
                     sda_en <= 0;
@@ -168,7 +168,7 @@ always_ff @(posedge clock) begin
         receive_ack_phase: begin
             sda_en <= 0;
             if(scl_posedge)begin
-                if(sda_in)
+                if(~sda_in)
                     state <= tx_data_phase;
                 else
                     state <= wait_stop;
