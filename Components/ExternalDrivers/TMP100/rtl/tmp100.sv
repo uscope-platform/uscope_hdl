@@ -15,10 +15,10 @@
 `timescale 10 ns / 1 ns
 
 module tmp100 #(
-    parameter RESOLUTION = 12,
-    parameter RESOLUTION_BITS = RESOLUTION  -9,
-    parameter N_SENSORS = 1,
-    parameter [6:0] ADDRESSES [N_SENSORS-1:0]= '{default:0}
+    parameter integer RESOLUTION = 12,
+    parameter integer RESOLUTION_BITS = RESOLUTION  -9,
+    parameter integer N_SENSORS = 1,
+    parameter reg [6:0] ADDRESSES [N_SENSORS-1:0]= '{default:0}
 )(
     input wire clock,
     input wire reset,
@@ -49,17 +49,19 @@ module tmp100 #(
 
     reg [1:0] resolution = 2'b11;
 
-    typedef enum logic [3:0] {  
+    typedef enum logic [3:0] {
         idle = 0,
         resolution_config =1,
         read_setup = 2,
         wait_transmission_start = 3,
         wait_transmission_end = 4,
         wait_trigger = 5,
-        read = 6, 
+        read = 6,
         wait_free = 7
     } driver_state;
-    
+
+
+    reg [6:0] current_sensor = 0;
     reg [6:0] sensors_ctr = 0;
 
     driver_state state = idle;
@@ -82,6 +84,7 @@ module tmp100 #(
                     sensors_ctr <= sensors_ctr +1;
                     next_state <= resolution_config;
                 end
+                current_sensor <= sensors_ctr;
                 i2c_write.data <= {1'b0,RESOLUTION_BITS, 5'b0};
                 i2c_write.dest <= ADDRESSES[sensors_ctr];
                 i2c_write.user <= 1;
@@ -103,7 +106,7 @@ module tmp100 #(
                 state <= wait_transmission_start;
             end
             wait_transmission_start: begin
-                if(~i2c_write.ready) 
+                if(~i2c_write.ready)
                     state <= wait_transmission_end;
             end
             wait_transmission_end: begin
@@ -124,6 +127,7 @@ module tmp100 #(
                     sensors_ctr <= sensors_ctr +1;
                     next_state <= read;
                 end
+                current_sensor <= sensors_ctr;
                 state <= wait_transmission_start;
 
                 i2c_write.valid <= 1;
@@ -140,9 +144,9 @@ module tmp100 #(
         endcase
 
         if(i2c_read.valid)begin
-            temperature.data <= (raw_sensor_output*125)/2;
+            temperature.data <= (raw_sensor_output*1250)/2;
             temperature.valid <= 1;
-            temperature.dest <= sensors_ctr;
+            temperature.dest <= current_sensor;
         end
     end
 

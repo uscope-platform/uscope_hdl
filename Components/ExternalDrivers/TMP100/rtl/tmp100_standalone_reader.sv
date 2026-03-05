@@ -81,7 +81,7 @@ module tmp100_standalone_reader (
     tmp100 #(
         .RESOLUTION(12),
         .N_SENSORS(6),
-        .ADDRESSES('{7'h4d, 7'h4c, 7'h48, 7'h49, 7'h4E, 7'h4E})
+        .ADDRESSES('{7'h4d, 7'h4c, 7'h48, 7'h49, 7'h4A, 7'h4E})
     ) driver(
         .clock(clock),
         .reset(reset),

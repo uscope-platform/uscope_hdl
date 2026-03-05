@@ -69,7 +69,7 @@ module standalone_reader_tb();
         .clock(clock),
         .SCL(SCL),
         .SDA(SDA),
-        .data_in(8'hca),
+        .data_in('{8'h90, 8'h17}),
         .data_out(slave_rx)
     );
 
