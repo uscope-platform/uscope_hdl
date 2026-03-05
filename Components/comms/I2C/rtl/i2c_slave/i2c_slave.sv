@@ -166,7 +166,9 @@ always_ff @(posedge clock) begin
                     sda_en <= 0;
                 end
             end else begin
-                state <= idle;
+                if(scl_negedge) begin
+                    state <= wait_stop;
+                end
             end
         end
         receive_ack_phase: begin
@@ -181,7 +183,9 @@ always_ff @(posedge clock) begin
             end
         end
         wait_stop: begin
-            state <= idle;
+            if(stop)begin
+                state <= idle;
+            end
         end
     endcase
 
