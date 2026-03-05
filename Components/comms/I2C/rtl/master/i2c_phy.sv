@@ -14,13 +14,16 @@
 // limitations under the License.
 `timescale 10 ns / 1 ns
 
-module i2c_phy #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
+module i2c_phy #(
+    parameter int START_STOP_DELAY = 350
+)(
     input wire clock,
     input wire timebase,
     input wire sampling_tb,
     input wire i2c_sda_in,
     input wire start_beat,
     input wire last_beat,
+    input wire immediate_stop,
     input wire start_read,
     input wire [7:0] write_data,
     input wire start_transfer,
@@ -33,7 +36,7 @@ module i2c_phy #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
 );
 
 
-    enum logic [3:0] {  
+    enum logic [3:0] {
         idle = 0,
         start=1,
         write_transmission = 2,
@@ -84,13 +87,13 @@ module i2c_phy #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
     always_ff @(posedge clock) begin
         previous_timebase <= timebase;
         prev_sampling_tb <= sampling_tb;
-        
+
         transfer_done <=0;
         case (state)
             idle:begin
                 ack <= 0;
                 received_data <= 0;
-                if(sampling_posedge) 
+                if(sampling_posedge)
                     transfer_counter <= 0;
                 transfer_done <=0;
                 if(transfer_counter == 0) i2c_sda_out <= 0;
@@ -106,11 +109,14 @@ module i2c_phy #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
                     sda_enable<= 0;
                     state <= read_reception;
                 end
+                if(immediate_stop) begin
+                    state <= stop;
+                end
             end
             read_reception:begin
                 in_read <= 1;
-                if(sampling_negedge) received_data[7-transfer_counter] <= i2c_sda_in;
-                if(sampling_posedge)begin
+                if(sampling_negedge)begin
+                    received_data[7-transfer_counter] <= i2c_sda_in;
                     transfer_counter <= transfer_counter +1;
                     if(transfer_counter==7)begin
                         state <= wait_ack;
@@ -138,7 +144,7 @@ module i2c_phy #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
             end
             write_transmission: begin
                 in_read <= 0;
-                received_data = 0;
+                received_data <= 0;
                 if(sampling_posedge)begin
                     i2c_sda_out <= write_data[7-transfer_counter];
                 end
@@ -160,7 +166,6 @@ module i2c_phy #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
                         state <= sample_ack;
                         sda_enable <= 0;
                     end
-                    
                 end
             end
             sample_ack:begin
@@ -172,7 +177,6 @@ module i2c_phy #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
                         transfer_done <=1;
                         state <= idle;
                     end
-                    
                     ack <= !i2c_sda_in;
                 end
             end
@@ -187,7 +191,6 @@ module i2c_phy #(parameter SETUP_DELAY = 35,START_STOP_DELAY = 350)(
                     state <= idle;
                 end
             end
-            
         endcase
     end
 

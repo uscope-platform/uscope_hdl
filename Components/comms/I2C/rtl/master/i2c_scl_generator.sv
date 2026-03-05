@@ -15,7 +15,9 @@
 
 `timescale 10 ns / 1 ns
 
-module i2c_scl_generator #(parameter COUNTER_WIDTH = 32)(
+module i2c_scl_generator #(
+    parameter int COUNTER_WIDTH = 32
+)(
     input wire       clock,
     input wire       reset,
     input wire      enable,
@@ -25,7 +27,7 @@ module i2c_scl_generator #(parameter COUNTER_WIDTH = 32)(
 );
 
 
-    
+
 
     reg [COUNTER_WIDTH-1:0] enable_counter;
     reg [COUNTER_WIDTH-1:0] internal_period;
@@ -50,7 +52,7 @@ module i2c_scl_generator #(parameter COUNTER_WIDTH = 32)(
             end
         end
     end
-    
+
     always_ff @(posedge clock)begin
         if(~reset)begin
             timebase <=0;

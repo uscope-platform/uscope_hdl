@@ -14,22 +14,28 @@
 // limitations under the License.
 `timescale 10 ns / 1 ns
 
-module i2c_mac #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, BUS_FREE_DELAY = 300)(
+module i2c_mac #(
+    parameter integer START_STOP_DELAY = 350,
+    integer ACK_DELAY = 1600,
+    integer BUS_FREE_DELAY = 30
+)(
     input wire clock,
     input wire transfer_step_done,
+    input wire ack,
     input wire [7:0] incoming_data,
     output reg start_beat,
     output reg last_beat,
     output reg start_read,
     output reg start_transfer,
+    output reg immediate_stop,
     output reg transfert_done,
     output reg [7:0] outgoing_data,
     axi_stream.slave transfer_req,
-    axi_stream.master read_response
+    axi_stream.master response
 );
 
     reg [7:0] transfers_counter = 0;
-    
+
     reg [15:0] bus_free_timer = 0;
 
     typedef enum logic [2:0]{
@@ -58,13 +64,14 @@ module i2c_mac #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, BUS_FREE_DE
     end
 
     assign transfer_req.ready = state == idle_state ;
-    
+
     reg [31:0] read_value = 0;
 
     always_ff @ (posedge clock) begin : control_state_machine
         start_transfer <= 0;
         start_read <= 0;
-        read_response.valid <= 0;
+        response.valid <= 0;
+        immediate_stop <= 0;
         case (state)
             idle_state: begin
                 if(transfer_req.valid)begin
@@ -82,12 +89,20 @@ module i2c_mac #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, BUS_FREE_DE
                 outgoing_data <= {slave_address, direction};
                 if(transfer_step_done)begin
                     start_beat <= 0;
-                    if(direction==0)begin
-                        state <= register_address_state;
-                        start_transfer <= 1;
+                    if(ack) begin
+                        if(direction==0)begin
+                            state <= register_address_state;
+                            start_transfer <= 1;
+                        end else begin
+                            start_read<=1;
+                            state<= read_data_state;
+                        end
                     end else begin
-                        start_read<=1;
-                        state<= read_data_state;
+                        state<= idle_state;
+                        immediate_stop <= 1;
+                        response.dest <= slave_address;
+                        response.user <=  1;
+                        response.valid <= 1;
                     end
                 end
             end
@@ -98,7 +113,7 @@ module i2c_mac #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, BUS_FREE_DE
                     last_beat <= 1;
                     if(direction==0)begin
                         state <= write_data_state;
-                    end 
+                    end
                 end
             end
             write_data_state: begin
@@ -113,8 +128,8 @@ module i2c_mac #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, BUS_FREE_DE
                 if(transfer_step_done)begin
                     if(transfers_counter== 1)begin
                         state <= bus_free_state;
-                        read_response.data <=  32'({read_value, incoming_data});
-                        read_response.valid <= 1;
+                        response.data <=  32'({read_value, incoming_data});
+                        response.valid <= 1;
                         read_value <= 0;
                         transfers_counter <= 0;
                     end else begin
@@ -123,7 +138,6 @@ module i2c_mac #(parameter START_STOP_DELAY = 350, ACK_DELAY = 1600, BUS_FREE_DE
                         last_beat <= 1;
                         transfers_counter<= transfers_counter+1;
                     end
-                    
                 end
             end
             bus_free_state: begin

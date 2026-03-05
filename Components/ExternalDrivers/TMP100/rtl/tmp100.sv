@@ -153,14 +153,14 @@ module tmp100 #(
         temperature.tlast = 0;
         temperature.user = 0;
     end
-    
+
     i2c_master_tristate i2c_interface(
         .clock(clock),
         .reset(reset),
         .SDA(SDA),
         .SCL(SCL),
         .transfer_req(i2c_write),
-        .read_response(i2c_read)
+        .response(i2c_read)
     );
 
 endmodule

@@ -14,14 +14,14 @@
 // limitations under the License.
 
 module i2c_master_tristate #(
-    SCL_TIMEBASE_DELAY = 25
+    parameter integer SCL_TIMEBASE_DELAY = 25
 )(
     input wire clock,
     input wire reset,
     inout wire SDA,
     inout wire SCL,
     axi_stream.slave transfer_req,
-    axi_stream.master read_response
+    axi_stream.master response
 );
 
     wire scl_in, scl_out, sda_in, sda_out, scl_en, sda_en;
@@ -30,7 +30,7 @@ module i2c_master_tristate #(
     assign sda_in = SDA;
 
     assign SCL = scl_en  & (scl_out == 1'b0) ? 1'b0 : 1'bz;
-    assign scl_in = SCL;  
+    assign scl_in = SCL;
 
 
     i2c_master #(
@@ -45,7 +45,7 @@ module i2c_master_tristate #(
         .i2c_sda_out(sda_out),
         .i2c_sda_out_en(sda_en),
         .transfer_req(transfer_req),
-        .read_response(read_response)
+        .response(response)
     );
 
 

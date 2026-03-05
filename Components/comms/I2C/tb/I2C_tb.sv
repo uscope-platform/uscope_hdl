@@ -61,11 +61,11 @@ module I2C_tb();
 
 
     logic [31:0] readdata;
-    
+
     //clock generation
-    initial clk = 0; 
-    always #0.5 clk = ~clk; 
-    
+    initial clk = 0;
+    always #0.5 clk = ~clk;
+
     // reset generation
     initial begin
         readdata = 0;

@@ -61,19 +61,16 @@ module standalone_reader_tb();
         #10 reader.write(tb + 8, 10);
         #10 reader.write(tb , 1);
     end
-    /* 
+
     axi_stream  slave_rx();
-    i2c_slave_tristate tmp_emulator(
+    i2c_slave_tristate  #(
+        .SLAVE_ADDRESS(8'h4e)
+    ) tmp_emulator(
         .clock(clock),
         .SCL(SCL),
         .SDA(SDA),
         .data_in(8'hca),
         .data_out(slave_rx)
-    );  
-
-
-    
-    */
-    
+    );
 
 endmodule
