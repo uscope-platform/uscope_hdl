@@ -1,5 +1,6 @@
 
 module tmp100_emulator #(
+    parameter reg [7:0] ADDRESS = 0,
     parameter integer AVERAGE_TEMPERATURE = 55,
     parameter integer TEMPERATURE_DELTA = 10
 )(
@@ -23,7 +24,7 @@ module tmp100_emulator #(
 
     axi_stream slave_rx();
     i2c_slave_tristate  #(
-        .SLAVE_ADDRESS(8'h4e)
+        .SLAVE_ADDRESS(ADDRESS)
     ) tmp_emulator(
         .clock(clock),
         .SCL(SCL),

@@ -81,7 +81,6 @@ module i2c_master #(
 
     i2c_phy phy(
         .clock(clock),
-        .timebase(timebase),
         .sampling_tb(sampling_tb),
         .write_data(write_data),
         .start_beat(start_beat),

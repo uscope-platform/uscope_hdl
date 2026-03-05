@@ -18,7 +18,6 @@ module i2c_phy #(
     parameter int START_STOP_DELAY = 350
 )(
     input wire clock,
-    input wire timebase,
     input wire sampling_tb,
     input wire i2c_sda_in,
     input wire start_beat,
@@ -58,12 +57,6 @@ module i2c_phy #(
         sda_enable = 0;
     end
 
-    wire tb_posedge;
-    wire tb_negedge;
-
-    assign tb_posedge = timebase& ~previous_timebase;
-    assign tb_negedge = ~timebase& previous_timebase;
-
 
     wire sampling_posedge;
     wire sampling_negedge;
@@ -85,7 +78,6 @@ module i2c_phy #(
     reg stop_needed = 0;
     reg in_read = 0;
     always_ff @(posedge clock) begin
-        previous_timebase <= timebase;
         prev_sampling_tb <= sampling_tb;
 
         transfer_done <=0;
@@ -169,7 +161,7 @@ module i2c_phy #(
                 end
             end
             sample_ack:begin
-                if(tb_negedge)begin
+                if(sampling_negedge)begin
                     sda_enable<= 1;
                     if(stop_needed)begin
                         state <= stop;
