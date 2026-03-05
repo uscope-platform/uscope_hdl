@@ -50,9 +50,10 @@ typedef enum logic [3:0] {
     rx_data_phase = 3,
     tx_data_phase = 4,
     wait_sda_release = 5,
-    send_ack_phase = 6,
-    receive_ack_phase = 7,
-    wait_stop = 8
+    wait_rx_ack = 6,
+    send_ack_phase = 7,
+    receive_ack_phase = 8,
+    wait_stop = 9
 } i2c_slave_fsm;
 
 i2c_slave_fsm state = idle;
@@ -130,18 +131,21 @@ always_ff @(posedge clock) begin
             end
         end
         tx_data_phase: begin
-            // sda_en <= 1;
+            sda_en <= 1;
             if(~scl_in)begin
-                sda_out  <= data_in[bit_counter];
+                sda_out  <= data_in[7-bit_counter];
             end
             if(scl_posedge)begin
                 if(bit_counter == 7) begin
                     bit_counter <= 0;
-                    state <= receive_ack_phase;
+                    state <= wait_rx_ack;
                 end else begin
                     bit_counter <= bit_counter+1;
                 end
             end
+        end
+        wait_rx_ack: begin
+            if(scl_negedge) state <= receive_ack_phase;
         end
         wait_sda_release: begin
             sda_out <= 1;
@@ -152,12 +156,17 @@ always_ff @(posedge clock) begin
         end
         send_ack_phase: begin
             sda_out <= ~ack;
-            if(scl_negedge) begin
-                state <= next_state;
-                sda_en <= 0;
+            if(ack)begin
+                if(scl_negedge) begin
+                    state <= next_state;
+                    sda_en <= 0;
+                end
+            end else begin
+                state <= idle;
             end
         end
         receive_ack_phase: begin
+            sda_en <= 0;
             if(scl_posedge)begin
                 if(sda_in)
                     state <= tx_data_phase;
