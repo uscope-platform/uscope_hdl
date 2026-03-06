@@ -139,7 +139,7 @@ always_ff @(posedge clock) begin
             if(~scl_in)begin
                 sda_out  <= data_in[packet_counter][7-bit_counter];
             end
-            if(scl_posedge)begin
+            if(scl_negedge)begin
                 if(bit_counter == 7) begin
                     bit_counter <= 0;
                     state <= wait_rx_ack;
@@ -149,7 +149,8 @@ always_ff @(posedge clock) begin
             end
         end
         wait_rx_ack: begin
-            if(scl_negedge) state <= receive_ack_phase;
+            sda_en <= 0;
+            if(scl_posedge) state <= receive_ack_phase;
         end
         wait_sda_release: begin
             sda_out <= 1;
@@ -173,7 +174,7 @@ always_ff @(posedge clock) begin
         end
         receive_ack_phase: begin
             sda_en <= 0;
-            if(scl_posedge)begin
+            if(scl_negedge)begin
                 if(~sda_in) begin
                     state <= tx_data_phase;
                     packet_counter <= packet_counter+1;
