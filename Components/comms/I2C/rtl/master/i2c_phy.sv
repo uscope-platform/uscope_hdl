@@ -117,11 +117,14 @@ module i2c_phy #(
             end
             send_ack: begin
                 read_data <= received_data;
+                i2c_sda_out <= stop_needed;
                 if(sampling_posedge)begin
-                    sda_enable<= 0;
                     if(stop_needed)begin
                         state <= stop;
+                        i2c_sda_out <= 0;
+                        sda_enable<= 1;
                     end else begin
+                        sda_enable<= 0;
                         transfer_done <=1;
                         state <= idle;
                     end
