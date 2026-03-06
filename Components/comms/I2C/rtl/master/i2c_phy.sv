@@ -161,16 +161,18 @@ module i2c_phy #(
                 end
             end
             sample_ack:begin
-                if(sampling_negedge)begin
-                    sda_enable<= 1;
-                    if(stop_needed)begin
-                        state <= stop;
-                    end else begin
-                        transfer_done <=1;
-                        state <= idle;
-                    end
-                    ack <= !i2c_sda_in;
+            if(sampling_negedge)begin
+                ack <= !i2c_sda_in;
+            end
+            if(sampling_posedge)begin
+                sda_enable<= 1;
+                if(stop_needed)begin
+                    state <= stop;
+                end else begin
+                    transfer_done <=1;
+                    state <= idle;
                 end
+            end
             end
             stop:begin
                 stop_needed<= 0;
