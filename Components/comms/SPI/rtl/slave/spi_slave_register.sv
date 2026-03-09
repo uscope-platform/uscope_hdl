@@ -88,6 +88,7 @@ module spi_slave_register #(
         data_out.dest <= 0;
         data_out.user <= 0;
         data_out.tlast <= 0;
+        data_in.ready <= 1;
     end
 
 
@@ -122,6 +123,7 @@ module spi_slave_register #(
                 if(enable)begin
                     if(inner_ss && ~ss_del && ~(ss_polarity_del ^ ss_polarity)) begin
                         state <= spi_transfer;
+                        data_in.ready <= 0;
                         ss_active <= 1;
                         spi_register <= 0;
                         transfer_counter <= 0;
@@ -162,6 +164,7 @@ module spi_slave_register #(
 
                 data_out.valid <= 1;
                 state <= spi_idle;
+                data_in.ready <= 1;
                 ss_active <= 0;
                 transfer_counter <= spi_transfer_length-1;
                 spi_register <= '0;

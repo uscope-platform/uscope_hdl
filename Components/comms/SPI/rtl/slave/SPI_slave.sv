@@ -19,7 +19,8 @@ module SPI_slave#(
     N_CHANNELS=3,
     REGISTERS_WIDTH=16,
     OUTPUT_WIDTH=32,
-    DEFAULT_LENGTH = 16
+    DEFAULT_LENGTH = 16,
+    DEFAULT_CONFIG = 0
 )(
     input wire clock,
     input wire reset,
@@ -41,7 +42,7 @@ module SPI_slave#(
     reg [31:0] cu_read_registers [N_REGISTERS-1:0];
     parameter [31:0] INITIAL_OUTPUT_VALUES [N_REGISTERS-1:0] = '{
         DEFAULT_LENGTH,
-        0
+        DEFAULT_CONFIG
     };
 
     axil_simple_register_cu #(
