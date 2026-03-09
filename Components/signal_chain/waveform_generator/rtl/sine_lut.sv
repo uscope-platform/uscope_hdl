@@ -37,7 +37,7 @@ module sine_lut #(
     logic [$clog2(LUT_DEPTH)-1:0] scaled_angle_next;
     assign scaled_angle = angle >> (INPUT_DATA_WIDTH-2-$clog2(LUT_DEPTH));
     assign scaled_angle_next = angle_next >> (INPUT_DATA_WIDTH-2-$clog2(LUT_DEPTH));
-    
+
     logic [OUTPUT_WIDTH-1:0] rom [0:LUT_DEPTH-1];
 
     initial begin
@@ -61,7 +61,7 @@ module sine_lut #(
             2 : cos <= -$signed(rom[scaled_angle]);
             3 : cos <= rom[(LUT_DEPTH-1)-scaled_angle];
         endcase
-        
+
         case (sector_next)
             0 : cos_next <= rom[scaled_angle_next];
             1 : cos_next <= -$signed(rom[(LUT_DEPTH-1)-scaled_angle_next]);

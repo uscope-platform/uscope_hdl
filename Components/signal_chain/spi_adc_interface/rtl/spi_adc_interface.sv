@@ -59,7 +59,7 @@ module spi_adc_interface #(
         .external_spi_transfer(spi_transfer)
     );
 
-    reg [$clog2(N_CHANNELS)-1:0] channel_counter = 0;
+    reg [$clog2(N_CHANNELS):0] channel_counter = 0;
 
     initial begin
         data_out.data <= 0;
@@ -68,13 +68,13 @@ module spi_adc_interface #(
 
     always_ff@(posedge clock)begin
         if(adc_samples_valid)begin
-            
+
             data_out.data <= adc_samples_data[0];
             data_out.user <= get_axis_metadata(REPORTED_SIZE, 0, 0);
             data_out.dest <= DESTINATIONS[0];
             data_out.valid <= 1;
-            
-            channel_counter <= channel_counter+1;
+
+            if(N_CHANNELS>1) channel_counter <= channel_counter+1;
         end else begin
             if(channel_counter>0)begin
                 data_out.data <= adc_samples_data[channel_counter];
@@ -86,7 +86,7 @@ module spi_adc_interface #(
                     channel_counter <= channel_counter+1;
                 end
             end else begin
-                data_out.valid <= 0;    
+                data_out.valid <= 0;
             end
         end
     end

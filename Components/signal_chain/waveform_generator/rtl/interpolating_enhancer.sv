@@ -31,8 +31,7 @@ module interpolating_enhancer #(
             2 : cos_out <= (cos + cos_next)/2;
             3 : cos_out = (cos + cos_next*3)/4;
         endcase
-        
+
     end
-    
 
 endmodule
