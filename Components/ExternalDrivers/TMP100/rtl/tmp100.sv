@@ -66,6 +66,20 @@ module tmp100 #(
     driver_state state = idle;
     driver_state next_state = idle;
     reg [15:0] wait_ctr=0;
+
+    initial begin
+        for (int i = 0; i < 8; i++) begin
+            active_sensors[i] = 1'b0;
+        end
+        temperature.data = 0;
+        temperature.valid = 0;
+        temperature.dest = 0;
+        temperature.tlast = 0;
+        temperature.user = 0;
+    end
+
+
+
     always_ff @(posedge clock)begin
         i2c_write.valid <= 0;
         temperature.valid <= 0;
@@ -156,14 +170,6 @@ module tmp100 #(
         end
     end
 
-    initial begin
-        active_sensors <= 0;
-        temperature.data = 0;
-        temperature.valid = 0;
-        temperature.dest = 0;
-        temperature.tlast = 0;
-        temperature.user = 0;
-    end
 
     i2c_master_tristate i2c_interface(
         .clock(clock),

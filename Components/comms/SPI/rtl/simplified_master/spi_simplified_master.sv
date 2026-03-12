@@ -173,9 +173,6 @@ always_ff @(posedge clock)begin
 
     logic [2:0] clk_counter = 0;
 
-    initial begin
-        generated_sclk =0;
-    end
     always_ff @(posedge clock) begin
         if (clk_counter >= spi_divider) begin
             clk_counter <= 3'd0;

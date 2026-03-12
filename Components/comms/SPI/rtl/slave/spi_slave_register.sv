@@ -102,9 +102,9 @@ module spi_slave_register #(
     reg [REGISTERS_WIDTH-1:0] latched_data_in = 0;
 
     wire current_miso;
+    reg [REGISTERS_WIDTH-1:0] transmission_register;
     assign current_miso = transmission_register[transfer_counter];
 
-    reg [REGISTERS_WIDTH-1:0] transmission_register;
 
     always_ff @(posedge clock) begin
         if(~reset) begin

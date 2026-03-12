@@ -27,11 +27,6 @@ module sigma_delta_comparators #(
     output wire combined_output
 );
 
-    initial begin
-        high_outputs = 0;
-        low_outputs = 0;
-    end
-
 
     wire signed [15:0] data [N_CHANNELS-1:0];
 
@@ -39,6 +34,11 @@ module sigma_delta_comparators #(
 
     generate
         for(i = 0; i<N_CHANNELS; i++)begin
+        initial begin
+            high_outputs[i] = 0;
+            low_outputs[i] = 0;
+        end
+
 
             assign data[i] = data_in[i].data;
             always_ff @(posedge clock) begin

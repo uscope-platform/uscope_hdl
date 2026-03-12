@@ -73,7 +73,7 @@ module i2c_mac #(
 
     reg [31:0] read_value = 0;
 
-    always_ff @ (posedge clock) begin : control_state_machine
+    always_ff @ (posedge clock) begin
         start_transfer <= 0;
         start_read <= 0;
         response.valid <= 0;
