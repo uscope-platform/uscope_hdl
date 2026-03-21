@@ -34,7 +34,8 @@ module PwmGenerator #(
     output wire timebase,
     output reg [N_PWM-1:0] pwm_out,
     output reg sync_out,
-    axi_lite.slave axi_in
+    axi_lite.slave axi_in,
+    axi_stream.slave modulation_in
 );
 
     //Common signals
@@ -66,34 +67,69 @@ module PwmGenerator #(
 
     assign selected_timebase = internal_timebase;
 
-    axi_lite internal_bus[N_CHAINS+1]();
+    axi_stream internal_bus();
 
-    typedef logic [31:0] addr_init_t [N_CHAINS:0];
-    function addr_init_t ADDR_CALC();
-        ADDR_CALC[0] = BASE_ADDRESS;
-        for(int i = 1; i<=N_CHAINS; i++)begin
-            ADDR_CALC[i] = BASE_ADDRESS+'h100*i;
-        end
-    endfunction
+    wire [31:0] read_chain_data [N_CHAINS-1:0];
+    wire [31:0] read_global_data;
 
-    localparam [31:0] AXI_ADDRESSES [N_CHAINS:0] = ADDR_CALC();
+    axi_stream read_req();
+    axi_stream read_resp();
+    axi_stream write_req();
 
-
-
-    axil_crossbar_interface #(
-        .DATA_WIDTH(32),
-        .ADDR_WIDTH(32),
-        .NM(1),
-        .NS(N_CHAINS+1),
-        .SLAVE_ADDR(AXI_ADDRESSES),
-        .SLAVE_MASK('{(N_CHAINS+1){32'hf00}})
-    ) axi_xbar (
+    axil_external_registers_cu #(
+        .REGISTERS_WIDTH(32),
+        .REGISTERED_BUFFERS(0),
+        .TRANSPARENT_MODE("TRUE"),
+        .READ_DELAY(1)
+    ) CU (
         .clock(clock),
         .reset(reset),
-        .slaves('{axi_in}),
-        .masters(internal_bus)
-    );
+        .read_address(read_req),
+        .read_data(read_resp),
+        .write_data(write_req),
+        .axi_in(axi_in)
+    ); 
+    reg [3:0] read_address;
 
+    reg wait_read_result;
+    always_ff @(posedge clock)begin
+        write_req.ready <= 1;
+        read_req.ready <= 1; 
+        read_resp.valid <= 0;
+        internal_bus.valid <= 0;
+        modulation_in.ready <= 1;
+
+        if(modulation_in.valid) begin
+            internal_bus.data <= modulation_in.data;
+            internal_bus.dest <= modulation_in.dest;
+            internal_bus.user <= modulation_in.user;
+            internal_bus.valid <= 1;
+            internal_bus.tlast <= 0;
+        end else if(write_req.valid)begin
+            internal_bus.data <= write_req.data;
+            internal_bus.dest <= write_req.dest[7:0];
+            internal_bus.user <= write_req.dest[11:8];
+            internal_bus.valid <= 1;
+            internal_bus.tlast <= 0;
+        end 
+
+        if(read_req.valid)begin
+            internal_bus.dest <= read_req.data[7:0];
+            internal_bus.user <= read_req.data[11:8];
+            read_address <= read_req.data[11:8];
+            internal_bus.valid <= 1;
+            internal_bus.tlast <= 1;
+            wait_read_result <= 1;
+        end
+        if(wait_read_result)begin
+            wait_read_result <= 0;
+            if(read_address == 0)
+                read_resp.data <= read_global_data;
+            else 
+                read_resp.data <= read_chain_data[read_address];
+            read_resp.valid <= 1;
+        end
+    end
 
     SyncEngine #(
         .N_CHAINS(N_CHAINS)
@@ -111,6 +147,7 @@ module PwmGenerator #(
 
     PwmControlUnit #(
         .INITIAL_STOPPED_STATE(INITIAL_STOPPED_STATE),
+        .BASE_ADDRESS(BASE_ADDRESS),
         .N_PWM(N_PWM)
     ) pwm_cu(
         .clock(clock),
@@ -124,7 +161,8 @@ module PwmGenerator #(
         .sync_out_select(sync_out_select),
         .sync_out_delay(sync_out_delay),
         .counter_stopped_state(counter_stopped_state),
-        .axi_in(internal_bus[0])
+        .read_response(read_global_data),
+        .modulation_in(internal_bus)
     );
 
     wire fast_count;
@@ -158,7 +196,8 @@ module PwmGenerator #(
                 .COUNTER_WIDTH(COUNTER_WIDTH),
                 .N_CHANNELS(N_CHANNELS),
                 .HR_ENABLE(HR_ENABLE),
-                .ENANCING_MODE(ENANCING_MODE)
+                .ENANCING_MODE(ENANCING_MODE),
+                .CHAIN_ADDRESS(i+1)
             ) chain(
                 .clock(clock),
                 .high_resolution_clock(high_resolution_clock),
@@ -172,7 +211,8 @@ module PwmGenerator #(
                 .sync_out(chains_sync_out[i]),
                 .out_a(partial_pwm_out_a[i]),
                 .out_b(partial_pwm_out_b[i]),
-                .axi_in(internal_bus[1+i])
+                .read_response(read_chain_data[i]),
+                .modulation_in(internal_bus)
             );
         end
     endgenerate

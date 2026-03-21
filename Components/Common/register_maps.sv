@@ -236,6 +236,16 @@ package reg_maps;
     } pmp_dab_regs;
 
     struct {
+        int control = 0;
+        int period = 'h4;
+        int duty_1 = 'h8;
+        int duty_2 = 'hc;
+        int duty_3 = 'h10;
+        int duty_4 = 'h14;
+        int duty_5 = 'h18;
+    } pmp_vsi_regs;
+
+    struct {
         int desired_output = 0;
         int step_size = 'h4;
         int step_duration = 'h8;

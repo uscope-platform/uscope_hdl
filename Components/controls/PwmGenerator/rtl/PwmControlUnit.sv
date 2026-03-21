@@ -28,36 +28,33 @@ module PwmControlUnit #(
     output reg        timebase_external_enable,
     output reg        counter_run,
     output reg        sync,
+    output reg [31:0] read_response,
     output wire [15:0] sync_out_select,
     output wire [15:0] sync_out_delay,
     output reg [N_PWM-1:0] counter_stopped_state,
-    axi_lite.slave axi_in
+    axi_stream.slave modulation_in
 );
 
-    reg [31:0] cu_write_registers [2:0];
-    reg [31:0] cu_read_registers [2:0];
+    reg [31:0] cu_registers [2:0] = '{default:0};
 
     wire [31:0] control_register;
 
-    assign control_register = cu_write_registers[0];
-    assign sync_out_select = cu_write_registers[1];
-    assign sync_out_delay = cu_write_registers[2];
+    assign control_register = cu_registers[0];
+    assign sync_out_select = cu_registers[1];
+    assign sync_out_delay = cu_registers[2];
+
+    always_ff @(posedge clock) begin
+        read_response <= 0;
+        if(modulation_in.valid && modulation_in.user == 0) begin
+            if(~modulation_in.tlast)begin
+                cu_registers[modulation_in.dest] <= modulation_in.data;
+            end else begin
+                read_response <= cu_registers[modulation_in.dest];
+            end
+        end
+    end
 
 
-    axil_simple_register_cu #(
-        .N_READ_REGISTERS(3),
-        .N_WRITE_REGISTERS(3),
-        .REGISTERS_WIDTH(32),
-        .ADDRESS_MASK('hf)
-    ) CU (
-        .clock(clock),
-        .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
-        .axil(axi_in)
-    );
-
-    assign cu_read_registers = cu_write_registers;
 
     reg wait_sync_reset;
 

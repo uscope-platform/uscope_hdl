@@ -14,9 +14,8 @@
 // limitations under the License.
 
 `timescale 10ns / 1ns
-`include "axis_BFM.svh"
 
-module pwm_generator_multi_chain_tb();
+module pwm_generator_axis_tb();
 
     reg  clk, reset;
     reg ext_tb=0;
@@ -31,9 +30,9 @@ module pwm_generator_multi_chain_tb();
     parameter SB_CHAIN_6_ADDR  = 'h43C00600;
 
     axi_lite axil();
-
     axi_stream mod_in();
 
+    
     PwmGenerator #(
         .BASE_ADDRESS(32'h43c00000), 
         .N_CHANNELS(1), 
@@ -57,7 +56,6 @@ module pwm_generator_multi_chain_tb();
     always #0.5 clk = ~clk; 
 
     initial begin
-        axil.initialize_master();
         mod_in.initialize();
         //Initial status
         reset <=1'h1;
@@ -67,29 +65,43 @@ module pwm_generator_multi_chain_tb();
 
         //Compare low 1
         
-        configure_chain(SB_CHAIN_1_ADDR, 0);
-        configure_chain(SB_CHAIN_2_ADDR, 166);
-        configure_chain(SB_CHAIN_3_ADDR, 332);
-        configure_chain(SB_CHAIN_4_ADDR, 498);
-        configure_chain(SB_CHAIN_5_ADDR, 664);
-        configure_chain(SB_CHAIN_6_ADDR, 830);
+        configure_chain(1, 0);
+        configure_chain(2, 166);
+        configure_chain(3, 332);
+        configure_chain(4, 498);
+        configure_chain(5, 664);
+        configure_chain(6, 830);
 
-        #1 axil.write(SB_TIMEBASE_ADDR, 32'h1128);        
+        #1 mod_in.write_all(0, 0, 32'h1128);        
     end
 
 
-    task configure_chain(input logic [31:0] chain_base_address, logic [31:0] phase_shift);
-        #1 axil.write(chain_base_address+8'h00, 0);
-        #1 axil.write(chain_base_address+8'h04, 500);
-        #1 axil.write(chain_base_address+8'h08, 2);
-        #1 axil.write(chain_base_address+8'h0C, 0);
-        #1 axil.write(chain_base_address+8'h10, 1000);
-        #1 axil.write(chain_base_address+8'h14, phase_shift);
-        #1 axil.write(chain_base_address+8'h18, 3);
-        #1 axil.write(chain_base_address+8'h1C, 1);
-        #1 axil.write(chain_base_address+8'h20, 1);
+    task configure_chain(input logic [31:0] chain, logic [31:0] phase_shift);
+        #10 mod_in.write_all(8'h00, chain, 0); 
+        #10 mod_in.write_all(8'h04, chain,  500);
+        #10 mod_in.write_all(8'h08, chain,  2);
+        #10 mod_in.write_all(8'h0C, chain,  0);
+        #10 mod_in.write_all(8'h10, chain,  1000);
+        #10 mod_in.write_all(8'h14, chain,  phase_shift);
+        #10 mod_in.write_all(8'h18, chain,  3);
+        #10 mod_in.write_all(8'h1C, chain,  1);
+        #10 mod_in.write_all(8'h20, chain,  1);
     endtask
+    
+    wire pwm_1, pwm_2, pwm_3, pwm_4, pwm_5, pwm_6;
+    wire pwm_7, pwm_8, pwm_9, pwm_10, pwm_11, pwm_12;
 
-    
-    
+    assign pwm_1 = pwm[0];
+    assign pwm_2 = pwm[1];
+    assign pwm_3 = pwm[2];
+    assign pwm_4 = pwm[3];
+    assign pwm_5 = pwm[4];
+    assign pwm_6 = pwm[5];
+    assign pwm_7 = pwm[6];
+    assign pwm_8 = pwm[7];
+    assign pwm_9 = pwm[8];
+    assign pwm_10 = pwm[9];
+    assign pwm_11 = pwm[10];
+    assign pwm_12 = pwm[11];
+
 endmodule

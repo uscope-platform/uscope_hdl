@@ -20,6 +20,7 @@ module pwmChain #(
     HR_ENABLE = "FALSE",
     ENANCING_MODE = "DUTY",
     COUNTER_WIDTH=16,
+    CHAIN_ADDRESS=0,
     PRAGMA_MKFG_MODULE_TOP = "pwmChain"
 )(
     input wire clock,
@@ -34,7 +35,8 @@ module pwmChain #(
     output wire sync_out,
     output wire [N_CHANNELS-1:0] out_a,
     output wire [N_CHANNELS-1:0] out_b,
-    axi_lite.slave axi_in
+    output wire [31:0] read_response,
+    axi_stream.slave modulation_in
     );
 
     wire [COUNTER_WIDTH-1:0] counter_out;
@@ -72,7 +74,8 @@ module pwmChain #(
 
     ChainControlUnit #(
         .N_CHANNELS(N_CHANNELS),
-        .COUNTER_WIDTH(COUNTER_WIDTH)
+        .COUNTER_WIDTH(COUNTER_WIDTH), 
+        .CHAIN_ADDRESS(CHAIN_ADDRESS)
     ) ControlUnit(
         .clock(clock),
         .reset(reset),
@@ -85,7 +88,8 @@ module pwmChain #(
         .output_enable(output_enable),
         .deadtime(deadtime),
         .deadtime_enable(deadtime_enable),
-        .axi_in(axi_in)
+        .read_response(read_response),
+        .modulation_in(modulation_in)
     );
 
     Counter #(

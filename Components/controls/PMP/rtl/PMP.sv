@@ -72,7 +72,7 @@ module pre_modulation_processor #(
             for(integer i = 0; i< 5; i= i+1)begin
                 if(cu_write.dest == TRIGGER_REGISTERS_IDX[i]) begin
                     triggers[i] <= 1'b1;
-                end                            
+                end
             end
         end
 
@@ -81,7 +81,7 @@ module pre_modulation_processor #(
             for(integer i = 0; i< 5; i= i+1)begin
                 if(modulation_in.dest == TRIGGER_REGISTERS_IDX[i]) begin
                     triggers[i] <= 1'b1;
-                end                            
+                end
             end
         end
 

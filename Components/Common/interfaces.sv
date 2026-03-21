@@ -134,6 +134,16 @@ interface axi_stream #(DATA_WIDTH = 32, USER_WIDTH = 32, DEST_WIDTH = 32, CLOCK_
         wait(ready==1);
     endtask
 
+    task write_all(input logic [31:0] destination, logic [31:0] user_in,logic [31:0] write_data, logic tlast_in = 0);
+        data <= write_data;
+        user <= user_in;
+        dest <= destination;
+        tlast <= tlast_in;
+        wait(ready) valid <= 1'b1;
+        #(CLOCK_PERIOD) valid <= 1'b0;
+        wait(ready==1);
+    endtask
+    
     task write_tlast(input logic [31:0] destination, logic [31:0] write_data, logic write_tlast);
         data <= write_data;
         dest <= destination;

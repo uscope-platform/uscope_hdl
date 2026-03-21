@@ -5,7 +5,7 @@
         "synth_modules":[],
         "synth_tl": "PwmGenerator",
         "sim_modules":[],
-        "sim_tl":"pwm_generator_tb",
+        "sim_tl":"pwm_generator_multi_chain_tb",
         "include_paths":[
             "/public/Components/Common"
         ]

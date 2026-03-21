@@ -18,6 +18,7 @@ module axil_external_registers_cu #(
     parameter REGISTERS_WIDTH = 32,
     REGISTERED_BUFFERS = 0,
     BASE_ADDRESS = 0,
+    TRANSPARENT_MODE = "FALSE",
     READ_DELAY = 0
 ) (
     input wire clock,
@@ -129,7 +130,8 @@ assign write_valid = write_data_valid && write_address_valid;
 // HANDLE READ DATA CHANNEL 
 
 wire [31:0] register_read_address;
-assign register_read_address = (internal_read_address - BASE_ADDRESS) >> 2;
+
+assign register_read_address = TRANSPARENT_MODE == "TRUE" ? internal_read_address : (internal_read_address - BASE_ADDRESS) >> 2;
 
 
 initial axi_in.RVALID = 0;
@@ -156,7 +158,8 @@ assign read_address.valid = read_address_valid;
 assign read_data.ready = read_ready;
 
 wire [31:0] register_write_address;
-assign register_write_address = (write_address - BASE_ADDRESS) >> 2;
+
+assign register_write_address = TRANSPARENT_MODE == "TRUE" ? write_address : (write_address - BASE_ADDRESS) >> 2;
 
 assign write_data.data = internal_write_data;
 assign write_data.dest = register_write_address;
