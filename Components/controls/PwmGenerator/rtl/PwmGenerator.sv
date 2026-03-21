@@ -101,20 +101,20 @@ module PwmGenerator #(
 
         if(modulation_in.valid) begin
             internal_bus.data <= modulation_in.data;
-            internal_bus.dest <= modulation_in.dest;
+            internal_bus.dest <= modulation_in.dest>>2;
             internal_bus.user <= modulation_in.user;
             internal_bus.valid <= 1;
             internal_bus.tlast <= 0;
         end else if(write_req.valid)begin
             internal_bus.data <= write_req.data;
-            internal_bus.dest <= write_req.dest[7:0];
+            internal_bus.dest <= write_req.dest[7:0]>>2;
             internal_bus.user <= write_req.dest[11:8];
             internal_bus.valid <= 1;
             internal_bus.tlast <= 0;
         end 
 
         if(read_req.valid)begin
-            internal_bus.dest <= read_req.data[7:0];
+            internal_bus.dest <= read_req.data[7:0]>>2;
             internal_bus.user <= read_req.data[11:8];
             read_address <= read_req.data[11:8];
             internal_bus.valid <= 1;
