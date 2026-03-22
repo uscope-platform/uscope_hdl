@@ -63,6 +63,7 @@ module PMP_buck_management_core #(
     always @ (posedge clock) begin : management_fsm
         if (~reset) begin
             pwm_config_done <= 0;
+            write_request.user <=0;
         end else begin
             case(management_state)
                 management_idle: begin

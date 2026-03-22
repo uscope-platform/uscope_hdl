@@ -87,6 +87,7 @@ module PMP_buck_operating_core #(
     always @(posedge clock) begin : operating_fsm
         if (~reset) begin
             modulator_status <= 0;
+            operating_write.user <= 0;
             latched_stop_request <= 0;
         end else begin
 

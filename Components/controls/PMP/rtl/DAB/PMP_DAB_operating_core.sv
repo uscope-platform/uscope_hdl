@@ -105,6 +105,7 @@ module PMP_DAB_operating_core #(
         if (~reset) begin
             modulator_status <= 0;
             latched_stop_request <= 0;
+            operating_write.user <= 0;
         end else begin
             if(stop)
                 latched_stop_request <= 1;

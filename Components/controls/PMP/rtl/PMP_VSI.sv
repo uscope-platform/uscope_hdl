@@ -43,21 +43,26 @@ module vsi_pre_modulation_processor  #(
 
     reg [31:0] config_data [2:0] = '{'hff, 'h1, 'h1100};
     reg [31:0] config_addr [2:0] = '{
-        'h100+(3*N_PWM_CHANNELS+3)*4, 
-        'h100+(3*N_PWM_CHANNELS+5)*4,
+        (3*N_PWM_CHANNELS+3)*4, 
+        (3*N_PWM_CHANNELS+5)*4,
+        'h0};
+        
+    reg [31:0] config_user [2:0] = '{
+        1, 
+        1,
         'h0};
 
     reg [15:0] modulator_registers_data [8:0];
     reg [31:0] modulator_registers_address [8:0];
 
     initial begin
-        modulator_registers_address[0] = 'h100 + (3*N_PWM_CHANNELS+1)*4;
+        modulator_registers_address[0] =  (3*N_PWM_CHANNELS+1)*4;
         
         for(integer i = 3; i>=0; i--)begin
-            modulator_registers_address[i+1] = 'h100 + 4*i;
+            modulator_registers_address[i+1] =  4*i;
         end
         for(integer i = 7; i>3; i--)begin
-            modulator_registers_address[i+1] = 'h100 + 4*(i+(N_PWM_CHANNELS-4));
+            modulator_registers_address[i+1] =  4*(i+(N_PWM_CHANNELS-4));
         end
     end
 
@@ -78,6 +83,8 @@ module vsi_pre_modulation_processor  #(
     fsm_state calculation_state;
     fsm_state next_state;
 
+    reg config_done = 0;
+
     // Determine the next state
     always @ (posedge clock) begin : main_fsm
         if (~reset) begin
@@ -85,6 +92,8 @@ module vsi_pre_modulation_processor  #(
             config_counter <= 0;
             write_request.dest <= 0;
             write_request.data <= 0;
+            write_request.user <= 0;
+            write_request.tlast <= 0;
             write_request.valid <= 0;
             calculate <= 0;
             calculation_done <= 0;
@@ -103,7 +112,7 @@ module vsi_pre_modulation_processor  #(
                         calculation_state <= configuration_state;
                     end
 
-                    if(update_needed & modulator_status==modulator_off)begin
+                    if(update_needed & config_done)begin
                         calculate <= 1;
                         update_needed <=0;
                     end
@@ -117,6 +126,7 @@ module vsi_pre_modulation_processor  #(
                      if(start) begin 
                         modulator_status <= modulator_on;
                         write_request.dest <= PWM_BASE_ADDR;
+                        write_request.user <= 0;
                         write_request.data <= modulator_on_config_register;
                         write_request.valid <= 1;
                     end
@@ -124,6 +134,7 @@ module vsi_pre_modulation_processor  #(
                     if(stop) begin 
                         modulator_status <= modulator_off;
                         write_request.dest <= PWM_BASE_ADDR;
+                        write_request.user <= 0;
                         write_request.data <= config_data[0];
                         write_request.valid <= 1;
                     end
@@ -132,10 +143,12 @@ module vsi_pre_modulation_processor  #(
                     update_needed <= update_needed | (|update);
                     if(write_request.ready)begin
                         write_request.dest <= PWM_BASE_ADDR + config_addr[config_counter];
+                        write_request.user <= config_user[config_counter];
                         write_request.data <= config_data[config_counter];
                         write_request.valid <= 1;
                         if(config_counter==2)begin
                             calculation_state <= calc_idle_state;
+                            config_done <= 1;
                             done <= 1;
                         end else begin
                             next_state <= configuration_state;
@@ -146,15 +159,14 @@ module vsi_pre_modulation_processor  #(
                 write_strobe:begin
                     update_needed <= update_needed | (|update);
                     write_request.valid <= 0;
-                    if(~write_request.ready)begin   
-                        config_counter <= config_counter+1;
-                        calculation_state <= next_state;    
-                    end
+                    config_counter <= config_counter+1;
+                    calculation_state <= next_state;
                 end
 
                 update_modulator:begin
                     if(write_request.ready)begin
                         write_request.dest <= PWM_BASE_ADDR + modulator_registers_address[config_counter];
+                        write_request.user <= 1;
                         write_request.data <= modulator_registers_data[config_counter];
                         write_request.valid <= 1;
                         if(config_counter==8)begin
@@ -170,14 +182,10 @@ module vsi_pre_modulation_processor  #(
 
             if(calculate)begin
                 calculate <= 0;
-                modulator_registers_data[1] <= period/2 - duty[0]/2;
-                modulator_registers_data[5] <= period/2 + duty[0]/2;
-                modulator_registers_data[2]  <= period/2 - duty[1]/2;
-                modulator_registers_data[6] <= period/2 + duty[1]/2;
-                modulator_registers_data[3]  <= period/2 - duty[2]/2;
-                modulator_registers_data[7] <= period/2 + duty[2]/2;
-                modulator_registers_data[4]  <= period/2 - duty[3]/2;
-                modulator_registers_data[8] <= period/2 + duty[3]/2;
+                for(int i = 0; i<N_PWM_CHANNELS; i++)begin
+                    modulator_registers_data[i+1] <= period/2 - duty[i]/2;
+                    modulator_registers_data[i+N_PWM_CHANNELS+1] <= period/2 + duty[i]/2;
+                end
                 calculation_done <= 1;
             end
         end

@@ -27,12 +27,13 @@ module pre_modulation_processor #(
     input wire clock,
     input wire reset,
     input wire external_start,
+    input wire configure,
     input wire external_stop,
     axi_lite.slave axi_in,
-    axi_lite.master axi_out,
     axi_stream.slave modulation_in,
     axi_stream.watcher duty_repeater,
-    output reg modulator_ready
+    output reg modulator_ready,
+    axi_stream modulation_out
 );
 
     axi_stream cu_write();
@@ -67,6 +68,7 @@ module pre_modulation_processor #(
     always_ff@(posedge clock) begin 
         triggers <= 0;
         cu_write.ready <= 1;
+        cu_read_addr.ready <= 1;
         if(cu_write.valid)begin
             cu_write_registers[cu_write.dest] <= cu_write.data;
             for(integer i = 0; i< 5; i= i+1)begin
@@ -323,8 +325,6 @@ module pre_modulation_processor #(
 
     endgenerate
 
-    axi_stream modulator_if_write();
-
     axi_stream_mux #(
         .N_STREAMS(3),
         .DEST_WIDTH(32),
@@ -334,25 +334,8 @@ module pre_modulation_processor #(
         .reset(reset),
         .address(mux_selector),
         .stream_in('{dab_write, vsi_write, buck_write}),
-        .stream_out(modulator_if_write)
+        .stream_out(modulation_out)
     );
-
-
-    axi_stream read_req();
-    assign read_req.valid = 0;
-
-    axi_stream read_resp();
-    assign read_resp.ready = 1;
-    
-    axis_to_axil WRITER(
-        .clock(clock),
-        .reset(reset), 
-        .axis_write(modulator_if_write),
-        .axis_read_request(read_req),
-        .axis_read_response(read_resp),
-        .axi_out(axi_out)
-    );
-
 
 
 endmodule
