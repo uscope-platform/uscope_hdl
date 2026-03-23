@@ -47,7 +47,7 @@ module PMP_buck_tb();
         .duty_repeater(duty_out),
         .axi_in(axi_pmp)
     );
-   
+    
     wire [15:0] gates_buck;
 
     PwmGenerator #(
@@ -124,13 +124,13 @@ module PMP_buck_tb();
         @(reset_done);
         #10 axi_pmp.write('h0, 8);
         #10 axi_pmp.write('h4, 1000); //period
-        #10 axi_pmp.write('hC, 200);  //duty 1
-        #10 axi_pmp.write('h10, 200); //duty 2
-        #10 axi_pmp.write('h14, 200); //duty 3
-        #10 axi_pmp.write('h18, 200); //duty 4
-        #10 axi_pmp.write('h1C, 200); //duty 5
-        #10 axi_pmp.write('h20, 200); //duty 6
-        #10 axi_pmp.write('h24, 5);   //deadtime
+        #10 axi_pmp.write('h8, 200);  //duty 1
+        #10 axi_pmp.write('hc, 200); //duty 2
+        #10 axi_pmp.write('h10, 200); //duty 3
+        #10 axi_pmp.write('h14, 200); //duty 4
+        #10 axi_pmp.write('h18, 200); //duty 5
+        #10 axi_pmp.write('h1c, 200); //duty 6
+        #10 axi_pmp.write('h20, 5);   //deadtime
         #10 axi_pmp.write('h24, 6);   //N active phases
         #50
         ext_start = 1;

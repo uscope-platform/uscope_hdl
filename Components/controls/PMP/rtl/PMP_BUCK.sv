@@ -84,7 +84,7 @@ module buck_pre_modulation_processor  #(
     ) shift_calc_engine(
         .clock(clock),
         .reset(reset),
-        .n_phases(n_active_phases+1),
+        .n_phases(n_active_phases),
         .period(period),
         .phase_shifts(phase_shifts)
     );

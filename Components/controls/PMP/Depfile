@@ -4,8 +4,13 @@
         "target_part":"xc7z020clg400",
         "synth_modules":[],
         "synth_tl": "pre_modulation_processor",
-        "sim_modules":["PMP_shedding_manager_tb"],
-        "sim_tl":"PMP_tb",
+        "sim_modules":[
+            "PMP_shedding_manager_tb",
+            "PMP_dab_tb",
+            "PMP_vsi_tb"
+
+        ],
+        "sim_tl":"PMP_buck_tb",
         "include_paths":[
             "/public/Components/Common"
         ]

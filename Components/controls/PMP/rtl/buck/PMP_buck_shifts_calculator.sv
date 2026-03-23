@@ -20,17 +20,21 @@ module PMP_buck_shifts_calculator #(
 )(
     input wire clock,
     input wire reset,
-    input wire [4:0] n_phases,
+    input wire [3:0] n_phases,
     input wire [15:0] period,
     output reg [15:0] phase_shifts [N_PHASES-1:0]
 );
 
 
-    reg [16:0] divisors_table [N_PHASES-1:0];
+    reg [15:0] divisors_table [N_PHASES-1:0];
     
+    integer i;
     initial begin
-        $readmemh("pmp_buck_divisors.mem", divisors_table);
-    end
+        for (i = 1; i <= N_PHASES; i = i + 1) begin
+            divisors_table[i-1] = 65535 / i;
+        end
+        phase_shifts =  '{default:0}
+;    end
 
     enum reg [1:0] { 
         initialize_state = 0,
@@ -53,7 +57,7 @@ module PMP_buck_shifts_calculator #(
         n_phases_prev <= n_phases;
         case(state)
             initialize_state :begin
-                if(period != 0)begin
+                if(period != 0 && n_phases >0)begin
                     phase_advance <= advance_ext>>16;  
                     state <= calculation_state;
                 end
