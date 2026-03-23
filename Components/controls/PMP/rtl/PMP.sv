@@ -103,12 +103,11 @@ module pre_modulation_processor #(
 
     wire modulation_status;
     reg [1:0] modulation_type;
-    reg [1:0] converter_type;
     reg [31:0] period;
     
     reg [15:0] modulation_parameters [N_PARAMETERS-1:0];
 
-    assign {converter_type, modulation_type} = cu_write_registers[0];
+    assign modulation_type = cu_write_registers[0];
     assign period = cu_write_registers[1];
     
     genvar i;
@@ -117,7 +116,7 @@ module pre_modulation_processor #(
     end
     
 
-    assign cu_read_registers[0] = {converter_type, modulation_type};
+    assign cu_read_registers[0] =  modulation_type;
     assign cu_read_registers[1] = period;
     
     for(i = 0; i<N_PARAMETERS; i++)begin

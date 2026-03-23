@@ -63,6 +63,7 @@ module PMP_DAB_management_core #(
     always @ (posedge clock) begin : management_fsm
         if (~reset) begin
             pwm_config_done <= 0;
+            write_request.tlast <= 0;
             write_request.user <= 0;
         end else begin
             case(management_state)
@@ -84,7 +85,8 @@ module PMP_DAB_management_core #(
                 end
                 fixed_configuration_state:begin
                     if(write_request.ready)begin
-                        write_request.dest <= PWM_BASE_ADDR + (management_chain_counter+1)*'h100 + global_config_addr[management_config_counter];
+                        write_request.dest <= PWM_BASE_ADDR + global_config_addr[management_config_counter];
+                        write_request.user <= management_chain_counter+1;
                         write_request.data <= global_config_data[management_config_counter];
                         write_request.valid <= 1;
                        
@@ -111,7 +113,8 @@ module PMP_DAB_management_core #(
                 end
                 operating_configuration_state:begin
                     if(write_request.ready)begin
-                        write_request.dest <= PWM_BASE_ADDR + (management_chain_counter+1)*'h100 + dt_config_addr + management_config_counter*4;
+                        write_request.dest <= PWM_BASE_ADDR + dt_config_addr + management_config_counter*4;
+                        write_request.user <= management_chain_counter+1;
                         write_request.data <= deadtime;
                         write_request.valid <= 1;
                         if(management_config_counter==N_PWM_CHANNELS-1)begin
