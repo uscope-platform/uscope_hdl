@@ -44,6 +44,9 @@ module PMP_tb();
 
     localparam N_CHANNEL_DAB = 4;
 
+    axi_stream modulation_dab();
+    axi_stream dab_pmp_in();
+
     pre_modulation_processor #(
         .CONVERTER_SELECTION("DYNAMIC"),
         .PWM_BASE_ADDR(0),
@@ -52,8 +55,12 @@ module PMP_tb();
         .clock(clk),
         .reset(reset),
         .axi_in(ctrl_axi_dab),
-        .axi_out(axi_pwm_dab)
+        .modulation_in(dab_pmp_in),
+        .axi_out(axi_pwm_dab),
+        .modulation_out(modulation_dab)
     );
+
+    wire [15:0] gates_dab;
 
     PwmGenerator #(
        .BASE_ADDRESS(0),
@@ -64,11 +71,11 @@ module PMP_tb();
         .ext_timebase(0),
         .fault(0),
         .pwm_out(gates_dab),
-        .axi_in(axi_pwm_dab)
+        .axi_in(axi_pwm_dab),
+        .modulation_in(modulation_dab)
     );
 
 
-    wire [15:0] gates_dab;
     
     wire signed [15:0] pri_a;
     wire signed [15:0] pri_b;
@@ -93,6 +100,9 @@ module PMP_tb();
     axis_BFM write_vsi_BFM;
     axi_stream write_vsi();
 
+    axi_stream modulation_vsi();
+    axi_stream vsi_pmp_in();
+
     axis_to_axil writer_vsi(
         .clock(clk),
         .reset(reset), 
@@ -111,6 +121,8 @@ module PMP_tb();
     ) UUT_vsi (
         .clock(clk),
         .reset(reset),
+        .modulation_in(vsi_pmp_in),
+        .modulation_out(modulation_vsi),
         .axi_in(ctrl_axi_vsi),
         .axi_out(axi_pwm_vsi)
     );
@@ -126,7 +138,8 @@ module PMP_tb();
         .ext_timebase(0),
         .fault(0),
         .pwm_out(gates_vsi),
-        .axi_in(axi_pwm_vsi)
+        .axi_in(axi_pwm_vsi),
+        .modulation_in(modulation_vsi)
     );
 
     wire signed [15:0] vsi_phase_a;
@@ -149,6 +162,9 @@ module PMP_tb();
     axis_BFM write_buck_BFM;
     axi_stream write_buck();
 
+    axi_stream modulation_buck();
+    axi_stream buck_pmp_in();
+
     axis_to_axil writer_buck(
         .clock(clk),
         .reset(reset), 
@@ -168,6 +184,8 @@ module PMP_tb();
     ) UUT_buck (
         .clock(clk),
         .reset(reset),
+        .modulation_in(buck_pmp_in),
+        .modulation_out(modulation_buck),
         .axi_in(ctrl_axi_buck),
         .axi_out(axi_pwm_buck)
     );
@@ -184,7 +202,8 @@ module PMP_tb();
         .ext_timebase(0),
         .fault(0),
         .pwm_out(gates_buck),
-        .axi_in(axi_pwm_buck)
+        .axi_in(axi_pwm_buck),
+        .modulation_in(modulation_buck)
     );
 
 

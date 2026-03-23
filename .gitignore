@@ -15,6 +15,9 @@
 *.jou
 *.o
 *.pb
+*.fst
+**/sim.tcl
+**/sim.sh
 **/.Xil/
 **/\.ipynb_checkpoints/
 #SPECIFIC DIRECTORY IGNORES

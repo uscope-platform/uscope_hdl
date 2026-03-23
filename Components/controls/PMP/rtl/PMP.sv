@@ -16,7 +16,7 @@
 `timescale 10 ns / 1 ns
 
 module pre_modulation_processor #(
-    CONVERTER_SELECTION = "DYNAMIC",
+    CONVERTER_SELECTION = "",
     BASE_ADDRESS = 0,
     PWM_BASE_ADDR = 0,
     N_PWM_CHANNELS = 4,
@@ -94,6 +94,13 @@ module pre_modulation_processor #(
         
     end
 
+    initial begin
+        if(CONVERTER_SELECTION != "BUCK" && CONVERTER_SELECTION != "VSI" && CONVERTER_SELECTION != "DAB")begin
+            $display("Invalid converter type: %s\n", CONVERTER_SELECTION);
+            $error(" Converter type should be one of the following {VSI, BUCK, DAB}");
+        end
+    end
+
     wire modulation_status;
     reg [1:0] modulation_type;
     reg [1:0] converter_type;
@@ -119,10 +126,6 @@ module pre_modulation_processor #(
 
     reg configuration_start;
 
-    axi_stream dab_write();
-    axi_stream vsi_write();
-    axi_stream buck_write();
-    
     wire dab_done, vsi_done, buck_done;
     wire dab_modulator_status, vsi_modulator_status, buck_modulator_status;
 
@@ -168,71 +171,7 @@ module pre_modulation_processor #(
 
     generate
 
-    if(CONVERTER_SELECTION == "DYNAMIC") begin
-
-            assign mux_selector = converter_type;
-            assign modulation_status = modulation_status_arr[converter_type];
-
-            dab_pre_modulation_processor #(
-                .PWM_BASE_ADDR(PWM_BASE_ADDR),
-                .N_PWM_CHANNELS(N_PWM_CHANNELS),
-                .N_PARAMETERS(N_PARAMETERS)
-            ) dab_core (
-                .clock(clock),
-                .reset(reset),
-                .start(external_start),
-                .stop(external_stop),
-                .configure(configuration_start),
-                .update(triggers[4:1]),
-                .modulation_type(modulation_type),
-                .period(period),
-                .modulation_parameters(modulation_parameters),
-                .modulator_status(dab_modulator_status),
-                .done(dab_done),
-                .duty_repeater(duty_repeater),
-                .write_request(dab_write)
-            );
-
-            vsi_pre_modulation_processor  #(
-                .PWM_BASE_ADDR(PWM_BASE_ADDR),
-                .N_PWM_CHANNELS(N_PWM_CHANNELS),
-                .N_PARAMETERS(N_PARAMETERS)
-            ) vsi_core (
-                .clock(clock),
-                .reset(reset),
-                .start(external_start),
-                .stop(external_stop),
-                .configure(configuration_start),
-                .update(triggers[4:1]),
-                .period(period),
-                .modulation_parameters(modulation_parameters),
-                .done(vsi_done),
-                .modulator_status(vsi_modulator_status),
-                .write_request(vsi_write)
-            );
-
-
-            buck_pre_modulation_processor  #(
-                .PWM_BASE_ADDR(PWM_BASE_ADDR),
-                .N_PHASES(N_CHAINS),
-                .N_PWM_CHANNELS(N_PWM_CHANNELS),
-                .N_PARAMETERS(N_PARAMETERS)
-            ) buck_core (
-                .clock(clock),
-                .reset(reset),
-                .start(external_start),
-                .stop(external_stop),
-                .configure(configuration_start),
-                .update(triggers[4:1]),
-                .period(period),
-                .modulation_parameters(modulation_parameters),
-                .done(buck_done),
-                .modulator_status(buck_modulator_status),
-                .duty_repeater(duty_repeater),
-                .write_request(buck_write)
-            );
-
-        end else if(CONVERTER_SELECTION == "DAB") begin
+        if(CONVERTER_SELECTION == "DAB") begin
 
             assign mux_selector = 0;
             assign modulation_status = dab_modulator_status;
@@ -259,7 +198,7 @@ module pre_modulation_processor #(
                 .modulator_status(dab_modulator_status),
                 .done(dab_done),
                 .duty_repeater(duty_repeater),
-                .write_request(dab_write)
+                .write_request(modulation_out)
             );
         end else if(CONVERTER_SELECTION == "VSI") begin
             
@@ -286,7 +225,7 @@ module pre_modulation_processor #(
                 .modulation_parameters(modulation_parameters),
                 .done(vsi_done),
                 .modulator_status(vsi_modulator_status),
-                .write_request(vsi_write)
+                .write_request(modulation_out)
             );
             assign dab_modulator_status = 0;
             assign vsi_modulator_status = 0;
@@ -319,23 +258,10 @@ module pre_modulation_processor #(
                 .done(buck_done),
                 .duty_repeater(duty_repeater),
                 .modulator_status(buck_modulator_status),
-                .write_request(buck_write)
+                .write_request(modulation_out)
             );
-    end
-
+        end
     endgenerate
-
-    axi_stream_mux #(
-        .N_STREAMS(3),
-        .DEST_WIDTH(32),
-        .BUFFERED(0)
-    )write_combiner(
-        .clock(clock),
-        .reset(reset),
-        .address(mux_selector),
-        .stream_in('{dab_write, vsi_write, buck_write}),
-        .stream_out(modulation_out)
-    );
 
 
 endmodule
