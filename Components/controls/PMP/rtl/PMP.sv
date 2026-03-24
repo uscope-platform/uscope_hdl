@@ -40,7 +40,7 @@ module pre_modulation_processor #(
     axi_stream cu_read_addr();
     axi_stream cu_read_data();
 
-    reg [4:0] triggers;
+    reg [7:0] triggers;
     reg config_required;
 
 
@@ -63,7 +63,7 @@ module pre_modulation_processor #(
 
     assign modulation_in.ready = 1;
 
-    localparam [31:0] TRIGGER_REGISTERS_IDX [4:0] = '{2, 3, 4, 5, 0};
+    localparam [31:0] TRIGGER_REGISTERS_IDX [6:0] = '{2, 3, 4, 5, 6, 7, 0};
 
     always_ff@(posedge clock) begin 
         triggers <= 0;
@@ -190,7 +190,7 @@ module pre_modulation_processor #(
                 .start(external_start),
                 .stop(external_stop),
                 .configure(configuration_start),
-                .update(triggers[4:1]),
+                .update(triggers[6:1]),
                 .modulation_type(modulation_type),
                 .period(period),
                 .modulation_parameters(modulation_parameters),
@@ -219,7 +219,7 @@ module pre_modulation_processor #(
                 .start(external_start),
                 .stop(external_stop),
                 .configure(configuration_start),
-                .update(triggers[4:1]),
+                .update(triggers[6:1]),
                 .period(period),
                 .modulation_parameters(modulation_parameters),
                 .done(vsi_done),
@@ -251,7 +251,7 @@ module pre_modulation_processor #(
                 .start(external_start),
                 .stop(external_stop),
                 .configure(configuration_start),
-                .update(triggers[4:1]),
+                .update(triggers[6:1]),
                 .period(period),
                 .modulation_parameters(modulation_parameters),
                 .done(buck_done),

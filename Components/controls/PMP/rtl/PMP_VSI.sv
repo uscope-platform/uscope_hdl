@@ -17,7 +17,6 @@
 
 module vsi_pre_modulation_processor  #(
     PWM_BASE_ADDR = 0,
-    N_PHASES = 4,
     N_PWM_CHANNELS = 4,
     N_PARAMETERS = 13
 )(
@@ -26,7 +25,7 @@ module vsi_pre_modulation_processor  #(
     input wire configure,
     input wire start,
     input wire stop,
-    input wire [3:0] update,
+    input wire [N_PWM_CHANNELS-1:0] update,
     input wire [15:0] period,
     input wire [15:0] modulation_parameters[N_PARAMETERS-1:0],
     output reg done,
@@ -35,13 +34,18 @@ module vsi_pre_modulation_processor  #(
 );
 
     
-    wire [15:0] duty[N_PHASES-1:0];
-    assign duty = modulation_parameters[N_PHASES-1:0];
+    wire [15:0] duty[N_PWM_CHANNELS-1:0];
+    assign duty = modulation_parameters[N_PWM_CHANNELS-1:0];
     
     localparam  modulator_off = 0;
     localparam  modulator_on = 1;
 
-    reg [31:0] config_data [2:0] = '{'hff, 'h1, 'h1100};
+    reg [31:0] config_data [2:0] = '{
+        {N_PWM_CHANNELS{2'b11}},
+        'h1,
+        'h1100
+    };
+
     reg [31:0] config_addr [2:0] = '{
         (3*N_PWM_CHANNELS+3)*4, 
         (3*N_PWM_CHANNELS+5)*4,
@@ -52,17 +56,17 @@ module vsi_pre_modulation_processor  #(
         1,
         'h0};
 
-    reg [15:0] modulator_registers_data [8:0];
-    reg [31:0] modulator_registers_address [8:0];
+    reg [15:0] modulator_registers_data [2*N_PWM_CHANNELS:0];
+    reg [31:0] modulator_registers_address [2*N_PWM_CHANNELS:0];
 
     initial begin
         modulator_registers_address[0] =  (3*N_PWM_CHANNELS+1)*4;
         
-        for(integer i = 3; i>=0; i--)begin
+        for(integer i = N_PWM_CHANNELS-1; i>=0; i--)begin
             modulator_registers_address[i+1] =  4*i;
         end
-        for(integer i = 7; i>3; i--)begin
-            modulator_registers_address[i+1] =  4*(i+(N_PWM_CHANNELS-4));
+        for(integer i = 2*N_PWM_CHANNELS-1; i>N_PWM_CHANNELS-1; i--)begin
+            modulator_registers_address[i+1] =  4*i;
         end
     end
 
@@ -169,7 +173,7 @@ module vsi_pre_modulation_processor  #(
                         write_request.user <= 1;
                         write_request.data <= modulator_registers_data[config_counter];
                         write_request.valid <= 1;
-                        if(config_counter==8)begin
+                        if(config_counter==2*N_PWM_CHANNELS)begin
                             calculation_state <= calc_idle_state;
                         end else begin
                             next_state <= update_modulator;

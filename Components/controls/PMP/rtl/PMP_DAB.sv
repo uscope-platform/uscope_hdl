@@ -25,7 +25,7 @@ module dab_pre_modulation_processor #(
     input wire configure,
     input wire start,
     input wire stop,
-    input wire [3:0] update,
+    input wire [5:0] update,
     input wire [1:0] modulation_type,
     input wire [15:0] period,
     input wire [15:0] modulation_parameters[N_PARAMETERS-1:0],
