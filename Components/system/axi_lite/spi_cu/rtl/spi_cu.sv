@@ -94,6 +94,7 @@ module spi_cu #(
                 end
                 address_h: begin
                     if(rx_data.valid)begin
+                        address[0] <= 0;
                         address[31:16]<= rx_data.data;
                         cu_state <= data_h;
                     end
