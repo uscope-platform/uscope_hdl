@@ -27,7 +27,6 @@ module pre_modulation_processor #(
     input wire clock,
     input wire reset,
     input wire external_start,
-    input wire configure,
     input wire external_stop,
     axi_lite.slave axi_in,
     axi_stream.slave modulation_in,
