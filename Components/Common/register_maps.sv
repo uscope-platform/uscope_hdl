@@ -243,6 +243,7 @@ package reg_maps;
         int duty_3 = 'h10;
         int duty_4 = 'h14;
         int duty_5 = 'h18;
+        int duty_6 = 'h1c;
     } pmp_vsi_regs;
 
     struct {
