@@ -16,4 +16,53 @@
 
 module fault_management_unit_tb();
 
+    reg clk, reset;
+    always begin
+     clk = 1'b1;
+     #0.5 clk = 1'b0;
+     #0.5;
+    end
+
+    event reset_done;
+    initial begin
+        reset = 1;
+        #5 reset = 0;
+        #5 reset = 1;
+        ->reset_done;
+    end
+
+    axi_lite control();
+    reg [3:0] faults;
+    wire fault_out, clear_fault;
+
+    fault_management_unit #(
+        .N_FAULTS(4)
+    )UUT(
+        .clock(clk),
+        .reset(reset),
+        .fault_in(faults),
+        .fault_out(fault_out),
+        .clear_fault(clear_fault),
+        .axi_in(control)
+    );
+
+    initial begin
+        faults = 0;
+        @(reset_done);
+        #15;
+        faults = 4;
+        #10 assert(fault_out == 0); // check exclusion
+
+        #10 faults = 6;
+        #10 assert(fault_out == 1); // check fault output
+        faults = 0;
+        #10 assert(fault_out == 1); // check sticky fault
+    end
+
+    initial begin
+        control.initialize_master();
+        @(reset_done);
+        #20 control.write(0, 4);
+    end
+
 endmodule

@@ -20,9 +20,45 @@ module fault_management_unit #(
     input wire clock,
     input wire reset,
     input wire [N_FAULTS-1:0] fault_in,
-    output wire fault_out,
+    output reg fault_out,
     output reg clear_fault,
     axi_lite.slave axi_in
 );
+
+
+    localparam N_REGISTERS = 3;
+
+    wire [31:0] cu_write_registers [N_REGISTERS-1:0];
+    wire [31:0] cu_read_registers [N_REGISTERS-1:0];
+
+    axil_simple_register_cu #(
+        .N_READ_REGISTERS(N_REGISTERS),
+        .N_WRITE_REGISTERS(N_REGISTERS),
+        .REGISTERS_WIDTH(32),
+        .TRIGGER_REGISTERS_IDX('{2}),
+        .TRIGGER_REGISTERS_IDX(1),
+        .ADDRESS_MASK('hff)
+    ) CU (
+        .clock(clock),
+        .reset(reset),
+        .input_registers(cu_read_registers),
+        .output_registers(cu_write_registers),
+        .axil(axi_in),
+        .trigger_out(clear_fault)
+    );
+
+
+    wire [N_FAULTS-1:0] exclusions;
+    assign exclusions = cu_write_registers[0];
+
+
+    assign cu_read_registers[0] = exclusions;
+    assign cu_read_registers[1] = fault_in;
+
+    always_ff @(posedge clock)begin
+        fault_out <= |(fault_in & ~exclusions);
+    end
+
+
 
 endmodule
