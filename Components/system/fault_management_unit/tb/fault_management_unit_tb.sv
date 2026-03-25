@@ -40,6 +40,7 @@ module fault_management_unit_tb();
     )UUT(
         .clock(clk),
         .reset(reset),
+        .enable(1),
         .fault_in(faults),
         .fault_out(fault_out),
         .clear_fault(clear_fault),

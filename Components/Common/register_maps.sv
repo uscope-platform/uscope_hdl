@@ -465,5 +465,12 @@ package reg_maps;
      } SPI_simple_master_regs;
 
 
+     struct {
+        int exclusions = 0;
+        int fault_status = 'h4;
+        int clear_fault = 'h8;
+     } fault_management_unit_regs;
+
+
 
 endpackage

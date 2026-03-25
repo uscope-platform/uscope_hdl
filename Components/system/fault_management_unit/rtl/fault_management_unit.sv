@@ -19,6 +19,7 @@ module fault_management_unit #(
 )(
     input wire clock,
     input wire reset,
+    input wire enable,
     input wire [N_FAULTS-1:0] fault_in,
     output reg fault_out,
     output reg clear_fault,
@@ -60,7 +61,7 @@ module fault_management_unit #(
     end
 
     always_latch begin
-        if(clear_fault | ~reset)begin
+    if(clear_fault | ~reset | ~enable)begin
             internal_fault <= 0;
         end else if (~internal_fault)begin
             internal_fault <= |(fault_in & ~exclusions);
