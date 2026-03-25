@@ -364,7 +364,7 @@ package reg_maps;
     endclass
 
     class fault_detector #(parameter int NUM = 3);
-        static function int slow_tresh_l(int i); return i * 4; endfunction
+        static function int slow_tresh_low(int i); return i * 4; endfunction
         static function int slow_tresh_high(int i); return (NUM + i) * 4; endfunction
         static function int slow_trip_duration(int i); return (2*NUM + i) * 4; endfunction
         static function int fast_tresh_low(int i); return (3*NUM + i) * 4; endfunction
