@@ -1,0 +1,24 @@
+{
+    "general":{
+        "project_name":"fault_manager",
+        "target_part":"xc7s25ftgb196-1",
+	    "synth_modules":[],
+        "synth_tl": "fault_managemnt_unit",
+        "sim_tl":"fault_managemnt_unit_tb",
+        "sim_modules":[],
+        "include_paths":[
+            "/public/Components/Common"
+        ]
+    },
+    "bus":{},
+    "scripts":[
+        {
+            "name":"set_properties.tcl",
+            "type": "tcl",
+            "arguments":[]
+        }
+    ],
+    "excluded_modules":[],
+    "constraints": [
+    ]
+}
