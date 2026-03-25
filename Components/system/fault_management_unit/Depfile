@@ -3,8 +3,8 @@
         "project_name":"fault_manager",
         "target_part":"xc7s25ftgb196-1",
 	    "synth_modules":[],
-        "synth_tl": "fault_managemnt_unit",
-        "sim_tl":"fault_managemnt_unit_tb",
+        "synth_tl": "fault_management_unit",
+        "sim_tl":"fault_management_unit_tb",
         "sim_modules":[],
         "include_paths":[
             "/public/Components/Common"

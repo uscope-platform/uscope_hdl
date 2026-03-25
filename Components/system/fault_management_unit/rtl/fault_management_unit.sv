@@ -14,6 +14,15 @@
 // limitations under the License.
 `timescale 10ns / 1ns
 
-module fault_managemnt_unit_tb();
+module fault_management_unit #(
+    int N_FAULTS = 6
+)(
+    input wire clock,
+    input wire reset,
+    input wire [N_FAULTS-1:0] fault_in,
+    output wire fault_out,
+    output reg clear_fault,
+    axi_lite.slave axi_in
+);
 
 endmodule
