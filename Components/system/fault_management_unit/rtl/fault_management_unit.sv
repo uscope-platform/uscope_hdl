@@ -25,7 +25,7 @@ module fault_management_unit #(
     axi_lite.slave axi_in
 );
 
-
+    reg internal_fault;
     localparam N_REGISTERS = 3;
 
     wire [31:0] cu_write_registers [N_REGISTERS-1:0];
@@ -56,9 +56,15 @@ module fault_management_unit #(
     assign cu_read_registers[1] = fault_in;
 
     always_ff @(posedge clock)begin
-        fault_out <= |(fault_in & ~exclusions);
+        fault_out <= internal_fault;
     end
 
-
+    always_latch begin
+        if(clear_fault | ~reset)begin
+            internal_fault <= 0;
+        end else if (~internal_fault)begin
+            internal_fault <= |(fault_in & ~exclusions);
+        end
+    end
 
 endmodule

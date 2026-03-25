@@ -49,10 +49,9 @@ module fault_management_unit_tb();
     initial begin
         faults = 0;
         @(reset_done);
-        #15;
+        #25;
         faults = 4;
         #10 assert(fault_out == 0); // check exclusion
-
         #10 faults = 6;
         #10 assert(fault_out == 1); // check fault output
         faults = 0;
@@ -62,7 +61,8 @@ module fault_management_unit_tb();
     initial begin
         control.initialize_master();
         @(reset_done);
-        #20 control.write(0, 4);
+        #10 control.write(0, 4);
+        #100 control.write(8, 0);
     end
 
 endmodule
