@@ -64,7 +64,7 @@ module standalone_reader_tb();
 
 
 
-    tmp100_emulator #(
+    tmp100_emulator_static #(
         .ADDRESS(7'H48)
     ) emu_a (
         .clock(clock),
@@ -73,7 +73,7 @@ module standalone_reader_tb();
         .SCL(SCL)
     );
 
-    tmp100_emulator #(
+    tmp100_emulator_static #(
         .ADDRESS(7'H49)
     ) emu_b (
         .clock(clock),
@@ -83,7 +83,7 @@ module standalone_reader_tb();
     );
 
 
-    tmp100_emulator #(
+    tmp100_emulator_static #(
         .ADDRESS(7'H4B)
     ) emu_c (
         .clock(clock),
@@ -92,7 +92,7 @@ module standalone_reader_tb();
         .SCL(SCL)
     );
 
-    tmp100_emulator #(
+    tmp100_emulator_static #(
         .ADDRESS(7'H4C)
     ) emu_d (
         .clock(clock),
@@ -102,7 +102,7 @@ module standalone_reader_tb();
     );
 
 
-    tmp100_emulator #(
+    tmp100_emulator_static #(
         .ADDRESS(7'H4E)
     ) emu_e (
         .clock(clock),
@@ -111,7 +111,7 @@ module standalone_reader_tb();
         .SCL(SCL)
     );
 
-    tmp100_emulator #(
+    tmp100_emulator_static #(
         .ADDRESS(7'H4F)
     ) emu_f (
         .clock(clock),

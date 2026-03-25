@@ -1,6 +1,8 @@
 
-module tmp100_emulator #(
-    parameter reg [7:0] ADDRESS = 0
+module tmp100_emulator_static #(
+    parameter reg [7:0] ADDRESS = 0,
+    parameter integer AVERAGE_TEMPERATURE = 55,
+    parameter integer TEMPERATURE_DELTA = 10
 )(
     input wire clock,
     input wire reset,
@@ -10,9 +12,14 @@ module tmp100_emulator #(
 );
 
     reg [11:0] temperature;
+    reg prev_sda, prev_scl;
 
     always_ff @(posedge clock) begin
-        if(temperature_in.valid) temperature <= temperature_in.data;
+        prev_sda <= SDA;
+        prev_scl <= SCL;
+        if(~SDA && prev_sda && SCL) begin
+            temperature <= AVERAGE_TEMPERATURE*16 + $urandom_range(0, TEMPERATURE_DELTA*2*16)-(TEMPERATURE_DELTA*16);
+        end
     end
 
     axi_stream slave_rx();
