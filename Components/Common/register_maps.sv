@@ -363,54 +363,15 @@ package reg_maps;
         static function int offset(int i); return (2*NUM + i) * 4; endfunction
     endclass
 
-    struct {
-        int slow_tresh_low = 0;
-        int slow_tresh_high = 'h4;
-        int slow_trip_duration = 'h8;
-        int fast_tresh_low = 'hC;
-        int fast_tresh_high = 'h10;
-    } fault_detector_1;
-
-    struct {
-        int slow_tresh_low_0     = 'h00;
-        int slow_tresh_low_1     = 'h04;
-        int slow_tresh_high_0    = 'h08;
-        int slow_tresh_high_1    = 'h0C;
-        int slow_trip_duration_0 = 'h10;
-        int slow_trip_duration_1 = 'h14;
-        int fast_tresh_low_0     = 'h18;
-        int fast_tresh_low_1     = 'h1c;
-        int fast_tresh_high_0    = 'h20;
-        int fast_tresh_high_1    = 'h24;
-        int fast_fault_0    = 'h28;
-        int fast_fault_1    = 'h2c;
-        int slow_fault_0    = 'h30;
-        int slow_fault_1    = 'h34;
-    } fault_detector_2;
-
-    struct {
-        int slow_tresh_low_0     = 'h00;
-        int slow_tresh_low_1     = 'h04;
-        int slow_tresh_low_2     = 'h08;
-        int slow_tresh_high_0    = 'h0c;
-        int slow_tresh_high_1    = 'h10;
-        int slow_tresh_high_2    = 'h14;
-        int slow_trip_duration_0 = 'h18;
-        int slow_trip_duration_1 = 'h1c;
-        int slow_trip_duration_2 = 'h20;
-        int fast_tresh_low_0     = 'h24;
-        int fast_tresh_low_1     = 'h28;
-        int fast_tresh_low_2     = 'h2c;
-        int fast_tresh_high_0    = 'h30;
-        int fast_tresh_high_1    = 'h34;
-        int fast_tresh_high_2    = 'h38;
-        int fast_fault_0    = 'h3c;
-        int fast_fault_1    = 'h40;
-        int fast_fault_2    = 'h44;
-        int slow_fault_0    = 'h48;
-        int slow_fault_1    = 'h4c;
-        int slow_fault_2    = 'h50;
-    } fault_detector_3;
+    class fault_detector #(parameter int NUM = 3);
+        static function int slow_tresh_l(int i); return i * 4; endfunction
+        static function int slow_tresh_high(int i); return (NUM + i) * 4; endfunction
+        static function int slow_trip_duration(int i); return (2*NUM + i) * 4; endfunction
+        static function int fast_tresh_low(int i); return (3*NUM + i) * 4; endfunction
+        static function int fast_tresh_high(int i); return (4*NUM + i) * 4; endfunction
+        static function int fast_fault(int i); return (5*NUM + i) * 4; endfunction
+        static function int slow_fault(int i); return (6*NUM + i) * 4; endfunction
+    endclass
 
     struct {
         int angle_dest = 0;
