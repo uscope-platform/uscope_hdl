@@ -45,34 +45,34 @@ module fault_detector_core #(
 
     reg [7:0] slow_trip_counter [N_CHANNELS-1:0] = '{N_CHANNELS{8'h0}};
 
+    initial begin
+        fast_fault_origin = 0;
+        slow_fault_origin = 0;
+    end
+
 
     always @(posedge clock) begin
-        if(~reset)begin
-            fast_fault_origin <= 0;
-            slow_fault_origin <= 0;
-        end else begin
-            if(slow_fault_origin || fast_fault_origin)begin
-                if(clear_fault)begin
-                    slow_fault_origin <= 0;
-                    fast_fault_origin <= 0;
-                    slow_trip_counter <= '{N_CHANNELS{8'h0}};
-                end
-            end else begin
-                if(data_in.valid) begin
-                    if(fast_trip) begin
-                        fast_fault_origin[current_address] <= 1;
-                    end
-                    if(slow_trip) begin
-                        slow_trip_counter[current_address] <= slow_trip_counter[current_address] + 1;
-                    end
-                    if(slow_trip_counter[current_address] != 0 & !slow_trip)begin
-                        slow_trip_counter[current_address] <= 0;
-                    end
-                end
-                    if(slow_trip_counter[current_address]==slow_trip_duration && slow_trip_duration != 0) begin
-                        slow_fault_origin[current_address] <= 1;
-                    end
+        if(slow_fault_origin || fast_fault_origin)begin
+            if(clear_fault)begin
+                slow_fault_origin <= 0;
+                fast_fault_origin <= 0;
+                slow_trip_counter <= '{N_CHANNELS{8'h0}};
             end
+        end else begin
+            if(data_in.valid) begin
+                if(fast_trip) begin
+                    fast_fault_origin[current_address] <= 1;
+                end
+                if(slow_trip) begin
+                    slow_trip_counter[current_address] <= slow_trip_counter[current_address] + 1;
+                end
+                if(slow_trip_counter[current_address] != 0 & !slow_trip)begin
+                    slow_trip_counter[current_address] <= 0;
+                end
+            end
+                if(slow_trip_counter[current_address]==slow_trip_duration && slow_trip_duration != 0) begin
+                    slow_fault_origin[current_address] <= 1;
+                end
         end
     end
 

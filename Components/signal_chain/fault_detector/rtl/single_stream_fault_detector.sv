@@ -16,7 +16,6 @@
 `timescale 10 ns / 1 ns
 
 module single_stream_fault_detector #(
-    parameter N_CHANNELS = 4,
     parameter STARTING_DEST = 0
 )(
     input wire clock,
@@ -45,10 +44,10 @@ module single_stream_fault_detector #(
     );
 
 
-    wire [N_CHANNELS-1:0] fast_fault;
-    wire [N_CHANNELS-1:0] slow_fault;
+    wire fast_fault;
+    wire slow_fault;
 
-    assign fault = |fast_fault | |slow_fault;
+    assign fault = fast_fault | slow_fault;
 
     wire signed [31:0] fast_thresholds [1:0];
     wire signed [31:0] slow_thresholds [1:0];
@@ -61,11 +60,11 @@ module single_stream_fault_detector #(
     assign fast_thresholds[1] = cu_write_registers[4][31:0];
 
     assign cu_read_registers[4:0] = cu_write_registers[4:0];
-    assign cu_read_registers[5] = {|fast_fault, |slow_fault};
+    assign cu_read_registers[5] = {fast_fault, slow_fault};
 
 
     fault_detector_core #(
-        .N_CHANNELS(N_CHANNELS),
+        .N_CHANNELS(1),
         .STARTING_DEST(STARTING_DEST)
     ) detector (
         .clock(clock),
