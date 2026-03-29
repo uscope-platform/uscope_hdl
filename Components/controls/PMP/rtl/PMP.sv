@@ -182,7 +182,8 @@ module pre_modulation_processor #(
 
             dab_pre_modulation_processor #(
                 .PWM_BASE_ADDR(PWM_BASE_ADDR),
-                .N_PWM_CHANNELS(N_PWM_CHANNELS)
+                .N_PWM_CHANNELS(N_PWM_CHANNELS),
+                .N_PARAMETERS(N_PARAMETERS)
             ) dab_pmp (
                 .clock(clock),
                 .reset(reset),
@@ -211,7 +212,8 @@ module pre_modulation_processor #(
 
             vsi_pre_modulation_processor  #(
                 .PWM_BASE_ADDR(PWM_BASE_ADDR),
-                .N_PWM_CHANNELS(N_PWM_CHANNELS)
+                .N_PWM_CHANNELS(N_PWM_CHANNELS),
+                .N_PARAMETERS(N_PARAMETERS)
             ) vsi_pmp (
                 .clock(clock),
                 .reset(reset),

@@ -37,7 +37,7 @@ module fault_management_unit #(
         .N_WRITE_REGISTERS(N_REGISTERS),
         .REGISTERS_WIDTH(32),
         .TRIGGER_REGISTERS_IDX('{2}),
-        .TRIGGER_REGISTERS_IDX(1),
+        .N_TRIGGER_REGISTERS(1),
         .ADDRESS_MASK('hff)
     ) CU (
         .clock(clock),

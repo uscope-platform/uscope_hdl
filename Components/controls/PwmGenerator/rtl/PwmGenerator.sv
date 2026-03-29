@@ -147,7 +147,6 @@ module PwmGenerator #(
 
     PwmControlUnit #(
         .INITIAL_STOPPED_STATE(INITIAL_STOPPED_STATE),
-        .BASE_ADDRESS(BASE_ADDRESS),
         .N_PWM(N_PWM)
     ) pwm_cu(
         .clock(clock),

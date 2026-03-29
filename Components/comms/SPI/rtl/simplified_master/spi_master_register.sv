@@ -36,7 +36,7 @@ module spi_master_register #(
     input wire start,
     output reg done,
     input wire [REGISTERS_WIDTH-1:0] data_in[N_CHANNELS-1:0],
-    input reg [REGISTERS_WIDTH-1:0] data_out[N_CHANNELS-1:0]
+    output reg [REGISTERS_WIDTH-1:0] data_out[N_CHANNELS-1:0]
 );
 
     typedef logic [REGISTERS_WIDTH-1:0] io_bus_t [N_CHANNELS-1:0];
