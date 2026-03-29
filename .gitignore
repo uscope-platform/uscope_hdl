@@ -16,6 +16,7 @@
 *.o
 *.pb
 *.fst
+*.dcp
 **/sim.tcl
 **/sim.sh
 **/.Xil/
