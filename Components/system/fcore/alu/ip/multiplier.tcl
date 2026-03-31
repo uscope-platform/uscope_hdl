@@ -16,5 +16,5 @@ proc multiplier {name multiplier_latency} {
 
     generate_target all [get_ips $name]
     make_wrapper -files [get_files ${name}.xci] -language SystemVerilog -add
-
+    export_ip_user_files -of_objects [get_ips $name] -no_script -force
 }
