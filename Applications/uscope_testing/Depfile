@@ -19,11 +19,6 @@
     },
     "scripts":[
         {
-            "name":"set_properties.tcl",
-            "type": "tcl",
-            "arguments":[]
-        },
-        {
             "name":"base_zynq.tcl",
             "type": "tcl",
             "arguments":[]

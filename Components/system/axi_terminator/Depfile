@@ -12,11 +12,6 @@
     },
     "scripts":[
         {
-            "name":"set_properties.tcl",
-            "type": "tcl",
-            "arguments":[]
-        },
-        {
             "name":"VIP_bd.tcl",
             "type": "tcl",
             "arguments":[]

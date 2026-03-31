@@ -13,11 +13,6 @@
     },
     "scripts":[
         {
-            "name":"set_properties.tcl",
-            "type": "tcl",
-            "arguments":[]
-        },
-        {
             "name":"kd240_ps.tcl",
             "type": "tcl",
             "arguments":[]

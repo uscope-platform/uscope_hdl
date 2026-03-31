@@ -14,11 +14,6 @@
     },
     "scripts":[
         {
-            "name":"set_properties.tcl",
-            "type": "tcl",
-            "arguments":[]
-        },
-        {
             "name":"float_to_fixed.tcl",
             "type": "tcl",
             "arguments":[]

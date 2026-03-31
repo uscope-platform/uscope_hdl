@@ -12,11 +12,6 @@
     },
     "scripts":[
         {
-            "name":"set_properties.tcl",
-            "type": "tcl",
-            "arguments":[]
-        },
-        {
             "name":"fcore_alu.py",
             "type": "py",
             "arguments":["fp_alu_div.tcl", "--reciprocal", "--name", "fcore_div_alu"],

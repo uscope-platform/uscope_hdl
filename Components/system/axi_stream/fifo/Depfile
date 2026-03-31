@@ -10,14 +10,8 @@
             "/public/Components/Common"
         ]
     },
-    "scripts":[
-        {
-            "name":"set_properties.tcl",
-            "type": "tcl",
-            "arguments":[]
-        }
-    ],
-    "excluded_modules":[
+    "scripts":[],
+        "excluded_modules":[
     ],
     "constraints": []
 }

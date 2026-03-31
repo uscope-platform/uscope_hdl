@@ -13,11 +13,6 @@
     },
     "scripts":[
         {
-            "name":"set_properties.tcl",
-            "type": "tcl",
-            "arguments":[]
-        },
-        {
             "name":"base_zynqmp_xvc.tcl",
             "type": "tcl",
             "arguments":[]

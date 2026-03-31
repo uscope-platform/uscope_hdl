@@ -12,11 +12,6 @@
     },
     "scripts":[
         {
-            "name":"set_properties.tcl",
-            "type": "tcl",
-            "arguments":[]
-        },
-        {
             "name":"zynqAxiStreamBd.tcl",
             "type": "tcl",
             "arguments":[]

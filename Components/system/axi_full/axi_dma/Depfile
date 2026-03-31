@@ -14,11 +14,6 @@
     },
     "scripts":[
         {
-            "name":"set_properties.tcl",
-            "type": "tcl",
-            "arguments":[]
-        }, 
-        {
             "name":"axi_dma_VIP_bd.tcl",
             "type": "tcl",
             "arguments":[]

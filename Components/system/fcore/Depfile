@@ -12,12 +12,6 @@
     },
     "scripts":[
         {
-            "name":"set_properties.tcl",
-            "type": "tcl",
-            "function_mode": false,
-            "arguments":[]
-        },
-        {
             "name":"adder.tcl",
             "type": "tcl",
             "function_mode": true,
