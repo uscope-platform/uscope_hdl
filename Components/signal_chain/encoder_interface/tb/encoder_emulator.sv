@@ -66,6 +66,8 @@ module encoder_emulator #(
                 z <= 1;
                 if(z_ctr == PPR-1)begin
                     z_ctr <= 0;
+                end else begin
+                    z_ctr <= z_ctr +1;
                 end
             end else begin
                 z <= 0;
