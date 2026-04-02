@@ -16,11 +16,11 @@
 
 
 module encoder_emulator #(
-    parameter PULSE_DURATION = 10,
     parameter PPR = 1000
 )(
     input wire clock,
     input wire enable,
+    input wire [15:0] pulse_duration,
     output reg a,
     output reg b,
     output reg z
@@ -28,7 +28,7 @@ module encoder_emulator #(
 
 
     reg [15:0] a_ctr = 0;
-    reg [15:0] b_ctr = PULSE_DURATION/2;
+    reg [15:0] b_ctr = pulse_duration/2;
     reg [15:0] z_ctr = 0;
 
     initial begin
@@ -38,7 +38,7 @@ module encoder_emulator #(
     end
     always @(posedge clock) begin
         if(enable)begin
-            if(a_ctr == PULSE_DURATION-1)begin
+            if(a_ctr == pulse_duration-1)begin
                 a_ctr <= 0;
                 a <= ~a;
             end else begin
@@ -50,7 +50,7 @@ module encoder_emulator #(
 
     always @(posedge clock) begin
         if(enable)begin
-            if(b_ctr == PULSE_DURATION-1)begin
+            if(b_ctr == pulse_duration-1)begin
                 b_ctr <= 0;
                 b <= ~b;
             end else begin
@@ -59,19 +59,23 @@ module encoder_emulator #(
         end
     end
 
+    reg a_prev = 0;
 
     always @(posedge clock) begin
+        a_prev <= a;
         if(enable)begin
-            if(z_ctr >(PPR - PULSE_DURATION))begin
-                z <= 1;
-                if(z_ctr == PPR-1)begin
-                    z_ctr <= 0;
+            if(a & ~a_prev)begin
+                if(z_ctr >(PPR - pulse_duration))begin
+                    z <= 1;
+                    if(z_ctr == PPR-1)begin
+                        z_ctr <= 0;
+                    end else begin
+                        z_ctr <= z_ctr +1;
+                    end
                 end else begin
+                    z <= 0;
                     z_ctr <= z_ctr +1;
                 end
-            end else begin
-                z <= 0;
-                z_ctr <= z_ctr +1;
             end
         end
     end
