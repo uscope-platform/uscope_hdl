@@ -434,4 +434,11 @@ package reg_maps;
 
 
 
+     struct {
+        int treshold_low = 0;
+        int treshold_high = 'h4;
+     } hysteresis_controller_regs;
+
+
+
 endpackage
