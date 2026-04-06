@@ -1,0 +1,14 @@
+{
+    "general":{
+        "project_name":"hysteresis_controller",
+        "target_part":"xc7z020clg400",
+        "synth_modules":[],
+        "synth_tl": "hysteresis_controller",
+        "sim_modules":[],
+        "sim_tl":"hysteresis_controller_tb",
+        "include_paths":[]
+    },
+    "scripts":[],
+    "excluded_modules":[],
+    "constraints": []
+}
