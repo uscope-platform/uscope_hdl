@@ -19,6 +19,8 @@ module spi_simplified_master#(
     N_CHANNELS=3,
     REGISTERS_WIDTH=16,
     OUTPUT_WIDTH=32,
+    DEFAULT_CONFIG = 0,
+    DEFAULT_DELAYS = 0,
     DEFAULT_LENGTH = 16,
     STARTING_DEST = 0,
     MAX_PACKET_SIZE = N_CHANNELS
@@ -37,16 +39,26 @@ module spi_simplified_master#(
 );
 
 
+    localparam N_REGISTERS = 3;
+
     wire [15:0] assert_delay;
     wire [15:0] deassert_delay;
     wire [7:0] spi_divider;
     wire ss_polarity, sclk_polarity, latching_edge, lsb_first;
     wire [7:0] transfer_length;
-    wire [31:0] cu_registers [N_CHANNELS-1:0];
+    wire [31:0] cu_registers [N_REGISTERS-1:0];
+
+    parameter [31:0] INITIAL_REGISTER_VALUES [N_REGISTERS-1:0] = '{
+        DEFAULT_LENGTH,
+        DEFAULT_DELAYS,
+        DEFAULT_CONFIG
+    };
+
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(N_CHANNELS),
-        .N_WRITE_REGISTERS(N_CHANNELS),
+        .N_READ_REGISTERS(N_REGISTERS),
+        .N_WRITE_REGISTERS(N_REGISTERS),
+        .INITIAL_OUTPUT_VALUES(INITIAL_REGISTER_VALUES),
         .REGISTERS_WIDTH(32),
         .ADDRESS_MASK('h3f)
     ) axi_if(
