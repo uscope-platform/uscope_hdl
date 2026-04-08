@@ -49,15 +49,17 @@ module single_stream_fault_detector #(
 
     assign fault = fast_fault | slow_fault;
 
-    wire signed [31:0] fast_thresholds [1:0];
-    wire signed [31:0] slow_thresholds [1:0];
+    wire signed [31:0] fast_threshold_low;
+    wire signed [31:0] fast_threshold_high;
+    wire signed [31:0] slow_threshold_low;
+    wire signed [31:0] slow_threshold_high;
     wire [7:0] slow_trip_duration;
 
-    assign slow_thresholds[0] = cu_write_registers[0][31:0];
-    assign slow_thresholds[1] = cu_write_registers[1][31:0];
+    assign slow_threshold_low = cu_write_registers[0][31:0];
+    assign slow_threshold_high = cu_write_registers[1][31:0];
     assign slow_trip_duration = cu_write_registers[2][7:0];
-    assign fast_thresholds[0] = cu_write_registers[3][31:0];
-    assign fast_thresholds[1] = cu_write_registers[4][31:0];
+    assign fast_threshold_low = cu_write_registers[3][31:0];
+    assign fast_threshold_high = cu_write_registers[4][31:0];
 
     assign cu_read_registers[4:0] = cu_write_registers[4:0];
     assign cu_read_registers[5] = {fast_fault, slow_fault};
@@ -69,10 +71,10 @@ module single_stream_fault_detector #(
     ) detector (
         .clock(clock),
         .reset(reset),
-        .fast_threshold_low(fast_thresholds[0]),
-        .fast_threshold_high(fast_thresholds[1]),
-        .slow_threshold_low(slow_thresholds[0]),
-        .slow_threshold_high(slow_thresholds[1]),
+        .fast_threshold_low(fast_threshold_low),
+        .fast_threshold_high(fast_threshold_high),
+        .slow_threshold_low(slow_threshold_low),
+        .slow_threshold_high(slow_threshold_high),
         .slow_trip_duration(slow_trip_duration),
         .data_in(data_in),
         .clear_fault(clear_fault),
