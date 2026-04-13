@@ -39,7 +39,7 @@ module pre_modulation_processor #(
     axi_stream cu_read_addr();
     axi_stream cu_read_data();
 
-    reg [7:0] triggers;
+    reg [N_PWM_CHANNELS:0] triggers;
     reg config_required;
 
 
@@ -62,7 +62,17 @@ module pre_modulation_processor #(
 
     assign modulation_in.ready = 1;
 
-    localparam [31:0] TRIGGER_REGISTERS_IDX [6:0] = '{2, 3, 4, 5, 6, 7, 0};
+
+    typedef logic [31:0] triggers_init_t [N_PWM_CHANNELS:0];
+    function triggers_init_t TRIGGERS_CALC();
+        TRIGGERS_CALC[0] = 0;
+        for(int i = 0; i<N_PWM_CHANNELS; i++)begin
+            TRIGGERS_CALC[i+1] =2+i;
+        end
+    endfunction
+
+    localparam [31:0] TRIGGER_REGISTERS_IDX [N_PWM_CHANNELS:0] = TRIGGERS_CALC();
+
 
     always_ff@(posedge clock) begin 
         triggers <= 0;
@@ -190,7 +200,7 @@ module pre_modulation_processor #(
                 .start(external_start),
                 .stop(external_stop),
                 .configure(configuration_start),
-                .update(triggers[6:1]),
+                .update(triggers[N_PWM_CHANNELS:1]),
                 .modulation_type(modulation_type),
                 .period(period),
                 .modulation_parameters(modulation_parameters),
@@ -220,7 +230,7 @@ module pre_modulation_processor #(
                 .start(external_start),
                 .stop(external_stop),
                 .configure(configuration_start),
-                .update(triggers[6:1]),
+                .update(triggers[N_PWM_CHANNELS:1]),
                 .period(period),
                 .modulation_parameters(modulation_parameters),
                 .done(vsi_done),
@@ -252,7 +262,7 @@ module pre_modulation_processor #(
                 .start(external_start),
                 .stop(external_stop),
                 .configure(configuration_start),
-                .update(triggers[6:1]),
+                .update(triggers[N_PWM_CHANNELS:1]),
                 .period(period),
                 .modulation_parameters(modulation_parameters),
                 .done(buck_done),
