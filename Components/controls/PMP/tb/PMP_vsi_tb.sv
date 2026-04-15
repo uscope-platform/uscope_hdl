@@ -31,7 +31,7 @@ module PMP_vsi_tb();
     reg ext_start, ext_stop;
     wire mod_ready;
 
-    localparam N_CHANNEL_VSI = 4;
+    localparam N_CHANNEL_VSI = 6;
 
     pre_modulation_processor #(
         .CONVERTER_SELECTION("VSI"),
@@ -69,12 +69,16 @@ module PMP_vsi_tb();
     wire signed [15:0] vsi_phase_b;
     wire signed [15:0] vsi_phase_c;
     wire signed [15:0] vsi_phase_d;
+    wire signed [15:0] vsi_phase_e;
+    wire signed [15:0] vsi_phase_f;
 
 
     assign vsi_phase_a = gates_vsi[0]*1000;
     assign vsi_phase_b = gates_vsi[1]*1000;
     assign vsi_phase_c = gates_vsi[2]*1000;
     assign vsi_phase_d = gates_vsi[3]*1000;
+    assign vsi_phase_e = gates_vsi[4]*1000;
+    assign vsi_phase_f = gates_vsi[5]*1000;
 
 
 
@@ -101,11 +105,13 @@ module PMP_vsi_tb();
     initial begin
         @(reset_done);
         #10 axi_pmp.write('h0, 'h4);
-        #10 axi_pmp.write('h4, 1000); //period
+        #10 axi_pmp.write('h4, 1400); //period
         #10 axi_pmp.write('h8, 200);  //duty 0
         #10 axi_pmp.write('hC, 400);  //duty 1
         #10 axi_pmp.write('h10, 600);  //duty 2
         #10 axi_pmp.write('h14, 800);  //dury 3
+        #10 axi_pmp.write('h18, 1000);  //dury 4
+        #10 axi_pmp.write('h1c, 1200);  //dury 5 
         #50
         ext_start = 1;
         #1 ext_start = 0;
@@ -115,6 +121,9 @@ module PMP_vsi_tb();
             #10 vsi_pmp_in.write_dest(3, 400 + $urandom_range(0, 100));  //duty 1
             #10 vsi_pmp_in.write_dest(4, 600 + $urandom_range(0, 100));  //duty 2
             #10 vsi_pmp_in.write_dest(5, 800 + $urandom_range(0, 100));  //dury 3
+            #10 vsi_pmp_in.write_dest(6, 400 + $urandom_range(0, 100));  //duty 1
+            #10 vsi_pmp_in.write_dest(7, 600 + $urandom_range(0, 100));  //duty 2
+            #10 vsi_pmp_in.write_dest(8, 200 + $urandom_range(0, 100));  //dury 3
         end
     end
 

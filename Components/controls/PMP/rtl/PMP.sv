@@ -80,7 +80,7 @@ module pre_modulation_processor #(
         cu_read_addr.ready <= 1;
         if(cu_write.valid)begin
             cu_write_registers[cu_write.dest] <= cu_write.data;
-            for(integer i = 0; i< 5; i= i+1)begin
+            for(integer i = 0; i<N_PWM_CHANNELS+1; i= i+1)begin
                 if(cu_write.dest == TRIGGER_REGISTERS_IDX[i]) begin
                     triggers[i] <= 1'b1;
                 end
