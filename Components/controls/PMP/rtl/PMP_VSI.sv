@@ -61,21 +61,16 @@ module vsi_pre_modulation_processor  #(
 
     initial begin
         modulator_registers_address[0] =  (3*N_PWM_CHANNELS+1)*4;
-        
-        for(integer i = N_PWM_CHANNELS-1; i>=0; i--)begin
-            modulator_registers_address[i+1] =  4*i;
-        end
-        for(integer i = 2*N_PWM_CHANNELS-1; i>N_PWM_CHANNELS-1; i--)begin
+        for(int i = 0; i<2*N_PWM_CHANNELS; i++)begin
             modulator_registers_address[i+1] =  4*i;
         end
     end
-
 
     reg [31:0] modulator_on_config_register = 'h1128;
     
     reg update_needed = 0;
     reg calculate, calculation_done;
-    reg [3:0] config_counter;
+    reg [11:0] config_counter;
     
     typedef enum reg [3:0] {
         calc_idle_state = 0,

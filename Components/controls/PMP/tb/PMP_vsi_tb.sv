@@ -31,7 +31,7 @@ module PMP_vsi_tb();
     reg ext_start, ext_stop;
     wire mod_ready;
 
-    localparam N_CHANNEL_VSI = 6;
+    localparam N_CHANNEL_VSI = 12;
 
     pre_modulation_processor #(
         .CONVERTER_SELECTION("VSI"),
@@ -54,7 +54,8 @@ module PMP_vsi_tb();
 
     PwmGenerator #(
        .BASE_ADDRESS(0),
-       .N_CHANNELS(N_CHANNEL_VSI)
+       .N_CHANNELS(N_CHANNEL_VSI),
+       .N_CHAINS(1)
     )  vsi_gen_checker(
         .clock(clk),
         .reset(reset),
@@ -64,7 +65,6 @@ module PMP_vsi_tb();
         .axi_in(axi_pwm),
         .modulation_in(modulation_vsi)
     );
-
     wire vsi_phase_a;
     wire vsi_phase_b;
     wire vsi_phase_c;
