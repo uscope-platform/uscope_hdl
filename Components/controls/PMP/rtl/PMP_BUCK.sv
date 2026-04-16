@@ -31,11 +31,12 @@ module buck_pre_modulation_processor  #(
     input wire [15:0] modulation_parameters[N_PARAMETERS-1:0],
     output reg done,
     output reg modulator_status,
+    output wire busy,
     axi_stream.watcher duty_repeater,
     axi_stream.master write_request
 );
 
-
+    assign busy = 0;
 
     axi_stream management_write();
     axi_stream operating_write();

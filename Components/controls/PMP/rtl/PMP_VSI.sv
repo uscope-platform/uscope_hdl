@@ -29,6 +29,7 @@ module vsi_pre_modulation_processor  #(
     input wire [15:0] period,
     input wire [15:0] modulation_parameters[N_PARAMETERS-1:0],
     output reg done,
+    output wire busy,
     output reg modulator_status,
     axi_stream.master write_request
 );
@@ -83,6 +84,8 @@ module vsi_pre_modulation_processor  #(
     fsm_state next_state;
 
     reg config_done = 0;
+
+    assign busy = calculation_state != calc_idle_state;
 
     // Determine the next state
     always @ (posedge clock) begin : main_fsm

@@ -32,9 +32,13 @@ module dab_pre_modulation_processor #(
     output reg modulator_status,
     axi_stream.watcher duty_repeater,
     output reg done,
+    output wire busy,
     axi_stream.master write_request
 );
 
+
+
+    assign busy = 0;
 
     axi_stream management_write();
     axi_stream operating_write();

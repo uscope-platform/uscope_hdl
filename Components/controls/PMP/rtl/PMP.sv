@@ -42,6 +42,7 @@ module pre_modulation_processor #(
     reg [N_PWM_CHANNELS:0] triggers;
     reg config_required;
 
+    wire modulation_status;
 
     reg [31:0] cu_write_registers [N_PARAMETERS+1:0] = INITIAL_PARAMETERS_VALUES;
     reg [31:0] cu_read_registers [N_PARAMETERS+1:0];
@@ -110,7 +111,6 @@ module pre_modulation_processor #(
         end
     end
 
-    wire modulation_status;
     reg [1:0] modulation_type;
     reg [31:0] period;
     
@@ -134,8 +134,7 @@ module pre_modulation_processor #(
 
     reg configuration_start;
 
-    wire dab_done, vsi_done, buck_done;
-    wire dab_modulator_status, vsi_modulator_status, buck_modulator_status;
+    wire done, pmp_busy;
 
     enum reg [1:0] {
         start_configuration_state = 0,
@@ -144,11 +143,11 @@ module pre_modulation_processor #(
     } config_state;
 
     always @ (posedge clock) begin
+        modulator_ready <= config_state == running_state && ~pmp_busy;
         if (~reset) begin
             config_required <= 1;
             configuration_start <= 0;
             config_state <=start_configuration_state;
-            modulator_ready <= 0;
         end else begin
             case (config_state)
                 start_configuration_state:begin
@@ -159,9 +158,8 @@ module pre_modulation_processor #(
                 wait_configuration_state:begin
                     configuration_start <= 0;
                     config_required <= 0;
-                    if(dab_done || vsi_done || buck_done)begin
+                    if(done)begin
                         config_state <= running_state;
-                        modulator_ready <= 1;
                     end
                 end
                 default:begin
@@ -171,24 +169,10 @@ module pre_modulation_processor #(
     end  
 
 
-
-    wire [1:0] mux_selector;
-
-    wire [2:0] modulation_status_arr = {buck_modulator_status, vsi_modulator_status, dab_modulator_status};
-
-
     generate
 
         if(CONVERTER_SELECTION == "DAB") begin
-
-            assign mux_selector = 0;
-            assign modulation_status = dab_modulator_status;
-
-            assign vsi_done = 0;
-            assign buck_done = 0;
-
-            assign vsi_modulator_status = 0;
-            assign buck_modulator_status = 0;
+            
 
             dab_pre_modulation_processor #(
                 .PWM_BASE_ADDR(PWM_BASE_ADDR),
@@ -204,21 +188,14 @@ module pre_modulation_processor #(
                 .modulation_type(modulation_type),
                 .period(period),
                 .modulation_parameters(modulation_parameters),
-                .modulator_status(dab_modulator_status),
-                .done(dab_done),
+                .modulator_status(modulation_status),
+                .done(done),
+                .busy(pmp_busy),
                 .duty_repeater(duty_repeater),
                 .write_request(modulation_out)
             );
         end else if(CONVERTER_SELECTION == "VSI") begin
             
-            assign mux_selector = 1;
-            assign modulation_status = vsi_modulator_status;
-
-            assign dab_done = 0;
-            assign buck_done = 0;
-
-            assign dab_modulator_status = 0;
-            assign buck_modulator_status = 0;
 
             vsi_pre_modulation_processor  #(
                 .PWM_BASE_ADDR(PWM_BASE_ADDR),
@@ -233,23 +210,14 @@ module pre_modulation_processor #(
                 .update(triggers[N_PWM_CHANNELS:1]),
                 .period(period),
                 .modulation_parameters(modulation_parameters),
-                .done(vsi_done),
-                .modulator_status(vsi_modulator_status),
+                .done(done),
+                .busy(pmp_busy),
+                .modulator_status(modulation_status),
                 .write_request(modulation_out)
             );
-            assign dab_modulator_status = 0;
-            assign vsi_modulator_status = 0;
+
         end else if(CONVERTER_SELECTION == "BUCK") begin
             
-
-            assign mux_selector = 2;
-            assign modulation_status = buck_modulator_status;
-
-            assign dab_done = 0;
-            assign vsi_done = 0;
-            
-            assign dab_modulator_status = 0;
-            assign vsi_modulator_status = 0;
             
             buck_pre_modulation_processor  #(
                 .PWM_BASE_ADDR(PWM_BASE_ADDR),
@@ -265,9 +233,10 @@ module pre_modulation_processor #(
                 .update(triggers[N_PWM_CHANNELS:1]),
                 .period(period),
                 .modulation_parameters(modulation_parameters),
-                .done(buck_done),
+                .done(done),
+                .busy(pmp_busy),
                 .duty_repeater(duty_repeater),
-                .modulator_status(buck_modulator_status),
+                .modulator_status(modulation_status),
                 .write_request(modulation_out)
             );
         end

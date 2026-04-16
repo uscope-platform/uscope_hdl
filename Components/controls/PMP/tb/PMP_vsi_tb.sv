@@ -126,9 +126,10 @@ module PMP_vsi_tb();
         #10 axi_pmp.write('h0, 'h4);
         #10 axi_pmp.write('h4, period); //period
         for(int i = 0; i< N_CHANNEL_VSI; i++)begin
-            #10 axi_pmp.write('h8+4*i, i*200+200);
+            #5 axi_pmp.write('h8+4*i, i*200+200);
         end
-        #50
+        wait(mod_ready==1);
+        #70;
         ext_start = 1;
         #1 ext_start = 0;
         forever begin
