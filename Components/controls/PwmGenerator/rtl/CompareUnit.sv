@@ -22,23 +22,27 @@ module CompareUnit  #(
     input wire         reset,
     input wire [COUNTER_WIDTH-1:0] counterValue,
     input wire         counter_stopped,
-    input wire [COUNTER_WIDTH-1:0] comparator_tresholds [N_CHANNELS*2-1:0],
+    input wire [COUNTER_WIDTH-1:0] tresholds_low [N_CHANNELS-1:0],
+    input wire [COUNTER_WIDTH-1:0] tresholds_high [N_CHANNELS-1:0],
     input wire         reload_compare,
     output reg [N_CHANNELS-1:0] matchHigh,
     output reg [N_CHANNELS-1:0] matchLow
 );
 
-    reg [COUNTER_WIDTH-1:0] working_registers [N_CHANNELS*2-1:0];
+    reg [COUNTER_WIDTH-1:0] working_tresholds_low [N_CHANNELS-1:0];
+    reg [COUNTER_WIDTH-1:0] working_tresholds_high [N_CHANNELS-1:0];
 
     always @(posedge clock) begin : shadow_update_logic
         if(counter_stopped) begin
-            for(integer i = 0; i < 2*N_CHANNELS; i = i+1) begin
-                working_registers[i][COUNTER_WIDTH-1:0] <= comparator_tresholds[i][COUNTER_WIDTH-1:0];
+            for(integer i = 0; i < N_CHANNELS; i = i+1) begin
+                working_tresholds_low[i][COUNTER_WIDTH-1:0] <= tresholds_low[i][COUNTER_WIDTH-1:0];
+                working_tresholds_high[i][COUNTER_WIDTH-1:0] <= tresholds_high[i][COUNTER_WIDTH-1:0];
             end
         end else begin
             if(reload_compare) begin 
-                for(integer i = 0; i < 2*N_CHANNELS; i = i+1) begin
-                    working_registers[i][COUNTER_WIDTH-1:0] <= comparator_tresholds[i][COUNTER_WIDTH-1:0];
+                for(integer i = 0; i < N_CHANNELS; i = i+1) begin
+                    working_tresholds_low[i][COUNTER_WIDTH-1:0] <= tresholds_low[i][COUNTER_WIDTH-1:0];
+                    working_tresholds_high[i][COUNTER_WIDTH-1:0] <= tresholds_high[i][COUNTER_WIDTH-1:0];
                 end
             end
         end
@@ -50,12 +54,12 @@ module CompareUnit  #(
             matchHigh <= 0;
         end else begin
             for(integer i = 0; i < N_CHANNELS; i = i+1) begin
-                if(counterValue < working_registers[i]) matchLow[i] <= 1;
+                if(counterValue < working_tresholds_low[i]) matchLow[i] <= 1;
                 else matchLow[i] <= 0;
             end
                         
             for(integer i = 0; i < N_CHANNELS; i = i+1) begin
-                if(counterValue >= working_registers[N_CHANNELS+i]) matchHigh[i] <= 1;
+                if(counterValue >= tresholds_high[i]) matchHigh[i] <= 1;
                 else matchHigh[i] <= 0;
             end
 

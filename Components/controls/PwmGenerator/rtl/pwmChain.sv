@@ -37,7 +37,7 @@ module pwmChain #(
     output wire [N_CHANNELS-1:0] out_b,
     output wire [31:0] read_response,
     axi_stream.slave modulation_in
-    );
+);
 
     wire [COUNTER_WIDTH-1:0] counter_out;
     reg [COUNTER_WIDTH-1:0] counter_out_reg;
@@ -50,7 +50,8 @@ module pwmChain #(
     wire reload_compare;
 
     wire [2:0] counter_mode;
-    wire [COUNTER_WIDTH-1:0] compare_tresholds [N_CHANNELS*2-1:0];
+    wire [COUNTER_WIDTH-1:0] tresholds_low [N_CHANNELS-1:0];
+    wire [COUNTER_WIDTH-1:0] tresholds_high [N_CHANNELS-1:0];
     wire [COUNTER_WIDTH-1:0] counter_start_data;
     wire [COUNTER_WIDTH-1:0] counter_stop_data;
     wire [COUNTER_WIDTH-1:0] timebase_shift;
@@ -84,7 +85,8 @@ module pwmChain #(
         .counter_mode(counter_mode),
         .counter_start_data(counter_start_data),
         .counter_stop_data(counter_stop_data),
-        .comparator_tresholds(compare_tresholds),
+        .tresholds_low(tresholds_low),
+        .tresholds_high(tresholds_high),
         .output_enable(output_enable),
         .deadtime(deadtime),
         .deadtime_enable(deadtime_enable),
@@ -117,7 +119,8 @@ module pwmChain #(
         .reset(reset),
         .counter_stopped(counter_stopped),
         .counterValue(counter_out),
-        .comparator_tresholds(compare_tresholds),
+        .tresholds_low(tresholds_low),
+        .tresholds_high(tresholds_high),
         .reload_compare(reload_compare),
         .matchHigh(compare_match_high),
         .matchLow(compare_match_low)

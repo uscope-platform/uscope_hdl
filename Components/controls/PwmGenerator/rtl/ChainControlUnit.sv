@@ -27,7 +27,8 @@ module ChainControlUnit #(
     output reg [2:0] counter_mode,
     output reg [COUNTER_WIDTH-1:0] counter_start_data,
     output reg [COUNTER_WIDTH-1:0] counter_stop_data,
-    output reg [COUNTER_WIDTH-1:0] comparator_tresholds [N_CHANNELS*2-1:0],
+    output reg [COUNTER_WIDTH-1:0] tresholds_low [N_CHANNELS-1:0],
+    output reg [COUNTER_WIDTH-1:0] tresholds_high [N_CHANNELS-1:0],
     output reg [1:0] output_enable [N_CHANNELS-1:0],
     output reg [COUNTER_WIDTH-1:0] deadtime [N_CHANNELS-1:0],
     output reg [31:0] read_response,
@@ -41,9 +42,6 @@ module ChainControlUnit #(
     localparam [31:0] OTHER_IV [5:0] = '{6{32'b0}};
     localparam [31:0] INITIAL_REGISTER_VALUES [N_CHANNELS*3+5:0]  = {OTHER_IV, DT_IV, THRESH_HIGH_IV, THRESH_LOW_IV};
 
-
-
-    
 
     reg [31:0] cu_registers [N_CHANNELS*3+5:0] = INITIAL_REGISTER_VALUES;
 
@@ -69,10 +67,12 @@ module ChainControlUnit #(
             counter_start_data <= 0;
             counter_stop_data <= 0;
         end else begin
-            for(integer i=0; i<N_CHANNELS*2; i=i+1) begin 
-                comparator_tresholds[i] <= cu_registers[i];
-                timebase_shift <= cu_registers[N_CHANNELS*3+2];
+            for(integer i=0; i<N_CHANNELS; i=i+1) begin 
+                tresholds_low[i] <= cu_registers[i];
+                tresholds_high[i] <= cu_registers[i+N_CHANNELS];
             end 
+            
+            timebase_shift <= cu_registers[N_CHANNELS*3+2];
             if(~counter_running) begin
                 
                 for(integer i=0; i<N_CHANNELS; i=i+1) begin 
