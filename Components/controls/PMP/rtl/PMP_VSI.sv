@@ -17,6 +17,7 @@
 
 module vsi_pre_modulation_processor  #(
     PWM_BASE_ADDR = 0,
+    VSI_CHAIN = 1,
     N_PWM_CHANNELS = 4,
     N_PARAMETERS = 13
 )(
@@ -53,8 +54,8 @@ module vsi_pre_modulation_processor  #(
         'h0};
         
     reg [31:0] config_user [2:0] = '{
-        1, 
-        1,
+        VSI_CHAIN, 
+        VSI_CHAIN,
         'h0};
 
     reg [15:0] modulator_registers_data [2*N_PWM_CHANNELS:0];
@@ -76,16 +77,16 @@ module vsi_pre_modulation_processor  #(
     typedef enum reg [3:0] {
         calc_idle_state = 0,
         configuration_state = 1,
-        write_strobe = 2,
-        update_modulator = 3
+        update_modulator = 2, 
+        send_start = 3
     } fsm_state;
 
     fsm_state calculation_state;
-    fsm_state next_state;
 
     reg config_done = 0;
 
     assign busy = calculation_state != calc_idle_state;
+    reg start_needed = 0;
 
     // Determine the next state
     always @ (posedge clock) begin : main_fsm
@@ -122,15 +123,14 @@ module vsi_pre_modulation_processor  #(
                     if(calculation_done)begin
                         config_counter <= 0;
                         calculation_done <= 0;
-                        calculation_state <= update_modulator;
+                        if(start_needed | (modulator_status==modulator_on)) begin
+                            calculation_state <= update_modulator;
+                        end
                     end
 
-                     if(start) begin 
-                        modulator_status <= modulator_on;
-                        write_request.dest <= PWM_BASE_ADDR;
-                        write_request.user <= 0;
-                        write_request.data <= modulator_on_config_register;
-                        write_request.valid <= 1;
+                    if(start) begin 
+                        start_needed <= 1;
+                        calculate <= 1;
                     end
 
                     if(stop) begin 
@@ -148,36 +148,42 @@ module vsi_pre_modulation_processor  #(
                         write_request.user <= config_user[config_counter];
                         write_request.data <= config_data[config_counter];
                         write_request.valid <= 1;
+                        config_counter <= config_counter+1;
                         if(config_counter==2)begin
                             calculation_state <= calc_idle_state;
                             config_done <= 1;
                             done <= 1;
                         end else begin
-                            next_state <= configuration_state;
-                            calculation_state <= write_strobe;
+                            calculation_state <= configuration_state;
                         end    
                     end
                 end
-                write_strobe:begin
-                    update_needed <= update_needed | (|update);
-                    write_request.valid <= 0;
-                    config_counter <= config_counter+1;
-                    calculation_state <= next_state;
-                end
-
                 update_modulator:begin
                     if(write_request.ready)begin
                         write_request.dest <= PWM_BASE_ADDR + modulator_registers_address[config_counter];
-                        write_request.user <= 1;
+                        write_request.user <= VSI_CHAIN;
                         write_request.data <= modulator_registers_data[config_counter];
                         write_request.valid <= 1;
+                        config_counter <= config_counter+1;
                         if(config_counter==2*N_PWM_CHANNELS)begin
-                            calculation_state <= calc_idle_state;
+                            if(start_needed)begin
+                                calculation_state <= send_start;
+                            end else begin
+                                calculation_state <= calc_idle_state;
+                            end
                         end else begin
-                            next_state <= update_modulator;
-                            calculation_state <= write_strobe;
+                            calculation_state <= update_modulator;
                         end    
                     end
+                end
+                send_start: begin
+                    start_needed <= 0;
+                    calculation_state <= calc_idle_state;
+                    modulator_status <= modulator_on;
+                    write_request.dest <= PWM_BASE_ADDR;
+                    write_request.user <= 0;
+                    write_request.data <= modulator_on_config_register;
+                    write_request.valid <= 1;
                 end
             endcase
 
