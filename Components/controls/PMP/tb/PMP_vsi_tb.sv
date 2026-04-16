@@ -65,21 +65,35 @@ module PMP_vsi_tb();
         .modulation_in(modulation_vsi)
     );
 
-    wire signed [15:0] vsi_phase_a;
-    wire signed [15:0] vsi_phase_b;
-    wire signed [15:0] vsi_phase_c;
-    wire signed [15:0] vsi_phase_d;
-    wire signed [15:0] vsi_phase_e;
-    wire signed [15:0] vsi_phase_f;
+    wire vsi_phase_a;
+    wire vsi_phase_b;
+    wire vsi_phase_c;
+    wire vsi_phase_d;
+    wire vsi_phase_e;
+    wire vsi_phase_f;
+
+    wire vsi_phase_g;
+    wire vsi_phase_h;
+    wire vsi_phase_i;
+    wire vsi_phase_l;
+    wire vsi_phase_m;
+    wire vsi_phase_n;
 
 
-    assign vsi_phase_a = gates_vsi[0]*1000;
-    assign vsi_phase_b = gates_vsi[1]*1000;
-    assign vsi_phase_c = gates_vsi[2]*1000;
-    assign vsi_phase_d = gates_vsi[3]*1000;
-    assign vsi_phase_e = gates_vsi[4]*1000;
-    assign vsi_phase_f = gates_vsi[5]*1000;
+    assign vsi_phase_a = gates_vsi[0];
+    assign vsi_phase_b = gates_vsi[1];
+    assign vsi_phase_c = gates_vsi[2];
+    assign vsi_phase_d = gates_vsi[3];
+    assign vsi_phase_e = gates_vsi[4];
+    assign vsi_phase_f = gates_vsi[5];
 
+
+    assign vsi_phase_g = gates_vsi[6];
+    assign vsi_phase_h = gates_vsi[7];
+    assign vsi_phase_i = gates_vsi[8];
+    assign vsi_phase_l = gates_vsi[9];
+    assign vsi_phase_m = gates_vsi[10];
+    assign vsi_phase_n = gates_vsi[11];
 
 
 
@@ -102,28 +116,28 @@ module PMP_vsi_tb();
         #10 -> reset_done;
     end
 
+    reg[15:0] address;
+    reg[15:0] data;
+
+    int period = 200*N_CHANNEL_VSI+400;
+
     initial begin
         @(reset_done);
         #10 axi_pmp.write('h0, 'h4);
-        #10 axi_pmp.write('h4, 1400); //period
-        #10 axi_pmp.write('h8, 200);  //duty 0
-        #10 axi_pmp.write('hC, 400);  //duty 1
-        #10 axi_pmp.write('h10, 600);  //duty 2
-        #10 axi_pmp.write('h14, 800);  //dury 3
-        #10 axi_pmp.write('h18, 1000);  //dury 4
-        #10 axi_pmp.write('h1c, 1200);  //dury 5 
+        #10 axi_pmp.write('h4, period); //period
+        for(int i = 0; i< N_CHANNEL_VSI; i++)begin
+            #10 axi_pmp.write('h8+4*i, i*200+200);
+        end
         #50
         ext_start = 1;
         #1 ext_start = 0;
         forever begin
             #500us;
-            #10 vsi_pmp_in.write_dest(2, 200 + $urandom_range(0, 100));  //duty 0
-            #10 vsi_pmp_in.write_dest(3, 400 + $urandom_range(0, 100));  //duty 1
-            #10 vsi_pmp_in.write_dest(4, 600 + $urandom_range(0, 100));  //duty 2
-            #10 vsi_pmp_in.write_dest(5, 800 + $urandom_range(0, 100));  //dury 3
-            #10 vsi_pmp_in.write_dest(6, 400 + $urandom_range(0, 100));  //duty 1
-            #10 vsi_pmp_in.write_dest(7, 600 + $urandom_range(0, 100));  //duty 2
-            #10 vsi_pmp_in.write_dest(8, 200 + $urandom_range(0, 100));  //dury 3
+            for(int i = 0; i< N_CHANNEL_VSI; i++)begin
+                address = 2+i;
+                data =  (i*200+200+ $urandom_range(0, 100)) % period;
+                #10 vsi_pmp_in.write_dest(address,data);
+            end
         end
     end
 
