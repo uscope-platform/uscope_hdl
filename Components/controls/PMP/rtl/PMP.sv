@@ -88,8 +88,8 @@ module pre_modulation_processor #(
         end
 
         if(modulation_in.valid)begin
-            cu_write_registers[modulation_in.dest & 'hF] <= modulation_in.data;
-            for(integer i = 0; i< 5; i= i+1)begin
+            cu_write_registers[modulation_in.dest] <= modulation_in.data;
+            for(integer i = 0; i< N_PWM_CHANNELS+1; i= i+1)begin
                 if(modulation_in.dest == TRIGGER_REGISTERS_IDX[i]) begin
                     triggers[i] <= 1'b1;
                 end
