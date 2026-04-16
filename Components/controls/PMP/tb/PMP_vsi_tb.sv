@@ -50,7 +50,7 @@ module PMP_vsi_tb();
     );
 
     
-    wire [15:0] gates_vsi;
+    wire [N_CHANNEL_VSI-1:0] gates_vsi;
 
     PwmGenerator #(
        .BASE_ADDRESS(0),
@@ -79,6 +79,12 @@ module PMP_vsi_tb();
     wire vsi_phase_m;
     wire vsi_phase_n;
 
+    wire vsi_phase_o;
+    wire vsi_phase_p;
+    wire vsi_phase_q;
+    wire vsi_phase_r;
+    wire vsi_phase_s;
+    wire vsi_phase_t;
 
     assign vsi_phase_a = gates_vsi[0];
     assign vsi_phase_b = gates_vsi[1];
@@ -96,6 +102,12 @@ module PMP_vsi_tb();
     assign vsi_phase_n = gates_vsi[11];
 
 
+    assign vsi_phase_o = gates_vsi[12];
+    assign vsi_phase_p = gates_vsi[13];
+    assign vsi_phase_q = gates_vsi[14];
+    assign vsi_phase_r = gates_vsi[15];
+    assign vsi_phase_s = gates_vsi[16];
+    assign vsi_phase_t = gates_vsi[17];
 
     ///////////////////////////////////////////////////////////////////////////////////
     //clock generation
@@ -126,10 +138,9 @@ module PMP_vsi_tb();
         #10 axi_pmp.write('h0, 'h4);
         #10 axi_pmp.write('h4, period); //period
         for(int i = 0; i< N_CHANNEL_VSI; i++)begin
-            #5 axi_pmp.write('h8+4*i, i*200+200);
+            #10 axi_pmp.write('h8+4*i, i*200+200);
+            wait(mod_ready==1);
         end
-        wait(mod_ready==1);
-        #70;
         ext_start = 1;
         #1 ext_start = 0;
         forever begin

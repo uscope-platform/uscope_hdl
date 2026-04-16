@@ -20,7 +20,7 @@ module pre_modulation_processor #(
     BASE_ADDRESS = 0,
     PWM_BASE_ADDR = 0,
     N_PWM_CHANNELS = 4,
-    N_PARAMETERS = 13,
+    N_PARAMETERS = CONVERTER_SELECTION=="VSI" ? N_PWM_CHANNELS: 13,
     N_CHAINS = 2,
     parameter [31:0] INITIAL_PARAMETERS_VALUES [N_PARAMETERS+1:0] = '{default:0}
 )(
