@@ -15,7 +15,7 @@
 `ifndef INTERFACES_SV
 `define INTERFACES_SV
 
-interface axi_lite #(DATA_WIDTH = 32, ADDR_WIDTH = 32, INTERFACE_NAME = "IF", CLOCK_PERIOD = 10ns);
+interface axi_lite #(DATA_WIDTH = 32, ADDR_WIDTH = 32, INTERFACE_NAME = "IF", CLOCK_PERIOD = 10);
     logic [ADDR_WIDTH-1:0] ARADDR;
     logic [2:0] ARPROT;
     logic ARREADY;
@@ -73,12 +73,12 @@ interface axi_lite #(DATA_WIDTH = 32, ADDR_WIDTH = 32, INTERFACE_NAME = "IF", CL
     task write(input logic [ADDR_WIDTH-1:0] address, input logic [DATA_WIDTH-1:0] data);
         AWADDR <= address;
         AWVALID <= 1;
-        #(CLOCK_PERIOD);
+        #(CLOCK_PERIOD* 1ns);
         AWVALID <= 0;
         WDATA <= data;
         WVALID <= 1;
         WSTRB <= 'hF;
-        #(CLOCK_PERIOD);
+        #(CLOCK_PERIOD* 1ns);
         BREADY <= 1;
 
         WVALID <= 0;
@@ -87,7 +87,7 @@ interface axi_lite #(DATA_WIDTH = 32, ADDR_WIDTH = 32, INTERFACE_NAME = "IF", CL
         WDATA <= 0;
         WSTRB <= 0;
         @(BVALID);
-        #(CLOCK_PERIOD);
+        #(CLOCK_PERIOD* 1ns);
     endtask
 
     task read(input logic [ADDR_WIDTH-1:0] address, output logic [DATA_WIDTH-1:0] data);
@@ -95,10 +95,10 @@ interface axi_lite #(DATA_WIDTH = 32, ADDR_WIDTH = 32, INTERFACE_NAME = "IF", CL
         ARVALID <= 1;
         RREADY <= 1;
         wait(ARREADY);
-        #(CLOCK_PERIOD);
+        #(CLOCK_PERIOD * 1ns);
         ARVALID <= 0;
         wait(RVALID);
-        #(CLOCK_PERIOD);
+        #(CLOCK_PERIOD * 1ns);
         data = RDATA;
 
         RREADY <= 0;
@@ -106,7 +106,7 @@ interface axi_lite #(DATA_WIDTH = 32, ADDR_WIDTH = 32, INTERFACE_NAME = "IF", CL
 
 endinterface
 
-interface axi_stream #(DATA_WIDTH = 32, USER_WIDTH = 32, DEST_WIDTH = 32, CLOCK_PERIOD = 10ns);
+interface axi_stream #(DATA_WIDTH = 32, USER_WIDTH = 32, DEST_WIDTH = 32, CLOCK_PERIOD = 10);
     logic [DATA_WIDTH-1:0] data;
     logic [USER_WIDTH-1:0] user;
     logic [DEST_WIDTH-1:0] dest;
@@ -130,7 +130,7 @@ interface axi_stream #(DATA_WIDTH = 32, USER_WIDTH = 32, DEST_WIDTH = 32, CLOCK_
         data <= write_data;
         dest <= destination;
         wait(ready) valid <= 1'b1;
-        #(CLOCK_PERIOD) valid <= 1'b0;
+        #(CLOCK_PERIOD* 1ns) valid <= 1'b0;
         wait(ready==1);
     endtask
 
@@ -140,7 +140,7 @@ interface axi_stream #(DATA_WIDTH = 32, USER_WIDTH = 32, DEST_WIDTH = 32, CLOCK_
         dest <= destination;
         tlast <= tlast_in;
         wait(ready) valid <= 1'b1;
-        #(CLOCK_PERIOD) valid <= 1'b0;
+        #(CLOCK_PERIOD* 1ns) valid <= 1'b0;
         wait(ready==1);
     endtask
     
@@ -149,7 +149,7 @@ interface axi_stream #(DATA_WIDTH = 32, USER_WIDTH = 32, DEST_WIDTH = 32, CLOCK_
         dest <= destination;
         tlast <= write_tlast;
         wait(ready) valid <= 1'b1;
-        #(CLOCK_PERIOD) valid <= 1'b0;
+        #(CLOCK_PERIOD* 1ns) valid <= 1'b0;
         tlast <= 0;
         wait(ready==1);
     endtask
@@ -159,7 +159,7 @@ interface axi_stream #(DATA_WIDTH = 32, USER_WIDTH = 32, DEST_WIDTH = 32, CLOCK_
         if(ready) begin
             data <= wr_data;
             valid <= 1;
-            #(CLOCK_PERIOD) valid <= 0;
+            #(CLOCK_PERIOD* 1ns) valid <= 0;
             wait(ready==1);
         end;
     endtask
