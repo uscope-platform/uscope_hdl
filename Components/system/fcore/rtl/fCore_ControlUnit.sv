@@ -39,9 +39,12 @@ module fCore_ControlUnit #(
     output reg dma_enable,
     output reg done,
     output reg fault,
-    axi_stream.master instruction_stream
+    axi_stream.master instruction_stream,
+    fcore_debug_if.slave debug_if
     );
 
+
+    assign debug_if.running = ~dma_enable;
 
     localparam [INSTRUCTION_WIDTH-1:0] SECTION_SEPARATOR = {{(INSTRUCTION_WIDTH-8){1'b0}}, {8'hc}};
 
@@ -89,7 +92,7 @@ module fCore_ControlUnit #(
                 efi_start <= 0;
                 done <= 0;
                 dma_enable <= 1;
-                if(run) begin
+                if(run || debug_if.start) begin
                     dma_enable <= 0;
                     state <= WAIT_LOAD;
                 end

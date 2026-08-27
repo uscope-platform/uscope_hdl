@@ -283,6 +283,10 @@ module istore_axi_if # (
     assign axi.RDATA = debug_read_en ? debug_read_data : read_data;
     assign read_address = axi_araddr;
 
+
+
+    wire [1:0] debug_selector_r = axi_araddr[ADDR_WIDTH-1:ADDR_WIDTH-2];
+    wire [1:0] debug_selector_w = axi_awaddr[ADDR_WIDTH-1:ADDR_WIDTH-2];
     //-----------------------------------------------------------------
     // DEBUG INTERFACE LOGIC
     //-----------------------------------------------------------------
@@ -294,11 +298,11 @@ module istore_axi_if # (
                 debug_if.start <= 1'b0;
                 debug_if.step <= 1'b0;
                 if (axi.WREADY && axi.WVALID && debug_write_en) begin
-                    if (axi_awaddr[ADDR_WIDTH-1:ADDR_WIDTH-2] == 2'b00) begin // REGISTER WRITE
+                    if (debug_selector_w == 2'b00) begin // REGISTER WRITE
                         debug_if.mem_addr <= axi_awaddr[ADDR_WIDTH-3: 0];
                         debug_if.write_val <= axi.WDATA;
                         debug_if.write_mem <= 1'b1;
-                    end else if (axi_awaddr[ADDR_WIDTH-1:ADDR_WIDTH-2] == 2'b01) begin // CORE_CONTROL
+                    end else if (debug_selector_w == 2'b01) begin // CORE_CONTROL
                         if (axi_awaddr[ADDR_WIDTH-3: 0] == 0) begin // START
                             debug_if.start <= 1'b1;
                         end
@@ -309,7 +313,7 @@ module istore_axi_if # (
                 end
 
                 if (axi.ARVALID && axi.ARREADY && debug_read_en) begin
-                    if (axi_araddr[ADDR_WIDTH-1:ADDR_WIDTH-2] == 2'b00) begin // REGISTER READ
+                    if (debug_selector_r == 2'b00) begin // REGISTER READ
                         debug_if.mem_addr <= axi_araddr[ADDR_WIDTH-3: 0];
                         debug_if.read_mem <= 1'b1;                           
                     end
@@ -317,10 +321,14 @@ module istore_axi_if # (
             end    
 
             always_ff @(posedge clock_in) begin 
-                if (reset_in == 1'b0) begin
+                if (~reset_in) begin
                     debug_read_data <= 0;
-                end else if (debug_if.read_mem) begin 
-                    debug_read_data <= debug_if.read_val;
+                end else begin
+                    if (debug_selector_r == 2'b00) begin // REGISTER READ
+                        debug_read_data <= debug_if.read_val;                     
+                    end else if (debug_selector_r == 2'b01) begin // CORE_CONTROL
+                        debug_read_data <= debug_if.running;                     
+                    end
                 end
             end
         end

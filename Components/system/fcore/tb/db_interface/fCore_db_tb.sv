@@ -119,15 +119,20 @@ module fCore_db_tb#(parameter EXECUTABLE = "")();
         #5 bfm_in.read((1)*4, reg_readback);
         #5 bfm_in.read((2)*4, reg_readback);
         #5 bfm_in.read((3)*4, reg_readback);
+        #100
+        #5 bfm_in.read((4096+1024)*4, reg_readback);
+        #5 bfm_in.write((4096+1024)*4, 1);
+        #10 bfm_in.read((4096+1024)*4, reg_readback);
+
     end    
 
-    reg [31:0] prog [0:17] = {'hd0003,'hc,'h10002,'h30004,'hc,'h40028,'h26,'h43160000,'h66,'h43480000,'h6085b,'h0,'h0,'h0,'h26,'h42000000,'h60842,'hc};
+    reg [31:0] prog [0:18] = {'he0003,'hc,'h10002,'h30004,'hc,'hc,'h40028,'h26,'h43160000,'h66,'h43480000,'h6085b,'h0,'h0,'h0,'h26,'h42000000,'h60842,'hc};
     string file_path;
     initial begin
         file_path = $sformatf("%s/tb/micro_bench/common_io/common_io.mem", EXECUTABLE);
         $readmemh(file_path, prog);
         #50.5;
-        for(integer i = 0; i<18; i++)begin
+        for(integer i = 0; i<19; i++)begin
             #5 bfm_in.write(i*4, prog[i]);
         end
         ->core_loaded;

@@ -155,7 +155,8 @@ module fCore #(
         .dma_enable(dma_enable),
         .done(done),
         .fault(fault),
-        .instruction_stream(instruction_stream)
+        .instruction_stream(instruction_stream),
+        .debug_if(debug_bus)
     );
 
     fCore_decoder #(

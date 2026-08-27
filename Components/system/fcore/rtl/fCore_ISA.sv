@@ -44,13 +44,14 @@ endpackage
 
 
 interface fcore_debug_if;
-    logic [31:0] write_val;
-    logic [31:0] read_val;
-    logic [15:0] mem_addr;
-    logic read_mem;
-    logic write_mem;
-    logic start;
-    logic step;
-    modport master(input  read_val, output write_val, mem_addr, read_mem, write_mem, start, step);
-    modport slave (output read_val, input  write_val, mem_addr, read_mem, write_mem, start, step);
+    logic [31:0] write_val; // REGISTER WRITE DATA
+    logic [31:0] read_val;  // REGISTER READ DATA
+    logic [15:0] mem_addr; // REGISTER ACCESS ADDRESS
+    logic read_mem;  // REGISTER READ STROBE
+    logic write_mem; // REGISTER WRITE STROBE
+    logic start;     // START CORE
+    logic step;      // SINGLE STEP ADVANCE
+    logic running;   // FLAG SHOWING THE CORE STATUS (STOP OR RUN)
+    modport master(input  read_val, running, output write_val, mem_addr, read_mem, write_mem, start, step);
+    modport slave (output read_val, running, input  write_val, mem_addr, read_mem, write_mem, start, step);
 endinterface //fcore_debug_if
