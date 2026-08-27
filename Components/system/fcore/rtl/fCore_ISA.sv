@@ -41,3 +41,16 @@ package fcore_isa;
     parameter LXOR = 26;  // 0x1a
     parameter CSEL = 27;  // 0x1b
 endpackage
+
+
+interface fcore_debug_if;
+    logic [31:0] write_val;
+    logic [31:0] read_val;
+    logic [15:0] mem_addr;
+    logic read_mem;
+    logic write_mem;
+    logic start;
+    logic step;
+    modport master(input  read_val, output write_val, mem_addr, read_mem, write_mem, start, step);
+    modport slave (output read_val, input  write_val, mem_addr, read_mem, write_mem, start, step);
+endinterface //fcore_debug_if

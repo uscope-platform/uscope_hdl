@@ -19,7 +19,7 @@ module fCore #(
     parameter PRAGMA_MKFG_MODULE_TOP = "fCore",
     parameter SIM_CONFIG = "FALSE",
     parameter FAST_DEBUG = "TRUE",
-    parameter INIT_FILE = "init.mem",
+    parameter string INIT_FILE = "init.mem",
     parameter TRANSLATION_TABLE_INIT_FILE = "",
     parameter DMA_BASE_ADDRESS = 32'h43c00000,
     parameter INSTRUCTION_STORE_SIZE = 4096,
@@ -35,7 +35,8 @@ module fCore #(
     parameter FULL_COMPARE = 1,
     parameter TRANSLATION_TABLE_INIT = "TRANSPARENT",
     parameter MAX_CHANNELS = 4,
-    parameter RAW_AXI_ACCESS = 1
+    parameter RAW_AXI_ACCESS = 1,
+    parameter ENABLE_DEBUG_INTERFACE = "FALSE"
 )(
     input wire clock,
     input wire axi_clock,
@@ -122,9 +123,12 @@ module fCore #(
     wire [REG_ADDR_WIDTH-1:0] efi_read_addr;
     wire [DATAPATH_WIDTH-1:0] efi_read_data;
 
+    fcore_debug_if debug_bus();
+
     wire [1:0] mem_efi_enable;
     wire [15:0] program_size;
     wire common_io_sel_a, common_io_sel_b, common_io_sel_c;
+
 
     axi_stream instruction_stream();
     axi_stream io_mapping();
@@ -348,6 +352,7 @@ module fCore #(
         .DATA_WIDTH(INSTRUCTION_WIDTH),
         .MEM_DEPTH(INSTRUCTION_STORE_SIZE),
         .FAST_DEBUG(FAST_DEBUG),
+        .ENABLE_DEBUG_INTERFACE(ENABLE_DEBUG_INTERFACE),
         .INIT_FILE(INIT_FILE)
     ) store(
         .clock_in(axi_clock),
@@ -358,7 +363,8 @@ module fCore #(
         .dma_read_addr(program_counter),
         .dma_read_data_w(instruction_w),
         .iommu_control(io_mapping),
-        .axi(axi)
+        .axi(axi),
+        .debug_if(debug_bus)
     );
     
 
@@ -368,7 +374,8 @@ module fCore #(
         .FILE_DEPTH(REG_FILE_SIZE),
         .REG_PER_CHANNEL(REGISTER_FILE_DEPTH),
         .OP_C_ENABLED(BITMANIP_IMPLEMENTED || CONDITIONAL_SELECT_IMPLEMENTED),
-        .EFI_IMPLEMENTED(EFI_IMPLEMENTED)
+        .EFI_IMPLEMENTED(EFI_IMPLEMENTED),
+        .ENABLE_DEBUG_INTERFACE(ENABLE_DEBUG_INTERFACE)
     ) registers(
         .clock(clock),
         .reset(reset),
@@ -386,7 +393,8 @@ module fCore #(
         .efi_read_addr(efi_read_addr),
         .efi_read_data(efi_read_data),
         .dma_write(dma_write),
-        .efi_write(efi_writeback)
+        .efi_write(efi_writeback),
+        .debug_if(debug_bus)
     );
 
     generate

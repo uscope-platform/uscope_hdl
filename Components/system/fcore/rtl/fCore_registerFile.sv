@@ -20,7 +20,8 @@ module fCore_registerFile #(
     FILE_DEPTH = 12, 
     REG_PER_CHANNEL = 16,
     OP_C_ENABLED=0,
-    EFI_IMPLEMENTED = 0
+    EFI_IMPLEMENTED = 0,
+    parameter ENABLE_DEBUG_INTERFACE = "FALSE"
 )(
     input wire clock,
     input wire reset,
@@ -45,7 +46,8 @@ module fCore_registerFile #(
     
     axi_stream.slave write_if,
     axi_stream.slave dma_write,
-    axi_stream.slave efi_write
+    axi_stream.slave efi_write,
+    fcore_debug_if.slave debug_if
     );
 
 
@@ -126,6 +128,8 @@ module fCore_registerFile #(
         read_data_a <= ram_a_read_data;
         read_data_b <= ram_b_read_data;
         
+
+
         if(efi_enable[0] & EFI_IMPLEMENTED==1)begin
             if(efi_enable[1])begin
                 ram_write_if.data <= efi_write.data;
@@ -145,12 +149,22 @@ module fCore_registerFile #(
             dma_read_data <= 0;
         end else if(dma_enable) begin
             efi_read_data <= 0;
-            ram_write_if.data <= dma_write.data;
-            ram_write_if.dest <= dma_write.dest;
-            ram_write_if.valid <= dma_write.valid;
+            if(debug_if.write_mem)begin
+                ram_write_if.data <= debug_if.write_val;
+                ram_write_if.dest <= debug_if.mem_addr;
+                ram_write_if.valid <= 1;
+            end else begin
+                ram_write_if.data <= dma_write.data;
+                ram_write_if.dest <= dma_write.dest;
+                ram_write_if.valid <= dma_write.valid;
+            end
+
             ram_a_read_addr <= dma_read_addr;
-            ram_b_read_addr <= dma_read_addr;
+            ram_b_read_addr <= debug_if.mem_addr;
+
+            debug_if.read_val <= ram_b_read_data;
             dma_read_data <= ram_a_read_data;
+            
         end else begin
             if(write_if.dest % REG_PER_CHANNEL != 0)begin
                 ram_write_if.data <= write_if.data;

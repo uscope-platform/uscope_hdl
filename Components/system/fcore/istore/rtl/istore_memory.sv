@@ -15,7 +15,13 @@
 
 `timescale 10ns / 1ns
 
-module istore_memory #(parameter DATA_WIDTH_A=32, DATA_WIDTH_B=64, parameter ADDR_WIDTH=8, FAST_DEBUG="FALSE", INIT_FILE = "") (
+module istore_memory #(
+    parameter DATA_WIDTH_A=32, 
+    DATA_WIDTH_B=64, 
+    parameter ADDR_WIDTH=8,
+    parameter string FAST_DEBUG="FALSE",
+    parameter string INIT_FILE = ""
+) (
     input wire clock_in,
     input wire clock_out,
     input wire reset,

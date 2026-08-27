@@ -18,8 +18,9 @@ module fCore_Istore # (
         parameter integer DATA_WIDTH = 32,
         parameter integer MEM_DEPTH = 4096,
         parameter ADDR_WIDTH = $clog2(MEM_DEPTH),
+        parameter ENABLE_DEBUG_INTERFACE = "FALSE",
         parameter FAST_DEBUG = "TRUE",
-        parameter INIT_FILE = "init.mem"
+        parameter string INIT_FILE = "init.mem"
     )(
         input wire clock_in,
         input wire clock_out,
@@ -29,7 +30,8 @@ module fCore_Istore # (
         input wire [ADDR_WIDTH-1:0] dma_read_addr,
         output reg [2*DATA_WIDTH-1:0] dma_read_data_w,
         axi_stream.master iommu_control,
-        AXI.slave axi
+        AXI.slave axi,
+        fcore_debug_if.master debug_if
     );
     
     localparam [DATA_WIDTH-1:0] SECTION_SEPARATOR = {{(DATA_WIDTH-8){1'b0}}, {8'hc}};
@@ -42,7 +44,8 @@ module fCore_Istore # (
 
     istore_axi_if #(
         .ADDR_WIDTH(ADDR_WIDTH),
-        .DATA_WIDTH(DATA_WIDTH)
+        .DATA_WIDTH(DATA_WIDTH),
+        .ENABLE_DEBUG_INTERFACE(ENABLE_DEBUG_INTERFACE)
     )axi_if(
         .clock_in(clock_in),
         .reset_in(reset_in),
@@ -51,7 +54,8 @@ module fCore_Istore # (
         .write_address(write_address),
         .read_address(read_address),
         .write_enable(write_enable),
-        .axi(axi)
+        .axi(axi),
+        .debug_if(debug_if)
     );
 
     reg [31:0] header_counter = 0;
@@ -72,7 +76,7 @@ module fCore_Istore # (
         .data_a(write_data),
         .data_b(read_data),
         .addr_a(write_address),
-        .addr_b( enable_bus_read ? write_address : core_read_address),
+        .addr_b( enable_bus_read ? read_address : core_read_address),
         .we_a(write_enable)
     );
 

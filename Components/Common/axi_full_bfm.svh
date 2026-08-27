@@ -35,7 +35,7 @@ class axi_full_bfm #(int ID_WIDTH = 1,int USER_WIDTH = 1, int DATA_WIDTH = 32, i
             this.bus.ARPROT <= 0;
             this.bus.ARADDR <= 0;
             this.bus.ARVALID <= 0;
-            this.bus.ARLEN <= 1;
+            this.bus.ARLEN <= 0;
             this.bus.ARBURST <= 0;
             this.bus.AWSIZE <= 4;
             
@@ -49,7 +49,7 @@ class axi_full_bfm #(int ID_WIDTH = 1,int USER_WIDTH = 1, int DATA_WIDTH = 32, i
             this.bus.AWPROT <= 0;
             this.bus.AWADDR <= 0;
             this.bus.AWVALID <= 0;
-            this.bus.AWLEN <= 1;
+            this.bus.AWLEN <= 0;
             this.bus.AWBURST <= 0;
             this.bus.ARSIZE <= 4;
 

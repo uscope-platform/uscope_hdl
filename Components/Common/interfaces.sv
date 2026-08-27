@@ -126,7 +126,7 @@ interface axi_stream #(DATA_WIDTH = 32, USER_WIDTH = 32, DEST_WIDTH = 32, CLOCK_
         tlast <= 0;
     endtask
 
-    task write_dest(input logic [31:0] destination, logic [31:0] write_data);
+    task write_dest(input logic [DEST_WIDTH-1:0] destination, logic [DATA_WIDTH-1:0] write_data);
         data <= write_data;
         dest <= destination;
         wait(ready) valid <= 1'b1;
@@ -134,7 +134,7 @@ interface axi_stream #(DATA_WIDTH = 32, USER_WIDTH = 32, DEST_WIDTH = 32, CLOCK_
         wait(ready==1);
     endtask
 
-    task write_all(input logic [31:0] destination, logic [31:0] user_in,logic [31:0] write_data, logic tlast_in = 0);
+    task write_all(input logic [DEST_WIDTH-1:0] destination, logic [USER_WIDTH-1:0] user_in,logic [DATA_WIDTH-1:0] write_data, logic tlast_in = 0);
         data <= write_data;
         user <= user_in;
         dest <= destination;
@@ -144,7 +144,7 @@ interface axi_stream #(DATA_WIDTH = 32, USER_WIDTH = 32, DEST_WIDTH = 32, CLOCK_
         wait(ready==1);
     endtask
     
-    task write_tlast(input logic [31:0] destination, logic [31:0] write_data, logic write_tlast);
+    task write_tlast(input logic [DEST_WIDTH-1:0] destination, logic [DATA_WIDTH-1:0] write_data, logic write_tlast);
         data <= write_data;
         dest <= destination;
         tlast <= write_tlast;
@@ -154,7 +154,7 @@ interface axi_stream #(DATA_WIDTH = 32, USER_WIDTH = 32, DEST_WIDTH = 32, CLOCK_
         wait(ready==1);
     endtask
 
-    task write (input logic [31:0] wr_data);
+    task write (input logic [DATA_WIDTH-1:0] wr_data);
         //WRITE ADDR
         if(ready) begin
             data <= wr_data;
