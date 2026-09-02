@@ -47,7 +47,7 @@ xvlog -sv --nolog -i $INCLUDE_DIR $ALU_RTL/ip/fcore_reciprocal_ip.sv
 xvlog -sv --nolog -i $INCLUDE_DIR $ALU_RTL/rtl/alu_results_combiner.sv
 xvlog -sv --nolog -i $INCLUDE_DIR $ALU_RTL/rtl/FP_saturator.sv
 xvlog -sv --nolog -i $INCLUDE_DIR $ISTORE_RTL/fCore_Istore.sv
-xvlog -sv --nolog -i $INCLUDE_DIR $ISTORE_RTL/istore_axi_interface.sv
+xvlog -sv --nolog -d SIMULATION_TRACE -i INCLUDE_DIR $ISTORE_RTL/istore_axi_interface.sv
 xvlog -sv --nolog -i $INCLUDE_DIR $ISTORE_RTL/istore_memory.sv
 xvlog -sv --nolog -i $INCLUDE_DIR $CORE_RTL/fCore_ControlUnit.sv
 xvlog -sv --nolog -i $INCLUDE_DIR $CORE_RTL/fCore_compare_unit.sv

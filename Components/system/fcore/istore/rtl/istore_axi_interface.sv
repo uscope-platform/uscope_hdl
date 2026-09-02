@@ -282,7 +282,7 @@ module istore_axi_if # (
     assign axi.RDATA = debug_read_en ? debug_read_data : read_data;
     assign read_address = axi_araddr;
 
-    `ifdef SIMULATION
+    `ifdef SIMULATION_TRACE
         bit disable_print = 0;
         always_ff @(posedge clock_in) begin 
             if (axi.WREADY && axi.WVALID && ~disable_print) begin
