@@ -16,7 +16,7 @@ module fuzzing_tb;
         end
         
         for(int i = 0; i<64; i++)begin
-            results_pkg.regs[i] = 0;
+            results_pkg.reg_file[i] = 32'hDEADBEEF;
         end
 
         forever begin
@@ -31,8 +31,8 @@ module fuzzing_tb;
             // Drive hardware core interface
             @(posedge clk);
             #1;
-
-            server.send_results(results_pkg)
+            
+            server.send_results(results_pkg);
         end
     end
 endmodule

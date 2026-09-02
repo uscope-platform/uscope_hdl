@@ -6,14 +6,12 @@
 #include <cstdint>
 #include "svdpi.h"
 
+#include "fuzz_types.h"
+
 static const char* SOCKET_PATH = "/tmp/fuzzing_socket.sock";
 static int server_fd = -1;
 static int client_fd = -1;
 
-struct fuzzing_package {
-    uint32_t reg_file[64];
-    uint32_t instructions[4096];
-};
 
 static bool read_exact(int fd, void* buffer, size_t length) {
     size_t total_read = 0;
@@ -23,6 +21,18 @@ static bool read_exact(int fd, void* buffer, size_t length) {
         ssize_t bytes = read(fd, ptr + total_read, length - total_read);
         if (bytes <= 0) return false;
         total_read += bytes;
+    }
+    return true;
+}
+
+static bool write_exact(int fd, const void* buffer, size_t length) {
+    size_t total_written = 0;
+    const char* ptr = static_cast<const char*>(buffer);
+    
+    while (total_written < length) {
+        ssize_t bytes = write(fd, ptr + total_written, length - total_written);
+        if (bytes <= 0) return false;
+        total_written += bytes;
     }
     return true;
 }
@@ -80,6 +90,28 @@ extern "C" {
             return 666;
         else 
             return 0;
+    }
+
+    int process_results(const svOpenArrayHandle regs_h) {
+
+        uint32_t results_buffer[64] = {0};
+
+        int reg_low = svLow(regs_h, 1);
+        for (int i = 0; i < 64; i++) {
+            uint32_t* ptr = (uint32_t*)svGetArrElemPtr1(regs_h, reg_low + i);
+            if (ptr) {
+                results_buffer[i] = *ptr;
+            }
+        }
+
+        if (!write_exact(client_fd, results_buffer, sizeof(results_buffer))) {
+            close(client_fd);
+            return -1;
+        }
+       
+        int ack = 0;
+        read(client_fd, &ack, sizeof(ack));
+        return 0;
     }
 
     void cleanup_socket_server() {

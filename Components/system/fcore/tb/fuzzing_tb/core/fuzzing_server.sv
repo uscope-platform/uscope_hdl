@@ -55,8 +55,8 @@ package fuzz_server_pkg;
             end
         endtask
 
-        task send_results(output fuzz_result_t pkg);
-            process_results(pkg.regs)
+        task send_results(input fuzz_result_t pkg);
+            process_results(pkg.reg_file);
         endtask
 
         // Encapsulated cleanup and termination
