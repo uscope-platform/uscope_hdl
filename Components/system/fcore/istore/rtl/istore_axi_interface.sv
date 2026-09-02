@@ -250,7 +250,7 @@ module istore_axi_if # (
                     // Data is now ready on read_data / debug_read_data
                     axi.RVALID <= 1'b1;
                     axi.RRESP  <= 2'b0;
-                    if (axi_arlen_cntr == axi_arlen) begin
+                    if (axi_arlen_cntr >= axi_arlen) begin
                         axi.RLAST <= 1'b1;
                     end
                     r_state <= R_DATA_PHASE;
@@ -258,15 +258,14 @@ module istore_axi_if # (
 
                 R_DATA_PHASE: begin
                     if (axi.RVALID && axi.RREADY) begin
-                        if (axi_arlen_cntr == axi_arlen) begin
+                        axi.RVALID <= 1'b0;
+                        axi.RLAST  <= 1'b0;
+                        if (axi_arlen_cntr >= axi_arlen) begin
                             // Burst completed
-                            axi.RVALID <= 1'b0;
-                            axi.RLAST  <= 1'b0;
+                            axi_arv_arr_flag <= 1'b0; // Clear flag to allow next AR transaction
                             r_state    <= R_IDLE;
                         end else begin
                             // Multi-beat burst: wait 1 cycle for next address data lookup
-                            axi.RVALID <= 1'b0;
-                            axi.RLAST  <= 1'b0;
                             r_state    <= R_WAIT_LATENCY;
                         end
                     end
