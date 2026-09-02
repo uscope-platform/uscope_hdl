@@ -1,53 +1,38 @@
 module fuzzing_tb;
-    logic clk = 0;
-    int status;
+    import fuzz_server_pkg::*;
 
+    logic clk = 0;
     always #5 clk = ~clk;
 
-    typedef struct {
-        logic [31:0]   reg_file [64];      // 64 x 32-bit registers
-        logic [31:0] instructions [4096
-        
-        ];  // 4096 x 32-bit instructions
-    } fuzzing_package_t;
-    
-
-    import "DPI-C" function int init_socket_server();
-    import "DPI-C" function int process_transaction(
-        output logic [31:0] regs [], 
-        output logic [31:0] insts []
-    );   
-    import "DPI-C" function void cleanup_socket_server();
-    
-    fuzzing_package_t pkg;
+    fuzzing_server    server;
+    fuzz_package_t current_pkg;
+    fuzz_result_t results_pkg;
 
     initial begin
-        $display("[SV] Starting simulator with DPI-C Sockets...");
+        server = new();
         
-        if (init_socket_server() != 0) begin
-            $display("[SV] Failed to start socket server.");
+        if (!server.start()) begin
             $finish;
+        end
+        
+        for(int i = 0; i<64; i++)begin
+            results_pkg.regs[i] = 0;
         end
 
         forever begin
-            // Blocks until client connects and sends data
-            automatic int status = process_transaction(pkg.reg_file, pkg.instructions);
-            
-            if (pkg.reg_file[0] == 666) begin
-                $display("[SV @ %0t] Termination requested (666). Shutting down.", $time);
-                cleanup_socket_server();
-                $finish;
-            end
-            $display("[SV @ %0t] Received package!", $time);
+            // Clean interface: blocking fetch
+            server.get_next_transaction(current_pkg);
 
-            $display(" reg[1]: %d, inst[0]: %d", pkg.reg_file[1], pkg.instructions[0]);
-            $display(" reg[2]: %d, inst[1]: %d", pkg.reg_file[2], pkg.instructions[1]);
-            $display(" reg[3]: %d, inst[2]: %d", pkg.reg_file[3], pkg.instructions[2]);
+            $display("[TB @ %0t] Received valid fuzzing vector!", $time);
+            $display("  reg[1]: %0d | inst[0]: %0d", current_pkg.reg_file[1], current_pkg.instructions[0]);
+            $display("  reg[2]: %0d | inst[1]: %0d", current_pkg.reg_file[2], current_pkg.instructions[1]);
+            $display("  reg[2]: %0d | inst[1]: %0d", current_pkg.reg_file[3], current_pkg.instructions[2]);
 
-        
-            // Drive design
+            // Drive hardware core interface
             @(posedge clk);
             #1;
+
+            server.send_results(results_pkg)
         end
     end
 endmodule

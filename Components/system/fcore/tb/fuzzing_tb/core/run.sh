@@ -7,7 +7,7 @@ rm -f $SOCKET_FILE
 
 echo "[1/4] Compiling SystemVerilog & DPI-C library..."
 xsc dpi_socket.cpp || exit 1
-xvlog -sv --nolog fuzzing_tb.sv || exit 1
+xvlog -sv --nolog fuzzing_server.sv fuzzing_tb.sv || exit 1
 xelab fuzzing_tb --nolog -sv_lib dpi -s top_sim || exit 1
 
 echo "[2/4] Compiling C++ client app..."
