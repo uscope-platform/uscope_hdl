@@ -34,10 +34,11 @@ module fuzzing_tb;
             // Clean interface: blocking fetch
             server.get_next_transaction(current_pkg);
 
-            $display("[TB @ %0t] Received valid fuzzing vector!", $time);
-            $display("  reg[1]: %0d | inst[0]: %0d", current_pkg.reg_file[1], current_pkg.instructions[0]);
-            $display("  reg[2]: %0d | inst[1]: %0d", current_pkg.reg_file[2], current_pkg.instructions[1]);
-            $display("  reg[2]: %0d | inst[1]: %0d", current_pkg.reg_file[3], current_pkg.instructions[2]);
+
+            for(int i = 0; i<4096; i++)begin
+                #5 axi_programmer.write(i*4, current_pkg.instructions[i]);
+            end
+
 
             // Drive hardware core interface
             @(posedge clock);
