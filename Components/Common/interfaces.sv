@@ -193,7 +193,13 @@ interface SPI_if;
 
 endinterface
 
-interface AXI #(parameter ID_WIDTH = 1, USER_WIDTH = 1, DATA_WIDTH = 32, ADDR_WIDTH = 32);
+interface AXI #(
+    parameter ID_WIDTH = 1,
+    USER_WIDTH = 1, 
+    DATA_WIDTH = 32, 
+    ADDR_WIDTH = 32,
+    CLOCK_PERIOD = 10
+    );
 
     logic [ID_WIDTH-1:0] AWID;
     logic [ADDR_WIDTH-1:0] AWADDR;
@@ -243,6 +249,99 @@ interface AXI #(parameter ID_WIDTH = 1, USER_WIDTH = 1, DATA_WIDTH = 32, ADDR_WI
     modport master (input AWREADY, WREADY, BID, BRESP, BUSER, BVALID, ARREADY, RID, RDATA, RRESP, RLAST, RUSER, RVALID, output AWID, AWADDR, AWLEN, AWSIZE, AWBURST ,AWLOCK, AWCACHE, AWPROT, AWQOS, AWREGION, AWUSER, AWVALID, WSTRB, WDATA, WLAST, WUSER, WVALID, BREADY, ARID, ARADDR, ARLEN, ARSIZE, ARBURST, ARLOCK, ARCACHE, ARPROT, ARQOS, ARREGION, ARUSER, ARVALID, RREADY);
     modport slave (output AWREADY, WREADY, BID, BRESP, BUSER, BVALID, ARREADY, RID, RDATA, RRESP, RLAST, RUSER, RVALID, input AWID, AWADDR, AWLEN, AWSIZE, AWBURST ,AWLOCK, AWCACHE, AWPROT, AWQOS, AWREGION, AWUSER, AWVALID, WSTRB, WDATA, WLAST, WUSER, WVALID, BREADY, ARID, ARADDR, ARLEN, ARSIZE, ARBURST, ARLOCK, ARCACHE, ARPROT, ARQOS, ARREGION, ARUSER, ARVALID, RREADY);
     
+
+    task initialize();
+            ARID <= 0;
+            ARUSER <= 0;
+            ARREGION <= 0;
+            ARQOS <= 0;
+            ARLOCK <= 0;
+            ARCACHE <= 0;
+            ARPROT <= 0;
+            ARADDR <= 0;
+            ARVALID <= 0;
+            ARLEN <= 0;
+            ARBURST <= 0;
+            AWSIZE <= 4;
+            
+
+            AWID <= 0;
+            AWUSER <= 0;
+            AWREGION <= 0;
+            AWQOS <= 0;
+            AWLOCK <= 0;
+            AWCACHE <= 0;
+            AWPROT <= 0;
+            AWADDR <= 0;
+            AWVALID <= 0;
+            AWLEN <= 0;
+            AWBURST <= 0;
+            ARSIZE <= 4;
+
+            BREADY <= 0;
+            RREADY <= 0;
+
+            WDATA <= 0;
+            WLAST <= 0;
+            WUSER <= 0;
+            WVALID <= 0;
+            WSTRB <= 0;
+    endtask
+
+
+
+    task write(input logic [ADDR_WIDTH-1:0] address, input logic [DATA_WIDTH-1:0] data);
+
+        AWADDR <= address;
+        AWVALID <= 1;
+        WDATA <= data;
+        WVALID <= 1;
+        WSTRB <= 'hF;
+        WLAST <= 1;
+        
+        // Wait for both channels to be independently acknowledged
+        fork
+            begin
+                wait(AWREADY);
+                #(CLOCK_PERIOD* 1ns);
+                AWVALID <= 0;
+            end
+            begin
+                wait(WREADY);
+                #(CLOCK_PERIOD* 1ns);
+                WVALID <= 0;
+                WLAST <= 0;
+            end
+        join
+
+        AWADDR <= 0;
+        WDATA <= 0;
+        WSTRB <= 0;
+        
+        // Complete the transaction by waiting for the write response
+        BREADY <= 1;
+        wait(BVALID);
+        #(CLOCK_PERIOD* 1ns);
+        BREADY <= 0;
+        
+    endtask
+
+    task read(input logic [ADDR_WIDTH-1:0] address, output logic [DATA_WIDTH-1:0] data);
+        ARADDR <= address;
+        ARVALID <= 1'b1;
+        wait(ARREADY && ARVALID);
+        #(CLOCK_PERIOD* 1ns);
+        ARVALID <= 0;
+        RREADY <= 1'b1;
+        wait(RVALID && RREADY);
+        #(CLOCK_PERIOD* 1ns);
+        data = RDATA;
+        
+        #(CLOCK_PERIOD* 1ns);
+        RREADY <= 0;
+    endtask
+
+
 endinterface
 
 `endif

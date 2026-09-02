@@ -31,7 +31,6 @@ module fCore_db_tb#(parameter EXECUTABLE = "")();
     axi_lite axi_master();
 
 
-    axi_full_bfm #(.ADDR_WIDTH(32)) bfm_in;
     AXI #(.ADDR_WIDTH(32)) axi_programmer();
 
     axi_stream axis_dma_write();
@@ -80,8 +79,8 @@ module fCore_db_tb#(parameter EXECUTABLE = "")();
     initial begin
         dma_bfm = new(axis_dma_write,1);
         axil_bfm = new(axi_master,1);
-        bfm_in = new(axi_programmer, 1);
-
+        axi_programmer.initialize();
+        
         dma_read_request.valid <= 0;
         dma_read_request.data <= 0;
         reset <=0;
@@ -91,24 +90,24 @@ module fCore_db_tb#(parameter EXECUTABLE = "")();
         #40;
         @(core_loaded);
         #100;
-        #5 bfm_in.write((4096+1)*4, 'hCAFEBEBE);
-        #5 bfm_in.write((4096+2)*4, 'hDEADBEEF);
-        #5 bfm_in.write((4096+3)*4, 'hBEEFBEBE);
-        #5 bfm_in.write((4096+4)*4, 'hDEADCAFE);
+        #5 axi_programmer.write((4096+1)*4, 'hCAFEBEBE);
+        #5 axi_programmer.write((4096+2)*4, 'hDEADBEEF);
+        #5 axi_programmer.write((4096+3)*4, 'hBEEFBEBE);
+        #5 axi_programmer.write((4096+4)*4, 'hDEADCAFE);
         #100;
-        #5 bfm_in.read((4096+1)*4, reg_readback);
-        #5 bfm_in.read((4096+2)*4, reg_readback);
-        #5 bfm_in.read((4096+3)*4, reg_readback);
-        #5 bfm_in.read((4096+4)*4, reg_readback);
+        #5 axi_programmer.read((4096+1)*4, reg_readback);
+        #5 axi_programmer.read((4096+2)*4, reg_readback);
+        #5 axi_programmer.read((4096+3)*4, reg_readback);
+        #5 axi_programmer.read((4096+4)*4, reg_readback);
         #100;
-        #5 bfm_in.read((0)*4, reg_readback);
-        #5 bfm_in.read((1)*4, reg_readback);
-        #5 bfm_in.read((2)*4, reg_readback);
-        #5 bfm_in.read((3)*4, reg_readback);
+        #5 axi_programmer.read((0)*4, reg_readback);
+        #5 axi_programmer.read((1)*4, reg_readback);
+        #5 axi_programmer.read((2)*4, reg_readback);
+        #5 axi_programmer.read((3)*4, reg_readback);
         #100
-        #5 bfm_in.read((4096+1024)*4, reg_readback);
-        #5 bfm_in.write((4096+1024)*4, 1);
-        #10 bfm_in.read((4096+1024)*4, reg_readback);
+        #5 axi_programmer.read((4096+1024)*4, reg_readback);
+        #5 axi_programmer.write((4096+1024)*4, 1);
+        #10 axi_programmer.read((4096+1024)*4, reg_readback);
 
     end    
 
@@ -119,7 +118,7 @@ module fCore_db_tb#(parameter EXECUTABLE = "")();
         $readmemh(file_path, prog);
         #50.5;
         for(integer i = 0; i<19; i++)begin
-            #5 bfm_in.write(i*4, prog[i]);
+            #5 axi_programmer.write(i*4, prog[i]);
         end
         ->core_loaded;
     end
