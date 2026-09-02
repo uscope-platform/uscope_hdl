@@ -33,25 +33,11 @@ module fCore_db_tb#(parameter EXECUTABLE = "")();
 
     axi_full_bfm #(.ADDR_WIDTH(32)) bfm_in;
     AXI #(.ADDR_WIDTH(32)) axi_programmer();
-    AXI #(.ADDR_WIDTH(32)) fCore_programming_bus();
 
     axi_stream axis_dma_write();
     axi_stream dma_read_request();
     axi_stream dma_read_response();
 
-
-    axi_xbar #(
-        .NM(1),
-        .NS(1),
-        .ADDR_WIDTH(32),
-        .SLAVE_ADDR('{0}),
-        .SLAVE_MASK('{1{'hfF00000}})
-    ) programming_interconnect  (
-        .clock(clock),
-        .reset(reset),
-        .slaves('{axi_programmer}),
-        .masters('{fCore_programming_bus})
-    );
 
     event core_loaded;
 
@@ -74,7 +60,7 @@ module fCore_db_tb#(parameter EXECUTABLE = "")();
         .done(done),
         .efi_start(efi_start),
         .control_axi_in(axi_master),
-        .axi(fCore_programming_bus),
+        .axi(axi_programmer),
         .axis_dma_write(axis_dma_write),
         .axis_dma_read_request(dma_read_request),
         .axis_dma_read_response(dma_read_response),

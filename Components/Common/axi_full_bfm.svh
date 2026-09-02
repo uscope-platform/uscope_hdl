@@ -68,28 +68,42 @@ class axi_full_bfm #(int ID_WIDTH = 1,int USER_WIDTH = 1, int DATA_WIDTH = 32, i
 
     task write(input logic [ADDR_WIDTH-1:0] address, input logic [DATA_WIDTH-1:0] data);
 
+        // Assert Address and Data channels concurrently
         this.bus.AWADDR <= address;
         this.bus.AWVALID <= 1;
-        this.bus.WLAST <= 1;
-        #(this.clock_period);
-        this.bus.AWVALID <= 0;
         this.bus.WDATA <= data;
         this.bus.WVALID <= 1;
         this.bus.WSTRB <= 'hF;
+        this.bus.WLAST <= 1;
         
-        #(this.clock_period);
-        this.bus.BREADY <= 1;
-        this.bus.WLAST <= 0;
-        this.bus.WVALID <= 0;
+        // Wait for both channels to be independently acknowledged
+        fork
+            begin
+                wait(this.bus.AWREADY);
+                #1;
+                this.bus.AWVALID <= 0;
+            end
+            begin
+                wait(this.bus.WREADY);
+                #1;
+                this.bus.WVALID <= 0;
+                this.bus.WLAST <= 0;
+            end
+        join
 
         this.bus.AWADDR <= 0;
         this.bus.WDATA <= 0;
         this.bus.WSTRB <= 0;
-        @(this.bus.BVALID);
-        #(this.clock_period);
+        
+        // Complete the transaction by waiting for the write response
+        this.bus.BREADY <= 1;
+        wait(this.bus.BVALID);
+        #1;
+        this.bus.BREADY <= 0;
+        
     endtask
 
-    task  read(input logic [ADDR_WIDTH-1:0] address, output logic [DATA_WIDTH-1:0] data);
+    task read(input logic [ADDR_WIDTH-1:0] address, output logic [DATA_WIDTH-1:0] data);
         this.bus.ARADDR <= address;
         this.bus.ARVALID <= 1;
         this.bus.RREADY <= 1;
