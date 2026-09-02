@@ -282,17 +282,21 @@ module istore_axi_if # (
     assign axi.RDATA = debug_read_en ? debug_read_data : read_data;
     assign read_address = axi_araddr;
 
-    bit disable_print = 0;
-    always_ff @(posedge clock_in) begin 
-        if (axi.WREADY && axi.WVALID && ~disable_print) begin
-            $display("  reg[%d]: 0x%h", axi_awaddr, axi.WDATA);
-            disable_print <= 1;
+    `ifdef SIMULATION
+        bit disable_print = 0;
+        always_ff @(posedge clock_in) begin 
+            if (axi.WREADY && axi.WVALID && ~disable_print) begin
+                if(debug_write_en) 
+                    $display("  RAM[%d]: 0x%h", axi_awaddr[ADDR_WIDTH-3: 0], axi.WDATA);
+                else
+                    $display("  ROM[%d]: 0x%h", axi_awaddr, axi.WDATA);
+                disable_print <= 1;
+            end
+            if(~axi.WVALID)begin
+                disable_print <= 0;
+            end
         end
-        if(~axi.WVALID)begin
-            disable_print <= 0;
-        end
-    end
-
+    `endif
     wire [1:0] debug_selector_r = axi_araddr[ADDR_WIDTH-1:ADDR_WIDTH-2];
     wire [1:0] debug_selector_w = axi_awaddr[ADDR_WIDTH-1:ADDR_WIDTH-2];
     //-----------------------------------------------------------------

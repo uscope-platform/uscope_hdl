@@ -39,6 +39,9 @@ module fuzzing_tb;
                 #5 axi_programmer.write(i*4, current_pkg.instructions[i]);
             end
 
+            for(int i = 0; i<64; i++)begin
+                #5 axi_programmer.write((i+4096)*4, current_pkg.reg_file[i]);
+            end
 
             // Drive hardware core interface
             @(posedge clock);
