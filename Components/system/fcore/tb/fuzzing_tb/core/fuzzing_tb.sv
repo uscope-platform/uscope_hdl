@@ -26,9 +26,6 @@ module fuzzing_tb;
             $finish;
         end
         
-        for(int i = 0; i<64; i++)begin
-            results_pkg.reg_file[i] = 32'hDEADBEEF;
-        end
         @(core_ready);
         forever begin
             // Clean interface: blocking fetch
@@ -47,6 +44,9 @@ module fuzzing_tb;
             @(posedge clock);
             #1;
             
+            for(int i = 0; i<64; i++)begin
+                #5 axi_programmer.read((i+4096)*4, results_pkg.reg_file[i]);
+            end
             server.send_results(results_pkg);
         end
     end

@@ -97,8 +97,11 @@ int main(int argc, char* argv[]) {
     // Read back the execution result buffer
     fuzz_result res{};
     read_exact(sock, &res, sizeof(res));
-    std::cout << "[C++ Client] Received execution result reg[0]: " 
-          << std::hex << res.reg_file[0] << std::dec << std::endl;
+    std::cout << "[C++ Client] Received execution result: " << std::endl;
+    std::cout << "    reg_file[0]: " << res.reg_file[0]  << std::endl;
+    std::cout << "    reg_file[1]: " << res.reg_file[1]  << std::endl;
+    std::cout << "    reg_file[2]: " << res.reg_file[2]  << std::endl;
+    std::cout << "    reg_file[3]: " << res.reg_file[3]  << std::endl;
 
     int ack_to_sv = 1;
     write(sock, &ack_to_sv, sizeof(ack_to_sv));
