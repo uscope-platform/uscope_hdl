@@ -49,9 +49,10 @@ interface fcore_debug_if;
     logic [15:0] mem_addr; // REGISTER ACCESS ADDRESS
     logic read_mem;  // REGISTER READ STROBE
     logic write_mem; // REGISTER WRITE STROBE
+    logic read_valid; // REGISTER READ RESPONS ACKNOWLEDGE
     logic start;     // START CORE
     logic step;      // SINGLE STEP ADVANCE
     logic running;   // FLAG SHOWING THE CORE STATUS (STOP OR RUN)
-    modport master(input  read_val, running, output write_val, mem_addr, read_mem, write_mem, start, step);
-    modport slave (output read_val, running, input  write_val, mem_addr, read_mem, write_mem, start, step);
+    modport master(input read_valid, read_val, running, output write_val, mem_addr, read_mem, write_mem, start, step);
+    modport slave (output read_valid, read_val, running, input  write_val, mem_addr, read_mem, write_mem, start, step);
 endinterface //fcore_debug_if

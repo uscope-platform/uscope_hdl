@@ -180,4 +180,9 @@ module fCore_registerFile #(
         end
     end
     
+    always_ff @(posedge clock)begin
+        debug_if.read_valid <=debug_if.read_mem;
+    end
+
+
 endmodule

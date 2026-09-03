@@ -248,12 +248,14 @@ module istore_axi_if # (
 
                 R_WAIT_LATENCY: begin
                     // Data is now ready on read_data / debug_read_data
-                    axi.RVALID <= 1'b1;
-                    axi.RRESP  <= 2'b0;
-                    if (axi_arlen_cntr >= axi_arlen) begin
-                        axi.RLAST <= 1'b1;
+                    if(debug_if.read_valid)begin
+                        axi.RVALID <= 1'b1;
+                        axi.RRESP  <= 2'b0;
+                        if (axi_arlen_cntr >= axi_arlen) begin
+                            axi.RLAST <= 1'b1;
+                        end
+                        r_state <= R_DATA_PHASE;
                     end
-                    r_state <= R_DATA_PHASE;
                 end
 
                 R_DATA_PHASE: begin
