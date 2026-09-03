@@ -6,6 +6,23 @@ CORE_RTL=$COMPONENTS/system/fcore/rtl
 ISTORE_RTL=$COMPONENTS/system/fcore/istore/rtl
 ALU_RTL=$COMPONENTS/system/fcore/alu
 INCLUDE_DIR=$COMPONENTS/Common
+
+USE_GUI=0
+
+# Parse script flags
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -g|--gui)
+      USE_GUI=1
+      shift
+      ;;
+    *)
+      shift
+      ;;
+  esac
+done
+
+
 trap 'kill $(jobs -p) 2>/dev/null; rm -f $SOCKET_FILE' EXIT
 rm -f $SOCKET_FILE
 
@@ -65,29 +82,40 @@ xvlog -sv --nolog -i $INCLUDE_DIR $CORE_RTL/fCore_bitmanip_unit.sv
 
 xvlog -sv --nolog -i $INCLUDE_DIR fuzzing_server.sv
 xvlog -sv --nolog -i $INCLUDE_DIR fuzzing_tb.sv || exit 1
-xelab fuzzing_tb  --relax -top glbl -L xil_defaultlib -L unisims_ver -L unimacro_ver -L xpm --nolog -sv_lib dpi -s top_sim || exit 1
 
+#xelab fuzzing_tb  --relax -top glbl -L xil_defaultlib -L unisims_ver -L unimacro_ver -L xpm --nolog -sv_lib dpi -s top_sim || exit 1
+xelab fuzzing_tb  --debug all --relax -top glbl -L xil_defaultlib -L unisims_ver -L unimacro_ver -L xpm --nolog -sv_lib dpi -s top_sim || exit 1
 
 echo "------------------------------------------------"
 echo "              C++ COMPILATION                   "
 echo "------------------------------------------------"
 
 echo "[2/4] Compiling C++ client app..."
-g++ fuzzing_test.cpp -o app || exit 1
+g++ -std=c++20 fuzzing_test.cpp -o app || exit 1
 
 echo "------------------------------------------------"
-echo "[3/4] Launching xsim background server..."
-xsim top_sim -R --nolog 2>&1 &
-XSIM_PID=$!
 
-echo "=========================================="
-echo " Running C++ Application Tests "
-echo "=========================================="
+if [ "$USE_GUI" -eq 1 ]; then
+  echo "Launching xsim in GUI mode..."
+  xsim top_sim --gui --view top_sim.wcfg --nolog &
+  disown
 
-# The first ./app call will automatically pause and wait for xsim to boot up
-./app
+    wait $XSIM_PID 2>/dev/null
+else
+    echo "Launching xsim in batch mode..."
+    xsim top_sim -R --nolog 2>&1 &
 
-wait $XSIM_PID 2>/dev/null
+    XSIM_PID=$!
 
-rm -rf xsim.dir app xsc.log *.pb *.jou
-echo "Done!"
+    echo "=========================================="
+    echo " Running C++ Application Tests "
+    echo "=========================================="
+
+    # The first ./app call will automatically pause and wait for xsim to boot up
+    ./app
+
+    wait $XSIM_PID 2>/dev/null
+
+    rm -rf xsim.dir app xsc.log *.pb *.jou
+    echo "Done!"
+fi

@@ -1,3 +1,5 @@
+`timescale 10ns / 1ns
+
 module fuzzing_tb;
     import fuzz_server_pkg::*;
 
@@ -19,6 +21,7 @@ module fuzzing_tb;
     event core_ready;
     initial begin
         run = 0;
+        efi_results.tlast = 1;
         axi_programmer.initialize();
         server = new();
         
@@ -43,6 +46,10 @@ module fuzzing_tb;
             // Drive hardware core interface
             @(posedge clock);
             #1;
+            run = 1;
+            #2;
+            run = 0;
+            @(posedge done);
             
             for(int i = 0; i<64; i++)begin
                 #5 axi_programmer.read((i+4096)*4, results_pkg.reg_file[i]);

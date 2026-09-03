@@ -5,11 +5,11 @@
 #include <cstdlib>
 #include <cstring>
 #include <chrono>
+#include <bit>
 #include <thread>
 #include "fuzz_types.h"
 
 static const char* SOCKET_PATH = "/tmp/fuzzing_socket.sock";
-
 
 
 
@@ -48,6 +48,8 @@ int connect_with_retry(int sock, const sockaddr_un& addr, int max_retries = 50, 
 }
 
 int main(int argc, char* argv[]) {
+
+
     int val_to_send = (argc > 1) ? std::atoi(argv[1]) : 5;
     int val_received = 0;
 
@@ -69,19 +71,45 @@ int main(int argc, char* argv[]) {
     }
     
     std::cout << "--------------------------TEST START--------------------------"<< std::endl;
-    fuzzing_package pkg;
+    fuzzing_package pkg = {{}, {
+        0x120004,
+        0xc,
+        0xc,
+        0xc,
+        0xc6,
+        0x40000000,
+        0x0,
+        0x0,
+        0x0,
+        0x0,
+        0x0,
+        0x0,
+        0x0,
+        0x0,
+        0x0,
+        0xa0841,
+        0x0,
+        0x0,
+        0x0,
+        0x0,
+        0x0,
+        0x0,
+        0x630a3,
+        0x0,
+        0x0,
+        0x0,
+        0x0,
+        0x0,
+        0x0,
+        0xc
+    }};
+    
     for(int i = 0; i<64; i++)
         pkg.reg_file[i] = 0;
-    for(int i = 0; i<4096; i++)
-        pkg.instructions[i] = 0;
+    
 
-    pkg.instructions[0] = 124;
-    pkg.instructions[1] = 324;
-    pkg.instructions[2] = 12;
-
-    pkg.reg_file[1] = 67;
-    pkg.reg_file[2] = 68;
-    pkg.reg_file[3] = 69;
+    pkg.reg_file[1] = 0x42f87de2;
+    pkg.reg_file[2] = 0x43191909;
 
     // 1. Send integer payload directly
     write(sock, &pkg, sizeof(pkg));
@@ -98,14 +126,19 @@ int main(int argc, char* argv[]) {
     fuzz_result res{};
     read_exact(sock, &res, sizeof(res));
     std::cout << "[C++ Client] Received execution result: " << std::endl;
-    std::cout << "    reg_file[0]: " << res.reg_file[0]  << std::endl;
-    std::cout << "    reg_file[1]: " << res.reg_file[1]  << std::endl;
-    std::cout << "    reg_file[2]: " << res.reg_file[2]  << std::endl;
-    std::cout << "    reg_file[3]: " << res.reg_file[3]  << std::endl;
+    std::cout << "    reg_file[0]: " << std::bit_cast<float>(res.reg_file[0])  << std::endl;
+    std::cout << "    reg_file[1]: " << std::bit_cast<float>(res.reg_file[1])  << std::endl;
+    std::cout << "    reg_file[2]: " << std::bit_cast<float>(res.reg_file[2])  << std::endl;
+    std::cout << "    reg_file[3]: " << std::bit_cast<float>(res.reg_file[3])  << std::endl;
+    std::cout << "    reg_file[4]: " << std::bit_cast<float>(res.reg_file[4])  << std::endl;
 
     int ack_to_sv = 1;
     write(sock, &ack_to_sv, sizeof(ack_to_sv));
     
+
+    std::cout << "\n[PAUSED] Press ENTER to continue...";
+    std::cin.get();
+
     pkg.reg_file[0] = 666;
 
     // 1. Send integer payload directly
