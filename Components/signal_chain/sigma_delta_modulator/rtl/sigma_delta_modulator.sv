@@ -15,7 +15,6 @@
 `timescale 10 ns / 1 ns
 
 module sigma_delta_modulator #(
-    INPUT_WIDTH = 16,
     GUARD_BITS = 8
 )(
     input wire clock,
@@ -26,15 +25,15 @@ module sigma_delta_modulator #(
 );
 
 
-    localparam signed [INPUT_WIDTH-1:0] REFERENCE_P = {1'b0, {(INPUT_WIDTH-1){1'b1}}};
-    localparam signed [INPUT_WIDTH-1:0] REFERENCE_N = -REFERENCE_P;
+    localparam signed [data_in.DATA_WIDTH-1:0] REFERENCE_P = {1'b0, {(data_in.DATA_WIDTH-1){1'b1}}};
+    localparam signed [data_in.DATA_WIDTH-1:0] REFERENCE_N = -REFERENCE_P;
 
     reg modulator_clock_delay;
-    reg signed [INPUT_WIDTH-1:0] latched_input = 0;
-    reg signed [INPUT_WIDTH+GUARD_BITS-1:0] integrator_1 = 0;
-    reg signed [INPUT_WIDTH+GUARD_BITS-1:0] integrator_2 = 0;
-    reg signed [INPUT_WIDTH+GUARD_BITS-1:0] comparator_in = 0;
-    wire signed [INPUT_WIDTH-1:0] feedback;
+    reg signed [data_in.DATA_WIDTH-1:0] latched_input = 0;
+    reg signed [data_in.DATA_WIDTH+GUARD_BITS-1:0] integrator_1 = 0;
+    reg signed [data_in.DATA_WIDTH+GUARD_BITS-1:0] integrator_2 = 0;
+    reg signed [data_in.DATA_WIDTH+GUARD_BITS-1:0] comparator_in = 0;
+    wire signed [data_in.DATA_WIDTH-1:0] feedback;
 
 
     assign feedback = data_out ? REFERENCE_P : REFERENCE_N;
