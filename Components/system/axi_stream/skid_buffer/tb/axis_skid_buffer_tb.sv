@@ -12,8 +12,7 @@ module axis_skid_buffer_tb();
     axi_stream consumer();
 
     axis_skid_buffer #(
-        .REGISTER_OUTPUT(1),
-        .DATA_WIDTH(32)
+        .REGISTER_OUTPUT(1)
     ) DUT (
         .clock(clk),
         .reset(rst),

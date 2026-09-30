@@ -84,10 +84,7 @@ module noise_generator #(
 
     axis_skid_buffer #(
         .REGISTER_OUTPUT(1),
-        .LATCHING(0),
-        .DATA_WIDTH(data_out.DATA_WIDTH),
-        .DEST_WIDTH(data_out.DEST_WIDTH),
-        .USER_WIDTH(data_out.USER_WIDTH)
+        .LATCHING(0)
     ) output_reg (
         .clock(clock),
         .reset(reset),

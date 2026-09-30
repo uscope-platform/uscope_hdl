@@ -16,10 +16,7 @@
 
 module axis_skid_buffer #(
     parameter REGISTER_OUTPUT = 1,
-    parameter LATCHING = 0,
-    parameter DATA_WIDTH = 32,
-    parameter DEST_WIDTH = 32,
-    parameter USER_WIDTH = 32
+    parameter LATCHING = 0
 ) (
     input wire clock,
     input wire reset,
@@ -57,9 +54,9 @@ module axis_skid_buffer #(
 
     assign axis_in.ready = registered_ready_reset & !input_skidding;
 
-    reg	[DATA_WIDTH-1:0] data_buffer = 0;
-    reg	[DATA_WIDTH-1:0] dest_buffer = 0;
-    reg	[DATA_WIDTH-1:0] user_buffer = 0;
+    reg	[$bits(axis_in.data)-1:0] data_buffer = 0;
+    reg	[$bits(axis_in.dest)-1:0] dest_buffer = 0;
+    reg	[$bits(axis_in.user)-1:0] user_buffer = 0;
     reg tlast_buffer = 0;
     // manage buffer
     always_ff @(posedge clock) begin

@@ -36,8 +36,7 @@ module axis_packet_remapper_decoupled #(
 
     axis_skid_buffer #(
         .REGISTER_OUTPUT(1),
-        .LATCHING(1),
-        .DATA_WIDTH(32)
+        .LATCHING(1)
     ) buffer (
         .clock(clock),
         .reset(reset),

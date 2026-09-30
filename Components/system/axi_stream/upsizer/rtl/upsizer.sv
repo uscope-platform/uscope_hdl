@@ -45,10 +45,7 @@ module upsizer#(
 
             axis_skid_buffer #(
                 .REGISTER_OUTPUT(0),
-                .LATCHING(0),
-                .DATA_WIDTH(INPUT_WIDTH),
-                .DEST_WIDTH(DEST_WIDTH),
-                .USER_WIDTH(USER_WIDTH)
+                .LATCHING(0)
             ) backpressure_buffer (
                 .clock(clock),
                 .reset(reset),

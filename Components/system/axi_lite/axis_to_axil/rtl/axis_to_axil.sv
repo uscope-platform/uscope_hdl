@@ -30,10 +30,7 @@ module axis_to_axil (
 
     axis_skid_buffer #(
         .REGISTER_OUTPUT(0),
-        .LATCHING(0),
-        .DATA_WIDTH(32),
-        .DEST_WIDTH(32),
-        .USER_WIDTH(32)
+        .LATCHING(0)
     ) write_skid_buffer (
         .clock(clock),
         .reset(reset),
@@ -43,10 +40,7 @@ module axis_to_axil (
 
     axis_skid_buffer #(
         .REGISTER_OUTPUT(0),
-        .LATCHING(0),
-        .DATA_WIDTH(32),
-        .DEST_WIDTH(32),
-        .USER_WIDTH(32)
+        .LATCHING(0)
     ) read_req_skid_buffer (
         .clock(clock),
         .reset(reset),
