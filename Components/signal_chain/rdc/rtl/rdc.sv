@@ -62,5 +62,11 @@ module rdc #(
         .data_in(excitation_sine)
     );
 
+    product_detector detector (
+        .clock(clock),
+        .reset(reset),
+        .analog_in(analog_in),
+        .excitation(excitation_sine)
+    );
 
 endmodule

@@ -1,0 +1,16 @@
+{
+    "general":{
+        "project_name":"resolver_to_digital",
+        "target_part":"xc7z020clg400",
+        "synth_modules":[],
+        "synth_tl": "rdc",
+        "sim_modules":[],
+        "sim_tl":"rdc_tb",
+        "include_paths":[
+            "/public/Components/Common"
+        ]
+    },
+    "scripts":[],
+    "excluded_modules":[],
+    "constraints": []
+}
