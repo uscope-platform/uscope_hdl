@@ -15,7 +15,7 @@
 
 `timescale 10ns / 1ns
 
-module axi_stream_extractor #(parameter DATA_WIDTH = 16, DEST_WIDTH = 8, REGISTERED = 0)(
+module axi_stream_extractor #( DEST_WIDTH = 8, REGISTERED = 0)(
     input wire clock,
     input wire [DEST_WIDTH-1:0] selector,
     input wire [DEST_WIDTH-1:0] out_dest,
