@@ -17,8 +17,8 @@
 
 module CIC_filter #(
     parameter integer N_STAGES = 3,
-    parameter integer RATIO_WIDTH = 5,
-    parameter integer PROCESSING_RESOLUTION = 24
+    parameter integer MAX_RATIO = 32,
+    parameter integer RATIO_WIDTH = $clog2(MAX_RATIO)
 )(
     input wire clock,
     input wire reset,
@@ -27,6 +27,9 @@ module CIC_filter #(
     axi_stream.master data_out
 );
     
+    localparam integer PROCESSING_RESOLUTION = $bits(data_in.data)+ $clog2( 64'(MAX_RATIO) ** N_STAGES );
+
+
     axi_stream #(
         .DATA_WIDTH(data_in.DATA_WIDTH),
         .USER_WIDTH(data_in.USER_WIDTH),
