@@ -1,0 +1,16 @@
+{
+    "general":{
+        "project_name":"CORDIC_arctangent",
+        "target_part":"xc7z020clg400",
+        "synth_modules":[],
+        "synth_tl": "CORDIC_atan",
+        "sim_modules":[],
+        "sim_tl":"CORDIC_atan_tb",
+        "include_paths":[
+            "/public/Components/Common"
+        ]
+    },
+    "scripts":[],
+    "excluded_modules":[],
+    "constraints": []
+}

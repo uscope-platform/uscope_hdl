@@ -1,3 +1,19 @@
+// Copyright 2021 Filippo Savi
+// Author: Filippo Savi <filssavi@gmail.com>
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+`timescale 10 ns / 1 ns
+
 module CORDIC_quadrant_selector#(
     parameter integer RESOLUTION = 16
 )(
@@ -8,8 +24,12 @@ module CORDIC_quadrant_selector#(
     axi_stream.master prescaled_out
 );
 
-    localparam PI = (2**ANGLE_WIDTH)/2
-    localparam PI_2 = PI/2
+    localparam PI = (2**RESOLUTION)/2;
+    localparam PI_2 = PI/2;
+    // Fixed-point angle representations (Q2.14 scaling assumed)
+    localparam signed [RESOLUTION-1:0] PI_2   = (1 << (RESOLUTION - 3)); // 90 deg
+    localparam signed [RESOLUTION-1:0] PI     = (1 << (RESOLUTION - 2)); // 180 deg
+    localparam signed [RESOLUTION-1:0] THREE_PI_2 = PI + PI_2;           // 270 deg (-90 deg)
 
     axi_stream #(
         .DATA_WIDTH(x_in.DATA_WIDTH),
@@ -20,14 +40,14 @@ module CORDIC_quadrant_selector#(
     axis_skid_buffer #(
         .REGISTER_OUTPUT(0),
         .LATCHING(0)
-    ) in_skid (
+    ) in_skid_x (
         .clock(clock),
         .reset(reset),
         .axis_in(x_in),
         .axis_out(x_buf)
     );
 
-    assign x_in.ready = prescaled_out.ready;
+    assign x_buf.ready = prescaled_out.ready;
 
 
     axi_stream #(
@@ -39,14 +59,14 @@ module CORDIC_quadrant_selector#(
     axis_skid_buffer #(
         .REGISTER_OUTPUT(0),
         .LATCHING(0)
-    ) in_skid (
+    ) in_skid_y (
         .clock(clock),
         .reset(reset),
         .axis_in(y_in),
         .axis_out(y_buf)
     );
 
-    assign y_in.ready = prescaled_out.ready;
+    assign y_buf.ready = prescaled_out.ready;
 
     reg new_sample = 0;
     always_ff @( posedge clock ) begin
