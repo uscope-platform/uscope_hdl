@@ -171,8 +171,7 @@ module batcher_sorter_8_serial_tb ();
 
     event data_in_started;
     event check_done;
-
-    integer data_length = 0;
+    
     batcher_sorter_serial_stimulus stim = new();
 
     initial begin

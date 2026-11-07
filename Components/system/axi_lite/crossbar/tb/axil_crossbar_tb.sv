@@ -58,7 +58,6 @@ module axil_crossbar_tb();
     );
 
 
-    logic [31:0] input_registers [2:0] = {0,0,0};
     logic [31:0] output_registers_2 [2:0];
 
     axil_simple_register_cu #(

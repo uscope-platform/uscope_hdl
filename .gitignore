@@ -149,3 +149,4 @@ Components/system/floating_point_ip/fti/fti
 **.prefs
 .project
 .library_mapping.xml
+Components/system/fcore/sim_verilator.sh
