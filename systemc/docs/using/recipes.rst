@@ -36,11 +36,22 @@ cycle:
 The device sees back pressure, and so does the master. Leave out ``check_throughput`` and ``check_latency``, which assume
 a sink that is always ready.
 
-A device with two streams in
-----------------------------
+A device with several streams in
+--------------------------------
 
-Make one ``axis_source`` for each, ``connect`` both, and write to the master of each from the sequence. A sequence that
-needs them to move at the same time can start more than one thread with ``spawn``.
+Make one ``axis_source`` for each and ``connect`` them all. To put a beat on every stream in the same cycle, call
+``put`` on each master and wait one cycle:
+
+.. code-block:: cpp
+
+    a.put(operand_a, dest, user);
+    b.put(operand_b);
+    op.put(subtract);
+    clk.wait_cycles(1);
+
+``put`` returns at once and ignores ``ready``, so it also drives a stream that has no back pressure. ``write`` is
+``put`` followed by the wait for ``ready``. The test of the adder model in
+``Components/system/fcore/alu/ip/tb/systemc/adder`` drives three input streams this way.
 
 A different kind of check
 -------------------------

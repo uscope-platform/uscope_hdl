@@ -36,6 +36,12 @@ namespace sctb {
         void write(const axis_beat &beat);
         void write(uint64_t data, uint32_t dest = 0, uint32_t user = 0, bool tlast = false);
 
+        /// Puts the beat on the bus for the next clock edge and returns at once, whatever ready is. It is for a
+        /// stream without back pressure, and for putting a beat on several streams in the same cycle: the caller
+        /// waits for the edge, for example with clock::wait_cycles(1)
+        void put(const axis_beat &beat);
+        void put(uint64_t data, uint32_t dest = 0, uint32_t user = 0, bool tlast = false);
+
         /// Leaves the bus idle for a number of cycles
         void idle(int64_t cycles = 1);
 
