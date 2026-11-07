@@ -1,0 +1,17 @@
+{
+    "general":{
+        "project_name":"fp64_to_fp32",
+        "target_part":"xc7z020clg400",
+        "synth_modules":[],
+        "synth_tl": "fp_fp64_to_fp32",
+        "sim_modules":[],
+        "sim_tl":"fp_fp64_to_fp32_tb",
+        "include_paths":[
+            "/public/Components/Common"
+        ]
+    },
+    "scripts":[],
+    "excluded_modules":[
+    ],
+    "constraints": []
+}
