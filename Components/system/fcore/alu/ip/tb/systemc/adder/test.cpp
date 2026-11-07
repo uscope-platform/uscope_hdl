@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "Vfcore_adder_ip_shim.h"
+#include "fp32.hpp"
 #include "sctb/axis.hpp"
 #include "sctb/checks.hpp"
 #include "sctb/clocking.hpp"
@@ -39,57 +40,22 @@
 /// operand as it is added
 class fcore_adder_model {
 public:
-    static constexpr uint32_t sign_mask = 0x80000000;
-
-    // random words are almost never denormal, infinite or NaN, and the sum of two random floats almost never cancels or
-    // overflows, so those cases are generated on purpose
-    uint32_t generate_operand(std::mt19937_64 &rng) const {
-        const uint32_t value = rng();
-        switch(rng() % 8){
-            case 0:
-                // zero or denormal
-                return value & ~exponent_mask;
-            case 1:
-                // infinity or NaN
-                return (rng() % 2) ? (value | exponent_mask) & ~mantissa_mask : value | exponent_mask;
-            case 2:
-                // the bottom of the normal range, where differences are denormal
-                return (value & ~exponent_mask) | ((rng() % 3) << 23);
-            case 3:
-                // the top of the range, where sums overflow
-                return (value & ~exponent_mask) | ((0xFD + rng() % 2) << 23);
-            default:
-                return value;
-        }
-    }
-
     void generate(std::mt19937_64 &rng, uint32_t &a, uint32_t &b) const {
-        a = generate_operand(rng);
+        a = fp32::generate(rng);
         if(rng() % 4 == 0){
             // close to the opposite of a, which cancels most of the bits or all of them
-            b = (a ^ sign_mask) ^ (static_cast<uint32_t>(rng()) & (0xFFFFFFFFu >> (rng() % 32)));
+            b = (a ^ fp32::sign_mask) ^ (static_cast<uint32_t>(rng()) & (0xFFFFFFFFu >> (rng() % 32)));
         } else {
-            b = generate_operand(rng);
+            b = fp32::generate(rng);
         }
     }
 
-    uint32_t reference(uint32_t a, uint32_t added) const {
-        uint32_t sum = raw_sum(a, added);
-        // a denormal result is flushed
-        if((sum & exponent_mask) == 0) sum &= sign_mask;
-        return sum;
-    }
-
-    // a NaN only has to stay a NaN, its payload is not checked
-    bool matches(uint32_t got, uint32_t expected) const {
-        if(is_nan(expected)) return is_nan(got);
-        return got == expected;
-    }
+    uint32_t reference(uint32_t a, uint32_t added) const {return fp32::flush_denormal(raw_sum(a, added));}
 
     /// Empty when the result is the expected one, otherwise what is wrong with it. The tag is the operands
     std::string compare(const sctb::axis_beat &expected, const sctb::axis_beat &actual, uint64_t tag) const {
         const std::string operands = sctb::hex(tag & 0xFFFFFFFF, 8) + " + " + sctb::hex(tag >> 32, 8);
-        if(!matches(actual.data, expected.data)){
+        if(!fp32::matches(actual.data, expected.data)){
             return sctb::format("wrong result: %s, out = %s, expected = %s", operands.c_str(),
                                 sctb::hex(actual.data, 8).c_str(), sctb::hex(expected.data, 8).c_str());
         }
@@ -103,40 +69,14 @@ public:
 
     static uint64_t get_tag(uint32_t a, uint32_t added) {return a | (static_cast<uint64_t>(added) << 32);}
 
-    static std::vector<std::string> get_class_names() {
-        return {"zero", "flushed denormal", "normal", "overflow", "infinity operand", "nan"};
-    }
-
     /// Which kind of result the operands give
-    size_t classify(uint32_t a, uint32_t added) const {
-        const uint32_t sum = raw_sum(a, added);
-        const uint32_t exponent = sum & exponent_mask;
-        if(is_nan(sum)) return 5;
-        if(exponent == exponent_mask) return (is_infinite(a) || is_infinite(added)) ? 4 : 3;
-        if(exponent == 0) return (sum & mantissa_mask) == 0 ? 0 : 1;
-        return 2;
-    }
+    size_t classify(uint32_t a, uint32_t added) const {return fp32::binary_class(raw_sum(a, added), a, added);}
 
     static std::vector<std::string> get_operation_names() {return {"add", "subtract"};}
 
 private:
-    static constexpr uint32_t exponent_mask = 0x7F800000;
-    static constexpr uint32_t mantissa_mask = 0x007FFFFF;
-
-    static bool is_nan(uint32_t bits) {return (bits & exponent_mask) == exponent_mask && (bits & mantissa_mask) != 0;}
-    static bool is_infinite(uint32_t bits) {return (bits & ~sign_mask) == exponent_mask;}
-
     // the sum before a denormal is flushed
-    static uint32_t raw_sum(uint32_t a, uint32_t added) {
-        float fa;
-        float fb;
-        std::memcpy(&fa, &a, sizeof(fa));
-        std::memcpy(&fb, &added, sizeof(fb));
-        const float sum = fa + fb;
-        uint32_t bits;
-        std::memcpy(&bits, &sum, sizeof(bits));
-        return bits;
-    }
+    static uint32_t raw_sum(uint32_t a, uint32_t added) {return fp32::to_bits(fp32::to_float(a) + fp32::to_float(added));}
 };
 
 /// Reset, a stream of random operations, wait for the pipeline to empty, then the checks of the totals.
@@ -162,7 +102,7 @@ public:
             uint32_t operand_b;
             model.generate(rng, operand_a, operand_b);
             const bool subtract = (rng() & 1) != 0;
-            const uint32_t added = subtract ? operand_b ^ fcore_adder_model::sign_mask : operand_b;
+            const uint32_t added = subtract ? operand_b ^ fp32::sign_mask : operand_b;
 
             // the sideband of the result is the one of operand a, the IP has no dest and no tlast
             a.put(operand_a, n, n + user_offset, (n & 1) != 0);
@@ -247,7 +187,7 @@ int sc_main(int argc, char *argv[]) {
 
     // the checking: the sequence says what each operation must give, the sink hands what comes out to the scoreboard
     sctb::scoreboard scoreboard("fcore_adder_ip", model, &fcore_adder_model::compare, clk.get_period());
-    sctb::coverpoint result_classes("result class", model.get_class_names());
+    sctb::coverpoint result_classes("result class", fp32::binary_class_names());
     sctb::coverpoint operations("operation", model.get_operation_names());
     sctb::covergroup coverage;
     coverage.add(result_classes);

@@ -30,6 +30,7 @@ add_subdirectory(${COMPONENTS}/../systemc sctb)
 
 add_executable(test test.cpp)
 target_link_libraries(test PRIVATE sctb)
+target_include_directories(test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/..)
 
 # interfaces_no_timing.sv is interfaces.sv without the tasks that need the timing support of Verilator
 # Verilator defines VERILATOR, which makes fcore_adder_ip a model built from the two conversion modules
