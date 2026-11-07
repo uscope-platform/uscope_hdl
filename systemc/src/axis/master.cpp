@@ -23,7 +23,7 @@ namespace sctb {
         drive_idle();
     }
 
-    void axis_master::write(const axis_beat &beat) {
+    void axis_master::put(const axis_beat &beat) {
         const uint32_t bits = bus.get_data_bits();
         if(bits < 64 && (beat.data >> bits) != 0) {
             reporter::instance().error(format("[%s] the data %s does not fit the %u bits of the stream", bus.data.basename(),
@@ -34,6 +34,14 @@ namespace sctb {
         bus.user.write(beat.user);
         bus.tlast.write(beat.tlast);
         bus.valid.write(true);
+    }
+
+    void axis_master::put(uint64_t data, uint32_t dest, uint32_t user, bool tlast) {
+        put({data, dest, user, tlast});
+    }
+
+    void axis_master::write(const axis_beat &beat) {
+        put(beat);
         do {
             wait(clk.posedge());
         } while(!bus.ready.read());

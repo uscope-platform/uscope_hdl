@@ -79,6 +79,15 @@ Master
 
    .. cpp:function:: void write(uint64_t data, uint32_t dest = 0, uint32_t user = 0, bool tlast = false)
 
+   .. cpp:function:: void put(const axis_beat &beat)
+
+      Puts the beat on the bus for the next clock edge and returns at once, whatever ``ready`` is. The caller waits for
+      the edge, for example with :cpp:func:`clock::wait_cycles`. It is for a stream that has no back pressure, and for
+      putting a beat on several streams in the same cycle. A beat with bits set above the width of the stream is
+      reported as an error, as with ``write``.
+
+   .. cpp:function:: void put(uint64_t data, uint32_t dest = 0, uint32_t user = 0, bool tlast = false)
+
    .. cpp:function:: void idle(int64_t cycles = 1)
 
       Leaves the bus idle for a number of cycles.
