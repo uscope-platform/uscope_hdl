@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 330" font-family="Helvetica, Arial, sans-serif" font-size="14">
+  <title>Structure of a testbench</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#37474f"/>
+    </marker>
+  </defs>
+
+  <!-- signal path -->
+  <g fill="#eceff1" stroke="#37474f" stroke-width="1.5">
+    <rect x="20"  y="40" width="130" height="50" rx="4"/>
+    <rect x="215" y="40" width="130" height="50" rx="4"/>
+    <rect x="445" y="40" width="130" height="50" rx="4" fill="#cfd8dc"/>
+    <rect x="675" y="40" width="130" height="50" rx="4"/>
+  </g>
+  <g text-anchor="middle" fill="#212121">
+    <text x="85"  y="62">test sequence</text><text x="85"  y="80" font-size="12" fill="#546e7a">thread</text>
+    <text x="280" y="62">axis_master</text><text x="280" y="80" font-size="12" fill="#546e7a">drives</text>
+    <text x="510" y="70" font-weight="bold">DUT</text>
+    <text x="740" y="62">axis_slave</text><text x="740" y="80" font-size="12" fill="#546e7a">answers ready</text>
+  </g>
+  <g stroke="#37474f" stroke-width="1.5" fill="none" marker-end="url(#arrow)">
+    <line x1="150" y1="65" x2="213" y2="65"/>
+    <line x1="345" y1="65" x2="443" y2="65"/>
+    <line x1="575" y1="65" x2="673" y2="65"/>
+  </g>
+  <g text-anchor="middle" font-size="12" fill="#546e7a">
+    <text x="394" y="56">in bus</text>
+    <text x="624" y="56">out bus</text>
+  </g>
+
+  <!-- checking path: the sequence says what each input must give and which case it is -->
+  <g fill="#eceff1" stroke="#37474f" stroke-width="1.5">
+    <rect x="20"  y="152" width="110" height="50" rx="4"/>
+    <rect x="20"  y="250" width="130" height="50" rx="4"/>
+    <rect x="675" y="152" width="130" height="50" rx="4" fill="#cfd8dc"/>
+  </g>
+  <g text-anchor="middle" fill="#212121">
+    <text x="75"  y="174">reference model</text><text x="75" y="192" font-size="12" fill="#546e7a">expected result</text>
+    <text x="85"  y="272">coverage</text><text x="85" y="290" font-size="12" fill="#546e7a">cases reached</text>
+    <text x="740" y="182" font-weight="bold">scoreboard</text>
+  </g>
+  <g stroke="#37474f" stroke-width="1.5" fill="none" marker-end="url(#arrow)">
+    <line x1="60"  y1="90"  x2="60"  y2="150"/>
+    <line x1="140" y1="90"  x2="140" y2="248"/>
+    <line x1="130" y1="177" x2="673" y2="177"/>
+    <line x1="740" y1="90"  x2="740" y2="150"/>
+  </g>
+  <g font-size="12" fill="#546e7a">
+    <text x="70"  y="124">each input</text>
+    <text x="150" y="228">each input</text>
+    <text x="400" y="170" text-anchor="middle">expected</text>
+    <text x="750" y="124">observed</text>
+  </g>
+</svg>

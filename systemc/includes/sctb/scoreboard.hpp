@@ -1,0 +1,75 @@
+//  Copyright 2026 University of Nottingham
+//  Author: Filippo Savi <filssavi@gmail.com>
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
+#ifndef SCTB_SCOREBOARD_HPP
+#define SCTB_SCOREBOARD_HPP
+
+#include <systemc.h>
+
+#include <cstdint>
+#include <deque>
+#include <functional>
+#include <string>
+
+#include "sctb/axis.hpp"
+
+namespace sctb {
+
+    /// Checks that what comes out of a device is what the reference model said would come out. The beats are
+    /// matched in order. The latency is measured on the way, from the time a beat is expected (when its input
+    /// went in) to the time it is observed (when it came out)
+    class scoreboard {
+    public:
+        /// Returns an empty string when the beats match, otherwise what differs. The tag is the one given to expect()
+        using compare_function = std::function<std::string(const axis_beat &expected, const axis_beat &actual, uint64_t tag)>;
+
+        scoreboard(const std::string &name, compare_function compare, sc_time clock_period);
+        /// The comparison is a member function of an object
+        template<typename T>
+        scoreboard(const std::string &name, const T &object, std::string (T::*method)(const axis_beat &, const axis_beat &, uint64_t) const, sc_time clock_period) :
+            scoreboard(name, std::bind(method, &object, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), clock_period) {}
+
+        /// The tag is whatever the comparison needs to report, for example the input that produced the beat
+        void expect(const axis_beat &beat, uint64_t tag = 0);
+        void observe(const axis_beat &beat);
+
+        /// To be called when the test is over: what is still waiting never came out
+        void finish();
+
+        size_t get_pending() const {return waiting.size();}
+        int64_t get_checked() const {return checked;}
+        /// In clock cycles, only meaningful once something has been checked
+        int64_t get_min_latency() const {return min_latency;}
+        int64_t get_max_latency() const {return max_latency;}
+
+    private:
+        struct waiting_beat {
+            axis_beat beat;
+            uint64_t tag;
+            sc_time time;
+        };
+
+        std::string name;
+        compare_function compare;
+        sc_time clock_period;
+        std::deque<waiting_beat> waiting;
+        int64_t checked = 0;
+        int64_t min_latency = INT64_MAX;
+        int64_t max_latency = INT64_MIN;
+    };
+
+}
+
+#endif //SCTB_SCOREBOARD_HPP
