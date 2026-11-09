@@ -29,6 +29,16 @@ namespace sctb {
             reporter::instance().error(format("[%s] the data %s does not fit the %u bits of the stream", bus.data.basename(),
                                               hex(beat.data, 16).c_str(), bits));
         }
+        const uint32_t dest_bits = bus.get_dest_bits();
+        if(dest_bits < 32 && (beat.dest >> dest_bits) != 0) {
+            reporter::instance().error(format("[%s] the dest %s does not fit the %u bits of the stream", bus.dest.basename(),
+                                              hex(beat.dest, 8).c_str(), dest_bits));
+        }
+        const uint32_t user_bits = bus.get_user_bits();
+        if(user_bits < 32 && (beat.user >> user_bits) != 0) {
+            reporter::instance().error(format("[%s] the user %s does not fit the %u bits of the stream", bus.user.basename(),
+                                              hex(beat.user, 8).c_str(), user_bits));
+        }
         bus.data.write(beat.data);
         bus.dest.write(beat.dest);
         bus.user.write(beat.user);

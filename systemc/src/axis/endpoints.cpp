@@ -17,10 +17,11 @@
 
 namespace sctb {
 
-    axis_source::axis_source(const std::string &stream, const clock &clk, uint32_t data_bits) :
-        name(stream), bus(stream, data_bits), master(bus, clk) {}
+    axis_source::axis_source(const std::string &stream, const clock &clk, uint32_t data_bits, uint32_t dest_bits, uint32_t user_bits) :
+        name(stream), bus(stream, data_bits, dest_bits, user_bits), master(bus, clk) {}
 
-    axis_sink::axis_sink(const std::string &stream, const clock &clk, uint32_t data_bits, double ready_probability, uint64_t seed) :
-        name(stream), bus(stream, data_bits), slave(stream + "_slave", bus, clk, ready_probability, seed) {}
+    axis_sink::axis_sink(const std::string &stream, const clock &clk, uint32_t data_bits, double ready_probability, uint64_t seed,
+                         uint32_t dest_bits, uint32_t user_bits) :
+        name(stream), bus(stream, data_bits, dest_bits, user_bits), slave(stream + "_slave", bus, clk, ready_probability, seed) {}
 
 }

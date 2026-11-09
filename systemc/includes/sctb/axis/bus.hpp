@@ -19,7 +19,9 @@
 #include <systemc.h>
 
 #include <cstdint>
+#include <memory>
 #include <string>
+#include <vector>
 
 namespace sctb {
 
@@ -34,13 +36,19 @@ namespace sctb {
         bool same_sideband(const axis_beat &other) const {return dest == other.dest && user == other.user && tlast == other.tlast;}
     };
 
-    /// The signals of a stream, the interface. The data signal is always 64 bits, the width of the stream is how many
-    /// of them are used: the ones above it are zero, and the waveform shows only the ones below
+    /// The signals of a stream, the interface. The data signal is always 64 bits, and dest and user 32, the width of the
+    /// stream is how many of them are used: the ones above it are zero, and the waveform shows only the ones below.
+    /// The ports of the model can be narrower than the signals, connect_stream adapts them
     class axis_bus {
     public:
-        explicit axis_bus(const std::string &name, uint32_t data_bits = 64);
+        explicit axis_bus(const std::string &name, uint32_t data_bits = 64, uint32_t dest_bits = 32, uint32_t user_bits = 32);
 
         uint32_t get_data_bits() const {return data_bits;}
+        uint32_t get_dest_bits() const {return dest_bits;}
+        uint32_t get_user_bits() const {return user_bits;}
+
+        /// Gives the bus something that has to live as long as it does, the adapters of connect_stream
+        void adopt(std::shared_ptr<void> object) {adopted.push_back(std::move(object));}
 
         sc_signal<bool> valid;
         sc_signal<bool> ready;
@@ -51,6 +59,9 @@ namespace sctb {
 
     private:
         uint32_t data_bits;
+        uint32_t dest_bits;
+        uint32_t user_bits;
+        std::vector<std::shared_ptr<void>> adopted;
     };
 
 }

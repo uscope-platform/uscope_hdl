@@ -19,16 +19,24 @@
 
 namespace sctb {
 
-    axis_bus::axis_bus(const std::string &name, uint32_t width) :
+    axis_bus::axis_bus(const std::string &name, uint32_t width, uint32_t dest_width, uint32_t user_width) :
         valid((name + "_valid").c_str()),
         ready((name + "_ready").c_str()),
         data((name + "_data").c_str()),
         dest((name + "_dest").c_str()),
         user((name + "_user").c_str()),
         tlast((name + "_tlast").c_str()),
-        data_bits(width) {
+        data_bits(width),
+        dest_bits(dest_width),
+        user_bits(user_width) {
         if(width < 1 || width > 64) {
             SC_REPORT_FATAL("sctb", format("the data of the stream %s is %u bits wide, it has to be from 1 to 64", name.c_str(), width).c_str());
+        }
+        if(dest_width < 1 || dest_width > 32) {
+            SC_REPORT_FATAL("sctb", format("the dest of the stream %s is %u bits wide, it has to be from 1 to 32", name.c_str(), dest_width).c_str());
+        }
+        if(user_width < 1 || user_width > 32) {
+            SC_REPORT_FATAL("sctb", format("the user of the stream %s is %u bits wide, it has to be from 1 to 32", name.c_str(), user_width).c_str());
         }
     }
 
