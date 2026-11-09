@@ -17,14 +17,13 @@
 
 // fp_fp32_to_fp64 with plain ports instead of axi_stream interfaces: Verilator can not
 // have interface ports on the top level module, so this is what the SystemC testbench is connected to.
-// The data ports are all 64 bits wide so that the testbench does not depend on the width of the stream, a narrower
-// stream is zero extended
+// The ports have the width of the streams, the testbench adapts to them
 module fp_fp32_to_fp64_shim (
     input wire clock,
     input wire reset,
     input wire in_valid,
     output wire in_ready,
-    input wire [63:0] in_data,
+    input wire [31:0] in_data,
     input wire [31:0] in_dest,
     input wire [31:0] in_user,
     input wire in_tlast,
@@ -40,7 +39,7 @@ module fp_fp32_to_fp64_shim (
     axi_stream #(.DATA_WIDTH(64)) out();
 
     assign in.valid = in_valid;
-    assign in.data = in_data[31:0];
+    assign in.data = in_data;
     assign in.dest = in_dest;
     assign in.user = in_user;
     assign in.tlast = in_tlast;
