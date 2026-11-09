@@ -30,14 +30,27 @@ the stream goes.
 Widths
 ------
 
-Verilator gives a port of up to 32 bits the type ``uint32_t`` and a port of up to 64 bits ``uint64_t``. A bus that
-followed the width of the stream would need to be a template, and so would everything that uses one: the master, the
-monitor, the slave, the endpoints, the connection and the trace. To keep the library free of that, the data signal of a
-bus is always 64 bits and the shim zero extends a narrower stream (``{32'b0, out.data}`` and ``in_data[31:0]``).
+Verilator gives a one bit port the type ``bool``, and otherwise the narrowest of ``uint32_t`` and ``uint64_t`` that
+holds it, or ``uint8_t`` and ``uint16_t`` as well with ``--pins-uint8``. A bus that followed the width of the stream
+would need to be a template, and so would everything that uses one: the master, the monitor, the slave, the endpoints
+and the trace. To keep the library free of that, the data signal of a bus is always 64 bits and dest and user are 32.
 
-The width the stream really has is declared when the stream is made. It is used for what is visible to a person: the
-waveform shows the data with that width, so a 32 bit float can be displayed as one, and a beat that does not fit it is
-reported as an error of the test. A stream wider than 64 bits needs its own signal type.
+``connect_stream`` looks at the type of each port and, when it is narrower than the signal, binds it to a small
+adapter instead of to the signal. The adapter implements the signal interface and forwards to the real signal, so it
+needs no process and adds no delta cycle: what the model reads is the low bits of the signal, and what it writes is
+zero extended into it. The checks of the signal, such as the one that has one writer, still apply. The shim therefore
+only flattens the interface ports, without zero extending anything, and can leave the parameters and other ports as
+they are.
+
+The width the stream really has is declared when the stream is made, ``axis_source("in", clk, 32)``, with the width of
+dest and user after it when they are not 32. It is used for what is visible to a person: the waveform shows the values
+with that width, so a 32 bit float can be displayed as one, and a beat that does not fit it is reported as an error of
+the test. A port can not tell the width a stream has, only the type that holds it, so a declared width that is not the
+width of the design is a mistake of the test. A value that the port can not hold is reported as an error by the
+adapter.
+
+A stream wider than 64 bits needs its own signal type. Verilator gives it a ``sc_bv`` port, which ``connect_stream``
+refuses with a message that names the port.
 
 Timing and ``interfaces_no_timing.sv``
 --------------------------------------

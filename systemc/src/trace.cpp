@@ -98,12 +98,14 @@ namespace sctb {
     void trace::add(const std::string &name, const sc_signal_in_if<uint64_t> &signal) {add_signal(name, signal, 64);}
     void trace::add(const std::string &name, const sc_signal_in_if<uint64_t> &signal, uint32_t bits) {add_signal(name, signal, bits);}
 
+    void trace::add(const std::string &name, const sc_signal_in_if<uint32_t> &signal, uint32_t bits) {add_signal(name, signal, bits);}
+
     void trace::add(const axis_bus &bus) {
         add(bus.valid.basename(), bus.valid);
         add(bus.ready.basename(), bus.ready);
         add(bus.data.basename(), bus.data, bus.get_data_bits());
-        add(bus.dest.basename(), bus.dest);
-        add(bus.user.basename(), bus.user);
+        add(bus.dest.basename(), bus.dest, bus.get_dest_bits());
+        add(bus.user.basename(), bus.user, bus.get_user_bits());
         add(bus.tlast.basename(), bus.tlast);
     }
 

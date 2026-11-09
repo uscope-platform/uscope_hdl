@@ -34,7 +34,7 @@ namespace sctb {
     /// stream going into a device needs
     class axis_source {
     public:
-        axis_source(const std::string &name, const clock &clk, uint32_t data_bits = 64);
+        axis_source(const std::string &name, const clock &clk, uint32_t data_bits = 64, uint32_t dest_bits = 32, uint32_t user_bits = 32);
 
         /// Connects the ports of the model called <name>_valid and so on to the bus
         void connect(const sc_module &model) {connect_stream(bus, model, name);}
@@ -52,7 +52,8 @@ namespace sctb {
     /// stream coming out of a device needs
     class axis_sink {
     public:
-        axis_sink(const std::string &name, const clock &clk, uint32_t data_bits = 64, double ready_probability = 1.0, uint64_t seed = 1);
+        axis_sink(const std::string &name, const clock &clk, uint32_t data_bits = 64, double ready_probability = 1.0, uint64_t seed = 1,
+                  uint32_t dest_bits = 32, uint32_t user_bits = 32);
 
         /// Connects the ports of the model called <name>_valid and so on to the bus
         void connect(const sc_module &model) {connect_stream(bus, model, name);}

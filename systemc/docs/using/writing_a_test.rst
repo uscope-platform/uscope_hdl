@@ -10,7 +10,8 @@ shown is included from the repository, so it is what runs. The files are in
 
 The device has ``axi_stream`` interface ports and a Verilated top module has plain ports, so the device is instantiated
 in a wrapper with plain ports named ``<stream>_valid``, ``_ready``, ``_data``, ``_dest``, ``_user`` and ``_tlast``.
-The data ports are 64 bits and a narrower stream is zero extended, see :doc:`/architecture/verilator_boundary`.
+The ports of the shim can have the width of the stream, ``sctb`` adapts them, see :doc:`/architecture/verilator_boundary`.
+The shim shown here still zero extends its data ports to 64 bits, which is not needed any more.
 
 .. literalinclude:: ../../../Components/system/floating_point_ip/fp32_to_fp64/tb/systemc/fp_fp32_to_fp64_shim.sv
    :language: systemverilog

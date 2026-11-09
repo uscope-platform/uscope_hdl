@@ -4,8 +4,8 @@ AXI stream
 .. cpp:namespace:: sctb
 
 ``axis``. A transfer happens on a rising clock edge where ``valid`` and ``ready`` are both high. This is the
-counterpart of the ``axi_stream`` interface and of ``axis_BFM`` in ``Common``. Data is 64 bits wide, a narrower
-stream is zero extended by the shim.
+counterpart of the ``axi_stream`` interface and of ``axis_BFM`` in ``Common``. The signals of the bus are 64 bits
+wide for the data and 32 for dest and user, and the ports of the model can be narrower, see :cpp:func:`connect_stream`.
 
 Bus and transfer
 ----------------
@@ -26,18 +26,25 @@ Bus and transfer
 
 .. cpp:class:: axis_bus
 
-   The signals of a stream, the interface. The data signal is always 64 bits so that one set of classes serves every
-   the width of a stream. The width of the stream is how many of those bits are used, the ones above it are zero.
+   The signals of a stream, the interface. The data signal is always 64 bits, and dest and user 32, so that one set of
+   classes serves every width of a stream. The width of the stream is how many of those bits are used, the ones above
+   it are zero.
 
-   .. cpp:function:: explicit axis_bus(const std::string &name, uint32_t data_bits = 64)
+   .. cpp:function:: explicit axis_bus(const std::string &name, uint32_t data_bits = 64, uint32_t dest_bits = 32, uint32_t user_bits = 32)
 
       The signals are called ``<name>_valid``, ``<name>_ready``, ``<name>_data``, ``<name>_dest``, ``<name>_user``
-      and ``<name>_tlast``, so they show up with those names in traces. The width is from 1 to 64.
+      and ``<name>_tlast``, so they show up with those names in traces. The width of the data is from 1 to 64, the one
+      of dest and user from 1 to 32.
 
    .. cpp:function:: uint32_t get_data_bits() const
 
       The width of the stream. The waveform shows the data with it, so that a viewer can display a 32 bit float
       as one.
+
+   .. cpp:function:: uint32_t get_dest_bits() const
+   .. cpp:function:: uint32_t get_user_bits() const
+
+      The widths of dest and user, used in the same way.
 
    .. cpp:member:: sc_signal<bool> valid
    .. cpp:member:: sc_signal<bool> ready
@@ -57,7 +64,12 @@ Bus and transfer
        sctb::connect_stream(env.get_input_bus(), dut, "in");
        sctb::connect_stream(env.get_output_bus(), dut, "out");
 
-   A port that is missing, or that is not of the type of the signal (the data of a stream is 64 bits wide), stops the
+   ``valid``, ``ready`` and ``tlast`` have to be one bit. ``_data``, ``_dest`` and ``_user`` can be any width that
+   Verilator gives a ``bool``, ``uint8_t``, ``uint16_t``, ``uint32_t`` or ``uint64_t`` port: a port that is narrower
+   than the signal is connected through an adapter that forwards to it, with no process and no delta cycle in
+   between. A value that the port can not hold is reported as an error instead of being cut off.
+
+   A port that is missing, or of a type that is not one of those (a port wider than 64 bits is a ``sc_bv``), stops the
    simulation at startup with a message that names the port.
 
 Master
@@ -99,7 +111,7 @@ Slave
 
    Answers a bus with ``ready`` and tells its listeners what it received.
 
-   .. cpp:function:: axis_slave(const std::string &name, axis_bus &bus, const clock &clk, double ready_probability = 1.0, uint64_t seed = 1)
+   .. cpp:function:: axis_slave(const std::string &name, axis_bus &bus, const clock &clk, double ready_probability = 1.0, uint64_t seed = 1, uint32_t dest_bits = 32, uint32_t user_bits = 32)
 
       ``ready_probability`` is the chance that ``ready`` is high in a cycle. With 1 it is always high, and the slave
       costs no simulation time. Below 1 it is drawn every cycle from a generator that starts from ``seed``, so the
@@ -140,7 +152,7 @@ device.
 
    The sending end of a stream of the device: the bus and a master that drives it.
 
-   .. cpp:function:: axis_source(const std::string &name, const clock &clk, uint32_t data_bits = 64)
+   .. cpp:function:: axis_source(const std::string &name, const clock &clk, uint32_t data_bits = 64, uint32_t dest_bits = 32, uint32_t user_bits = 32)
 
       The bus signals are called ``<name>_valid`` and so on, as in :cpp:class:`axis_bus`.
 

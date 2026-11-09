@@ -53,8 +53,9 @@ namespace sctb {
         void add(const std::string &name, const sc_signal_in_if<uint64_t> &signal);
         /// Only the lowest bits of the signal are written, for a value that is narrower than the signal that carries it
         void add(const std::string &name, const sc_signal_in_if<uint64_t> &signal, uint32_t bits);
+        void add(const std::string &name, const sc_signal_in_if<uint32_t> &signal, uint32_t bits);
 
-        /// The six signals of a stream, under the names they were given. The data is written with the width of the stream
+        /// The six signals of a stream, under the names they were given. The data, dest and user are written with the width of the stream
         void add(const axis_bus &bus);
         void add(const axis_source &source) {add(source.get_bus());}
         void add(const axis_sink &sink) {add(sink.get_bus());}
