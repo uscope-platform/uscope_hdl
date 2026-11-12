@@ -14,7 +14,7 @@
 // limitations under the License.
 `timescale 10 ns / 1 ns
 
-module CORDIC_atan_tb();
+module CORDIC_atan_tb ();
 
     reg  clock, reset;
 
@@ -24,8 +24,12 @@ module CORDIC_atan_tb();
 
     event config_done;
 
+
+    localparam bit OUTPUT_0_2PI = 0;
+
     CORDIC_atan#(
-        .RESOLUTION(16)
+        .RESOLUTION(16),
+        .OUTPUT_0_2PI(OUTPUT_0_2PI)
     )UUT(
         .clock(clock),
         .reset(reset),
@@ -93,6 +97,39 @@ module CORDIC_atan_tb();
     // Slave driver for the output interface (AXI Stream handshake receiver)
     initial begin
         angle.ready = 1'b1; // Continuously accept outputs from CORDIC
+    end
+
+    // Real valued signals for the waveform viewer
+    real ref_theta, cordic_rad, err_abs, err_rel;
+
+    // wraps an angle difference into [-PI, PI)
+    function automatic real wrap_pi(real a);
+        while (a >= PI) a -= 2.0 * PI;
+        while (a < -PI) a += 2.0 * PI;
+        return a;
+    endfunction
+
+    // The core handles one sample at a time: latch the reference when it takes it
+    real theta_latched;
+    always @(posedge clock) begin
+        if (UUT.initial_condition.valid && UUT.initial_condition.ready) begin
+            theta_latched = theta;
+        end
+    end
+
+    always @(posedge clock) begin
+        if (angle.valid && angle.ready) begin
+            ref_theta  = theta_latched;
+            // 16 bit output, full scale: 32768 = PI
+            if (OUTPUT_0_2PI) begin
+                cordic_rad = $itor(angle.data[15:0]) / 32768.0 * PI;
+            end else begin
+                ref_theta  = wrap_pi(ref_theta);
+                cordic_rad = $itor($signed(angle.data[15:0])) / 32768.0 * PI;
+            end
+            err_abs    = wrap_pi(cordic_rad - ref_theta);
+            err_rel    = (ref_theta != 0.0) ? 100.0 * err_abs / ref_theta : 0.0; // percent
+        end
     end
 
 endmodule

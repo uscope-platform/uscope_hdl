@@ -15,7 +15,8 @@
 `timescale 10 ns / 1 ns
 
 module CORDIC_atan#(
-    parameter integer RESOLUTION = 16
+    parameter integer RESOLUTION = 16,
+    parameter bit OUTPUT_0_2PI = 1'b0 // 0: angle in [-PI, PI), 1: angle in [0, 2*PI)
 )(
     input wire clock,
     input wire reset,
@@ -39,7 +40,8 @@ module CORDIC_atan#(
     );
 
     CORDIC_core#(
-        .RESOLUTION(RESOLUTION)
+        .RESOLUTION(RESOLUTION),
+        .OUTPUT_0_2PI(OUTPUT_0_2PI)
     )serial_core(
         .clock(clock),
         .reset(reset),

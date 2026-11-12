@@ -24,12 +24,8 @@ module CORDIC_quadrant_selector#(
     axi_stream.master prescaled_out
 );
 
-    localparam PI = (2**RESOLUTION)/2;
-    localparam PI_2 = PI/2;
-    // Fixed-point angle representations (Q2.14 scaling assumed)
-    localparam signed [RESOLUTION-1:0] PI_2   = (1 << (RESOLUTION - 3)); // 90 deg
-    localparam signed [RESOLUTION-1:0] PI     = (1 << (RESOLUTION - 2)); // 180 deg
-    localparam signed [RESOLUTION-1:0] THREE_PI_2 = PI + PI_2;           // 270 deg (-90 deg)
+    // Q1.15 scaling: PI = 180 deg = 32768 = 2**(RESOLUTION-1)
+    localparam signed [RESOLUTION-1:0] ANG_PI_2 = 2**(RESOLUTION-2);
 
     axi_stream #(
         .DATA_WIDTH(x_in.DATA_WIDTH),
@@ -49,7 +45,6 @@ module CORDIC_quadrant_selector#(
 
     assign x_buf.ready = prescaled_out.ready;
 
-
     axi_stream #(
         .DATA_WIDTH(y_in.DATA_WIDTH),
         .USER_WIDTH(y_in.USER_WIDTH),
@@ -67,37 +62,55 @@ module CORDIC_quadrant_selector#(
     );
 
     assign y_buf.ready = prescaled_out.ready;
-
+    
     reg new_sample = 0;
-    always_ff @( posedge clock ) begin
+
+    reg signed [15:0] scaled_x = 0;
+    reg signed [15:0] scaled_y = 0;
+    reg signed [15:0] z_start = 0;
+
+    assign prescaled_out.data[15:0] = scaled_x;
+    assign prescaled_out.data[31:16] = scaled_y;
+    assign prescaled_out.user = z_start;
+
+    wire signed [15:0] x_in_b = x_buf.data[15:0];
+    wire signed [15:0] y_in_b = y_buf.data[15:0];
+    
+    always_ff @(posedge clock) begin
         prescaled_out.valid <= 0;
-        if(y_buf.valid && y_buf.ready && x_buf.valid && x_buf.ready)begin
-            if($signed(x_buf.data)<0)begin
-                if($signed(y_buf.data)>=0)begin
-                    prescaled_out.data[15:0] <= -$signed(x_buf.data);
-                    prescaled_out.data[31:16] <= y_buf.data;
-                    prescaled_out.user <= PI_2;
+
+        if (y_buf.valid && y_buf.ready && x_buf.valid && x_buf.ready) begin
+
+
+            // 180-degree pre-rotation for Quadrants II & III (x < 0)
+            if (x_in_b < 0) begin
+                if (y_in_b >= 0) begin
+                    scaled_x <= y_in_b;
+                    scaled_y <= -x_in_b;
+                    z_start <= ANG_PI_2;
                 end else begin
-                    prescaled_out.data[15:0] <= x_buf.data;
-                    prescaled_out.data[31:16] <= -$signed(y_buf.data);
-                    prescaled_out.user <= 3*PI_2;
+                    scaled_x <= -y_in_b;
+                    scaled_y <= x_in_b;
+                    z_start <= -ANG_PI_2;
                 end
             end else begin
-                prescaled_out.data[15:0] <= x_buf.data;
-                prescaled_out.data[31:16] <= y_buf.data;
-                prescaled_out.user <= 0;
+                // Q1 & Q4: Pass through
+                scaled_x <= x_in_b;
+                scaled_y <= y_in_b;
+                z_start <= 16'sd0;
             end
-            if(prescaled_out.ready)begin
+
+            if (prescaled_out.ready) begin
                 prescaled_out.valid <= 1;
             end else begin
                 new_sample <= 1;
             end
         end
-        if(new_sample && prescaled_out.ready) begin
+
+        if (new_sample && prescaled_out.ready) begin
             new_sample <= 0;
             prescaled_out.valid <= 1;
         end
     end
-
 
 endmodule

@@ -16,7 +16,8 @@
 
 module CORDIC_core#(
     parameter integer RESOLUTION = 16,
-    parameter integer GUARD_BITS = 3
+    parameter integer GUARD_BITS = 3,
+    parameter bit OUTPUT_0_2PI = 1'b0 // 0: angle in [-PI, PI) (sign extended), 1: angle in [0, 2*PI) (zero extended)
 )(
     input wire clock,
     input wire reset,
@@ -30,15 +31,15 @@ module CORDIC_core#(
         real scale_factor;
         
         // Scale factor to convert radians to fixed-point integer representation
-        // For signed format (e.g., Q2.14 representing angles up to +/- PI/2):
-        scale_factor = (1 << (RESOLUTION - 2)) / 3.14159265358979323846; 
+        // Full scale: PI = 2**(RESOLUTION-1), matching the quadrant selector
+        scale_factor = (1 << (RESOLUTION - 1)) / 3.14159265358979323846;
 
         for (int i = 0; i < RESOLUTION; i++) begin
             // math.atan(2 ** -i)
             angle_rad = $atan(1.0 / (1 << i)); 
             
             // Convert to fixed-point representation
-            generate_atan_lut[i] = $rtoi(angle_rad * scale_factor);
+            generate_atan_lut[i] = $rtoi($floor(angle_rad * scale_factor + 0.5));
         end
     endfunction
     localparam atan_lut_t ATAN_LUT = generate_atan_lut();
@@ -67,6 +68,11 @@ module CORDIC_core#(
     wire signed [WORK_WIDTH-1:0] y_next = d_pos ? (y_int + x_shift) : (y_int - x_shift);
     wire signed [WORK_WIDTH-1:0] z_next = d_pos ? (z_int - ATAN_LUT[step_counter]) : (z_int + ATAN_LUT[step_counter]);
 
+    // Angle is PI = 2**(RESOLUTION-1) full scale, so the same bits are either
+    // two's complement [-PI, PI) or unsigned [0, 2*PI)
+    localparam integer OUT_WIDTH = out.DATA_WIDTH;
+    wire [RESOLUTION-1:0] z_out = z_next[RESOLUTION-1:0];
+
     always_ff @(posedge clock) begin
 
         out.valid <= 0; 
@@ -87,7 +93,7 @@ module CORDIC_core#(
                 y_int <= y_next;
                 if(step_counter == RESOLUTION-1)begin
                     state <= idle_state;
-                    out.data <= z_next;
+                    out.data <= OUTPUT_0_2PI ? OUT_WIDTH'(z_out) : OUT_WIDTH'($signed(z_out));
                     out.valid <= 1;
                 end else begin
                     z_int <= z_next;
