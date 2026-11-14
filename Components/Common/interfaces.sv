@@ -15,6 +15,11 @@
 `ifndef INTERFACES_SV
 `define INTERFACES_SV
 
+// When VERILATOR is defined the interfaces come from interfaces_no_timing.sv, which has no tasks
+`ifdef VERILATOR
+`include "interfaces_no_timing.sv"
+`else
+
 interface axi_lite #(DATA_WIDTH = 32, ADDR_WIDTH = 32, INTERFACE_NAME = "IF", CLOCK_PERIOD = 10);
     logic [ADDR_WIDTH-1:0] ARADDR;
     logic [2:0] ARPROT;
@@ -343,5 +348,7 @@ interface AXI #(
 
 
 endinterface
+
+`endif
 
 `endif
