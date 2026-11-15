@@ -6,8 +6,9 @@ Scoreboard
 
 A ``scoreboard`` is a queue of the results that the test said would come out, and a comparison.
 
-* ``expect(beat, tag)`` puts a result at the end of the queue and remembers the time. The tag is any 64 bit value that
-  the comparison wants to report, usually the input that produced the beat.
+* ``expect(beat, tag)`` puts a result at the end of the queue and remembers the time. The tag is opaque: the
+  scoreboard stores it and passes it to the comparison unchanged, so it can be the input that produced the beat or
+  anything else the test needs. A comparison that has no use for it takes only the two beats.
 * ``observe(beat)`` takes the oldest expected result, calls the comparison, and reports an error if it returns
   something. The comparison is a member function of an object the test provides, which returns an empty string when
   the beats match and a description of the difference when they do not. The string is built on a mismatch.

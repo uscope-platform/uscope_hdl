@@ -35,16 +35,32 @@ namespace sctb {
     template<typename beat_type = axis_beat<>>
     class scoreboard {
     public:
-        /// Returns an empty string when the beats match, otherwise what differs. The tag is the one given to expect()
+        /// Returns an empty string when the beats match, otherwise what differs. The third argument is the tag given
+        /// to expect(), which the scoreboard carries through and never looks at
         using compare_function = std::function<std::string(const beat_type &expected, const beat_type &actual, uint64_t tag)>;
 
+        /// The comparison of a test that has nothing to say about the input: it is not given the tag
+        using compare_function_without_tag = std::function<std::string(const beat_type &expected, const beat_type &actual)>;
+
         scoreboard(const std::string &name, compare_function compare, sc_time clock_period);
+        scoreboard(const std::string &name, compare_function_without_tag compare, sc_time clock_period);
+
         /// The comparison is a member function of an object
         template<typename T>
         scoreboard(const std::string &name, const T &object, std::string (T::*method)(const beat_type &, const beat_type &, uint64_t) const, sc_time clock_period) :
-            scoreboard(name, std::bind(method, &object, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), clock_period) {}
+            scoreboard(name, [&object, method](const beat_type &expected, const beat_type &actual, uint64_t tag) {
+                return (object.*method)(expected, actual, tag);
+            }, clock_period) {}
 
-        /// The tag is whatever the comparison needs to report, for example the input that produced the beat
+        /// The comparison of a test that has nothing to say about the input
+        template<typename T>
+        scoreboard(const std::string &name, const T &object, std::string (T::*method)(const beat_type &, const beat_type &) const, sc_time clock_period) :
+            scoreboard(name, [&object, method](const beat_type &expected, const beat_type &actual) {
+                return (object.*method)(expected, actual);
+            }, clock_period) {}
+
+        /// The tag is opaque to the scoreboard: it stores it with the expected beat and gives it back to the
+        /// comparison unchanged. It is whatever the test needs to report, for example the input that produced the beat
         void expect(const beat_type &beat, uint64_t tag = 0);
         void observe(const beat_type &beat);
 

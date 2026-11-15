@@ -27,6 +27,12 @@ namespace sctb {
         name(board_name), compare(compare_beats), clock_period(period) {}
 
     template<typename beat_type>
+    scoreboard<beat_type>::scoreboard(const std::string &board_name, compare_function_without_tag compare_beats, sc_time period) :
+        scoreboard(board_name, [compare_beats](const beat_type &expected, const beat_type &actual, uint64_t) {
+            return compare_beats(expected, actual);
+        }, period) {}
+
+    template<typename beat_type>
     void scoreboard<beat_type>::expect(const beat_type &beat, uint64_t tag) {
         waiting.push_back({beat, tag, sc_time_stamp()});
     }
