@@ -27,22 +27,25 @@
 
 namespace sctb {
 
-    /// Only watches a bus, and tells the listeners about every transfer in the cycle it happens
+
+    template <typename data_type = uint64_t, typename dest_type = uint32_t, typename user_type = uint32_t>
     class axis_monitor {
     public:
         axis_monitor(const std::string &name, axis_bus &bus, const clock &clk);
 
-        void add_listener(std::function<void(const axis_beat &)> listener) {listeners.push_back(listener);}
+        void add_listener(std::function<void(const axis_beat<data_type, dest_type, user_type> &)> listener) {listeners.push_back(listener);}
         /// The listener is a member function of an object
         template<typename T>
-        void add_listener(T &object, void (T::*method)(const axis_beat &)) {add_listener(std::bind(method, &object, std::placeholders::_1));}
+        void add_listener(T &object, void (T::*method)(const axis_beat<data_type, dest_type, user_type> &)) {add_listener(std::bind(method, &object, std::placeholders::_1));}
 
     private:
         void sample();
 
         axis_bus &bus;
-        std::vector<std::function<void(const axis_beat &)>> listeners;
+        std::vector<std::function<void(const axis_beat<data_type, dest_type, user_type> &)>> listeners;
     };
+
+    extern template class axis_monitor<>;
 
 }
 

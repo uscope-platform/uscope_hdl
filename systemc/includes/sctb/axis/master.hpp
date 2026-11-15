@@ -26,20 +26,21 @@
 namespace sctb {
 
     /// Drives a bus. The calls block, so they can be made from a thread like the tasks of axis_BFM are called
-    /// from an initial block
+    /// from an initial block. The definitions are in the library, only the default beat is built
+    template <typename data_type = uint64_t, typename dest_type = uint32_t, typename user_type = uint32_t>
     class axis_master {
     public:
         axis_master(axis_bus &bus, const clock &clk);
 
         /// Returns when the beat has been accepted. Consecutive calls send one beat per cycle as long as the
         /// slave is ready
-        void write(const axis_beat &beat);
+        void write(const axis_beat<data_type, dest_type, user_type> &beat);
         void write(uint64_t data, uint32_t dest = 0, uint32_t user = 0, bool tlast = false);
 
         /// Puts the beat on the bus for the next clock edge and returns at once, whatever ready is. It is for a
         /// stream without back pressure, and for putting a beat on several streams in the same cycle: the caller
         /// waits for the edge, for example with clock::wait_cycles(1)
-        void put(const axis_beat &beat);
+        void put(const axis_beat<data_type, dest_type, user_type> &beat);
         void put(uint64_t data, uint32_t dest = 0, uint32_t user = 0, bool tlast = false);
 
         /// Leaves the bus idle for a number of cycles
@@ -51,6 +52,8 @@ namespace sctb {
         axis_bus &bus;
         const clock &clk;
     };
+
+    extern template class axis_master<>;
 
 }
 

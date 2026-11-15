@@ -29,25 +29,27 @@
 
 namespace sctb {
 
-    /// Answers a bus with ready and tells the listeners what it received
+    template <typename data_type = uint64_t, typename dest_type = uint32_t, typename user_type = uint32_t>
     class axis_slave {
     public:
         /// ready_probability is the chance that ready is high in a cycle, with 1 it is always high
         axis_slave(const std::string &name, axis_bus &bus, const clock &clk, double ready_probability = 1.0, uint64_t seed = 1);
 
-        void add_listener(std::function<void(const axis_beat &)> listener) {monitor.add_listener(listener);}
+        void add_listener(std::function<void(const axis_beat<data_type, dest_type, user_type> &)> listener) {monitor.add_listener(listener);}
         template<typename T>
-        void add_listener(T &object, void (T::*method)(const axis_beat &)) {monitor.add_listener(object, method);}
+        void add_listener(T &object, void (T::*method)(const axis_beat<data_type, dest_type, user_type> &)) {monitor.add_listener(object, method);}
 
     private:
         void drive_ready();
 
-        axis_monitor monitor;
+        axis_monitor<data_type, dest_type, user_type> monitor;
         axis_bus &bus;
         double probability;
         std::mt19937_64 rng;
         std::uniform_real_distribution<double> chance;
     };
+
+    extern template class axis_slave<>;
 
 }
 

@@ -17,11 +17,19 @@
 
 namespace sctb {
 
-    axis_source::axis_source(const std::string &stream, const clock &clk, uint32_t data_bits, uint32_t dest_bits, uint32_t user_bits) :
+    template <typename data_type, typename dest_type, typename user_type>
+    axis_source<data_type, dest_type, user_type>::axis_source(const std::string &stream, const clock &clk, uint32_t data_bits, uint32_t dest_bits,
+                                                             uint32_t user_bits) :
         name(stream), bus(stream, data_bits, dest_bits, user_bits), master(bus, clk) {}
 
-    axis_sink::axis_sink(const std::string &stream, const clock &clk, uint32_t data_bits, double ready_probability, uint64_t seed,
-                         uint32_t dest_bits, uint32_t user_bits) :
+    template <typename data_type, typename dest_type, typename user_type>
+    axis_sink<data_type, dest_type, user_type>::axis_sink(const std::string &stream, const clock &clk, uint32_t data_bits, double ready_probability,
+                                                          uint64_t seed, uint32_t dest_bits, uint32_t user_bits) :
         name(stream), bus(stream, data_bits, dest_bits, user_bits), slave(stream + "_slave", bus, clk, ready_probability, seed) {}
+
+    // the beat of the signals of the bus is the one the testbenches use, the specializations of the endpoints with
+    // other types would have to be instantiated here as well
+    template class axis_source<>;
+    template class axis_sink<>;
 
 }

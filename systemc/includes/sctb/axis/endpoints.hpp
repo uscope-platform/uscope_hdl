@@ -32,6 +32,8 @@ namespace sctb {
 
     /// The sending end of a stream of the device: the bus and a master that drives it. It is all the plumbing a
     /// stream going into a device needs
+
+    template <typename data_type = uint64_t, typename dest_type = uint32_t, typename user_type = uint32_t>
     class axis_source {
     public:
         axis_source(const std::string &name, const clock &clk, uint32_t data_bits = 64, uint32_t dest_bits = 32, uint32_t user_bits = 32);
@@ -40,16 +42,15 @@ namespace sctb {
         void connect(const sc_module &model) {connect_stream(bus, model, name);}
 
         const axis_bus &get_bus() const {return bus;}
-        axis_master &get_master() {return master;}
+        axis_master<data_type, dest_type, user_type> &get_master() {return master;}
 
     private:
         std::string name;
         axis_bus bus;
-        axis_master master;
+        axis_master<data_type, dest_type, user_type> master;
     };
 
-    /// The receiving end of a stream of the device: the bus and a slave that answers it. It is all the plumbing a
-    /// stream coming out of a device needs
+    template <typename data_type = uint64_t, typename dest_type = uint32_t, typename user_type = uint32_t>
     class axis_sink {
     public:
         axis_sink(const std::string &name, const clock &clk, uint32_t data_bits = 64, double ready_probability = 1.0, uint64_t seed = 1,
@@ -59,17 +60,20 @@ namespace sctb {
         void connect(const sc_module &model) {connect_stream(bus, model, name);}
 
         const axis_bus &get_bus() const {return bus;}
-        axis_slave &get_slave() {return slave;}
+        axis_slave<data_type, dest_type, user_type> &get_slave() {return slave;}
 
-        void add_listener(std::function<void(const axis_beat &)> listener) {slave.add_listener(listener);}
+        void add_listener(std::function<void(const axis_beat<data_type, dest_type, user_type> &)> listener) {slave.add_listener(listener);}
         template<typename T>
-        void add_listener(T &object, void (T::*method)(const axis_beat &)) {slave.add_listener(object, method);}
+        void add_listener(T &object, void (T::*method)(const axis_beat<data_type, dest_type, user_type> &)) {slave.add_listener(object, method);}
 
     private:
         std::string name;
         axis_bus bus;
-        axis_slave slave;
+        axis_slave<data_type, dest_type, user_type> slave;
     };
+
+    extern template class axis_source<>;
+    extern template class axis_sink<>;
 
 }
 
