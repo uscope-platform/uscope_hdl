@@ -137,9 +137,47 @@ Command line (``options``)
 .. cpp:class:: options
 
    The command line of a test. An option is ``--name=value``, or ``--name`` alone, everything else is a positional
-   argument.
+   argument. ``--help``, or ``-h``, prints the menu of the test and exits, so every test has one without doing
+   anything for it.
 
-   .. cpp:function:: options(int argc, char *argv[])
+   .. code-block:: bash
+
+       ./build/test --help
+
+   .. code-block:: text
+
+       Usage: test [vectors] [options]
+
+       Arguments:
+         vectors   how many vectors to send, the test has a default
+
+       Options:
+         --trace=<file>            write the waveform to file, FST format
+         --trace-start=<cycle>     the first cycle that is written, 0 by default
+         --trace-cycles=<cycles>   how many cycles are written, all of them by default
+         --help, -h                print this menu and exit
+
+   .. cpp:struct:: help_entry
+
+      One line of the menu.
+
+      .. cpp:member:: std::string name
+
+      .. cpp:member:: std::string description
+
+   .. cpp:function:: options(int argc, char *argv[], std::initializer_list<help_entry> arguments = {{"vectors", "how many vectors to send, the test has a default"}})
+
+      ``arguments`` are the positional arguments of the test, the ones the menu describes. They default to the number
+      of vectors, which is what every test takes: a test that takes something else, or that wants to say what its
+      default is, passes its own list.
+
+      .. code-block:: cpp
+
+          const sctb::options options(argc, argv, {{"vectors", "how many vectors to send, 100000 by default"}});
+
+   .. cpp:function:: static void print_help(const std::string &program, std::initializer_list<help_entry> arguments = {{"vectors", "how many vectors to send, the test has a default"}})
+
+      The menu, for a test that wants to print it on something other than ``--help``.
 
    .. cpp:function:: bool has(const std::string &name) const
 
