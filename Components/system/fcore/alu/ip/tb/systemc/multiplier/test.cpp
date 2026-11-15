@@ -46,7 +46,7 @@ public:
     uint32_t reference(uint32_t a, uint32_t b) const {return fp32::flush_denormal(raw_product(a, b));}
 
     /// Empty when the result is the expected one, otherwise what is wrong with it. The tag is the operands
-    std::string compare(const sctb::axis_beat &expected, const sctb::axis_beat &actual, uint64_t tag) const {
+    std::string compare(const sctb::axis_beat<> &expected, const sctb::axis_beat<> &actual, uint64_t tag) const {
         const std::string operands = sctb::hex(tag & 0xFFFFFFFF, 8) + " * " + sctb::hex(tag >> 32, 8);
         if(!fp32::matches(actual.data, expected.data)){
             return sctb::format("wrong result: %s, out = %s, expected = %s", operands.c_str(),
@@ -75,8 +75,8 @@ private:
 /// the scoreboard compares it with what comes out
 class fcore_multiplier_sequence {
 public:
-    fcore_multiplier_sequence(const fcore_multiplier_model &model, sctb::axis_source &operand_a, sctb::axis_source &operand_b, const sctb::clock &clk,
-                   sc_signal<bool> &reset, sctb::scoreboard &scoreboard, sctb::coverpoint &result_classes,
+    fcore_multiplier_sequence(const fcore_multiplier_model &model, sctb::axis_source<> &operand_a, sctb::axis_source<> &operand_b, const sctb::clock &clk,
+                   sc_signal<bool> &reset, sctb::scoreboard<> &scoreboard, sctb::coverpoint &result_classes,
                    sctb::covergroup &coverage, int64_t n_vectors) :
         model(model), a(operand_a.get_master()), b(operand_b.get_master()), clk(clk), reset(reset), scoreboard(scoreboard),
         result_classes(result_classes), coverage(coverage), n_vectors(n_vectors), rng(1) {}
@@ -122,11 +122,11 @@ private:
     static constexpr uint32_t user_offset = 5;
 
     const fcore_multiplier_model &model;
-    sctb::axis_master &a;
-    sctb::axis_master &b;
+    sctb::axis_master<> &a;
+    sctb::axis_master<> &b;
     const sctb::clock &clk;
     sc_signal<bool> &reset;
-    sctb::scoreboard &scoreboard;
+    sctb::scoreboard<> &scoreboard;
     sctb::coverpoint &result_classes;
     sctb::covergroup &coverage;
     int64_t n_vectors;
@@ -152,9 +152,9 @@ int sc_main(int argc, char *argv[]) {
     dut.reset(reset);
 
     // the two streams going in, driven, and the one coming out, answered and watched
-    sctb::axis_source operand_a("a", clk, 32);
-    sctb::axis_source operand_b("b", clk, 32);
-    sctb::axis_sink result("result", clk, 32);
+    sctb::axis_source<> operand_a("a", clk, 32);
+    sctb::axis_source<> operand_b("b", clk, 32);
+    sctb::axis_sink<> result("result", clk, 32);
     operand_a.connect(dut);
     operand_b.connect(dut);
     result.connect(dut);
@@ -167,12 +167,12 @@ int sc_main(int argc, char *argv[]) {
     trace.add(result);
 
     // the checking: the sequence says what each operation must give, the sink hands what comes out to the scoreboard
-    sctb::scoreboard scoreboard("fcore_multiplier_ip", model, &fcore_multiplier_model::compare, clk.get_period());
+    sctb::scoreboard<> scoreboard("fcore_multiplier_ip", model, &fcore_multiplier_model::compare, clk.get_period());
     sctb::coverpoint result_classes("result class", fp32::binary_class_names());
     sctb::covergroup coverage;
     coverage.add(result_classes);
 
-    result.add_listener(scoreboard, &sctb::scoreboard::observe);
+    result.add_listener(scoreboard, &sctb::scoreboard<>::observe);
 
     fcore_multiplier_sequence sequence(model, operand_a, operand_b, clk, reset, scoreboard, result_classes, coverage, n_vectors);
     sctb::spawn("sequence", sequence, &fcore_multiplier_sequence::run);

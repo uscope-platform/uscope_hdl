@@ -53,7 +53,7 @@ public:
     uint32_t reference(uint32_t a, uint32_t added) const {return fp32::flush_denormal(raw_sum(a, added));}
 
     /// Empty when the result is the expected one, otherwise what is wrong with it. The tag is the operands
-    std::string compare(const sctb::axis_beat &expected, const sctb::axis_beat &actual, uint64_t tag) const {
+    std::string compare(const sctb::axis_beat<> &expected, const sctb::axis_beat<> &actual, uint64_t tag) const {
         const std::string operands = sctb::hex(tag & 0xFFFFFFFF, 8) + " + " + sctb::hex(tag >> 32, 8);
         if(!fp32::matches(actual.data, expected.data)){
             return sctb::format("wrong result: %s, out = %s, expected = %s", operands.c_str(),
@@ -84,8 +84,8 @@ private:
 /// after, the scoreboard compares it with what comes out
 class fcore_adder_sequence {
 public:
-    fcore_adder_sequence(const fcore_adder_model &model, sctb::axis_source &operand_a, sctb::axis_source &operand_b,
-                         sctb::axis_source &operation, const sctb::clock &clk, sc_signal<bool> &reset, sctb::scoreboard &scoreboard,
+    fcore_adder_sequence(const fcore_adder_model &model, sctb::axis_source<> &operand_a, sctb::axis_source<> &operand_b,
+                         sctb::axis_source<> &operation, const sctb::clock &clk, sc_signal<bool> &reset, sctb::scoreboard<> &scoreboard,
                          sctb::coverpoint &result_classes, sctb::coverpoint &operations, sctb::covergroup &coverage, int64_t n_vectors) :
         model(model), a(operand_a.get_master()), b(operand_b.get_master()), op(operation.get_master()), clk(clk), reset(reset),
         scoreboard(scoreboard), result_classes(result_classes), operations(operations), coverage(coverage), n_vectors(n_vectors), rng(1) {}
@@ -136,12 +136,12 @@ private:
     static constexpr uint32_t user_offset = 5;
 
     const fcore_adder_model &model;
-    sctb::axis_master &a;
-    sctb::axis_master &b;
-    sctb::axis_master &op;
+    sctb::axis_master<> &a;
+    sctb::axis_master<> &b;
+    sctb::axis_master<> &op;
     const sctb::clock &clk;
     sc_signal<bool> &reset;
-    sctb::scoreboard &scoreboard;
+    sctb::scoreboard<> &scoreboard;
     sctb::coverpoint &result_classes;
     sctb::coverpoint &operations;
     sctb::covergroup &coverage;
@@ -168,10 +168,10 @@ int sc_main(int argc, char *argv[]) {
     dut.reset(reset);
 
     // the three streams going in, driven, and the one coming out, answered and watched
-    sctb::axis_source operand_a("a", clk, 32);
-    sctb::axis_source operand_b("b", clk, 32);
-    sctb::axis_source operation("op", clk, 32);
-    sctb::axis_sink result("result", clk, 32);
+    sctb::axis_source<> operand_a("a", clk, 32);
+    sctb::axis_source<> operand_b("b", clk, 32);
+    sctb::axis_source<> operation("op", clk, 32);
+    sctb::axis_sink<> result("result", clk, 32);
     operand_a.connect(dut);
     operand_b.connect(dut);
     operation.connect(dut);
@@ -186,14 +186,14 @@ int sc_main(int argc, char *argv[]) {
     trace.add(result);
 
     // the checking: the sequence says what each operation must give, the sink hands what comes out to the scoreboard
-    sctb::scoreboard scoreboard("fcore_adder_ip", model, &fcore_adder_model::compare, clk.get_period());
+    sctb::scoreboard<> scoreboard("fcore_adder_ip", model, &fcore_adder_model::compare, clk.get_period());
     sctb::coverpoint result_classes("result class", fp32::binary_class_names());
     sctb::coverpoint operations("operation", model.get_operation_names());
     sctb::covergroup coverage;
     coverage.add(result_classes);
     coverage.add(operations);
 
-    result.add_listener(scoreboard, &sctb::scoreboard::observe);
+    result.add_listener(scoreboard, &sctb::scoreboard<>::observe);
 
     fcore_adder_sequence sequence(model, operand_a, operand_b, operation, clk, reset, scoreboard, result_classes, operations, coverage, n_vectors);
     sctb::spawn("sequence", sequence, &fcore_adder_sequence::run);

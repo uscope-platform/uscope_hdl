@@ -83,7 +83,7 @@ public:
     }
 
     /// Empty when the result is the expected one, otherwise what is wrong with it
-    std::string compare(const sctb::axis_beat &expected, const sctb::axis_beat &actual, uint64_t input) const {
+    std::string compare(const sctb::axis_beat<> &expected, const sctb::axis_beat<> &actual, uint64_t input) const {
         if(!matches(actual.data, expected.data)){
             return sctb::format("wrong result: in = %s, out = %s, expected = %s", sctb::hex(input, 8).c_str(),
                                 sctb::hex(actual.data, 16).c_str(), sctb::hex(expected.data, 16).c_str());
@@ -111,8 +111,8 @@ private:
 /// Every input is sent and the result it must give is said right after, the scoreboard compares it with what comes out
 class fp32_to_fp64_sequence {
 public:
-    fp32_to_fp64_sequence(const fp32_to_fp64_model &model, sctb::axis_source &input, const sctb::clock &clk, sc_signal<bool> &reset,
-                    sctb::scoreboard &scoreboard, sctb::coverpoint &input_classes, sctb::covergroup &coverage, int64_t n_vectors) :
+    fp32_to_fp64_sequence(const fp32_to_fp64_model &model, sctb::axis_source<> &input, const sctb::clock &clk, sc_signal<bool> &reset,
+                    sctb::scoreboard<> &scoreboard, sctb::coverpoint &input_classes, sctb::covergroup &coverage, int64_t n_vectors) :
         model(model), master(input.get_master()), clk(clk), reset(reset), scoreboard(scoreboard), input_classes(input_classes), coverage(coverage), n_vectors(n_vectors), rng(1) {}
 
     void run() {
@@ -123,7 +123,7 @@ public:
         for(int64_t i = 0; i < n_vectors; i++){
             progress.update(i);
             const auto n = static_cast<uint32_t>(i);
-            const sctb::axis_beat beat = {model.generate(rng), n, n + user_offset, (n & 1) != 0};
+            const sctb::axis_beat<> beat = {model.generate(rng), n, n + user_offset, (n & 1) != 0};
             master.write(beat);
             input_classes.hit(model.classify(beat.data));
             scoreboard.expect({model.reference(beat.data), beat.dest, beat.user, beat.tlast}, beat.data);
@@ -148,10 +148,10 @@ private:
     static constexpr uint32_t user_offset = 5;
 
     const fp32_to_fp64_model &model;
-    sctb::axis_master &master;
+    sctb::axis_master<> &master;
     const sctb::clock &clk;
     sc_signal<bool> &reset;
-    sctb::scoreboard &scoreboard;
+    sctb::scoreboard<> &scoreboard;
     sctb::coverpoint &input_classes;
     sctb::covergroup &coverage;
     int64_t n_vectors;
@@ -177,8 +177,8 @@ int sc_main(int argc, char *argv[]) {
     dut.reset(reset);
 
     // the stream going in, driven and watched, and the one coming out, answered and watched
-    sctb::axis_source input("in", clk, 32);
-    sctb::axis_sink output("out", clk, 64);
+    sctb::axis_source<> input("in", clk, 32);
+    sctb::axis_sink<> output("out", clk, 64);
     input.connect(dut);
     output.connect(dut);
 
@@ -189,12 +189,12 @@ int sc_main(int argc, char *argv[]) {
     trace.add(output);
 
     // the checking: the sequence says what each input must give, the sink hands what comes out to the scoreboard
-    sctb::scoreboard scoreboard("fp32_to_fp64", model, &fp32_to_fp64_model::compare, clk.get_period());
+    sctb::scoreboard<> scoreboard("fp32_to_fp64", model, &fp32_to_fp64_model::compare, clk.get_period());
     sctb::coverpoint input_classes("input class", model.get_class_names());
     sctb::covergroup coverage;
     coverage.add(input_classes);
 
-    output.add_listener(scoreboard, &sctb::scoreboard::observe);
+    output.add_listener(scoreboard, &sctb::scoreboard<>::observe);
 
     fp32_to_fp64_sequence sequence(model, input, clk, reset, scoreboard, input_classes, coverage, n_vectors);
     sctb::spawn("sequence", sequence, &fp32_to_fp64_sequence::run);

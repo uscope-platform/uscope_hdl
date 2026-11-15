@@ -67,7 +67,7 @@ public:
     uint32_t reference(uint32_t operand) const {return fp32::to_bits(static_cast<float>(static_cast<int32_t>(operand)));}
 
     /// Empty when the result is the expected one, otherwise what is wrong with it. The tag is the operand
-    std::string compare(const sctb::axis_beat &expected, const sctb::axis_beat &actual, uint64_t tag) const {
+    std::string compare(const sctb::axis_beat<> &expected, const sctb::axis_beat<> &actual, uint64_t tag) const {
         if(actual.data != expected.data){
             return sctb::format("wrong result: in = %s, out = %s, expected = %s", sctb::hex(tag, 8).c_str(),
                                 sctb::hex(actual.data, 8).c_str(), sctb::hex(expected.data, 8).c_str());
@@ -103,8 +103,8 @@ public:
 /// it with what comes out
 class fcore_itf_sequence {
 public:
-    fcore_itf_sequence(const fcore_itf_model &model, sctb::axis_source &operand_a, const sctb::clock &clk, sc_signal<bool> &reset,
-                   sctb::scoreboard &scoreboard, sctb::coverpoint &result_classes, sctb::covergroup &coverage, int64_t n_vectors) :
+    fcore_itf_sequence(const fcore_itf_model &model, sctb::axis_source<> &operand_a, const sctb::clock &clk, sc_signal<bool> &reset,
+                   sctb::scoreboard<> &scoreboard, sctb::coverpoint &result_classes, sctb::covergroup &coverage, int64_t n_vectors) :
         model(model), a(operand_a.get_master()), clk(clk), reset(reset), scoreboard(scoreboard), result_classes(result_classes),
         coverage(coverage), n_vectors(n_vectors), rng(1) {}
 
@@ -145,10 +145,10 @@ private:
     static constexpr uint32_t user_offset = 5;
 
     const fcore_itf_model &model;
-    sctb::axis_master &a;
+    sctb::axis_master<> &a;
     const sctb::clock &clk;
     sc_signal<bool> &reset;
-    sctb::scoreboard &scoreboard;
+    sctb::scoreboard<> &scoreboard;
     sctb::coverpoint &result_classes;
     sctb::covergroup &coverage;
     int64_t n_vectors;
@@ -174,8 +174,8 @@ int sc_main(int argc, char *argv[]) {
     dut.reset(reset);
 
     // the stream going in, driven, and the one coming out, answered and watched
-    sctb::axis_source operand_a("a", clk, 32);
-    sctb::axis_sink result("result", clk, 32);
+    sctb::axis_source<> operand_a("a", clk, 32);
+    sctb::axis_sink<> result("result", clk, 32);
     operand_a.connect(dut);
     result.connect(dut);
 
@@ -186,12 +186,12 @@ int sc_main(int argc, char *argv[]) {
     trace.add(result);
 
     // the checking: the sequence says what each operation must give, the sink hands what comes out to the scoreboard
-    sctb::scoreboard scoreboard("fcore_itf_ip", model, &fcore_itf_model::compare, clk.get_period());
+    sctb::scoreboard<> scoreboard("fcore_itf_ip", model, &fcore_itf_model::compare, clk.get_period());
     sctb::coverpoint result_classes("result class", model.get_class_names());
     sctb::covergroup coverage;
     coverage.add(result_classes);
 
-    result.add_listener(scoreboard, &sctb::scoreboard::observe);
+    result.add_listener(scoreboard, &sctb::scoreboard<>::observe);
 
     fcore_itf_sequence sequence(model, operand_a, clk, reset, scoreboard, result_classes, coverage, n_vectors);
     sctb::spawn("sequence", sequence, &fcore_itf_sequence::run);
