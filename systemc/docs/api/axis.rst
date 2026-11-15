@@ -222,5 +222,7 @@ The two ends and the checking have to agree on the beat, and the type is written
 
     output.add_listener(scoreboard, &sctb::scoreboard<sctb::axis_beat<uint32_t>>::observe);
 
-and the model of the device takes the same beat, ``std::string compare(const sctb::axis_beat<uint32_t> &expected, ...)``.
-The test of ``axi_stream/fifo`` is written that way.
+and the model of the device takes the same beat,
+``std::string compare(const sctb::axis_beat<uint32_t> &expected, const sctb::axis_beat<uint32_t> &actual)``. The
+test of ``axi_stream/fifo`` is written that way, and its comparison does not take the tag of the scoreboard because
+the expected beat is the input.

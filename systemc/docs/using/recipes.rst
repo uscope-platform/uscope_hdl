@@ -78,7 +78,9 @@ and the model of the device takes the same beat:
 
 .. code-block:: cpp
 
-    std::string compare(const sctb::axis_beat<uint32_t> &expected, const sctb::axis_beat<uint32_t> &actual, uint64_t tag) const;
+    std::string compare(const sctb::axis_beat<uint32_t> &expected, const sctb::axis_beat<uint32_t> &actual) const;
+
+The fifo passes its input through, so the expected beat is the input and the comparison does not need the tag.
 
 ``axis_beat<uint32_t>`` is ``axis_beat<uint32_t, uint32_t, uint32_t>``, the other two members have their default. A test
 that says nothing gets the beat of a bus, ``axis_beat<>``, which is what all the other tests use. The type is what the

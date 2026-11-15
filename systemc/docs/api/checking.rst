@@ -19,18 +19,32 @@ Scoreboard (``scoreboard``)
    .. cpp:type:: compare_function = std::function<std::string(const beat_type &expected, const beat_type &actual, uint64_t tag)>
 
       Returns an empty string when the beats match, otherwise what differs. The string is built on a mismatch.
-      The tag is the one given to :cpp:func:`expect`.
+      The third argument is the tag given to :cpp:func:`expect`, which the scoreboard carries through and never
+      looks at.
+
+   .. cpp:type:: compare_function_without_tag = std::function<std::string(const beat_type &expected, const beat_type &actual)>
+
+      The comparison of a test that has nothing to say about the input: it is not given the tag. The expected beat
+      says everything, which is the case of a device that passes its input through, like the fifo.
 
    .. cpp:function:: scoreboard(const std::string &name, compare_function compare, sc_time clock_period)
+
+   .. cpp:function:: scoreboard(const std::string &name, compare_function_without_tag compare, sc_time clock_period)
 
    .. cpp:function:: template<typename T> scoreboard(const std::string &name, const T &object, std::string (T::*method)(const beat_type &, const beat_type &, uint64_t) const, sc_time clock_period)
 
       The comparison is a member function of an object.
 
+   .. cpp:function:: template<typename T> scoreboard(const std::string &name, const T &object, std::string (T::*method)(const beat_type &, const beat_type &) const, sc_time clock_period)
+
+      The same, for a comparison that takes only the two beats.
+
    .. cpp:function:: void expect(const beat_type &beat, uint64_t tag = 0)
 
-      The reference model says this will come out. The tag is whatever the comparison wants to report, for example
-      the input that produced the beat.
+      The reference model says this will come out. The tag is opaque to the scoreboard: it stores it with the beat
+      and gives it back to the comparison unchanged. It is whatever the test needs to report, for example the input
+      that produced the beat, or an index into the test's own data. A comparison that takes only the two beats is
+      not given it.
 
    .. cpp:function:: void observe(const beat_type &beat)
 
