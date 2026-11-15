@@ -22,14 +22,17 @@
 
 namespace sctb {
 
-    scoreboard::scoreboard(const std::string &board_name, compare_function compare_beats, sc_time period) :
+    template<typename beat_type>
+    scoreboard<beat_type>::scoreboard(const std::string &board_name, compare_function compare_beats, sc_time period) :
         name(board_name), compare(compare_beats), clock_period(period) {}
 
-    void scoreboard::expect(const axis_beat<> &beat, uint64_t tag) {
+    template<typename beat_type>
+    void scoreboard<beat_type>::expect(const beat_type &beat, uint64_t tag) {
         waiting.push_back({beat, tag, sc_time_stamp()});
     }
 
-    void scoreboard::observe(const axis_beat<> &beat) {
+    template<typename beat_type>
+    void scoreboard<beat_type>::observe(const beat_type &beat) {
         auto &report = reporter::instance();
         if(waiting.empty()) {
             report.error(format("[%s] a result came out while none was expected", name.c_str()));
@@ -47,9 +50,14 @@ namespace sctb {
         max_latency = std::max(max_latency, latency);
     }
 
-    void scoreboard::finish() {
+    template<typename beat_type>
+    void scoreboard<beat_type>::finish() {
         if(waiting.empty()) return;
         reporter::instance().error(format("[%s] %zu expected results never came out", name.c_str(), waiting.size()));
     }
+
+    // the beat of a bus, and the one of a stream whose data is a word
+    template class scoreboard<>;
+    template class scoreboard<axis_beat<uint32_t, uint32_t, uint32_t>>;
 
 }

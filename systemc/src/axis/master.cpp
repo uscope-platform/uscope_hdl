@@ -26,18 +26,20 @@ namespace sctb {
 
     template <typename data_type, typename dest_type, typename user_type>
     void axis_master<data_type, dest_type, user_type>::put(const axis_beat<data_type, dest_type, user_type> &beat) {
+        // a beat that is not wider than the stream cannot hold more than the stream: the check would only shift by
+        // as many bits as the type has, which is undefined
         const uint32_t bits = bus.get_data_bits();
-        if(bits < 64 && (beat.data >> bits) != 0) {
+        if(bits < 8 * sizeof(data_type) && (beat.data >> bits) != 0) {
             reporter::instance().error(format("[%s] the data %s does not fit the %u bits of the stream", bus.data.basename(),
                                               hex(beat.data, 16).c_str(), bits));
         }
         const uint32_t dest_bits = bus.get_dest_bits();
-        if(dest_bits < 32 && (beat.dest >> dest_bits) != 0) {
+        if(dest_bits < 8 * sizeof(dest_type) && (beat.dest >> dest_bits) != 0) {
             reporter::instance().error(format("[%s] the dest %s does not fit the %u bits of the stream", bus.dest.basename(),
                                               hex(beat.dest, 8).c_str(), dest_bits));
         }
         const uint32_t user_bits = bus.get_user_bits();
-        if(user_bits < 32 && (beat.user >> user_bits) != 0) {
+        if(user_bits < 8 * sizeof(user_type) && (beat.user >> user_bits) != 0) {
             reporter::instance().error(format("[%s] the user %s does not fit the %u bits of the stream", bus.user.basename(),
                                               hex(beat.user, 8).c_str(), user_bits));
         }
@@ -84,5 +86,6 @@ namespace sctb {
     }
 
     template class axis_master<>;
+    template class axis_master<uint32_t, uint32_t, uint32_t>;
 
 }

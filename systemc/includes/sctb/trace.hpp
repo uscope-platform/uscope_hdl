@@ -57,8 +57,10 @@ namespace sctb {
 
         /// The six signals of a stream, under the names they were given. The data, dest and user are written with the width of the stream
         void add(const axis_bus &bus);
-        void add(const axis_source<> &source) {add(source.get_bus());}
-        void add(const axis_sink<> &sink) {add(sink.get_bus());}
+        template<typename... beat_types>
+        void add(const axis_source<beat_types...> &source) {add(source.get_bus());}
+        template<typename... beat_types>
+        void add(const axis_sink<beat_types...> &sink) {add(sink.get_bus());}
 
     private:
         friend class trace_variable;

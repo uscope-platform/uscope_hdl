@@ -72,8 +72,11 @@ namespace sctb {
         axis_slave<data_type, dest_type, user_type> slave;
     };
 
+    // the beat of a bus, and the one of a stream whose data is a word
     extern template class axis_source<>;
     extern template class axis_sink<>;
+    extern template class axis_source<uint32_t, uint32_t, uint32_t>;
+    extern template class axis_sink<uint32_t, uint32_t, uint32_t>;
 
 }
 

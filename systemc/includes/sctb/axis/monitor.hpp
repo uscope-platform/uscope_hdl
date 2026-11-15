@@ -46,6 +46,7 @@ namespace sctb {
     };
 
     extern template class axis_monitor<>;
+    extern template class axis_monitor<uint32_t, uint32_t, uint32_t>;
 
 }
 

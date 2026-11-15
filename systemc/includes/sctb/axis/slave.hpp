@@ -50,6 +50,7 @@ namespace sctb {
     };
 
     extern template class axis_slave<>;
+    extern template class axis_slave<uint32_t, uint32_t, uint32_t>;
 
 }
 
