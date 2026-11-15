@@ -33,17 +33,17 @@ namespace sctb {
     class scoreboard {
     public:
         /// Returns an empty string when the beats match, otherwise what differs. The tag is the one given to expect()
-        using compare_function = std::function<std::string(const axis_beat &expected, const axis_beat &actual, uint64_t tag)>;
+        using compare_function = std::function<std::string(const axis_beat<> &expected, const axis_beat<> &actual, uint64_t tag)>;
 
         scoreboard(const std::string &name, compare_function compare, sc_time clock_period);
         /// The comparison is a member function of an object
         template<typename T>
-        scoreboard(const std::string &name, const T &object, std::string (T::*method)(const axis_beat &, const axis_beat &, uint64_t) const, sc_time clock_period) :
+        scoreboard(const std::string &name, const T &object, std::string (T::*method)(const axis_beat<> &, const axis_beat<> &, uint64_t) const, sc_time clock_period) :
             scoreboard(name, std::bind(method, &object, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), clock_period) {}
 
         /// The tag is whatever the comparison needs to report, for example the input that produced the beat
-        void expect(const axis_beat &beat, uint64_t tag = 0);
-        void observe(const axis_beat &beat);
+        void expect(const axis_beat<> &beat, uint64_t tag = 0);
+        void observe(const axis_beat<> &beat);
 
         /// To be called when the test is over: what is still waiting never came out
         void finish();
@@ -56,7 +56,7 @@ namespace sctb {
 
     private:
         struct waiting_beat {
-            axis_beat beat;
+            axis_beat<> beat;
             uint64_t tag;
             sc_time time;
         };

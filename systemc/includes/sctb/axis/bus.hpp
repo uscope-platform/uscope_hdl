@@ -25,11 +25,12 @@
 
 namespace sctb {
 
-    /// One transfer
+    /// One transfer. The types default to the ones of the signals of axis_bus: a beat is normally just axis_beat
+    template <typename data_type = uint64_t, typename dest_type = uint32_t, typename user_type = uint32_t>
     struct axis_beat {
-        uint64_t data = 0;
-        uint32_t dest = 0;
-        uint32_t user = 0;
+        data_type data = 0;
+        dest_type dest = 0;
+        user_type user = 0;
         bool tlast = false;
 
         /// dest, user and tlast, what a device that only transforms the data has to carry through

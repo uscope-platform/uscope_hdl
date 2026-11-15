@@ -19,7 +19,9 @@
 
 namespace sctb {
 
-    axis_slave::axis_slave(const std::string &name, axis_bus &stream, const clock &clk, double ready_probability, uint64_t seed) :
+    template <typename data_type, typename dest_type, typename user_type>
+    axis_slave<data_type, dest_type, user_type>::axis_slave(const std::string &name, axis_bus &stream, const clock &clk, double ready_probability,
+                                                            uint64_t seed) :
         monitor(name + "_monitor", stream, clk), bus(stream), probability(ready_probability), rng(seed), chance(0.0, 1.0) {
         bus.ready.write(probability >= 1.0);
         if(probability < 1.0) {
@@ -27,6 +29,9 @@ namespace sctb {
         }
     }
 
-    void axis_slave::drive_ready() {bus.ready.write(chance(rng) < probability);}
+    template <typename data_type, typename dest_type, typename user_type>
+    void axis_slave<data_type, dest_type, user_type>::drive_ready() {bus.ready.write(chance(rng) < probability);}
+
+    template class axis_slave<>;
 
 }

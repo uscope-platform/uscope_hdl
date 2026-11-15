@@ -25,11 +25,11 @@ namespace sctb {
     scoreboard::scoreboard(const std::string &board_name, compare_function compare_beats, sc_time period) :
         name(board_name), compare(compare_beats), clock_period(period) {}
 
-    void scoreboard::expect(const axis_beat &beat, uint64_t tag) {
+    void scoreboard::expect(const axis_beat<> &beat, uint64_t tag) {
         waiting.push_back({beat, tag, sc_time_stamp()});
     }
 
-    void scoreboard::observe(const axis_beat &beat) {
+    void scoreboard::observe(const axis_beat<> &beat) {
         auto &report = reporter::instance();
         if(waiting.empty()) {
             report.error(format("[%s] a result came out while none was expected", name.c_str()));

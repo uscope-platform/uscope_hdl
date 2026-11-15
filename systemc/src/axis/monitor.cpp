@@ -19,17 +19,24 @@
 
 namespace sctb {
 
-    axis_monitor::axis_monitor(const std::string &name, axis_bus &stream, const clock &clk) : bus(stream) {
+    template <typename data_type, typename dest_type, typename user_type>
+    axis_monitor<data_type, dest_type, user_type>::axis_monitor(const std::string &name, axis_bus &stream, const clock &clk) : bus(stream) {
         spawn_every_cycle(name, clk, *this, &axis_monitor::sample);
     }
 
     // the values read are the ones from before the clock edge, like the ones the RTL sees
-    void axis_monitor::sample() {
+    template <typename data_type, typename dest_type, typename user_type>
+    void axis_monitor<data_type, dest_type, user_type>::sample() {
         if(!bus.valid.read() || !bus.ready.read()) return;
-        const axis_beat beat = {bus.data.read(), bus.dest.read(), bus.user.read(), bus.tlast.read()};
+        const axis_beat<data_type, dest_type, user_type> beat = {static_cast<data_type>(bus.data.read()),
+                                                                 static_cast<dest_type>(bus.dest.read()),
+                                                                 static_cast<user_type>(bus.user.read()),
+                                                                 bus.tlast.read()};
         for(auto &listener : listeners){
             listener(beat);
         }
     }
+
+    template class axis_monitor<>;
 
 }

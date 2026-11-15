@@ -19,11 +19,13 @@
 
 namespace sctb {
 
-    axis_master::axis_master(axis_bus &stream, const clock &clock_source) : bus(stream), clk(clock_source) {
+    template <typename data_type, typename dest_type, typename user_type>
+    axis_master<data_type, dest_type, user_type>::axis_master(axis_bus &stream, const clock &clock_source) : bus(stream), clk(clock_source) {
         drive_idle();
     }
 
-    void axis_master::put(const axis_beat &beat) {
+    template <typename data_type, typename dest_type, typename user_type>
+    void axis_master<data_type, dest_type, user_type>::put(const axis_beat<data_type, dest_type, user_type> &beat) {
         const uint32_t bits = bus.get_data_bits();
         if(bits < 64 && (beat.data >> bits) != 0) {
             reporter::instance().error(format("[%s] the data %s does not fit the %u bits of the stream", bus.data.basename(),
@@ -46,11 +48,13 @@ namespace sctb {
         bus.valid.write(true);
     }
 
-    void axis_master::put(uint64_t data, uint32_t dest, uint32_t user, bool tlast) {
-        put({data, dest, user, tlast});
+    template <typename data_type, typename dest_type, typename user_type>
+    void axis_master<data_type, dest_type, user_type>::put(uint64_t data, uint32_t dest, uint32_t user, bool tlast) {
+        put({static_cast<data_type>(data), static_cast<dest_type>(dest), static_cast<user_type>(user), tlast});
     }
 
-    void axis_master::write(const axis_beat &beat) {
+    template <typename data_type, typename dest_type, typename user_type>
+    void axis_master<data_type, dest_type, user_type>::write(const axis_beat<data_type, dest_type, user_type> &beat) {
         put(beat);
         do {
             wait(clk.posedge());
@@ -59,21 +63,26 @@ namespace sctb {
         bus.valid.write(false);
     }
 
-    void axis_master::write(uint64_t data, uint32_t dest, uint32_t user, bool tlast) {
-        write({data, dest, user, tlast});
+    template <typename data_type, typename dest_type, typename user_type>
+    void axis_master<data_type, dest_type, user_type>::write(uint64_t data, uint32_t dest, uint32_t user, bool tlast) {
+        write({static_cast<data_type>(data), static_cast<dest_type>(dest), static_cast<user_type>(user), tlast});
     }
 
-    void axis_master::idle(int64_t cycles) {
+    template <typename data_type, typename dest_type, typename user_type>
+    void axis_master<data_type, dest_type, user_type>::idle(int64_t cycles) {
         drive_idle();
         clk.wait_cycles(cycles);
     }
 
-    void axis_master::drive_idle() {
+    template <typename data_type, typename dest_type, typename user_type>
+    void axis_master<data_type, dest_type, user_type>::drive_idle() {
         bus.valid.write(false);
         bus.data.write(0);
         bus.dest.write(0);
         bus.user.write(0);
         bus.tlast.write(false);
     }
+
+    template class axis_master<>;
 
 }
