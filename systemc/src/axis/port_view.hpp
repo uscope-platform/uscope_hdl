@@ -36,12 +36,14 @@ namespace sctb {
     /// one that it has one writer, still apply because the writes reach it.
     ///   * a read gives the low bits of the signal. The ones that do not fit the port are reported, once
     ///   * a write is zero extended into the signal
+    /// The edges are the only part of the interface of a signal that is there for a one bit signal only, so the view
+    /// of a one bit port is port_view<bool> below and this is the view of every other port
     template<typename T, typename U>
-    class port_view : public sc_signal_inout_if<T> {
+    class port_view_base : public sc_signal_inout_if<T> {
         static_assert(sizeof(T) < sizeof(U) || std::is_same<T, bool>::value, "a port that is not narrower than the signal is bound to it directly");
 
     public:
-        port_view(sc_signal<U> &signal, std::string port_name) : signal(signal), port_name(std::move(port_name)) {}
+        port_view_base(sc_signal<U> &signal, std::string port_name) : signal(signal), port_name(std::move(port_name)) {}
 
         // the interface of a signal
         const sc_event &value_changed_event() const override {return signal.value_changed_event();}
@@ -54,15 +56,11 @@ namespace sctb {
             return cache;
         }
         void write(const T &value) override {signal.write(static_cast<U>(value));}
-        // it is there in SystemC 3.0 but it is not part of the standard, so it is not marked override
-        const T &get_data_ref() const {return read();}
+        // part of the interface of SystemC 3.x, which the testbenches need, but not of the standard
+        const T &get_data_ref() const override {return read();}
 
-        // what the interface of a bool needs on top of that. Nothing that is connected to a port of the model waits
-        // for an edge of it, the model is sensitive to the value
-        const sc_event &posedge_event() const {return never;}
-        const sc_event &negedge_event() const {return never;}
-        bool posedge() const {return signal.event() && read();}
-        bool negedge() const {return signal.event() && !read();}
+    protected:
+        sc_signal<U> &signal;
 
     private:
         static constexpr uint32_t bits = std::is_same<T, bool>::value ? 1 : 8 * sizeof(T);
@@ -81,10 +79,32 @@ namespace sctb {
                                               port_name.c_str(), hex(value, 2 * sizeof(U)).c_str(), bits));
         }
 
-        sc_signal<U> &signal;
         std::string port_name;
         mutable T cache{};
         mutable bool reported = false;
+    };
+
+    /// The view of every port that is not one bit, the edges are not part of the interface of those signals
+    template<typename T, typename U>
+    class port_view : public port_view_base<T, U> {
+    public:
+        using port_view_base<T, U>::port_view_base;
+    };
+
+    /// The view of a one bit port: the interface of a bool signal asks for the edges as well. Nothing that is
+    /// connected to a port of the model waits for an edge of it, the model is sensitive to the value, so the events
+    /// handed out are never notified
+    template<typename U>
+    class port_view<bool, U> : public port_view_base<bool, U> {
+    public:
+        using port_view_base<bool, U>::port_view_base;
+
+        const sc_event &posedge_event() const override {return never;}
+        const sc_event &negedge_event() const override {return never;}
+        bool posedge() const override {return this->signal.event() && this->read();}
+        bool negedge() const override {return this->signal.event() && !this->read();}
+
+    private:
         sc_event never;
     };
 
