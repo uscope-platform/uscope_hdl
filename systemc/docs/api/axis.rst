@@ -7,16 +7,42 @@ AXI stream
 counterpart of the ``axi_stream`` interface and of ``axis_BFM`` in ``Common``. The signals of the bus are 64 bits
 wide for the data and 32 for dest and user, and the ports of the model can be narrower, see :cpp:func:`connect_stream`.
 
+Types of the beat
+-----------------
+
+The pieces of a stream are templates on the types of the beat: the data, the dest and the user.
+
+.. code-block:: cpp
+
+    template<typename data_type = uint64_t, typename dest_type = uint32_t, typename user_type = uint32_t>
+    struct axis_beat;
+
+The defaults are the ones of the signals of :cpp:class:`axis_bus`, so the beat of a bus is written ``axis_beat<>``.
+A stream whose data is a word says so once, ``axis_beat<uint32_t>``, and the master, slave, monitor and endpoints that
+carry it are the same specialization, written ``axis_master<uint32_t>``, ``axis_source<uint32_t>`` and so on. The
+widths are still what the stream is made with: the type of the beat says what the test holds the data in, the
+``data_bits`` of the bus says how many bits of it the device sees.
+
+The library is built for two of them, ``axis_beat<>`` and ``axis_beat<uint32_t, uint32_t, uint32_t>``. The
+definitions of the templates are in ``systemc/src``, so another one is a line in each of the files that define them:
+
+.. code-block:: cpp
+
+    template class axis_master<uint16_t, uint8_t, uint32_t>;
+
+in ``axis/master.cpp``, ``axis/slave.cpp``, ``axis/monitor.cpp`` and ``axis/endpoints.cpp`` for the stream, and
+``scoreboard.cpp`` and ``checks.cpp`` for the checking, next to the ones that are already there.
+
 Bus and transfer
 ----------------
 
-.. cpp:struct:: axis_beat
+.. cpp:struct:: template<typename data_type = uint64_t, typename dest_type = uint32_t, typename user_type = uint32_t> axis_beat
 
-   One transfer.
+   One transfer. ``axis_beat<>`` is the one of a bus, ``axis_beat<uint32_t>`` the one of a stream whose data is a word.
 
-   .. cpp:member:: uint64_t data
-   .. cpp:member:: uint32_t dest
-   .. cpp:member:: uint32_t user
+   .. cpp:member:: data_type data
+   .. cpp:member:: dest_type dest
+   .. cpp:member:: user_type user
    .. cpp:member:: bool tlast
 
    .. cpp:function:: bool same_sideband(const axis_beat &other) const
@@ -28,7 +54,8 @@ Bus and transfer
 
    The signals of a stream, the interface. The data signal is always 64 bits, and dest and user 32, so that one set of
    classes serves every width of a stream. The width of the stream is how many of those bits are used, the ones above
-   it are zero.
+   it are zero. It is not a template: the widths are the ones the stream is made with, so that a test has one type of
+   bus whatever the streams of its device are.
 
    .. cpp:function:: explicit axis_bus(const std::string &name, uint32_t data_bits = 64, uint32_t dest_bits = 32, uint32_t user_bits = 32)
 
@@ -75,7 +102,7 @@ Bus and transfer
 Master
 ------
 
-.. cpp:class:: axis_master
+.. cpp:class:: template<typename data_type = uint64_t, typename dest_type = uint32_t, typename user_type = uint32_t> axis_master
 
    Drives a bus. The calls block, so they can be made from a thread like the tasks of ``axis_BFM`` are called from an
    ``initial`` block.
@@ -84,14 +111,14 @@ Master
 
       Drives the bus idle.
 
-   .. cpp:function:: void write(const axis_beat &beat)
+   .. cpp:function:: void write(const axis_beat<data_type, dest_type, user_type> &beat)
 
       Returns when the beat has been accepted. Consecutive calls send one beat per cycle as long as the slave is
       ready. A beat with bits set above the width of the stream is reported as an error, it is a mistake of the test.
 
    .. cpp:function:: void write(uint64_t data, uint32_t dest = 0, uint32_t user = 0, bool tlast = false)
 
-   .. cpp:function:: void put(const axis_beat &beat)
+   .. cpp:function:: void put(const axis_beat<data_type, dest_type, user_type> &beat)
 
       Puts the beat on the bus for the next clock edge and returns at once, whatever ``ready`` is. The caller waits for
       the edge, for example with :cpp:func:`clock::wait_cycles`. It is for a stream that has no back pressure, and for
@@ -107,38 +134,38 @@ Master
 Slave
 -----
 
-.. cpp:class:: axis_slave
+.. cpp:class:: template<typename data_type = uint64_t, typename dest_type = uint32_t, typename user_type = uint32_t> axis_slave
 
    Answers a bus with ``ready`` and tells its listeners what it received.
 
-   .. cpp:function:: axis_slave(const std::string &name, axis_bus &bus, const clock &clk, double ready_probability = 1.0, uint64_t seed = 1, uint32_t dest_bits = 32, uint32_t user_bits = 32)
+   .. cpp:function:: axis_slave(const std::string &name, axis_bus &bus, const clock &clk, double ready_probability = 1.0, uint64_t seed = 1)
 
       ``ready_probability`` is the chance that ``ready`` is high in a cycle. With 1 it is always high, and the slave
       costs no simulation time. Below 1 it is drawn every cycle from a generator that starts from ``seed``, so the
       back pressure is random but repeatable.
 
-   .. cpp:function:: void add_listener(std::function<void(const axis_beat &)> listener)
+   .. cpp:function:: void add_listener(std::function<void(const axis_beat<data_type, dest_type, user_type> &)> listener)
 
       Called with every transfer the slave accepted, in the cycle it happens.
 
-   .. cpp:function:: template<typename T> void add_listener(T &object, void (T::*method)(const axis_beat &))
+   .. cpp:function:: template<typename T> void add_listener(T &object, void (T::*method)(const axis_beat<data_type, dest_type, user_type> &))
 
       The listener is a member function of an object.
 
 Monitor
 -------
 
-.. cpp:class:: axis_monitor
+.. cpp:class:: template<typename data_type = uint64_t, typename dest_type = uint32_t, typename user_type = uint32_t> axis_monitor
 
    Watches a bus and reports every transfer. It runs on every rising edge and reads the values from before the edge.
 
    .. cpp:function:: axis_monitor(const std::string &name, axis_bus &bus, const clock &clk)
 
-   .. cpp:function:: void add_listener(std::function<void(const axis_beat &)> listener)
+   .. cpp:function:: void add_listener(std::function<void(const axis_beat<data_type, dest_type, user_type> &)> listener)
 
       Called with every transfer, in the cycle it happens, in the order the listeners were added.
 
-   .. cpp:function:: template<typename T> void add_listener(T &object, void (T::*method)(const axis_beat &))
+   .. cpp:function:: template<typename T> void add_listener(T &object, void (T::*method)(const axis_beat<data_type, dest_type, user_type> &))
 
       The listener is a member function of an object.
 
@@ -148,34 +175,52 @@ Stream endpoints
 The parts above wired up for the common case, so that a test creates a stream in one line. They work with any
 device.
 
-.. cpp:class:: axis_source
+.. cpp:class:: template<typename data_type = uint64_t, typename dest_type = uint32_t, typename user_type = uint32_t> axis_source
 
    The sending end of a stream of the device: the bus and a master that drives it.
 
    .. cpp:function:: axis_source(const std::string &name, const clock &clk, uint32_t data_bits = 64, uint32_t dest_bits = 32, uint32_t user_bits = 32)
 
-      The bus signals are called ``<name>_valid`` and so on, as in :cpp:class:`axis_bus`.
+      The bus signals are called ``<name>_valid`` and so on, as in :cpp:class:`axis_bus`. The width of the stream is
+      what the device sees, the type of the beat is what the test holds the data in.
 
    .. cpp:function:: void connect(const sc_module &model)
 
       Connects the ports of the model called ``<name>_valid`` and so on to the bus, see :cpp:func:`connect_stream`.
 
-   .. cpp:function:: axis_master &get_master()
+   .. cpp:function:: axis_master<data_type, dest_type, user_type> &get_master()
 
-.. cpp:class:: axis_sink
+.. cpp:class:: template<typename data_type = uint64_t, typename dest_type = uint32_t, typename user_type = uint32_t> axis_sink
 
    The receiving end of a stream of the device: the bus and a slave that answers it.
 
-   .. cpp:function:: axis_sink(const std::string &name, const clock &clk, uint32_t data_bits = 64, double ready_probability = 1.0, uint64_t seed = 1)
+   .. cpp:function:: axis_sink(const std::string &name, const clock &clk, uint32_t data_bits = 64, double ready_probability = 1.0, uint64_t seed = 1, uint32_t dest_bits = 32, uint32_t user_bits = 32)
 
    .. cpp:function:: void connect(const sc_module &model)
 
-   .. cpp:function:: axis_slave &get_slave()
+   .. cpp:function:: axis_slave<data_type, dest_type, user_type> &get_slave()
 
-   .. cpp:function:: void add_listener(std::function<void(const axis_beat &)> listener)
+   .. cpp:function:: void add_listener(std::function<void(const axis_beat<data_type, dest_type, user_type> &)> listener)
 
       Called with every transfer the sink received.
 
-   .. cpp:function:: template<typename T> void add_listener(T &object, void (T::*method)(const axis_beat &))
+   .. cpp:function:: template<typename T> void add_listener(T &object, void (T::*method)(const axis_beat<data_type, dest_type, user_type> &))
 
       The listener is a member function of an object.
+
+A stream whose data is a word
+-----------------------------
+
+The two ends and the checking have to agree on the beat, and the type is written once in each place:
+
+.. code-block:: cpp
+
+    const axis_fifo_model model;
+    sctb::axis_source<uint32_t> input("in", clk, 32);
+    sctb::axis_sink<uint32_t> output("out", clk, 32);
+    sctb::scoreboard<sctb::axis_beat<uint32_t>> scoreboard("axis_fifo", model, &axis_fifo_model::compare, clk.get_period());
+
+    output.add_listener(scoreboard, &sctb::scoreboard<sctb::axis_beat<uint32_t>>::observe);
+
+and the model of the device takes the same beat, ``std::string compare(const sctb::axis_beat<uint32_t> &expected, ...)``.
+The test of ``axi_stream/fifo`` is written that way.

@@ -60,6 +60,31 @@ The scoreboard compares whatever the test gives it, so the expected beat can dep
 device with state keeps the state in the model and calls ``expect`` with what the model says. A device that
 produces a result per several inputs calls ``expect`` once per result.
 
+The type of the beat
+--------------------
+
+The endpoints and the checking are templates on the beat, so a test that wants a narrower one says it in the type of
+each object that carries it. The test of ``axi_stream/fifo``, a 32 bit stream, does:
+
+.. code-block:: cpp
+
+    sctb::axis_source<uint32_t> input("in", clk, 32);
+    sctb::axis_sink<uint32_t> output("out", clk, 32);
+    sctb::scoreboard<sctb::axis_beat<uint32_t>> scoreboard("axis_fifo", model, &axis_fifo_model::compare, clk.get_period());
+
+    output.add_listener(scoreboard, &sctb::scoreboard<sctb::axis_beat<uint32_t>>::observe);
+
+and the model of the device takes the same beat:
+
+.. code-block:: cpp
+
+    std::string compare(const sctb::axis_beat<uint32_t> &expected, const sctb::axis_beat<uint32_t> &actual, uint64_t tag) const;
+
+``axis_beat<uint32_t>`` is ``axis_beat<uint32_t, uint32_t, uint32_t>``, the other two members have their default. A test
+that says nothing gets the beat of a bus, ``axis_beat<>``, which is what all the other tests use. The type is what the
+test holds the data in, not the width of the device: the width is still the ``data_bits`` of the stream, and a beat
+with bits above it is reported as an error. The library is built for the two, see :doc:`/api/axis` for another one.
+
 A new protocol
 --------------
 

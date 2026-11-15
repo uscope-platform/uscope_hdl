@@ -6,30 +6,33 @@ Checking
 Scoreboard (``scoreboard``)
 ---------------------------
 
-.. cpp:class:: scoreboard
+.. cpp:class:: template<typename beat_type = axis_beat<>> scoreboard
 
    Checks that what comes out of a device is what the reference model said would come out. The beats are matched
    in order. The latency is measured on the way, from the time a beat is expected (when its input went in) to the
    time it is observed (when it came out), so a test measures the depth of the pipeline without knowing it in
    advance.
 
-   .. cpp:type:: compare_function = std::function<std::string(const axis_beat &expected, const axis_beat &actual, uint64_t tag)>
+   ``beat_type`` is the beat of the streams it watches: ``axis_beat<>``, which is the one of a bus, or the one the
+   endpoints of the test use, for example ``axis_beat<uint32_t>``. See :cpp:struct:`axis_beat`.
+
+   .. cpp:type:: compare_function = std::function<std::string(const beat_type &expected, const beat_type &actual, uint64_t tag)>
 
       Returns an empty string when the beats match, otherwise what differs. The string is built on a mismatch.
       The tag is the one given to :cpp:func:`expect`.
 
    .. cpp:function:: scoreboard(const std::string &name, compare_function compare, sc_time clock_period)
 
-   .. cpp:function:: template<typename T> scoreboard(const std::string &name, const T &object, std::string (T::*method)(const axis_beat &, const axis_beat &, uint64_t) const, sc_time clock_period)
+   .. cpp:function:: template<typename T> scoreboard(const std::string &name, const T &object, std::string (T::*method)(const beat_type &, const beat_type &, uint64_t) const, sc_time clock_period)
 
       The comparison is a member function of an object.
 
-   .. cpp:function:: void expect(const axis_beat &beat, uint64_t tag = 0)
+   .. cpp:function:: void expect(const beat_type &beat, uint64_t tag = 0)
 
       The reference model says this will come out. The tag is whatever the comparison wants to report, for example
       the input that produced the beat.
 
-   .. cpp:function:: void observe(const axis_beat &beat)
+   .. cpp:function:: void observe(const beat_type &beat)
 
       This came out. It is compared with the oldest beat that is expected and reported if it differs. A beat that
       comes out when none is expected is an error.
@@ -53,13 +56,15 @@ End of test checks (``checks``)
 -------------------------------
 
 Each one reports to the reporter and can be used on its own. A test picks the ones that make sense for its device.
+They are templates on the beat of the scoreboard they are given, so ``sctb::drain(scoreboard, clk, 20)`` works
+whichever beat the scoreboard holds.
 
-.. cpp:function:: void drain(const scoreboard &board, const clock &clk, int64_t max_cycles)
+.. cpp:function:: template<typename beat_type> void drain(const scoreboard<beat_type> &board, const clock &clk, int64_t max_cycles)
 
    Waits for what is still in the device to come out, up to ``max_cycles``. Call it
    from a thread.
 
-.. cpp:function:: void check_latency(const scoreboard &board, int64_t cycles)
+.. cpp:function:: template<typename beat_type> void check_latency(const scoreboard<beat_type> &board, int64_t cycles)
 
    Every result has to take the same number of cycles, and it has to be ``cycles``. Nothing coming out at all is
    an error too.

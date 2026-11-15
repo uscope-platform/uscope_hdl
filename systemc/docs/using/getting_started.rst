@@ -28,6 +28,26 @@ reported as an error, so the binary can be used from a script or from CI.
 The command line
 ----------------
 
+Every test takes the same arguments, and prints them when it is called with ``--help``. The menu also lists what the
+test itself takes, which is the number of vectors:
+
+.. code-block:: bash
+
+    ./build/test --help
+
+.. code-block:: text
+
+    Usage: test [vectors] [options]
+
+    Arguments:
+      vectors   how many vectors to send, the test has a default
+
+    Options:
+      --trace=<file>            write the waveform to file, FST format
+      --trace-start=<cycle>     the first cycle that is written, 0 by default
+      --trace-cycles=<cycles>   how many cycles are written, all of them by default
+      --help, -h                print this menu and exit
+
 .. list-table::
    :header-rows: 1
    :widths: 34 66
@@ -42,6 +62,8 @@ The command line
      - First cycle that is written, 0 by default.
    * - ``--trace-cycles=<cycles>``
      - Number of cycles that are written, all of them by default.
+   * - ``--help``, ``-h``
+     - Print the menu and exit, without running the simulation.
 
 .. code-block:: bash
 

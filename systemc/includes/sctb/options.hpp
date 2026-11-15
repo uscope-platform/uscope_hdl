@@ -17,16 +17,31 @@
 #define SCTB_OPTIONS_HPP
 
 #include <cstdint>
+#include <initializer_list>
 #include <map>
 #include <string>
 #include <vector>
 
 namespace sctb {
 
-    /// The command line of a test. An option is --name=value, or --name alone, everything else is a positional argument
+    /// One line of the help menu
+    struct help_entry {
+        std::string name;
+        std::string description;
+    };
+
+    /// The command line of a test. An option is --name=value, or --name alone, everything else is a positional
+    /// argument. --help, or -h, prints the menu of the test and exits, so every test has one
     class options {
     public:
-        options(int argc, char *argv[]);
+        /// The arguments the test takes on top of the number of vectors, which every test has under that name.
+        /// Calling the test with --help lists them with the options of the library
+        options(int argc, char *argv[],
+                std::initializer_list<help_entry> arguments = {{"vectors", "how many vectors to send, the test has a default"}});
+
+        /// The menu, for --help and for a test that wants to print it itself
+        static void print_help(const std::string &program,
+                               std::initializer_list<help_entry> arguments = {{"vectors", "how many vectors to send, the test has a default"}});
 
         bool has(const std::string &name) const {return named.count(name) != 0;}
         /// The fallback when the option is not there
