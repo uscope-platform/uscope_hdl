@@ -31,5 +31,8 @@ namespace sctb {
     // other types would have to be instantiated here as well
     template class axis_source<>;
     template class axis_sink<>;
+    // a stream whose data is a word: the beat carries 32 bits, the bus is 64 either way
+    template class axis_source<uint32_t, uint32_t, uint32_t>;
+    template class axis_sink<uint32_t, uint32_t, uint32_t>;
 
 }

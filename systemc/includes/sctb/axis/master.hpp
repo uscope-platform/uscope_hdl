@@ -53,7 +53,9 @@ namespace sctb {
         const clock &clk;
     };
 
+    // the beat of a bus, and the one of a stream whose data is a word
     extern template class axis_master<>;
+    extern template class axis_master<uint32_t, uint32_t, uint32_t>;
 
 }
 

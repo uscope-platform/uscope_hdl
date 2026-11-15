@@ -29,10 +29,12 @@ namespace sctb {
     /// a test picks the ones that make sense for the device
 
     /// Waits for what is still in the device to come out, up to a number of cycles. Call it from a thread
-    void drain(const scoreboard &board, const clock &clk, int64_t max_cycles);
+    template<typename beat_type>
+    void drain(const scoreboard<beat_type> &board, const clock &clk, int64_t max_cycles);
 
     /// Every result has to take the same number of cycles, and it has to be the one of the device
-    void check_latency(const scoreboard &board, int64_t cycles);
+    template<typename beat_type>
+    void check_latency(const scoreboard<beat_type> &board, int64_t cycles);
 
     /// A device that takes a beat every cycle takes n cycles for n beats, give or take the cycle the sequence starts in
     void check_throughput(int64_t beats, sc_time elapsed, const clock &clk);

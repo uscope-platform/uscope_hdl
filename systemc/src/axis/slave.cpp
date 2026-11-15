@@ -33,5 +33,6 @@ namespace sctb {
     void axis_slave<data_type, dest_type, user_type>::drive_ready() {bus.ready.write(chance(rng) < probability);}
 
     template class axis_slave<>;
+    template class axis_slave<uint32_t, uint32_t, uint32_t>;
 
 }
