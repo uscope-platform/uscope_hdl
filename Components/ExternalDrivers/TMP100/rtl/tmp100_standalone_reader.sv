@@ -102,20 +102,4 @@ module tmp100_standalone_reader (
     end
 
 
-    wire [31:0] write_regs [8:0];
-
-    axil_simple_register_cu #(
-        .N_READ_REGISTERS(9),
-        .N_WRITE_REGISTERS(9),
-        .REGISTERS_WIDTH(32),
-        .ADDRESS_MASK('hff)
-    ) CU (
-        .clock(clock),
-        .reset(reset),
-        .input_registers(current_temps),
-        .output_registers(write_regs),
-        .axil(temperature_axi)
-    );
-
-
 endmodule
