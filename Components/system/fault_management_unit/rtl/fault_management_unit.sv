@@ -26,35 +26,48 @@ module fault_management_unit #(
     axi_lite.slave axi_in
 );
 
-    reg internal_fault;
-    localparam N_REGISTERS = 3;
 
-    wire [31:0] cu_write_registers [N_REGISTERS-1:0];
-    wire [31:0] cu_read_registers [N_REGISTERS-1:0];
+
+
+    typedef struct {
+        reg [31:0] exclusions;
+        reg [31:0] rsvd_1;
+        reg [31:0] clear;
+    } axis_limiter_write_registers;
+
+    typedef struct {
+        reg [31:0] exclusions;
+        reg [31:0] fault_in;      
+        reg [31:0] clear;  
+    } axis_limiter_read_registers;
+    
+    axis_limiter_write_registers write_registers;
+    axis_limiter_read_registers read_registers;
+
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(N_REGISTERS),
-        .N_WRITE_REGISTERS(N_REGISTERS),
+        .READ_TYPE(axis_limiter_read_registers),
+        .WRITE_TYPE(axis_limiter_write_registers),
         .REGISTERS_WIDTH(32),
-        .TRIGGER_REGISTERS_IDX('{2}),
-        .N_TRIGGER_REGISTERS(1),
-        .ADDRESS_MASK('hff)
+        .ADDRESS_MASK('hf),
+        .TRIGGER_MASK('{clear:1, default:0})
     ) CU (
         .clock(clock),
         .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
-        .axil(axi_in),
-        .trigger_out(clear_fault)
+        .input_registers(read_registers),
+        .output_registers(write_registers),
+        .trigger_out(clear_fault),
+        .axil(axi_in)
     );
 
+    always_comb begin 
+        read_registers.exclusions = write_registers.exclusions;
+        read_registers.fault_in = fault_in;
+        read_registers.clear = write_registers.clear;
+    end
 
-    wire [N_FAULTS-1:0] exclusions;
-    assign exclusions = cu_write_registers[0];
 
-
-    assign cu_read_registers[0] = exclusions;
-    assign cu_read_registers[1] = fault_in;
+    reg internal_fault;
 
     always_ff @(posedge clock)begin
         fault_out <= internal_fault;
@@ -64,7 +77,7 @@ module fault_management_unit #(
     if(clear_fault | ~reset | ~enable)begin
             internal_fault <= 0;
         end else if (~internal_fault)begin
-            internal_fault <= |(fault_in & ~exclusions);
+            internal_fault <= |(fault_in & ~write_registers.exclusions);
         end
     end
 

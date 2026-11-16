@@ -25,30 +25,26 @@ module axis_limiter #(parameter BASE_ADDRESS = 'h43c00000)(
     axi_lite.slave axi_in
 );
 
-    reg [31:0] limit_up;
-    reg [31:0] limit_down;
-
-    reg [31:0] cu_write_registers [1:0];
-    reg [31:0] cu_read_registers [1:0];
+    typedef struct {
+        reg [31:0] limit_up;
+        reg [31:0] limit_down;
+    } axis_limiter_registers;
+    
+    axis_limiter_registers registers;
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(2),
-        .N_WRITE_REGISTERS(2),
+        .READ_TYPE(axis_limiter_registers),
+        .WRITE_TYPE(axis_limiter_registers),
         .REGISTERS_WIDTH(32),
         .ADDRESS_MASK('hf),
-        .INITIAL_OUTPUT_VALUES('{32'h0, 32'hffffffff})
+        .INITIAL_OUTPUT_VALUES('{limit_down: 32'h0,limit_up: 32'hffffffff})
     ) CU (
         .clock(clock),
         .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
+        .input_registers(registers),
+        .output_registers(registers),
         .axil(axi_in)
     );
-
-    assign limit_up = cu_write_registers[0];
-    assign limit_down = cu_write_registers[1];
-
-    assign cu_read_registers = cu_write_registers;
 
 
     assign in.ready = out.ready; 
@@ -60,10 +56,10 @@ module axis_limiter #(parameter BASE_ADDRESS = 'h43c00000)(
             out.dest <= 0;
         end else begin
             if(out.ready & in.valid) begin
-                if(in.data > limit_up)
-                    out.data <= limit_up;
-                else if(in.data < limit_down)
-                    out.data <= limit_down;
+                if(in.data > registers.limit_up)
+                    out.data <= registers.limit_up;
+                else if(in.data < registers.limit_down)
+                    out.data <= registers.limit_down;
                 else
                     out.data <= in.data;
                 out.dest <= in.dest;
