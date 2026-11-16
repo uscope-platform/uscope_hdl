@@ -28,46 +28,32 @@ module axis_ramp_generator #(
 );
 
 
-    localparam ADDITIONAL_BITS = 32 - OUTPUT_WIDTH;
-    localparam N_REGISTERS = 4;
-
-
     wire trigger_axis_write;
-    wire ramp_bypass;
-    reg [31:0] cu_write_registers [N_REGISTERS-1:0];
-    reg [31:0] cu_read_registers [N_REGISTERS-1:0];
+
+    typedef struct {
+        reg [31:0] stop_value;
+        reg [31:0] constant_dest;
+        reg [31:0] ramp_increment;
+        reg [31:0] ramp_bypass;
+    } axis_ramp_generator_registers;
+
+    axis_ramp_generator_registers registers;
 
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(N_REGISTERS),
-        .N_WRITE_REGISTERS(N_REGISTERS),
+        .READ_TYPE(axis_ramp_generator_registers),
+        .WRITE_TYPE(axis_ramp_generator_registers),
         .REGISTERS_WIDTH(32),
-        .ADDRESS_MASK('h1f),
-        .N_TRIGGER_REGISTERS(1),
-        .TRIGGER_REGISTERS_IDX({0})
+        .ADDRESS_MASK('hff),
+        .TRIGGER_MASK('{stop_value:1, default:0})
     ) CU (
         .clock(clock),
         .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
+        .input_registers(registers),
+        .output_registers(registers),
         .trigger_out(trigger_axis_write),
         .axil(axil)
     );
-
-
-    reg [OUTPUT_WIDTH-1:0] stop_value;
-    reg [31:0] constant_dest;
-    reg [OUTPUT_WIDTH-1:0] ramp_increment;
-
-    assign stop_value = cu_write_registers[0];
-    assign constant_dest = cu_write_registers[1];
-    assign ramp_increment = cu_write_registers[2];
-    assign ramp_bypass = cu_write_registers[3][0];
-
-    assign cu_read_registers[0] = {{ADDITIONAL_BITS{1'b0}}, stop_value};
-    assign cu_read_registers[1] = {{ADDITIONAL_BITS{1'b0}}, constant_dest};
-    assign cu_read_registers[2] = {{ADDITIONAL_BITS{1'b0}}, ramp_increment};
-    assign cu_read_registers[3] = ramp_bypass;
 
     reg [OUTPUT_WIDTH-1:0] const_in_progress = 0;
 
@@ -94,19 +80,19 @@ module axis_ramp_generator #(
         rg_wait_sync = 2
     } ramp_generator_state = rg_idle;
 
-    assign inner_ramp.dest = constant_dest;
+    assign inner_ramp.dest = registers.constant_dest;
 
     always_ff @(posedge clock) begin
 
         inner_ramp.valid <= 0;
         case(ramp_generator_state)
         rg_idle:begin
-            if(trigger_axis_write & ~ramp_bypass)begin
-                shadow_stop_value<= stop_value;
+            if(trigger_axis_write & ~registers.ramp_bypass)begin
+                shadow_stop_value<= registers.stop_value;
                 ramp_generator_state <= rg_in_progress;
                 const_in_progress <= prev_stop_value;
-            end else if(trigger_axis_write && ramp_bypass) begin
-                inner_ramp.data  <= stop_value;
+            end else if(trigger_axis_write && registers.ramp_bypass) begin
+                inner_ramp.data  <= registers.stop_value;
                 inner_ramp.valid <= 1;
             end
         end
@@ -121,9 +107,9 @@ module axis_ramp_generator #(
                     prev_stop_value <= shadow_stop_value;
                 end 
                 if(ramp_direction)begin
-                    const_in_progress <= const_in_progress + ramp_increment;
+                    const_in_progress <= const_in_progress + registers.ramp_increment;
                 end else begin
-                    const_in_progress <= const_in_progress - ramp_increment;
+                    const_in_progress <= const_in_progress - registers.ramp_increment;
                 end
             end else begin
                 ramp_generator_state <= rg_wait_sync;
@@ -143,9 +129,9 @@ module axis_ramp_generator #(
                 end
 
                 if(ramp_direction)begin
-                    const_in_progress <= const_in_progress + ramp_increment;
+                    const_in_progress <= const_in_progress + registers.ramp_increment;
                 end else begin
-                    const_in_progress <= const_in_progress - ramp_increment;
+                    const_in_progress <= const_in_progress - registers.ramp_increment;
                 end
 
             end

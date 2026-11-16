@@ -32,6 +32,42 @@ module PID #(
     axi_lite.slave axil
 );
 
+    typedef struct {
+        reg [31:0] nonblocking_output;
+        reg [31:0] kP;
+        reg [31:0] kI;
+        reg [31:0] kD;
+        reg signed [31:0] limit_out_up;
+        reg signed [31:0] limit_out_down;
+        reg signed [31:0] limit_int_up;
+        reg signed [31:0] limit_int_down;
+        reg [31:0] denominators;
+    } pid_registers;
+
+    pid_registers registers;
+    pid_registers inital_values = '{
+        limit_out_up: 16'sd32767,
+        limit_int_up: 16'sd32767,
+        limit_out_down: -16'sd32767,
+        limit_int_down: -16'sd32767,
+        denominators: 'h010101,
+        default:0
+    }
+
+    axil_simple_register_cu #(
+        .READ_TYPE(pid_registers),
+        .WRITE_TYPE(pid_registers),
+        .REGISTERS_WIDTH(32),
+        .ADDRESS_MASK('hff),
+        .INITIAL_OUTPUT_VALUES(inital_values)
+    ) CU (
+        .clock(clock),
+        .reset(reset),
+        .input_registers(registers),
+        .output_registers(registers),
+        .axil(axil)
+    );
+
 
     assign reference.ready = 1;
     assign feedback.ready = 1;
@@ -54,68 +90,11 @@ module PID #(
 
     assign diff_out = 0;
 
-    reg [31:0] cu_write_registers [8:0];
-    reg [31:0] cu_read_registers [8:0];
-
-    localparam ADDITIONAL_BITS = 32 - OUTPUT_DATA_WIDTH;
-    localparam [31:0] INITIAL_OUTPUT_VALUES [8:0]= '{
-            'h010101,
-            -16'sd32767,
-            16'sd32767,
-            -16'sd32767,
-            16'sd32767,
-            0,
-            0,
-            0,
-            0
-        };
-
-
-    axil_simple_register_cu #(
-        .N_READ_REGISTERS(9),
-        .N_WRITE_REGISTERS(9),
-        .REGISTERS_WIDTH(32),
-        .ADDRESS_MASK('h3f),
-        .INITIAL_OUTPUT_VALUES(INITIAL_OUTPUT_VALUES)
-    ) CU (
-        .clock(clock),
-        .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
-        .axil(axil)
-    );
-
-    reg nonblocking_output;
-    reg [OUTPUT_DATA_WIDTH-1:0] kP;
-    reg [OUTPUT_DATA_WIDTH-1:0] kI;
-    reg [OUTPUT_DATA_WIDTH-1:0] kD;
-    reg signed [OUTPUT_DATA_WIDTH-1:0] limit_out_up;
-    reg signed [OUTPUT_DATA_WIDTH-1:0] limit_out_down;
-    reg signed [OUTPUT_DATA_WIDTH-1:0] limit_int_up;
-    reg signed [OUTPUT_DATA_WIDTH-1:0] limit_int_down;
     reg [7:0] kP_den;
     reg [7:0] kI_den;
     reg [7:0] kD_den;
 
-    assign nonblocking_output = cu_write_registers[0];
-    assign kP = cu_write_registers[1];
-    assign kI = cu_write_registers[2];
-    assign kD = cu_write_registers[3];
-    assign limit_out_up = cu_write_registers[4];
-    assign limit_out_down = cu_write_registers[5];
-    assign limit_int_up = cu_write_registers[6];
-    assign limit_int_down = cu_write_registers[7];
-    assign {kD_den, kI_den, kP_den} = cu_write_registers[8];
-
-    assign cu_read_registers[0] = nonblocking_output;
-    assign cu_read_registers[1] = kP;
-    assign cu_read_registers[2] = kI;
-    assign cu_read_registers[3] = kD;
-    assign cu_read_registers[4] = limit_out_up;
-    assign cu_read_registers[5] = limit_out_down;
-    assign cu_read_registers[6] = limit_int_up;
-    assign cu_read_registers[7] = limit_int_down;
-    assign cu_read_registers[8] = {kD_den, kI_den, kP_den};
+    assign {kD_den, kI_den, kP_den} = registers.denominators;
 
 
     
@@ -137,7 +116,7 @@ module PID #(
             error <= 0;
             error_valid <= 0;
         end else begin
-            if(inputs_valid & (out.ready | nonblocking_output)) begin
+            if(inputs_valid & (out.ready | registers.nonblocking_output[0])) begin
                 error <= reference.data - feedback.data;
                 error_valid <=1;
             end else begin
@@ -158,10 +137,10 @@ module PID #(
             integrator_out_valid <= 0;
         end else begin
             integrator_out_valid <= integrator_in_valid;
-            if(error_valid & (out.ready | nonblocking_output)) begin
-                propotional_out <= ($signed(kP) * error) >>> kP_den;
-                integrator_in <= ($signed(kI) * error) >>> kI_den;
-                differential_out <= ($signed(kD) * diff_out) >>> kD_den;
+            if(error_valid & (out.ready | registers.nonblocking_output[0])) begin
+                propotional_out <= ($signed(registers.kP) * error) >>> kP_den;
+                integrator_in <= ($signed(registers.kI) * error) >>> kI_den;
+                differential_out <= ($signed(registers.kD) * diff_out) >>> kD_den;
                 integrator_in_valid <=1;    
             end else begin
                 integrator_in_valid <=0;
@@ -188,10 +167,10 @@ module PID #(
         if(~reset) begin
             out.data <= 0;
         end else begin
-            if (int_pid_out > limit_out_up) begin 
-                out.data <= limit_out_up;
-            end else if (int_pid_out < limit_out_down) begin 
-                out.data <= limit_out_down;    
+            if (int_pid_out > registers.limit_out_up) begin 
+                out.data <= registers.limit_out_up;
+            end else if (int_pid_out < registers.limit_out_down) begin 
+                out.data <= registers.limit_out_down;    
             end else begin 
                 out.data <= int_pid_out;
             end

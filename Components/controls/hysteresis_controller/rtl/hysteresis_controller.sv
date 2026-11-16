@@ -25,38 +25,27 @@ module hysteresis_controller #(
     axi_lite.slave axi_in
 );
 
-    localparam N_REGISTERS = 2;
 
-    wire [in.DATA_WIDTH-1:0] cu_registers [N_REGISTERS-1:0];
 
+
+    typedef struct {
+        reg [31:0] tresh_low;
+        reg [31:0] tresh_high;
+    } hysteresis_controller_registers;
+
+    hysteresis_controller_registers registers;
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(N_REGISTERS),
-        .N_WRITE_REGISTERS(N_REGISTERS),
-        .REGISTERS_WIDTH(32),
+        .READ_TYPE(hysteresis_controller_registers),
+        .WRITE_TYPE(hysteresis_controller_registers),
         .ADDRESS_MASK('hff)
     ) CU (
         .clock(clock),
         .reset(reset),
-        .input_registers(cu_registers),
-        .output_registers(cu_registers),
+        .input_registers(registers),
+        .output_registers(registers),
         .axil(axi_in)
     );
-
-    wire [in.DATA_WIDTH-1:0] tresh_low;
-    wire [in.DATA_WIDTH-1:0] tresh_high;
-
-    wire signed [in.DATA_WIDTH-1:0] signed_tresh_low;
-    wire signed [in.DATA_WIDTH-1:0] signed_tresh_high;
-
-    assign tresh_low = cu_registers[0];
-    assign tresh_high = cu_registers[1];
-
-    assign signed_tresh_low = $signed(cu_registers[0]);
-    assign signed_tresh_high = $signed(cu_registers[1]);
-
-    wire signed [in.DATA_WIDTH-1:0] signed_in;
-    assign signed_in = $signed(in.data);
 
 
     initial begin
@@ -71,15 +60,15 @@ module hysteresis_controller #(
         if(enable & in.valid) begin
             if(SIGNED_INPUT=="TRUE")begin
                  if(control_out)begin
-                    control_out <= signed_in < signed_tresh_low;
+                    control_out <= $signed(in.data) < $signed(registers.tresh_low);
                 end else begin
-                    control_out <= signed_in > signed_tresh_high;
+                    control_out <= $signed(in.data) > $signed(registers.tresh_high);
                 end
             end else begin
                 if(control_out)begin
-                    control_out <= in.data < tresh_low;
+                    control_out <= in.data < registers.tresh_low;
                 end else begin
-                    control_out <= in.data > tresh_high;
+                    control_out <= in.data > registers.tresh_high;
                 end
             end
         end
