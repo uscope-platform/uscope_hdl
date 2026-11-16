@@ -24,13 +24,13 @@ module axis_constant_tb();
     axi_lite axil();
     axi_lite_BFM axil_bfm;
     
-    axi_stream out();
+    axi_stream #(.DATA_WIDTH(64)) out();
     
     //clock generation
     initial clk = 0; 
     always #0.5 clk = ~clk; 
 
-    axis_constant UUT(
+    axis_constant  UUT(
         .clock(clk),
         .reset(reset),
         .sync(1),

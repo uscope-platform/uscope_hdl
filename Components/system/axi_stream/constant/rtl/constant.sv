@@ -18,7 +18,6 @@
 
 
 module axis_constant #(
-    parameter CONSTANT_WIDTH = 32,
     parameter PRAGMA_MKFG_PROXY = "FALSE",
     parameter PRAGMA_MKFG_PROXY_TL = "",
     parameter PRAGMA_MKFG_PROXY_IF = "proxy_if"
@@ -30,44 +29,31 @@ module axis_constant #(
     axi_lite.slave axil
 );
 
-
-    localparam ADDITIONAL_BITS = 32 - CONSTANT_WIDTH;
-
     wire trigger_axis_write;
-    reg [31:0] cu_write_registers [2:0];
-    reg [31:0] cu_read_registers [2:0];
 
+    typedef struct {
+        reg [31:0] low_bytes;
+        reg [31:0] high_bytes;
+        reg [31:0] constant_dest;
+    } axis_constant_registers;
+    
+    axis_constant_registers registers;
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(3),
-        .N_WRITE_REGISTERS(3),
-        .REGISTERS_WIDTH(32),
+        .READ_TYPE(axis_constant_registers),
+        .WRITE_TYPE(axis_constant_registers),
         .ADDRESS_MASK('hf),
-        .N_TRIGGER_REGISTERS(1),
-        .TRIGGER_REGISTERS_IDX({0})
+        .TRIGGER_MASK('{low_bytes:1, default:0})
     ) CU (
         .clock(clock),
         .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
+        .input_registers(registers),
+        .output_registers(registers),
         .trigger_out(trigger_axis_write),
         .axil(axil)
     );
 
     reg wait_sync;
-
-    reg [31:0] constant_low_bytes;
-    reg [31:0] constant_high_bytes;
-    reg [31:0] constant_dest;
-
-    assign constant_low_bytes = cu_write_registers[0];
-    assign constant_high_bytes = cu_write_registers[1];
-    assign constant_dest = cu_write_registers[2];
-
-    assign cu_read_registers[0] = {{ADDITIONAL_BITS{1'b0}}, constant_low_bytes};
-    assign cu_read_registers[1] = {{ADDITIONAL_BITS{1'b0}}, constant_high_bytes};
-    assign cu_read_registers[2] = {{ADDITIONAL_BITS{1'b0}}, constant_dest};
-
 
     always_ff @(posedge clock) begin
         if (~reset) begin
@@ -79,16 +65,16 @@ module axis_constant #(
             const_out.valid <= 0;
             if(trigger_axis_write)begin
                 if(const_out.ready & sync) begin
-                    const_out.data <= {constant_high_bytes, constant_low_bytes};
-                    const_out.dest <= constant_dest;
+                    const_out.data <= {registers.high_bytes, registers.low_bytes};
+                    const_out.dest <= registers.constant_dest;
                     const_out.valid <= 1;
                 end else begin
                     wait_sync = 1;
                 end   
             end else if(wait_sync) begin
                 if(const_out.ready & sync) begin
-                    const_out.data <= {constant_high_bytes, constant_low_bytes};
-                    const_out.dest <= constant_dest;
+                    const_out.data <= {registers.high_bytes, registers.low_bytes};
+                    const_out.dest <= registers.constant_dest;
                     const_out.valid <= 1;
                     wait_sync <= 0;
                 end              
