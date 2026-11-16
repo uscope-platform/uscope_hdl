@@ -33,7 +33,7 @@ module CIC_filter_tb();
 
     CIC_filter #(
         .N_STAGES(3),
-        .PROCESSING_RESOLUTION(28)
+        .RESOLUTION(28)
     ) UUT(
         .clock(clock),
         .reset(reset),

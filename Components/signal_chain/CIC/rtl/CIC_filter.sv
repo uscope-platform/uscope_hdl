@@ -50,7 +50,8 @@ module CIC_filter #(
 
     reg [PROCESSING_RESOLUTION-1:0] integrator_out [N_STAGES-1:0];
     reg [PROCESSING_RESOLUTION-1:0] comb_out [N_STAGES-1:0];
-
+    reg comb_clock = 0;
+    
     integrator_stage #(
             .PROCESSING_RESOLUTION(PROCESSING_RESOLUTION)
     )integrator_0(
@@ -112,7 +113,7 @@ module CIC_filter #(
     endgenerate
 
     reg [RATIO_WIDTH-1:0] downsampling_ctr = 0;
-    reg comb_clock = 0;
+
     reg out_phase = 0;
     reg pipeline_full = 0;
     reg [$clog2(N_STAGES)-1:0] fill_ctr = 0;

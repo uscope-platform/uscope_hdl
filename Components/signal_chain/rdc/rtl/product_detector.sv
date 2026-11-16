@@ -20,20 +20,20 @@ module product_detector #(
     input wire clock,
     input wire reset,
     axi_stream.slave analog_in,
-    axi_stream.slave excitation
+    axi_stream.slave excitation,
+    axi_stream.master sin,
+    axi_stream.master cos
 );
 
-axi_stream #(.DATA_WIDTH($bits(analog_in.data))) sin();
-axi_stream #(.DATA_WIDTH($bits(analog_in.data))) cos();
 axi_stream #(.DATA_WIDTH(2*$bits(analog_in.data))) sin_hf();
 axi_stream #(.DATA_WIDTH(2*$bits(analog_in.data))) cos_hf();
 
 reg [$bits(excitation.data)-1:0] latched_excitation;
-reg signed [2*$bits(analog_in.data)-1:0] sin_product;
-reg signed [2*$bits(analog_in.data)-1:0] cos_product;
 
 assign analog_in.ready = 1;
 assign excitation.ready = 1;
+
+reg [1:0] n_available_signals = 0;
 
 always_ff@(posedge clock)begin
     if(excitation.valid) latched_excitation <= excitation.data;
@@ -43,12 +43,17 @@ always_ff@(posedge clock)begin
     if(analog_in.valid)begin
         if(analog_in.dest == 0) begin
             sin_hf.data <= $signed(latched_excitation) * $signed(analog_in.data);
-            sin_hf.valid <= 1;
+            n_available_signals <= n_available_signals+1;
         end
         
         if(analog_in.dest == 1) begin
             cos_hf.data <= $signed(latched_excitation) * $signed(analog_in.data);
+            n_available_signals <= n_available_signals+1;
+        end
+        if(n_available_signals >= 2)begin
             cos_hf.valid <= 1;
+            sin_hf.valid <= 1;
+            n_available_signals <= 0;
         end
     end
 end
