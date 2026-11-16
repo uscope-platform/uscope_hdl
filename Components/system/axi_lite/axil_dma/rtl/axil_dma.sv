@@ -29,41 +29,32 @@ module axil_dma #(
     output reg dma_done
 );
 
-
-    reg [31:0] cu_write_registers [3:0];
-    reg [31:0] cu_read_registers [3:0];
-  
-    parameter [31:0] IV [3:0] = '{4{'h0}};
+    typedef struct {
+        reg [31:0] target_base_low;
+        reg [31:0] transfer_size;
+        reg [31:0] reserved;
+        reg [31:0] target_base_high;
+    } axil_dma_registers;
+    
+    axil_dma_registers registers;
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(4),
-        .N_WRITE_REGISTERS(4),
+        .READ_TYPE(axil_dma_registers),
+        .WRITE_TYPE(axil_dma_registers),
         .REGISTERS_WIDTH(32),
-        .ADDRESS_MASK('hff),
-        .INITIAL_OUTPUT_VALUES(IV)
+        .ADDRESS_MASK('hff)
     ) CU (
         .clock(clock),
         .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
+        .input_registers(registers),
+        .output_registers(registers),
         .axil(axi_in)
     );
 
     reg [63:0] target_base;
-    reg [31:0] transfer_size;
 
-
-    assign target_base[31:0] = cu_write_registers[0];
-    assign target_base[63:32] = cu_write_registers[3];
-    assign transfer_size = cu_write_registers[1];
-
-
-    assign cu_read_registers[0] = target_base[31:0];
-    assign cu_read_registers[3] = target_base[63:32];
-    assign cu_read_registers[1] = transfer_size;
-    assign cu_read_registers[2] = 0;
-    
-
+    assign target_base[31:0] = registers.target_base_low;
+    assign target_base[63:32] = registers.target_base_high;
 
     wire dma_start;
     assign dma_start = data_in.tlast;
@@ -158,7 +149,7 @@ module axil_dma #(
                 writer_wait_response:begin
                     if(axi_out.BVALID)begin
                         axi_out.BREADY <= 0;
-                        if(progress_counter == transfer_size-1)begin
+                        if(progress_counter == registers.transfer_size-1)begin
                             writer_state <= writer_idle;
                         end else begin
                             writer_state <= writer_dma_send;

@@ -25,36 +25,47 @@ module interrupt_controller # (
 );
 
 
-
-    reg [N_INTERRUPTS-1:0] status_register = 0;
-    reg [N_INTERRUPTS-1:0] ack_register;
-
     reg ack_trigger;
+
+    typedef struct {
+        reg [31:0] status;
+    } interrupt_controller_read_registers;
+
+    typedef struct {
+        reg [31:0] ack;
+    } interrupt_controller_write_registers;
+    
+    interrupt_controller_read_registers read_registers;
+    interrupt_controller_write_registers write_registers;
+
+
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(1),
-        .N_WRITE_REGISTERS(1),
-        .N_TRIGGER_REGISTERS(1),
-        .TRIGGER_REGISTERS_IDX('{0}),
+        .READ_TYPE(interrupt_controller_read_registers),
+        .WRITE_TYPE(interrupt_controller_write_registers),
         .REGISTERS_WIDTH(32),
-        .ADDRESS_MASK('hf)
+        .ADDRESS_MASK('hff),
+        .TRIGGER_MASK('{ack: 1})
     ) CU (
         .clock(clock),
         .reset(reset),
-        .input_registers('{status_register}),
-        .output_registers('{ack_register}),
+        .input_registers(read_registers),
+        .output_registers(write_registers),
         .trigger_out('{ack_trigger}),
         .axil(axi_in)
     );
 
+    initial begin
+        read_registers.status  = 0;
+    end
 
 
     always_ff @( posedge clock ) begin
-        irq <= |status_register;
+        irq <= |read_registers.status;
         
         if(ack_trigger)begin
-            status_register <= status_register & ~ack_register;
+            read_registers.status <= read_registers.status & ~write_registers.ack;
         end else if(|interrupt_in)begin
-            status_register <= status_register | interrupt_in;
+            read_registers.status <= read_registers.status | interrupt_in;
         end
     end
 
