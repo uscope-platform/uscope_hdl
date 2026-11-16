@@ -26,18 +26,28 @@ module gpio #(
     axi_lite.slave axil
 );
 
-    localparam ADDITIONAL_INPUT_BITS = 32 - INPUT_WIDTH;
-    localparam ADDITIONAL_OUTPUT_BITS = 32 - OUTPUT_WIDTH;
+    typedef struct {
+            reg [31:0] out;
+            reg [31:0] in;
+    } gpio_registers;
+        
+    gpio_registers read_registers, write_registers;
+
+    always_comb begin
+        read_registers = write_registers;
+        read_registers.in = 32'(gpio_i);
+        gpio_o = write_registers.out[OUTPUT_WIDTH-1:0];
+    end
+
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(2),
-        .N_WRITE_REGISTERS(1),
-        .REGISTERS_WIDTH(32),
+        .READ_TYPE(gpio_registers),
+        .WRITE_TYPE(gpio_registers),
         .ADDRESS_MASK('hf)
     ) CU (
         .clock(clock),
         .reset(reset),
-        .input_registers('{{{ADDITIONAL_INPUT_BITS{1'b0}},{gpio_i}}, {{ADDITIONAL_OUTPUT_BITS{1'b0}},{gpio_o}}}),
-        .output_registers('{gpio_o}),
+        .input_registers(read_registers),
+        .output_registers(write_registers),
         .axil(axil)
     );
 

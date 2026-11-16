@@ -29,43 +29,51 @@ module trigger_engine #(
     output reg [63:0] dma_base_addr
 );
 
-        wire rearm_trigger;
+    
 
-    reg [31:0] cu_write_registers [7:0];
-    reg [31:0] cu_read_registers [7:0];
+    typedef struct packed{
+        logic [29:0] rsvd_1; logic [1:0]  trigger_mode; // PADDED
+        logic [31:0] trigger_level;
+        logic [31:0] buffer_addr_low;
+        logic [31:0] buffer_addr_high;
+        logic [23:0] rsvd_2; logic [7:0]  channel_selector; // PADDED
+        logic [15:0] rsvd_3; logic [15:0] trigger_point; // PADDED
+        logic [29:0] rsvd_4; logic [1:0]  acquisition_mode; // PADDED
+        logic [31:0]rearm_status;
+    } hil_controller_registers;
+    
+    enum reg [2:0] {
+        wait_fill = 0,
+        run = 1,
+        stop = 2,
+        free_run = 3
+    } scope_state = wait_fill;
+
+    wire rearm_trigger;
+    
+    hil_controller_registers write_registers, read_registers;
+
+    always_comb begin
+        read_registers = write_registers;
+        read_registers.rearm_status = 32'(scope_state);
+    end
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(8),
-        .N_WRITE_REGISTERS(8),
-        .REGISTERS_WIDTH(32),
+        .READ_TYPE(hil_controller_registers),
+        .WRITE_TYPE(hil_controller_registers),
         .ADDRESS_MASK('h1f),
-        .N_TRIGGER_REGISTERS(1),
-        .TRIGGER_REGISTERS_IDX('{7})
+        .TRIGGER_MASK('{rearm_status: 1, default: 0})
     ) CU (
         .clock(clock),
         .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
+        .input_registers(read_registers),
+        .output_registers(write_registers),
         .trigger_out(rearm_trigger),
         .axil(axi_in)
     );
 
-
-    wire [1:0] acquisition_mode;
-    wire [1:0] trigger_mode;
-    wire [31:0] trigger_level;
-    reg [7:0] channel_selector;
-
-    assign trigger_mode = cu_write_registers[0];
-    assign trigger_level = cu_write_registers[1];
-    assign dma_base_addr[31:0] = cu_write_registers[2];
-    assign dma_base_addr[63:32] = cu_write_registers[3];
-    assign channel_selector = cu_write_registers[4];
-    assign trigger_point = cu_write_registers[5];
-    assign acquisition_mode = cu_write_registers[6];
-
-    assign cu_read_registers[6:0] = cu_write_registers[6:0];
-
+    assign dma_base_addr = {write_registers.buffer_addr_high, write_registers.buffer_addr_low};
+    assign trigger_point = write_registers.trigger_point;
 
     wire[31:0] unrolled_data [N_CHANNELS-1:0];
     wire [15:0] unrolled_user [N_CHANNELS-1:0];
@@ -84,9 +92,9 @@ module trigger_engine #(
     wire [31:0] selected_data;
     wire [15:0] selected_user;
     wire selected_valid;
-    assign selected_data = unrolled_data[channel_selector];
-    assign selected_user = unrolled_user[channel_selector];
-    assign selected_valid = unrolled_valid[channel_selector];
+    assign selected_data = unrolled_data[write_registers.channel_selector];
+    assign selected_user = unrolled_user[write_registers.channel_selector];
+    assign selected_valid = unrolled_valid[write_registers.channel_selector];
 
     initial trigger_out <= 0;
 
@@ -140,7 +148,7 @@ module trigger_engine #(
 
 
     assign rising_edge  = comp_out_dly == 2 && (comp_out.data == 1 || comp_out.data == 0);
-    assign falling_edge = (comp_out.data == 1 || comp_out.data == 0) && comp_out.data == 2;
+    assign falling_edge = (comp_out.data == 1 || comp_out.data == 0) && comp_out_dly == 2;
 
     always_comb begin
         if(is_axis_float(delayed_in.user))begin
@@ -150,33 +158,25 @@ module trigger_engine #(
             comp_in_a.data = itf_out.data;
             comp_in_a.valid = itf_out.valid;
         end
-        comp_in_b.data = trigger_level;
+        comp_in_b.data = write_registers.trigger_level;
         comp_in_b.valid = 1;
     end
 
-    enum reg [2:0] {
-        wait_fill = 0,
-        run = 1,
-        stop = 2,
-        free_run = 3
-    } state = wait_fill;
 
     reg [15:0] fill_ctr = 0;
 
-    assign cu_read_registers[7] = state;
-
     always_ff @(posedge clock) begin
         comp_out_dly <= comp_out.data;
-        case (state)
+        case (scope_state)
             wait_fill : begin
                 if(fill_ctr == MEMORY_DEPTH)begin
-                    state <= run;
+                    scope_state <= run;
                 end
                 fill_ctr <= fill_ctr + 1;
             end
             run : begin
                 if(comp_out.valid)begin
-                    case (trigger_mode)
+                    case (write_registers.trigger_mode)
                         0: begin //RISING EDGE TRIGGER
                             trigger_out <= rising_edge;
                         end
@@ -188,26 +188,26 @@ module trigger_engine #(
                         end
                     endcase
                 end
-                if(trigger_out && acquisition_mode ==1)begin
-                    state <= stop;
+                if(trigger_out && write_registers.acquisition_mode ==1)begin
+                    scope_state <= stop;
                 end
-                if(acquisition_mode == 2)begin
-                    state <= free_run;
+                if(write_registers.acquisition_mode == 2)begin
+                    scope_state <= free_run;
                 end
             end
             stop : begin
                 trigger_out <= 0;
-                if(rearm_trigger || acquisition_mode !=1)begin
-                    state <= run;
+                if(rearm_trigger || write_registers.acquisition_mode !=1)begin
+                    scope_state <= run;
                 end
-                if(acquisition_mode == 2)begin
-                    state <= free_run;
+                if(write_registers.acquisition_mode == 2)begin
+                    scope_state <= free_run;
                 end
             end
             free_run : begin
                 trigger_out <= 1;
-                if(acquisition_mode !=2)begin
-                    state <= run;
+                if(write_registers.acquisition_mode !=2)begin
+                    scope_state <= run;
                     trigger_out <= 0;
                 end
             end

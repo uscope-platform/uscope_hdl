@@ -33,7 +33,6 @@ module uScope_stream_dma #(
     axi_stream.slave data_in
 );
 
-    wire [31:0] addr[N_CHANNELS-1:0];
 
     axi_lite #(.INTERFACE_NAME("MUX CONTROLLER"), .ADDR_WIDTH(ADDR_WIDTH)) mux_ctrl_axi();
     axi_lite #(.INTERFACE_NAME("TRIGGER CONTROLLER"), .ADDR_WIDTH(ADDR_WIDTH)) uscope_axi();
@@ -62,29 +61,24 @@ module uScope_stream_dma #(
     );
 
 
-    reg [31:0] cu_write_registers [N_CHANNELS:0];
-    reg [31:0] cu_read_registers [N_CHANNELS:0];
-    localparam [31:0] VARIABLE_INITIAL_VALUES [N_CHANNELS:0] = '{(N_CHANNELS+1){1'b0}};
+    typedef struct {
+        reg [30:0] rsvd_1; reg disable_dma;
+        reg [31:0] address[N_CHANNELS];
+    } uscope_dma_registers;
+    
+    uscope_dma_registers registers;
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(N_CHANNELS+1),
-        .N_WRITE_REGISTERS(N_CHANNELS+1),
-        .INITIAL_OUTPUT_VALUES(VARIABLE_INITIAL_VALUES),
-        .REGISTERS_WIDTH(32),
+        .READ_TYPE(uscope_dma_registers),
+        .WRITE_TYPE(uscope_dma_registers),
         .ADDRESS_MASK('hff)
     ) CU (
         .clock(clock),
         .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
+        .input_registers(registers),
+        .output_registers(registers),
         .axil(mux_ctrl_axi)
     );
-
-    wire external_capture_enable, disable_dma;
-    assign disable_dma = cu_write_registers[0][0];
-    assign external_capture_enable = cu_write_registers[0][24];
-
-    assign cu_read_registers = cu_write_registers;
 
 
     wire sample_scope;
@@ -109,7 +103,6 @@ module uScope_stream_dma #(
     generate
         genvar i;
         for(i = 0; i<N_CHANNELS; i++)begin
-            assign addr[i] = cu_write_registers[i+1];
             assign unrolled_sync_ready[i] = scope_in_sync[i].ready;
 
             axi_stream_extractor #(
@@ -118,7 +111,7 @@ module uScope_stream_dma #(
                 .REGISTERED(0)
             ) extractor (
                 .clock(clock),
-                .selector(addr[i]),
+                .selector(registers.address[i]),
                 .out_dest(i),
                 .stream_in(data_in),
                 .stream_out(scope_in[i])
@@ -149,7 +142,7 @@ module uScope_stream_dma #(
     )scope_internal (
         .clock(clock),
         .reset(reset),
-        .disable_dma(disable_dma),
+        .disable_dma(registers.disable_dma),
         .stream_in(scope_in_sync),
         .out(scope_out),
         .axi_in(uscope_axi),

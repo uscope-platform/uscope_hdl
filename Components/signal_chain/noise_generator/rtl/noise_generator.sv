@@ -35,22 +35,24 @@ module noise_generator #(
     axi_stream.master data_out
 );
 
-    localparam N_REGISTERS = 1+N_OUTPUTS;
+    typedef struct {
+        reg [31:0] active_outputs;
+        reg [31:0] output_dest [N_OUTPUTS];
+    } noise_generator_registers;
+    
+    noise_generator_registers registers;
 
-    reg [31:0] cu_read_registers [N_REGISTERS-1:0];
-    reg [31:0] cu_write_registers [N_REGISTERS-1:0];
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(N_REGISTERS),
-        .N_WRITE_REGISTERS(N_REGISTERS),
-        .ADDRESS_MASK('hFF)
+        .READ_TYPE(noise_generator_registers),
+        .WRITE_TYPE(noise_generator_registers),
+        .ADDRESS_MASK('hff)
     ) CU (
         .clock(clock),
         .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
-        .axil(axi_in),
-        .trigger_out()
+        .input_registers(registers),
+        .output_registers(registers),
+        .axil(axi_in)
     );
 
     axi_stream generator_out();
@@ -92,22 +94,8 @@ module noise_generator #(
         .axis_out(data_out)
     );
 
-    assign cu_read_registers = cu_write_registers;
+    assign active = |registers.active_outputs;
 
-    wire [31:0] active_outputs;
-
-    assign active_outputs = cu_write_registers[0];
-
-    wire [31:0] output_dest [N_OUTPUTS-1:0];
-
-    assign active = |active_outputs;
-
-
-    generate
-        for (genvar i = 0; i < N_OUTPUTS; i++) begin
-            assign output_dest[i] = cu_write_registers[i+1];
-        end
-    endgenerate
 
 
     localparam polynomial = 'h281000;
@@ -170,13 +158,13 @@ module noise_generator #(
                 end else begin
                     case (state)
                         idle:begin
-                            if(trigger & |active_outputs) begin
+                            if(trigger & |registers.active_outputs) begin
                                 state <= working;
                                 output_counter <= 0;
                             end
                         end
                         working: begin
-                            if(output_counter == active_outputs-1)begin
+                            if(output_counter == registers.active_outputs-1)begin
                                 state <= idle;
                                 generator_out.tlast <= 1'b1;
                             end else begin
@@ -185,7 +173,7 @@ module noise_generator #(
                             if(generator_out.ready)begin
                                 state_reg[i] <= state_out[i];
                                 generator_out.data <= {{generator_out.DATA_WIDTH-16{noise_gen_out[15]}}, noise_gen_out};
-                                generator_out.dest <= output_dest[output_counter];
+                                generator_out.dest <= registers.output_dest[output_counter];
                                 generator_out.valid <= 1'b1;
                             end
                         end

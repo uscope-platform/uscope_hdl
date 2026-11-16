@@ -26,38 +26,29 @@ module enable_generator #(
     axi_lite.slave axil
 );
 
-    reg [COUNTER_WIDTH-1:0] period;
     wire [COUNTER_WIDTH-1:0] count;
-    reg bus_enable;
-    reg [COUNTER_WIDTH-1:0] enable_threshold_1;
 
 
-
-    logic [31:0] cu_write_registers [2:0];
-    logic [31:0] cu_read_registers [2:0];
-
-    localparam ADDITIONAL_BITS = 32 - COUNTER_WIDTH;
+    typedef struct {
+        reg [30:0] rsvd_1; reg bus_enable;
+        reg [31:0] period;
+        reg [31:0] enable_threshold;
+        
+    } enable_generator_registers;
+    
+    enable_generator_registers registers;
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(3),
-        .N_WRITE_REGISTERS(3),
-        .REGISTERS_WIDTH(32),
-        .ADDRESS_MASK('hf)
+        .READ_TYPE(enable_generator_registers),
+        .WRITE_TYPE(enable_generator_registers),
+        .ADDRESS_MASK('hff)
     ) CU (
         .clock(clock),
         .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
+        .input_registers(registers),
+        .output_registers(registers),
         .axil(axil)
     );
-
-    assign bus_enable = cu_write_registers[0][0];
-    assign period = cu_write_registers[1][COUNTER_WIDTH-1:0];
-    assign enable_threshold_1 = cu_write_registers[2][COUNTER_WIDTH-1:0];
-
-    assign cu_read_registers[0][31:0] = {31'b0, {bus_enable}};
-    assign cu_read_registers[1][31:0] = {{ADDITIONAL_BITS{1'b0}},period};
-    assign cu_read_registers[2][31:0] = {{ADDITIONAL_BITS{1'b0}},enable_threshold_1};
     
     wire comparator_out;
     reg synchronized_tb,prev_comp_out;
@@ -72,7 +63,7 @@ module enable_generator #(
 
 
     always_ff@(posedge clock) begin
-        if(period == 0 || period == 1) begin
+        if(registers.period == 0 || registers.period == 1) begin
             synchronized_tb <= ext_timebase;
         end else begin
             prev_comp_out <= comparator_out;
@@ -92,8 +83,8 @@ module enable_generator #(
         .reset(reset),
         .pause(0),
         .external_timebase(ext_timebase),
-        .gen_enable_in(bus_enable | gen_enable_in),
-        .period(period),
+        .gen_enable_in(registers.bus_enable | gen_enable_in),
+        .period(registers.period),
         .counter_out(count)
     );
 
@@ -103,7 +94,7 @@ module enable_generator #(
     ) comparator_1(
         .clock(clock),
         .reset(reset),
-        .enable_treshold(enable_threshold_1),
+        .enable_treshold(registers.enable_threshold),
         .count(count),
         .enable_out(comparator_out)
     );

@@ -27,37 +27,35 @@ module waveform_generator #(
 );
 
     localparam int N_PARAMETERS = 10;
-    localparam int N_REGISTERS = N_PARAMETERS+3;
 
-    reg [31:0] cu_read_registers [N_REGISTERS-1:0];
-    reg [31:0] cu_write_registers [N_REGISTERS-1:0];
+    typedef struct {
+        reg [15:0] rsvd_1; reg [15:0] active_channels;
+        reg [29:0] rsvd_2; reg [1:0] shape;
+        reg [23:0] rsvd_3; reg [7:0] output_selector;
+        reg [31:0] parameters [N_PARAMETERS];
+    } waveform_generator_registers;
+    
+    waveform_generator_registers registers;
 
     wire latch_parameters;
+
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(N_REGISTERS),
-        .N_WRITE_REGISTERS(N_REGISTERS),
-        .ADDRESS_MASK('hFF),
-        .TRIGGER_REGISTERS_IDX('{0}),
-        .N_TRIGGER_REGISTERS(1)
+        .READ_TYPE(waveform_generator_registers),
+        .WRITE_TYPE(waveform_generator_registers),
+        .ADDRESS_MASK('hff),
+        .TRIGGER_MASK('{active_channels: 1, default: 0})
     ) CU (
         .clock(clock),
         .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
-        .axil(axi_in),
-        .trigger_out('{latch_parameters})
+        .input_registers(registers),
+        .output_registers(registers),
+        .trigger_out('{latch_parameters}),
+        .axil(axi_in)
     );
 
 
     reg [1:0] shape [N_OUTPUTS];
-    wire [15:0] active_channels;
     reg [31:0] parameters[N_OUTPUTS][N_PARAMETERS-1:0] = '{default:0};
-    wire [7:0] output_selector;
-    assign cu_read_registers = cu_write_registers;
-
-    assign active_channels = cu_write_registers[0];
-    assign output_selector = cu_write_registers[2];
-
 
 
     axi_stream square_out[N_OUTPUTS]();
@@ -75,8 +73,8 @@ module waveform_generator #(
         for ( i = 0; i<N_PARAMETERS; i++) begin
             always_ff @(posedge clock)begin
                 if(latch_parameters)begin
-                    parameters[output_selector][i] <= cu_write_registers[i+3];
-                    shape[output_selector] <= cu_write_registers[1][1:0];
+                    parameters[registers.output_selector][i] <= registers.parameters[i];
+                    shape[registers.output_selector] <= registers.shape;
                     active <= 1;
                 end
             end
@@ -90,7 +88,7 @@ module waveform_generator #(
             )square_gen(
                 .clock(clock),
                 .reset(reset),
-                .trigger(trigger & active_channels>output_idx),
+                .trigger(trigger & registers.active_channels>output_idx),
                 .parameters(parameters[output_idx]),
                 .data_out(square_out[output_idx])
             );
@@ -112,7 +110,7 @@ module waveform_generator #(
             )triangle_gen(
                 .clock(clock),
                 .reset(reset),
-                .trigger(trigger & active_channels>output_idx),
+                .trigger(trigger & registers.active_channels>output_idx),
                 .parameters(parameters[output_idx]),
                 .data_out(triangle_out[output_idx])
             );
@@ -163,7 +161,7 @@ module waveform_generator #(
         if(serialized_out.valid == 0) begin
             data_out.tlast <= 0;
         end else begin
-            if(tlast_counter == active_channels-1) begin
+            if(tlast_counter == registers.active_channels-1) begin
                 data_out.tlast <= 1;
             end else begin
                 tlast_counter <= tlast_counter+1;

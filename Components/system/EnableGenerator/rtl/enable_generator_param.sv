@@ -26,37 +26,30 @@ module enable_generator_param #(
     axi_lite.slave axil
 );
 
+
+    typedef struct {
+        reg [30:0] rsvd_1; reg bus_enable;
+        reg [31:0] period;
+        reg [31:0] enable_threshold [N_ENABLES];
+    } enable_generator_param_registers;
     
-    reg [COUNTER_WIDTH-1:0] period;
-    wire [COUNTER_WIDTH-1:0] count;
-    reg bus_enable;
-    reg [COUNTER_WIDTH-1:0] enable_threshold [N_ENABLES-1:0];
+    enable_generator_param_registers registers;
 
-
-    localparam N_REGISTERS = 2+N_ENABLES;
-
-    logic [31:0] cu_write_registers [N_REGISTERS-1:0];
-    logic [31:0] cu_read_registers [N_REGISTERS-1:0];
-
-    localparam ADDITIONAL_BITS = 32 - COUNTER_WIDTH;
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(N_REGISTERS),
-        .N_WRITE_REGISTERS(N_REGISTERS),
-        .REGISTERS_WIDTH(32),
-        .ADDRESS_MASK('hFF)
+        .READ_TYPE(enable_generator_param_registers),
+        .WRITE_TYPE(enable_generator_param_registers),
+        .ADDRESS_MASK('hff)
     ) CU (
         .clock(clock),
         .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
+        .input_registers(registers),
+        .output_registers(registers),
         .axil(axil)
     );
 
-    assign cu_read_registers = cu_write_registers;
 
-    assign bus_enable = cu_write_registers[0][0];
-    assign period = cu_write_registers[1];
+    wire [COUNTER_WIDTH-1:0] count;
 
     enable_generator_counter #(
         .COUNTER_WIDTH(COUNTER_WIDTH),
@@ -64,9 +57,9 @@ module enable_generator_param #(
     ) counter(
         .clock(clock),
         .reset(reset),
-        .gen_enable_in(bus_enable | gen_enable_in),
+        .gen_enable_in(registers.bus_enable | gen_enable_in),
         .pause(pause),
-        .period(period),
+        .period(registers.period),
         .counter_out(count)
     );
 
@@ -75,7 +68,6 @@ module enable_generator_param #(
     genvar i;
     generate
         for (i = 0; i < N_ENABLES; i++) begin
-            assign enable_threshold[i] = cu_write_registers[i+2];
 
             enable_comparator #(
                 .COUNTER_WIDTH(COUNTER_WIDTH),
@@ -83,7 +75,7 @@ module enable_generator_param #(
             ) comparator(
                 .clock(clock),
                 .reset(reset),
-                .enable_treshold(enable_threshold[i]),
+                .enable_treshold(registers.enable_threshold[i]),
                 .count(count),
                 .enable_out(internal_enable_out[i])
             );

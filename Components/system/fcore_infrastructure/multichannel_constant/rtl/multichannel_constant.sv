@@ -38,43 +38,34 @@ module multichannel_constant #(
     reg [CONSTANT_WIDTH-1:0] constant_dest_memory [0:N_CONSTANTS-1][0:N_CHANNELS-1];
     reg [CONSTANT_WIDTH-1:0] constant_user_memory [0:N_CONSTANTS-1][0:N_CHANNELS-1];
 
-    localparam N_REGISTER = 7;
-    reg [31:0] cu_write_registers [N_REGISTER-1:0];
-    reg [31:0] cu_read_registers [N_REGISTER-1:0];
+    typedef struct {
+        reg [31:0] constant_low_bytes;
+        reg [31:0] constant_high_bytes;
+        reg [31:0] constant_dest;
+        reg [15:0] constant_selector;
+        reg [15:0] channel_selector;
+        reg [31:0] clear_address;
+        reg [23:0] rsvd_1; reg [7:0] active_channels;
+        reg [31:0] constant_user;
+    } multichannel_constant_registers;
+    
+    multichannel_constant_registers registers;
 
+    wire latch_parameters;
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(N_REGISTER),
-        .N_WRITE_REGISTERS(N_REGISTER),
-        .REGISTERS_WIDTH(32),
+        .READ_TYPE(multichannel_constant_registers),
+        .WRITE_TYPE(multichannel_constant_registers),
         .ADDRESS_MASK('hff),
-        .N_TRIGGER_REGISTERS(2),
-        .TRIGGER_REGISTERS_IDX({0,4})
+        .TRIGGER_MASK('{constant_low_bytes: 1, clear_address:1, default: 0})
     ) CU (
         .clock(clock),
         .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
-        .trigger_out({latch_constant, clear_constant}),
+        .input_registers(registers),
+        .output_registers(registers),
+        .trigger_out('{clear_constant, latch_constant}),
         .axil(axil)
     );
-
-    reg [31:0] constant_low_bytes;
-    reg [31:0] constant_high_bytes;
-    reg [31:0] constant_dest;
-    reg [15:0] channel_selector;
-    reg [15:0] constant_selector;
-    reg [7:0] active_channels;
-    reg [31:0] constant_user;
-
-    assign constant_low_bytes = cu_write_registers[0];
-    assign constant_high_bytes = cu_write_registers[1];
-    assign constant_dest = cu_write_registers[2];
-    assign {channel_selector, constant_selector} = cu_write_registers[3];
-    assign active_channels = cu_write_registers[5];
-    assign constant_user = cu_write_registers[6];
-
-    assign cu_read_registers = cu_write_registers;
 
     reg [N_CONSTANTS-1:0] active_constants = 0;
 
@@ -89,17 +80,17 @@ module multichannel_constant #(
             end
         end else begin
             if(latch_constant)begin
-                constant_data_memory[constant_selector][channel_selector] <= {constant_high_bytes, constant_low_bytes};
-                constant_dest_memory[constant_selector][channel_selector] <= constant_dest;
-                constant_user_memory[constant_selector][channel_selector] <= constant_user;
-                if(!active_constants[constant_selector]) n_active_constants <= n_active_constants + 1;
-                active_constants[constant_selector] <= 1;
+                constant_data_memory[registers.constant_selector][registers.channel_selector] <= {registers.constant_high_bytes, registers.constant_low_bytes};
+                constant_dest_memory[registers.constant_selector][registers.channel_selector] <= registers.constant_dest;
+                constant_user_memory[registers.constant_selector][registers.channel_selector] <= registers.constant_user;
+                if(!active_constants[registers.constant_selector]) n_active_constants <= n_active_constants + 1;
+                active_constants[registers.constant_selector] <= 1;
             end
             if(clear_constant)begin
-                constant_data_memory[constant_selector][channel_selector] <= 0;
-                constant_dest_memory[constant_selector][channel_selector] <= 0;
-                constant_user_memory[constant_selector][channel_selector] <= 0;
-                active_constants[constant_selector] <= 0;
+                constant_data_memory[registers.constant_selector][registers.channel_selector] <= 0;
+                constant_dest_memory[registers.constant_selector][registers.channel_selector] <= 0;
+                constant_user_memory[registers.constant_selector][registers.channel_selector] <= 0;
+                active_constants[registers.constant_selector] <= 0;
                 n_active_constants <= n_active_constants - 1;
             end
         end
@@ -112,7 +103,7 @@ module multichannel_constant #(
     reg[7:0] const_pointer = 0;
     reg[7:0] channel_counter = 0;
 
-    wire early_advance = channel_counter == active_channels-1 && active_channels != 0;
+    wire early_advance = channel_counter == registers.active_channels-1 && registers.active_channels != 0;
     wire regular_advance = channel_counter == N_CHANNELS-1;
     enum logic [2:0]{
        idle_state = 0,

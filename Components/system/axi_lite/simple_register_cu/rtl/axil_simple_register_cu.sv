@@ -14,24 +14,74 @@
 // limitations under the License.
 `timescale 10 ns / 1 ns
 
+// input_registers / output_registers are typed by READ_TYPE / WRITE_TYPE, which
+// must be given. They can be packed or unpacked structs or arrays, as long as
+// every member is a bit-stream type. The register count is
+// $bits(type)/REGISTERS_WIDTH. Registers follow declaration order: the first
+// declared field/element is register 0 (address 0x0), the next is register 1
+// (0x4), and so on. (For an array declared [N-1:0] that means element N-1 is
+// register 0; declare it [0:N-1] if you want element i at register i.)
+// INITIAL_OUTPUT_VALUES is a WRITE_TYPE value applied on reset (default all 0).
+//
+// Register access triggers: mark a register by name in TRIGGER_MASK (a value of
+// WRITE_TYPE, e.g. '{rearm_status: 1, default: 0}) and it gets one bit on
+// trigger_out, pulsed for one cycle when that register is written (reads do not
+// trigger). The number of bits equals the number of bits set in the mask (mark
+// each register with a single 1), ordered by register address (lowest = bit 0).
+// The pulse is in the cycle the new value appears on output_registers.
+// Out-of-range writes pulse nothing.
+//
+// Example:
+//   axil_simple_register_cu #(
+//       .READ_TYPE (rdc_status_t),
+//       .WRITE_TYPE(rdc_registers_t),
+//       .INITIAL_OUTPUT_VALUES('{offset: 0, dds_divider: 100, modulator_divider: 8}),
+//       .TRIGGER_MASK('{offset: 1, default: 0}),   // trigger_out[0] pulses on a write to offset
+//       .ADDRESS_MASK('hFF)
+//   ) cu (.input_registers(status), .output_registers(regs), ...);
+
 module axil_simple_register_cu #(
-    parameter N_READ_REGISTERS = 1,
-    N_WRITE_REGISTERS = 1,
-    REGISTERS_WIDTH = 32,
-    N_TRIGGER_REGISTERS = 1,
-    parameter [REGISTERS_WIDTH-1:0] INITIAL_OUTPUT_VALUES [N_WRITE_REGISTERS-1:0] = '{N_WRITE_REGISTERS{0}},
-    parameter [31:0] TRIGGER_REGISTERS_IDX [N_TRIGGER_REGISTERS-1:0] = '{N_TRIGGER_REGISTERS{0}},
-    REGISTERED_BUFFERS = 0,
+    parameter type READ_TYPE,
+    parameter type WRITE_TYPE,
+    parameter REGISTERS_WIDTH = 32,
+    parameter WRITE_TYPE INITIAL_OUTPUT_VALUES = '{default:'0},
+    parameter WRITE_TYPE TRIGGER_MASK = '{default:'0},
+    // number of triggers = number of bits set in the mask (mark each register with 1)
+    parameter N_TRIGGER_REGISTERS = ($countones(($bits(WRITE_TYPE))'({>>{TRIGGER_MASK}})) > 0) ? $countones(($bits(WRITE_TYPE))'({>>{TRIGGER_MASK}})) : 1,
+    parameter REGISTERED_BUFFERS = 0,
     parameter [31:0] ADDRESS_MASK = 0
 ) (
     input wire clock,
     input wire reset,
-    input wire [REGISTERS_WIDTH-1:0] input_registers [N_READ_REGISTERS-1:0],
-    output reg [REGISTERS_WIDTH-1:0] output_registers [N_WRITE_REGISTERS-1:0],
-    output reg [N_TRIGGER_REGISTERS-1:0] trigger_out,
+    input READ_TYPE input_registers,
+    output WRITE_TYPE output_registers,
+    output reg [N_TRIGGER_REGISTERS-1:0] trigger_out,   // one bit per register marked in TRIGGER_MASK
     axi_lite.slave axil
 );
 
+localparam int NR = $bits(READ_TYPE)  / REGISTERS_WIDTH;
+localparam int NW = $bits(WRITE_TYPE) / REGISTERS_WIDTH;
+
+generate
+    if ($bits(READ_TYPE) % REGISTERS_WIDTH != 0) begin : g_chk_rd
+        $error("READ_TYPE (%0d bits) is not a multiple of REGISTERS_WIDTH (%0d)", $bits(READ_TYPE), REGISTERS_WIDTH);
+    end
+    if ($bits(WRITE_TYPE) % REGISTERS_WIDTH != 0) begin : g_chk_wr
+        $error("WRITE_TYPE (%0d bits) is not a multiple of REGISTERS_WIDTH (%0d)", $bits(WRITE_TYPE), REGISTERS_WIDTH);
+    end
+endgenerate
+
+// Flat views of the register banks. In a packed type the first field sits in
+// the MSBs, so register i is chunk (N-1-i) of the flat vector.
+logic [NR*REGISTERS_WIDTH-1:0] read_flat;
+logic [NW*REGISTERS_WIDTH-1:0] write_flat;   // register state
+
+// Bit-stream (not plain) assignment so READ_TYPE / WRITE_TYPE can be packed or
+// unpacked. {>>{x}} walks x in declaration order, first member/element first.
+assign read_flat = {>>{input_registers}};
+always_comb begin
+    {>>{output_registers}} = write_flat;
+end
 
     // function [REGISTERS_WIDTH-1:0]	apply_strobe;
     //     input [REGISTERS_WIDTH-1:0] prior_data;
@@ -163,7 +213,10 @@ always @ (posedge clock) begin
         read_data <= 0;
     end else begin
         if(read_address_valid) begin
-            read_data <= input_registers[register_read_address];
+            if (register_read_address < NR)
+                read_data <= read_flat[(NR-1-register_read_address)*REGISTERS_WIDTH +: REGISTERS_WIDTH];
+            else
+                read_data <= 0;
         end
     end
 end
@@ -172,26 +225,47 @@ end
 
 always_ff @(posedge clock) begin
     if (~reset) begin
-        output_registers <= INITIAL_OUTPUT_VALUES;
+        write_flat <= {>>{INITIAL_OUTPUT_VALUES}};
     end else begin
         if(write_valid & write_ready) begin
-            output_registers[register_write_address] <= write_data;
+            if (register_write_address < NW)
+                write_flat[(NW-1-register_write_address)*REGISTERS_WIDTH +: REGISTERS_WIDTH] <= write_data;
         end
     end
 end
 
 
-always @ (posedge clock) begin
-    if (~reset) begin
-        trigger_out <= 1'b0;
-    end else begin
-        trigger_out <= 1'b0;
-        if(write_valid & write_ready) begin
-            for(integer i = 0; i< N_TRIGGER_REGISTERS; i= i+1)begin
-                if(register_write_address == TRIGGER_REGISTERS_IDX[i]) begin
-                    trigger_out[i] <= 1'b1;
-                end                            
-            end
+// Register access triggers. A register is a trigger if its chunk in the mask
+// is non-zero; trigger bits are assigned in register order. Everything here is
+// constant after unrolling.
+localparam logic [NW*REGISTERS_WIDTH-1:0] MASK_FLAT = {>>{TRIGGER_MASK}};
+
+function automatic int count_marked(input logic [NW*REGISTERS_WIDTH-1:0] mask);
+    int c = 0;
+    for (int i = 0; i < NW; i++)
+        if (|mask[(NW-1-i)*REGISTERS_WIDTH +: REGISTERS_WIDTH]) c++;
+    return c;
+endfunction
+
+generate
+    if (count_marked(MASK_FLAT) > N_TRIGGER_REGISTERS) begin : g_chk_trig
+        $error("TRIGGER_MASK marks %0d registers but N_TRIGGER_REGISTERS is %0d",
+               count_marked(MASK_FLAT), N_TRIGGER_REGISTERS);
+    end
+endgenerate
+
+wire write_access = write_valid && write_ready;
+
+always_ff @(posedge clock) begin
+    int k;
+    trigger_out <= '0;
+    k = 0;
+    for (int i = 0; i < NW; i++) begin
+        if (|MASK_FLAT[(NW-1-i)*REGISTERS_WIDTH +: REGISTERS_WIDTH]) begin
+            if (reset && k < N_TRIGGER_REGISTERS &&
+                write_access && register_write_address == i)
+                trigger_out[k] <= 1'b1;
+            k++;
         end
     end
 end
