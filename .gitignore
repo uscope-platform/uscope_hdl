@@ -151,3 +151,5 @@ Components/system/floating_point_ip/fti/fti
 .project
 .library_mapping.xml
 Components/system/fcore/sim_verilator.sh
+.vscode/c_cpp_properties.json
+.DS_Store
