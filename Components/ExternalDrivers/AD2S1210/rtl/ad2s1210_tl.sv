@@ -165,12 +165,16 @@ module ad2s1210_tl (
         .axi_in(ad2s1012_axi)
     );
 
-    enable_generator_2 tb_gen(
+
+    enable_generator_param #(
+        .N_ENABLES(2),
+        .COUNTER_WIDTH(24)
+    ) tb_gen (
         .clock(clock),
         .reset(reset),
         .gen_enable_in(0),
-        .enable_out_1(read_angle),
-        .enable_out_2(read_speed),
+        .pause(0),
+        .enable_out({read_speed,read_angle}),
         .axil(enable_gen_axi)
     );
 

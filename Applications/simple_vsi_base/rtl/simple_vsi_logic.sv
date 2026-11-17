@@ -293,15 +293,15 @@ module simple_vsi_logic (
         .speed(speed)
     );
 
-    enable_generator_2 #(
-        .COUNTER_WIDTH(16)
-    )enc_tb(
+    enable_generator_param #(
+        .N_ENABLES(2),
+        .COUNTER_WIDTH(24)
+    ) enc_tb (
         .clock(clock),
         .reset(reset),
-        .ext_timebase(0),
         .gen_enable_in(1),
-        .enable_out_1(sample_angle),
-        .enable_out_2(sample_speed),
+        .pause(0),
+        .enable_out({sample_speed,sample_angle}),
         .axil(encoder_tb_axi)
     );
 
