@@ -110,7 +110,7 @@ module AdcProcessing_tb();
         #10 write_BFM.write_dest(cal_offset, 'h18);
         #10 write_BFM.write_dest(cal_offset, 'h1c);
         //CU
-        #10 write_BFM.write_dest(32'h04010000, 'h24);
+        #10 write_BFM.write_dest(32'h02010000, 'h34);
         #10 ->configuration_done;
     end
 
@@ -121,6 +121,7 @@ module AdcProcessing_tb();
     integer uncalibrated_accumulator = 0;
 
     reg [15:0] input_data = 0;
+    reg signed [16:0] calibrated_sample;
     reg [15:0] calibrated_data = 0;
     reg [15:0] r_calibrated_data = 0;
     reg [15:0] filtered_data = 0;
@@ -135,7 +136,15 @@ module AdcProcessing_tb();
                 input_counter = input_counter + 1;
 
             input_data = $urandom() % ((2<<15)-1);
-            accumulated_input = $signed(accumulated_input) + $signed(input_data+cal_offset);
+            // model the calibration path saturating adder: signed input + offset
+            // clamped to the 16 bit signed range (the RTL adder clamps at 0x7fff).
+            // plain 16 bit arithmetic here would wrap to negative instead
+            calibrated_sample = $signed(input_data) + $signed(cal_offset);
+            if(calibrated_sample > 32767)
+                calibrated_sample = 32767;
+            else if(calibrated_sample < -32768)
+                calibrated_sample = -32768;
+            accumulated_input = $signed(accumulated_input) + calibrated_sample;
 
             uncalibrated_accumulator = $signed(uncalibrated_accumulator) + $signed(input_data);
             axis_BFM.write_dest(input_data, 2);
@@ -189,7 +198,7 @@ module AdcProcessing_tb();
             uncalibrated_out = uncalibrated_accumulator/4;
             #2;
             expected_out = (accumulated_input)>>>2;
-            
+            wait(processing_out.valid);
             assert (expected_out==processing_out.data) 
             else begin
                 $display("OUTPUT DATA ERROR: expected value %h | actual value %h", expected_out[15:0], processing_out.data[15:0]);
