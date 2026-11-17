@@ -55,44 +55,25 @@ module sigma_delta_processor #(
     /////////////////////////////////////////////////////////////////////
 
 
-    parameter N_REGISTERS = 3*N_CHANNELS;
+    typedef struct {
+        reg signed [31:0] tresholds_low[N_CHANNELS];
+        reg signed [31:0] tresholds_high[N_CHANNELS];
+        reg signed [31:0] offsets[N_CHANNELS];
+    } sigma_delta_processor_registers;
 
-    reg [31:0] cu_write_registers [N_REGISTERS-1:0];
-    reg [31:0] cu_read_registers [N_REGISTERS-1:0];
-
-
-    localparam [31:0] INIT_VAL [N_REGISTERS-1:0] = '{default:0};
-
+    sigma_delta_processor_registers registers;
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(N_REGISTERS),
-        .N_WRITE_REGISTERS(N_REGISTERS),
+        .READ_TYPE(sigma_delta_processor_registers),
+        .WRITE_TYPE(sigma_delta_processor_registers),
         .REGISTERS_WIDTH(32),
-        .ADDRESS_MASK('hfff),
-        .INITIAL_OUTPUT_VALUES(INIT_VAL)
+        .ADDRESS_MASK('hfff)
     ) CU (
         .clock(clock),
         .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
+        .input_registers(registers),
+        .output_registers(registers),
         .axil(axi_in)
     );
-
-    assign cu_read_registers = cu_write_registers;
-
-
-
-    wire signed [31:0] high_tresholds [N_CHANNELS-1:0];
-    wire signed [31:0] low_tresholds [N_CHANNELS-1:0];
-    wire [31:0] offsets [N_CHANNELS-1:0];
-
-    genvar n;
-    generate
-        for(n=0; n<N_CHANNELS; n = n+1)begin
-            assign low_tresholds[n] = cu_write_registers[n];
-            assign high_tresholds[n] = cu_write_registers[N_CHANNELS + n];
-            assign offsets[n] = cu_write_registers[2*N_CHANNELS + n];
-        end
-    endgenerate
 
 
     /////////////////////////////////////////////////////////////////////
@@ -154,7 +135,7 @@ module sigma_delta_processor #(
                 .clock(clock),
                 .reset(reset),
                 .sync(sync),
-                .offset(offsets[i]),
+                .offset(registers.offsets[i]),
                 .sd_data_in(data_in[i]),
                 .sd_clock_in(clock_out),
                 .output_clock(main_sampling_clock),
@@ -209,8 +190,8 @@ module sigma_delta_processor #(
         .clock(clock),
         .reset(reset),
         .data_in(comparator_data_out),
-        .high_tresholds(high_tresholds),
-        .low_tresholds(low_tresholds),
+        .high_tresholds(registers.tresholds_high),
+        .low_tresholds(registers.tresholds_low),
         .high_outputs(high_faults),
         .low_outputs(low_faults),
         .combined_output(combined_fault)

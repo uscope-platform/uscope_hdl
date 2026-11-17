@@ -35,9 +35,6 @@ module multiphase_reference_generator #(
     reg [31:0] emulator_tb;
     reg [15:0] emulator_counter;
 
-    reg emulate_angle;
-
-    assign angle_emulation = emulate_angle;
 
     axi_stream #(
         .DATA_WIDTH(16)
@@ -47,37 +44,40 @@ module multiphase_reference_generator #(
     reg [31:0] cu_read_registers [2:0];
 
 
+    typedef struct packed{
+        reg [30:0] padding;
+        reg emulate_angle;
+    } multiphase_reference_generator_control;
+
+    typedef struct {
+        multiphase_reference_generator_control control;
+        reg [31:0] phase_advance;
+        reg [31:0] sampling_period;
+    } multiphase_reference_generator_registers;
+
+    multiphase_reference_generator_registers registers;
+    
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(3),
-        .N_WRITE_REGISTERS(3),
+        .READ_TYPE(multiphase_reference_generator_registers),
+        .WRITE_TYPE(multiphase_reference_generator_registers),
         .REGISTERS_WIDTH(32),
         .ADDRESS_MASK('hf)
     ) CU (
         .clock(clock),
         .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
+        .input_registers(registers),
+        .output_registers(registers),
         .axil(axil)
     );
 
+    assign angle_emulation = registers.control.emulate_angle;
 
-    reg [31:0] emulation_phase_advance;
-    reg [31:0] emulation_sampling_period;
-
-    assign emulate_angle = cu_write_registers[0];
-    assign emulation_phase_advance = cu_write_registers[1];
-    assign emulation_sampling_period = cu_write_registers[2];
-
-    assign cu_read_registers[0] = {31'b0, emulate_angle};
-    assign cu_read_registers[1] = emulation_phase_advance;
-    assign cu_read_registers[2] = emulation_sampling_period;
-    
     enable_generator_counter angle_emulator_tb(
         .clock(clock),
         .reset(reset),
         .pause(0),
-        .gen_enable_in(emulate_angle),
-        .period(emulation_sampling_period),
+        .gen_enable_in(registers.control.emulate_angle),
+        .period(registers.sampling_period),
         .counter_out(emulator_tb)
     );
 
@@ -88,7 +88,7 @@ module multiphase_reference_generator #(
     )sampling_divider(
         .clock(clock),
         .reset(reset),
-        .gen_enable_in(emulate_angle),
+        .gen_enable_in(registers.control.emulate_angle),
         .period(20),
         .enable_out(samplple_tb)
     );
@@ -103,7 +103,7 @@ module multiphase_reference_generator #(
             emulated_phase.data <= emulator_counter;
             emulated_phase.valid <= samplple_tb;
             if(emulator_tb == 1) begin
-                emulator_counter <= emulator_counter + emulation_phase_advance;
+                emulator_counter <= emulator_counter + registers.phase_advance;
             end
         end
     end
@@ -111,7 +111,7 @@ module multiphase_reference_generator #(
     axi_stream generator_inner_phase();
 
     always_comb begin
-        if(emulate_angle)begin
+        if(registers.control.emulate_angle)begin
             generator_inner_phase.data <= emulated_phase.data;
             generator_inner_phase.valid <= emulated_phase.valid;
             emulated_phase.ready <= generator_inner_phase.ready;

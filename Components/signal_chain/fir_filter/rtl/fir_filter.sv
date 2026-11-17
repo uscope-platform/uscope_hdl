@@ -29,34 +29,31 @@ module fir_filter #(
     axi_stream.master data_out
 );
 
-    reg [31:0] cu_read_registers [2:0];
-    reg [31:0] cu_write_registers [2:0];
-    reg tap_write;
-    
+    typedef struct {
+        reg [31:0] control;
+        reg [31:0] tap_data;
+        reg [31:0] tap_addr;
+    } fir_filter_registers;
+
+    fir_filter_registers registers;
+    wire tap_write;
+
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(3),
-        .N_WRITE_REGISTERS(3),
-        .N_TRIGGER_REGISTERS(1),
-        .TRIGGER_REGISTERS_IDX('{2}),
-        .ADDRESS_MASK('h0FF)
+        .READ_TYPE(fir_filter_registers),
+        .WRITE_TYPE(fir_filter_registers),
+        .REGISTERS_WIDTH(32),
+        .TRIGGER_MASK('{tap_addr: 1, default: 0}),
+        .ADDRESS_MASK('hff)
     ) CU (
         .clock(clock),
         .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
+        .input_registers(registers),
+        .output_registers(registers),
         .trigger_out(tap_write),
         .axil(cfg_in)
     );
 
-    assign cu_read_registers = cu_write_registers;
 
-    wire [31:0] control;
-    wire [15:0] tap_addr;
-    wire [WORKING_WIDTH-1:0] tap_data;
-
-    assign control = cu_write_registers[0];
-    assign tap_data = cu_write_registers[1];
-    assign tap_addr = cu_write_registers[2];
 
     generate
         if(FILTER_IMPLEMENTATION =="PARALLEL")begin
@@ -68,8 +65,8 @@ module fir_filter #(
             )filter_core(
                 .clock(clock),
                 .reset(reset),
-                .tap_data(tap_data),
-                .tap_addr(tap_addr),
+                .tap_data(registers.tap_data),
+                .tap_addr(registers.tap_addr),
                 .tap_write(tap_write),
                 .data_in(data_in),
                 .data_out(data_out)
@@ -83,9 +80,9 @@ module fir_filter #(
             )filter_core (
                 .clock(clock),
                 .reset(reset),
-                .n_taps(control),
-                .tap_data(tap_data),
-                .tap_addr(tap_addr),
+                .n_taps(registers.control),
+                .tap_data(registers.tap_data),
+                .tap_addr(registers.tap_addr),
                 .tap_write(tap_write),
                 .data_in(data_in),
                 .data_out(data_out)
@@ -95,6 +92,47 @@ module fir_filter #(
         end   
         
     endgenerate
+
+
+
+
+ /**
+    {
+        "name": "fir_filter",
+        "type": "parametric_peripheral",
+        "registers":[
+            {
+                "name": "control",
+                "n_regs": ["1"],
+                "description": "Fir filter control register",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"n_taps",
+                        "description": "Number of active FIR filter taps",
+                        "start_position": 0,
+                        "n_fields":["1"],
+                        "length": 8
+                    }
+                ]
+            },
+            {
+                "name": "tap_data",
+                "n_regs": ["1"],
+                "description": "Fir Filter tap data value",
+                "direction": "RW",
+                "fields":[]
+            },
+            {
+                "name": "tap_addr",
+                "n_regs": ["1"],
+                "description": "Fir Filter tap address value (writing it triggers the tap memory write)",
+                "direction": "RW",
+                "fields":[]
+            }
+        ]
+    }
+ **/
     
 
 
