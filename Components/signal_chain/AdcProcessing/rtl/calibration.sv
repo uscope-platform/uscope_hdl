@@ -22,8 +22,7 @@ module calibration #(
     )(
     input wire clock,
     input wire reset,
-    input wire signed [DATA_PATH_WIDTH-1:0] offset [N_CHANNELS-1:0],
-    input wire [DATA_PATH_WIDTH-1:0] shift [N_CHANNELS-1:0],
+    input adc_processing_types::calibrator_coefficients coefficients[N_CHANNELS],
     input wire shift_enable,
     axi_stream.slave data_in,
     axi_stream.master data_out
@@ -37,11 +36,14 @@ module calibration #(
     assign data_in.ready = data_out.ready | ~reset ? 1 : 0;
 
 
+    wire [31:0] current_channel;
+    assign current_channel = data_in.dest - DATA_BLOCK_BASE_ADDR;
+
     saturating_adder #(.DATA_WIDTH(DATA_PATH_WIDTH)) offset_adder(
         .a(data_in.data),
-        .b(offset[data_in.dest - DATA_BLOCK_BASE_ADDR]),
+        .b(coefficients[current_channel].offset[DATA_PATH_WIDTH-1:0]),
         .satp({1'b0,{DATA_PATH_WIDTH-1{1'b1}}}),
-        .satn({OUTPUT_SIGNED[data_in.dest - DATA_BLOCK_BASE_ADDR],{DATA_PATH_WIDTH-1{1'b0}}}),
+        .satn({OUTPUT_SIGNED[current_channel],{DATA_PATH_WIDTH-1{1'b0}}}),
         .out(raw_data_out)
     );
 
@@ -55,7 +57,7 @@ module calibration #(
         end else begin
             if(data_in.valid & data_out.ready) begin
                 if(shift_enable) begin
-                    data_out.data <= raw_data_out << shift[data_in.dest - DATA_BLOCK_BASE_ADDR];
+                    data_out.data <= raw_data_out << coefficients[current_channel].shift;
                 end else begin
                     data_out.data <= raw_data_out;
                 end

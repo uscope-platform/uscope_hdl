@@ -52,58 +52,68 @@ module AdcProcessing #(
         $display("--------------------------------------------------------------");
     end
 
-    wire shift_enable;
-    wire [1:0] latch_mode;
-    wire [1:0] clear_latch;
-    wire [1:0] trip_high;
-    wire [1:0] trip_low;
-    wire [7:0] decimation_ratio;
-
-    wire signed [DATA_PATH_WIDTH-1:0] denoise_tresh_p [N_CHANNELS-1:0];
-    wire signed [DATA_PATH_WIDTH-1:0] denoise_tresh_n [N_CHANNELS-1:0];
+    adc_processing_types::comparator_control_signal trip_high;
+    adc_processing_types::comparator_control_signal trip_low;
 
 
-    wire signed [DATA_PATH_WIDTH-1:0] comparator_thresholds [0:7];
+    wire taps_we;
 
-    wire signed [DATA_PATH_WIDTH-1:0] offset [N_CHANNELS-1:0];
-    wire [DATA_PATH_WIDTH-1:0] shift [N_CHANNELS-1:0];
 
-    wire [7:0] n_taps;
-    wire [FLTER_TAP_WIDTH-1:0] taps_data;
-    wire [7:0] taps_addr;
-    wire taps_we, linearizer_enable;
+    typedef struct {
+        adc_processing_types::comparators comparator_tresholds;
+        adc_processing_types::calibrator_coefficients calibration[N_CHANNELS];
+        adc_processing_types::denoise_tresholds denoise_tresholds[N_CHANNELS];
+        adc_processing_types::control_register control;
+        reg [31:0] tap_data;
+        reg [31:0] tap_address;
+    } adc_processing_registers;
 
-    AdcProcessingControlUnit #(
-        .STICKY_FAULT(STICKY_FAULT),
-        .FLTER_TAP_WIDTH(FLTER_TAP_WIDTH),
-        .DATA_PATH_WIDTH(DATA_PATH_WIDTH),
-        .N_CHANNELS(N_CHANNELS)
-    ) AdcCU(
+    adc_processing_registers registers;
+
+    axil_simple_register_cu #(
+        .READ_TYPE(adc_processing_registers),
+        .WRITE_TYPE(adc_processing_registers),
+        .INITIAL_OUTPUT_VALUES('{ 
+            comparator_tresholds:{
+                slow: '{
+                    low_falling: -16'sd32768, 
+                    low_rising:  -16'sd32768,
+                    high_falling: 16'sd32767,
+                    high_rising:  16'sd32767
+                },
+                fast: '{
+                    low_falling: -16'sd32768, 
+                    low_rising:  -16'sd32768,
+                    high_falling: 16'sd32767,
+                    high_rising:  16'sd32767
+                }
+            },
+            default: 0
+        }),
+        .ADDRESS_MASK('hff),
+        .TRIGGER_MASK('{tap_address: 1, default: 0})
+    ) CU (
         .clock(clock),
         .reset(reset),
-        .axi_in(axi_in),
+        .input_registers(registers),
+        .output_registers(registers),
+        .trigger_out(taps_we),
+        .axil(axi_in)
+    );
+
+
+    processing_fault_collector #(
+        .STICKY_FAULT(STICKY_FAULT)
+    ) fault_collector(
+        .clock(clock),
+        .reset(reset),
         .data_in_valid(data_in.valid),
-        // COMPARATORS
-        .comparator_thresholds(comparator_thresholds),
-        .latch_mode(latch_mode),
-        .clear_latch(clear_latch),
+        .clear_fault(registers.control.clear_fault),
+        .disable_fault(registers.control.disable_fault),
+        .slow_fault_threshold(registers.control.slow_fault_threshold),
         .trip_high(trip_high),
         .trip_low(trip_low),
-        // CALIBRATION
-        .shift(shift),
-        .offset(offset),
-        .shift_enable(shift_enable),
-        .fault(fault),
-        .linearizer_enable(linearizer_enable),
-        // DENOISING
-        .denoise_tresh_p(denoise_tresh_p),
-        .denoise_tresh_n(denoise_tresh_n),
-        // FILTERING AND DECIMATION
-        .decimation_ratio(decimation_ratio),
-        .n_taps(n_taps),
-        .taps_data(taps_data),
-        .taps_addr(taps_addr),
-        .taps_we(taps_we)
+        .fault(fault)
     );
 
     comparator #(
@@ -111,12 +121,12 @@ module AdcProcessing #(
     )fast_cmp(
         .clock(clock),
         .reset(reset),
-        .thresholds(comparator_thresholds[0:3]),
+        .tresholds(registers.comparator_tresholds.fast),
         .data_in(data_in),
-        .latching_mode(latch_mode[0]),
-        .clear_latch(clear_latch[0]),
-        .trip_high(trip_high[0]),
-        .trip_low(trip_low[0])
+        .latching_mode(registers.control.latch_mode.fast),
+        .clear_latch(registers.control.clear_latch.fast),
+        .trip_high(trip_high.fast),
+        .trip_low(trip_low.fast)
     );
 
     axi_stream #(
@@ -132,9 +142,8 @@ module AdcProcessing #(
         .clock(clock),
         .reset(reset),
         .data_in(data_in),
-        .shift(shift),
-        .offset(offset),
-        .shift_enable(shift_enable),
+        .coefficients(registers.calibration),
+        .shift_enable(registers.control.shift_enable),
         .data_out(cal_out)
     );
 
@@ -149,8 +158,7 @@ module AdcProcessing #(
     )denoise(
         .clock(clock),
         .reset(reset),
-        .thresh_p(denoise_tresh_p),
-        .thresh_n(denoise_tresh_n),
+        .denoise_tresholds(registers.denoise_tresholds),
         .enable(DENOISING),
         .data_in(cal_out),
         .data_out(denoise_out)
@@ -172,7 +180,7 @@ module AdcProcessing #(
     )linearizer(
         .clock(clock),
         .reset(reset),
-        .enable(linearizer_enable),
+        .enable(registers.control.linearizer_enable),
         .data_in(denoise_out),
         .data_out(lin_out)
     );
@@ -202,7 +210,7 @@ module AdcProcessing #(
                 .reset(reset),
                 .data_in(lin_out),
                 .data_out(filtered_data_out),
-                .decimation_ratio(decimation_ratio)
+                .decimation_ratio(registers.control.decimation_ratio)
             );
 
         end else if(DECIMATED == 2)begin
@@ -220,9 +228,9 @@ module AdcProcessing #(
         )filter(
             .clock(clock),
             .reset(reset),
-            .n_taps(n_taps),
-            .tap_data(taps_data),
-            .tap_addr(taps_addr),
+            .n_taps(registers.control.n_taps),
+            .tap_data(registers.tap_data),
+            .tap_addr(registers.tap_address),
             .tap_write(taps_we),
             .data_in(lin_out),
             .data_out(raw_filtered_out)
@@ -238,7 +246,7 @@ module AdcProcessing #(
             .reset(reset),
             .data_in(raw_filtered_out),
             .data_out(filtered_data_out),
-            .decimation_ratio(decimation_ratio)
+            .decimation_ratio(registers.control.decimation_ratio)
         );
         end
     endgenerate
@@ -256,13 +264,241 @@ module AdcProcessing #(
     ) slow_cmp(
         .clock(clock),
         .reset(reset),
-        .thresholds(comparator_thresholds[4:7]),
+        .tresholds(registers.comparator_tresholds.slow),
         .data_in(slow_cmp_in),
-        .latching_mode(latch_mode[1]),
-        .clear_latch(clear_latch[1]),
-        .trip_high(trip_high[1]),
-        .trip_low(trip_low[1])
+        .latching_mode(registers.control.latch_mode.slow),
+        .clear_latch(registers.control.clear_latch.slow),
+        .trip_high(trip_high.slow),
+        .trip_low(trip_low.slow)
     );
 
 
 endmodule
+
+
+
+ /**
+    {
+        "name": "AdcProcessing",
+        "type": "parametric_peripheral",
+        "registers":[
+            {
+                "name": "cmp_slow_low",
+                "n_regs": ["1"],
+                "description": "Slow comparator low band thresholds",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"rising",
+                        "description": "Low band release treshold (rising edge in normal mode)",
+                        "start_position": 0,
+                        "n_fields":["1"],
+                        "length": 16
+                    },
+                    {
+                        "name":"falling",
+                        "description": "Low band enter treshold (falling edge in normal mode)",
+                        "start_position": 16,
+                        "n_fields":["1"],
+                        "length": 16
+                    }
+                ]
+            },
+            {
+                "name": "cmp_slow_high",
+                "n_regs": ["1"],
+                "description": "Slow comparator high band thresholds",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"rising",
+                        "description": "High band enter treshold (rising edge in normal mode)",
+                        "start_position": 0,
+                        "n_fields":["1"],
+                        "length": 16
+                    },
+                    {
+                        "name":"falling",
+                        "description": "High band release treshold (falling edge in normal mode)",
+                        "start_position": 16,
+                        "n_fields":["1"],
+                        "length": 16
+                    }
+                ]
+            },
+            {
+                "name": "cmp_fast_low",
+                "n_regs": ["1"],
+                "description": "Fast comparator low band thresholds",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"rising",
+                        "description": "Low band release treshold (rising edge in normal mode)",
+                        "start_position": 0,
+                        "n_fields":["1"],
+                        "length": 16
+                    },
+                    {
+                        "name":"falling",
+                        "description": "Low band enter treshold (falling edge in normal mode)",
+                        "start_position": 16,
+                        "n_fields":["1"],
+                        "length": 16
+                    }
+                ]
+            },
+            {
+                "name": "cmp_fast_high",
+                "n_regs": ["1"],
+                "description": "Fast comparator high band thresholds",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"rising",
+                        "description": "High band enter treshold (rising edge in normal mode)",
+                        "start_position": 0,
+                        "n_fields":["1"],
+                        "length": 16
+                    },
+                    {
+                        "name":"falling",
+                        "description": "High band release treshold (falling edge in normal mode)",
+                        "start_position": 16,
+                        "n_fields":["1"],
+                        "length": 16
+                    }
+                ]
+            },
+            {
+                "name": "calibration_$",
+                "n_regs": ["N_CHANNELS"],
+                "description": "Per-channel calibration coefficients (signed offset and data shift)",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"shift",
+                        "description": "Per-channel data shift amount",
+                        "start_position": 28,
+                        "n_fields":["1"],
+                        "length": 4
+                    },
+                    {
+                        "name":"offset",
+                        "description": "Signed per-channel offset calibration coefficient",
+                        "start_position": 0,
+                        "n_fields":["1"],
+                        "length": 28
+                    }
+                ]
+            },
+            {
+                "name": "denoise_tresh_$",
+                "n_regs": ["N_CHANNELS"],
+                "description": "denoiser tresholds",
+                "direction": "RW",
+                "fields":[
+                     {
+                        "name":"positive",
+                        "description": "Positive difference limit",
+                        "start_position": 0,
+                        "n_fields":["1"],
+                        "length": 16
+                    },
+                    {
+                        "name":"negative",
+                        "description": "Negative difference limit",
+                        "start_position": 16,
+                        "n_fields":["1"],
+                        "length": 16
+                    }
+                ]
+            },
+            {
+                "name": "control",
+                "n_regs": ["1"],
+                "description": "ADC post processing module control register",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"shift_enable",
+                        "description": "Enables calibration shifter",
+                        "start_position": 0,
+                        "n_fields":["1"],
+                        "length": 1
+                    },
+                    {
+                        "name":"latch_mode",
+                        "description": "Toggles comparators between normal and latching mode",
+                        "start_position": 1,
+                        "n_fields":["1"],
+                        "length": 2
+                    },
+                    {
+                        "name":"clear_latch",
+                        "description": "Clear comparators latch when in latching mode",
+                        "start_position": 3,
+                        "n_fields":["1"],
+                        "length": 2
+                    },
+                    {
+                        "name":"clear_fault",
+                        "description": "Clear sticky fault satus",
+                        "start_position": 5,
+                        "n_fields":["1"],
+                        "length": 1
+                    },
+                    {
+                        "name":"fault_disable",
+                        "description": "Disable fault generation",
+                        "start_position": 6,
+                        "n_fields":["1"],
+                        "length": 1
+                    },
+                    {
+                        "name":"linearizer_enable",
+                        "description": "Enable data linearization",
+                        "start_position": 7,
+                        "n_fields":["1"],
+                        "length": 1
+                    },
+                    {
+                        "name":"fault_delay",
+                        "description": "Amount of clock cycles a slow comparator must be active before triggering a fault",
+                        "start_position": 8,
+                        "n_fields":["1"],
+                        "length": 8
+                    },
+                    {
+                        "name":"n_taps",
+                        "description": "Number of active FIR filter taps",
+                        "start_position": 16,
+                        "n_fields":["1"],
+                        "length": 8
+                    },
+                    {
+                        "name":"decimation",
+                        "description": "Decimation ratio between input and output data",
+                        "start_position": 24,
+                        "n_fields":["1"],
+                        "length": 8
+                    }
+                ]
+            },
+            {
+                "name": "filter_tap_data",
+                "n_regs": ["1"],
+                "description": "Fir Filter tap data value",
+                "direction": "RW",
+                "fields":[]
+            },
+            {
+                "name": "filter_tap_address",
+                "n_regs": ["1"],
+                "description": "Fir Filter tap address value",
+                "direction": "RW",
+                "fields":[]
+            }
+        ]
+    }   
+ **/

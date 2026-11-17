@@ -21,8 +21,7 @@ module denoiser #(
 )(
     input wire clock,
     input wire reset,
-    input wire signed [DATA_PATH_WIDTH-1 :0] thresh_p [N_CHANNELS-1 :0],
-    input wire signed [DATA_PATH_WIDTH-1 :0] thresh_n [N_CHANNELS-1 :0],
+    input adc_processing_types::denoise_tresholds denoise_tresholds[N_CHANNELS],
     input wire enable,
     axi_stream.slave data_in,
     axi_stream.master data_out
@@ -50,8 +49,8 @@ module denoiser #(
             if(data_in.valid)begin
                 if(enable &&
                     (
-                    positive_diff > thresh_p[data_in.dest - DATA_BLOCK_BASE_ADDR] ||
-                    negative_diff < thresh_n[data_in.dest - DATA_BLOCK_BASE_ADDR]
+                    positive_diff > denoise_tresholds[data_in.dest - DATA_BLOCK_BASE_ADDR].positive ||
+                    negative_diff < denoise_tresholds[data_in.dest - DATA_BLOCK_BASE_ADDR].negative
                     )
                 ) begin
                     data_out.data <= last_good_data[data_in.dest - DATA_BLOCK_BASE_ADDR];

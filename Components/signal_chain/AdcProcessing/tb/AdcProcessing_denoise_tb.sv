@@ -91,23 +91,23 @@ module AdcProcessing_denoise_tb();
         #1 reset <=1'h0;
         //TESTS
         #5.5 reset <=1'h1;
-        //Comparators
-        #10 axil_bfm.write('h00, {trip_low_s, trip_low_f2});
-        #10 axil_bfm.write('h04, {trip_low_s, trip_low_f1});
-        #10 axil_bfm.write('h08, {trip_high_s, trip_high_f1});
-        #10 axil_bfm.write('h0C, {trip_high_s, trip_high_f2});
+        //Comparators — per-comparator map, each register holds falling @16, rising @0
+        #10 axil_bfm.write('h00, {trip_low_s,  trip_low_s});   // cmp_slow_low:  enter/release low
+        #10 axil_bfm.write('h04, {trip_high_s, trip_high_s});  // cmp_slow_high: release/enter high
+        #10 axil_bfm.write('h08, {trip_low_f2, trip_low_f1});  // cmp_fast_low:  enter/release low
+        #10 axil_bfm.write('h0C, {trip_high_f1,trip_high_f2}); // cmp_fast_high: release/enter high
         //Calibration
         #10 axil_bfm.write('h10, cal_offset);
         #10 axil_bfm.write('h14, cal_offset);
         #10 axil_bfm.write('h18, cal_offset);
         #10 axil_bfm.write('h1c, cal_offset);
         // DENOISING
+        #10 axil_bfm.write('h20, {-16'sd5000, 16'sd5000});
         #10 axil_bfm.write('h24, {-16'sd5000, 16'sd5000});
         #10 axil_bfm.write('h28, {-16'sd5000, 16'sd5000});
         #10 axil_bfm.write('h2c, {-16'sd5000, 16'sd5000});
-        #10 axil_bfm.write('h30, {-16'sd5000, 16'sd5000});
         //CU
-        #10 axil_bfm.write('h34, 32'h04010000);
+        #10 axil_bfm.write('h30, 32'h04010000);
         #10 ->configuration_done;
     end
 

@@ -99,18 +99,17 @@ module AdcProcessing_tb();
         #1 reset <=1'h0;
         //TESTS
         #5.5 reset <=1'h1;
-        //Comparators
-        #10 write_BFM.write_dest({trip_low_s, trip_low_f2}, 'h00);
-        #10 write_BFM.write_dest({trip_low_s, trip_low_f1}, 'h04);
-        #10 write_BFM.write_dest({trip_high_s, trip_high_f1}, 'h08);
-        #10 write_BFM.write_dest({trip_high_s, trip_high_f2}, 'h0C);
+        #10 write_BFM.write_dest({trip_low_s,  trip_low_s},   'h00); // cmp_slow_low:  enter/release low
+        #10 write_BFM.write_dest({trip_high_s, trip_high_s},  'h04); // cmp_slow_high: release/enter high
+        #10 write_BFM.write_dest({trip_low_f2, trip_low_f1},  'h08); // cmp_fast_low:  enter/release low
+        #10 write_BFM.write_dest({trip_high_f1,trip_high_f2}, 'h0C); // cmp_fast_high: release/enter high
         //Calibration
         #10 write_BFM.write_dest(cal_offset, 'h10);
         #10 write_BFM.write_dest(cal_offset, 'h14);
         #10 write_BFM.write_dest(cal_offset, 'h18);
         #10 write_BFM.write_dest(cal_offset, 'h1c);
         //CU
-        #10 write_BFM.write_dest(32'h02010000, 'h34);
+        #10 write_BFM.write_dest(32'h02010000, 'h30);
         #10 ->configuration_done;
     end
 
