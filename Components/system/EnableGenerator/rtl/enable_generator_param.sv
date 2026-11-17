@@ -125,7 +125,7 @@ endmodule
             },           
             {
                 "name": "treshold_$",
-                "n_regs": ["MAX_STEPS"],
+                "n_regs": ["N_ENABLES"],
                 "description": "value of the counter at which the enable $ pulse is triggered",
                 "direction": "RW",
                 "fields":[]

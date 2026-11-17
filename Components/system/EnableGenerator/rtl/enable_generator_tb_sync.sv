@@ -26,17 +26,17 @@ module enable_generator_tb_sync #(
 );
 
     reg [N_ENABLES-1:0] prev_enable_in;
-    reg [N_ENABLES-1:0] synchronized;
+    reg [N_ENABLES-1:0] synchronized_out;
 
     always_ff @(posedge clock) begin
         if (bypass) begin
-            synchronized <= {N_ENABLES{ext_timebase}};
+            synchronized_out <= {N_ENABLES{ext_timebase}};
         end else begin
             prev_enable_in <= enable_in;
-            synchronized   <= enable_in & ~prev_enable_in;
+            synchronized_out   <= enable_in & ~prev_enable_in;
         end
     end
 
-    assign enable_out = (ENABLE == 1) ? synchronized : enable_in;
+    assign enable_out = (ENABLE == 1) ? synchronized_out : enable_in;
 
 endmodule

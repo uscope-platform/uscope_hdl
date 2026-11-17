@@ -40,6 +40,8 @@ module enable_generator_param_tb();
         .clock(clk),
         .reset(rst),
         .gen_enable_in(gen_en),
+        .pause(0),
+        .gen_enable_in(0),
         .enable_out(en_out),
         .axil(axil)
     );
