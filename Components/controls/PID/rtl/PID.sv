@@ -52,7 +52,7 @@ module PID #(
         limit_int_down: -16'sd32767,
         denominators: 'h010101,
         default:0
-    }
+    };
 
     axil_simple_register_cu #(
         .READ_TYPE(pid_registers),
