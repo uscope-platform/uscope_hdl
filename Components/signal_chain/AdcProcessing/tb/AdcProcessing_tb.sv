@@ -156,13 +156,13 @@ module AdcProcessing_tb();
         calibrated_data <= r_calibrated_data;
     end
 
-    reg fast_trip_high;
-    reg fast_trip_low;
+    reg fast_trip_high = 0;
+    reg fast_trip_low = 0;
     wire fast_fault;
 
-    reg slow_trip_high;
-    reg slow_trip_low;
-    reg slow_fault;
+    reg slow_trip_high = 0;
+    reg slow_trip_low = 0;
+    reg slow_fault = 0;
    
     wire expected_fault;
     assign expected_fault = fast_fault || slow_fault;
@@ -173,18 +173,24 @@ module AdcProcessing_tb();
     wire signed [15:0] slow_comp_in;
     assign slow_comp_in = $signed(uncalibrated_out);
     always_ff @(posedge clk) begin
-
+        // mirror comparator.sv normal mode exactly: trips are held while the
+        // input equals the release threshold (strict comparisons on both edges)
         if(fast_trip_low) begin
-            fast_trip_low <= fast_comp_in < trip_low_f1;
-        end else begin
-            fast_trip_low <= fast_comp_in < trip_low_f2;
+            if(fast_comp_in > trip_low_f1)
+                fast_trip_low <= 0;
+        end else if(fast_comp_in < trip_low_f2) begin
+            fast_trip_low <= 1;
         end
-        
-        fast_trip_high <= fast_comp_in > trip_high_f2;
+
+        if(fast_comp_in > trip_high_f2)
+            fast_trip_high <= 1;
+        else if(fast_comp_in < trip_high_f1)
+            fast_trip_high <= 0;
+
         slow_trip_low <= slow_comp_in < trip_low_s;
         slow_trip_high <= slow_comp_in > trip_high_s;
         slow_fault <= slow_trip_high || slow_trip_low;
-    end    
+    end
 
 
     reg [15:0] expected_out = 0;
