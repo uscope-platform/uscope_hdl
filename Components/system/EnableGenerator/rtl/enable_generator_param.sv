@@ -16,10 +16,12 @@
 
 module enable_generator_param #(
     N_ENABLES = 3,
-    COUNTER_WIDTH = 32
+    COUNTER_WIDTH = 32,
+    EXTERNAL_TIMEBASE_ENABLE = 0
 )(
     input wire        clock,
     input wire        reset,
+    input wire        ext_timebase,
     input wire        gen_enable_in,
     input wire        pause,
     output wire [N_ENABLES-1:0]  enable_out,
@@ -53,10 +55,11 @@ module enable_generator_param #(
 
     enable_generator_counter #(
         .COUNTER_WIDTH(COUNTER_WIDTH),
-        .EXTERNAL_TIMEBASE_ENABLE(0)
-    ) counter(
+        .EXTERNAL_TIMEBASE_ENABLE(EXTERNAL_TIMEBASE_ENABLE)
+    ) counter (
         .clock(clock),
         .reset(reset),
+        .external_timebase(ext_timebase),
         .gen_enable_in(registers.bus_enable | gen_enable_in),
         .pause(pause),
         .period(registers.period),
@@ -64,7 +67,7 @@ module enable_generator_param #(
     );
 
     reg [N_ENABLES-1:0] internal_enable_out;
-    assign enable_out = internal_enable_out & {N_ENABLES{~pause}};
+   
     genvar i;
     generate
         for (i = 0; i < N_ENABLES; i++) begin
@@ -72,7 +75,7 @@ module enable_generator_param #(
             enable_comparator #(
                 .COUNTER_WIDTH(COUNTER_WIDTH),
                 .CLOCK_MODE("FALSE")
-            ) comparator(
+            ) comparator (
                 .clock(clock),
                 .reset(reset),
                 .enable_treshold(registers.enable_threshold[i]),
@@ -83,7 +86,19 @@ module enable_generator_param #(
         end
     endgenerate
 
-
+    wire [N_ENABLES-1:0] selected_enable;
+   
+    enable_generator_tb_sync #(
+        .N_ENABLES(N_ENABLES),
+        .ENABLE(EXTERNAL_TIMEBASE_ENABLE)
+    ) tb_sync (
+        .clock(clock),
+        .bypass(registers.period == 0 || registers.period == 1),
+        .ext_timebase(ext_timebase),
+        .enable_in(internal_enable_out),
+        .enable_out(selected_enable)
+    );
+    assign enable_out = selected_enable & {N_ENABLES{~pause}};
 
 endmodule
 

@@ -7,9 +7,8 @@
             "enable_generator_core"
         ],
         "synth_tl": "enable_generator_param",
-        "sim_modules":[
-        ],
-        "sim_tl":"enable_generator_param_tb",
+        "sim_modules":["enable_generator_param_tb"],
+        "sim_tl":"enable_generator_ext_tb",
         "include_paths":[
             "/public/Components/Common"
         ]
