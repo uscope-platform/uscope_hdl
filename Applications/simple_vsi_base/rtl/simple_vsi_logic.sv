@@ -147,12 +147,16 @@ module simple_vsi_logic (
 
     wire ph_sensing_en, ph_sense_trg;
 
-    enable_generator #(
-        .COUNTER_WIDTH(32)
+    enable_generator_param #(
+        .COUNTER_WIDTH(32),
+        .N_ENABLES(1),
+        .EXTERNAL_TIMEBASE_ENABLE(0)
     ) ph_timebase (
         .clock(clock),
         .reset(reset),
         .gen_enable_in(ph_sensing_en),
+        .ext_timebase(0),
+        .pause(0),
         .enable_out(ph_sense_trg),
         .axil(phase_tb_axi)
     );
@@ -214,12 +218,16 @@ module simple_vsi_logic (
 
     wire dc_sensing_en, dc_sense_trg;
 
-    enable_generator #(
-        .COUNTER_WIDTH(32)
+    enable_generator_param #(
+        .COUNTER_WIDTH(32),
+        .N_ENABLES(1),
+        .EXTERNAL_TIMEBASE_ENABLE(0)
     ) dc_timebase (
         .clock(clock),
         .reset(reset),
         .gen_enable_in(dc_sensing_en),
+        .ext_timebase(0),
+        .pause(0),
         .enable_out(dc_sense_trg),
         .axil(dc_tb_axi)
     );

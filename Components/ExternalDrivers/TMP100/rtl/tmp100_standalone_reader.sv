@@ -65,12 +65,16 @@ module tmp100_standalone_reader (
     );
 
     wire read_tmp;
-    enable_generator #(
-        .COUNTER_WIDTH(32)
+    enable_generator_param #(
+        .COUNTER_WIDTH(32),
+        .N_ENABLES(1),
+        .EXTERNAL_TIMEBASE_ENABLE(0)
     ) tb (
         .clock(clock),
         .reset(reset),
         .gen_enable_in(enable),
+        .ext_timebase(0),
+        .pause(0),
         .enable_out(read_tmp),
         .axil(tb_axi)
     );

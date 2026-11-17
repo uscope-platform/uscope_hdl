@@ -83,14 +83,16 @@ module uScope_stream_dma #(
 
     wire sample_scope;
 
-    enable_generator #(
+    enable_generator_param #(
         .COUNTER_WIDTH(24),
+        .N_ENABLES(1),
         .EXTERNAL_TIMEBASE_ENABLE(1)
     ) scope_tb(
         .clock(clock),
         .reset(reset),
         .ext_timebase(sampling_clock),
         .gen_enable_in(0),
+        .pause(0),
         .enable_out(sample_scope),
         .axil(timebase_axi)
     );
