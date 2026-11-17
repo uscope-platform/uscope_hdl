@@ -16,7 +16,6 @@
 
 module AdcProcessingControlUnit #(
     STICKY_FAULT = 0,
-    DENOISING = 1'b0,
     DATA_PATH_WIDTH = 16,
     FLTER_TAP_WIDTH = 16,
     N_CHANNELS = 4
@@ -51,89 +50,111 @@ module AdcProcessingControlUnit #(
 
     parameter N_SHIFT_REGS = N_CHANNELS/8+1;
     parameter N_COMPARE_REGS = 4;
-    parameter N_DENOISE_REGS = N_CHANNELS;
-    parameter N_OFFSET_REGS = N_CHANNELS;
     
-
-    parameter CONTROL_REG = N_OFFSET_REGS+N_COMPARE_REGS+N_SHIFT_REGS+N_DENOISE_REGS;
-    parameter TAP_DATA_REG = CONTROL_REG+1;
-    parameter TAP_ADDR_REG = CONTROL_REG+2;
-
-
-    parameter N_REGISTERS = N_OFFSET_REGS+N_COMPARE_REGS+N_SHIFT_REGS+N_DENOISE_REGS+3;
 
     reg clear_fault, disable_fault;
     reg [7:0] slow_fault_threshold;
 
-    reg [31:0] cu_write_registers [N_REGISTERS-1:0];
-    reg [31:0] cu_read_registers [N_REGISTERS-1:0];
 
-    parameter N_ZERO_IV = N_REGISTERS-N_COMPARE_REGS;
-    parameter [31:0] ZERO_IV [N_ZERO_IV-1:0] = '{N_ZERO_IV{32'h0}};
-	parameter [31:0] COMPARE_IV [N_COMPARE_REGS-1:0] = '{N_COMPARE_REGS{32'hffff0000}};
-    parameter [31:0] IV [N_REGISTERS-1:0] = {ZERO_IV, COMPARE_IV};
-    
+    typedef struct packed {
+        reg signed [15:0] slow;
+        reg signed [15:0] fast;
+    } processing_thresholds_register;
+
+    typedef struct packed {
+        reg signed [15:0] negative;
+        reg signed [15:0] positive;
+    } processing_denoise_register;
+
+    typedef struct packed {
+        reg [7:0] decimation_ratio;     // [31:24]
+        reg [7:0] n_taps;               // [23:16]
+        reg [7:0] slow_fault_threshold; // [15:8]
+        reg       linearizer_enable;    // [7]
+        reg       disable_fault;        // [6]
+        reg       clear_fault;          // [5]
+        reg [1:0] clear_latch;          // [4:3]
+        reg [1:0] latch_mode;           // [2:1]
+        reg       shift_enable;         // [0]
+    } adc_processing_control_fields;
+
+    typedef struct {
+        processing_thresholds_register thresholds[N_COMPARE_REGS];
+        reg [31:0] offset[N_CHANNELS];
+        reg [31:0] shift[N_SHIFT_REGS];
+        processing_denoise_register denoise_thresholds[N_CHANNELS];
+        adc_processing_control_fields control;
+        reg [31:0] tap_data;
+        reg [31:0] tap_address;
+    } adc_processing_registers;
+
+    adc_processing_registers registers;
+
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(N_REGISTERS),
-        .N_WRITE_REGISTERS(N_REGISTERS),
-        .REGISTERS_WIDTH(32),
+        .READ_TYPE(adc_processing_registers),
+        .WRITE_TYPE(adc_processing_registers),
+        .INITIAL_OUTPUT_VALUES('{           
+            thresholds: '{
+                '{fast: -16'sd32768, slow: -16'sd32768},  // cmp_low_f
+                '{fast: -16'sd32768, slow: -16'sd32768},  // cmp_low_r
+                '{fast:  16'sd32767, slow:  16'sd32767},  // cmp_high_f
+                '{fast:  16'sd32767, slow:  16'sd32767}   // cmp_high_r
+            },
+            default: 0
+        }),
         .ADDRESS_MASK('hff),
-        .N_TRIGGER_REGISTERS(1),
-        .TRIGGER_REGISTERS_IDX('{TAP_ADDR_REG}),
-        .INITIAL_OUTPUT_VALUES(IV)
+        .TRIGGER_MASK('{tap_address: 1, default: 0})
     ) CU (
         .clock(clock),
         .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
+        .input_registers(registers),
+        .output_registers(registers),
         .trigger_out(taps_we),
         .axil(axi_in)
     );
-    
+
     genvar i, j;
     generate
 
        
         for(i = 0; i<N_COMPARE_REGS; i++)begin
-            assign comparator_thresholds[i] =  cu_write_registers[i][15:0];
-            assign comparator_thresholds[i+4] =  cu_write_registers[i][31:16];
+            assign comparator_thresholds[i] =  registers.thresholds[i].fast;
+            assign comparator_thresholds[i+4] = registers.thresholds[i].slow;
         end
 
 
-        for(i = 0; i<N_OFFSET_REGS; i++)begin
-            assign offset[i] =  cu_write_registers[i+N_COMPARE_REGS][15:0];
+        for(i = 0; i<N_CHANNELS; i++)begin
+            assign offset[i] =  registers.offset[i];
         end
         
         for(j = 0; j<N_SHIFT_REGS; j++)begin
             for(i = 0; i<8; i++)begin
                 if(i+j*8<N_CHANNELS)begin
-                    assign shift[i+j*8] = cu_write_registers[N_OFFSET_REGS+N_COMPARE_REGS+j][i*4+3:i*4];
+                    assign shift[i+j*8] = registers.shift[j][i*4+3:i*4];
                 end
             end
         end
         
-        for(i = 0; i<N_DENOISE_REGS; i++)begin
-            assign denoise_tresh_p[i] =  cu_write_registers[N_OFFSET_REGS+N_COMPARE_REGS+N_SHIFT_REGS+i][15:0];
-            assign denoise_tresh_n[i] =  cu_write_registers[N_OFFSET_REGS+N_COMPARE_REGS+N_SHIFT_REGS+i][31:16];
+        for(i = 0; i<N_CHANNELS; i++)begin
+            assign denoise_tresh_p[i] =  registers.denoise_thresholds[i].positive;
+            assign denoise_tresh_n[i] =  registers.denoise_thresholds[i].negative;
         end
     endgenerate
 
-    assign denoise_enable = DENOISING;
 
-    assign shift_enable         = cu_write_registers[CONTROL_REG][0];
-    assign latch_mode           = cu_write_registers[CONTROL_REG][2:1];
-    assign clear_latch          = cu_write_registers[CONTROL_REG][4:3];
-    assign clear_fault          = cu_write_registers[CONTROL_REG][5];
-    assign disable_fault        = cu_write_registers[CONTROL_REG][6];
-    assign linearizer_enable    = cu_write_registers[CONTROL_REG][7];
-    assign slow_fault_threshold = cu_write_registers[CONTROL_REG][15:8];
-    assign n_taps               = cu_write_registers[CONTROL_REG][23:16];
-    assign decimation_ratio     = cu_write_registers[CONTROL_REG][31:24];
+    assign shift_enable         = registers.control.shift_enable;
+    assign latch_mode           = registers.control.latch_mode;
+    assign clear_latch          = registers.control.clear_latch;
+    assign clear_fault          = registers.control.clear_fault;
+    assign disable_fault        = registers.control.disable_fault;
+    assign linearizer_enable    = registers.control.linearizer_enable;
+    assign slow_fault_threshold = registers.control.slow_fault_threshold;
+    assign n_taps               = registers.control.n_taps;
+    assign decimation_ratio     = registers.control.decimation_ratio;
     
-    assign taps_data = cu_write_registers[TAP_DATA_REG];
-    assign taps_addr = cu_write_registers[TAP_ADDR_REG];
+    assign taps_data = registers.tap_data;
+    assign taps_addr = registers.tap_address;
 
-    assign cu_read_registers = cu_write_registers;
     
     reg arm_fault;
 
@@ -153,7 +174,7 @@ module AdcProcessingControlUnit #(
     generate
         if(STICKY_FAULT==0) begin
             always_comb begin
-                fault <= trip_high[0] | trip_low[0] | trip_high[1] | trip_low[1];
+                fault = trip_high[0] | trip_low[0] | trip_high[1] | trip_low[1];
             end       
         end else begin
             always @(posedge clock) begin : fault_trip
@@ -355,7 +376,7 @@ endmodule
                     {
                         "name":"linearizer_enable",
                         "description": "Enable data linearization",
-                        "start_position": 6,
+                        "start_position": 7,
                         "n_fields":["1"],
                         "length": 1
                     },

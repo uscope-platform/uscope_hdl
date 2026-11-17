@@ -59,7 +59,6 @@ module AdcProcessing #(
     wire [1:0] trip_low;
     wire [7:0] decimation_ratio;
 
-    wire denoise_enable;
     wire signed [DATA_PATH_WIDTH-1:0] denoise_tresh_p [N_CHANNELS-1:0];
     wire signed [DATA_PATH_WIDTH-1:0] denoise_tresh_n [N_CHANNELS-1:0];
 
@@ -76,7 +75,6 @@ module AdcProcessing #(
 
     AdcProcessingControlUnit #(
         .STICKY_FAULT(STICKY_FAULT),
-        .DENOISING(DENOISING),
         .FLTER_TAP_WIDTH(FLTER_TAP_WIDTH),
         .DATA_PATH_WIDTH(DATA_PATH_WIDTH),
         .N_CHANNELS(N_CHANNELS)
@@ -98,7 +96,6 @@ module AdcProcessing #(
         .fault(fault),
         .linearizer_enable(linearizer_enable),
         // DENOISING
-        .denoise_enable(denoise_enable),
         .denoise_tresh_p(denoise_tresh_p),
         .denoise_tresh_n(denoise_tresh_n),
         // FILTERING AND DECIMATION
@@ -154,7 +151,7 @@ module AdcProcessing #(
         .reset(reset),
         .thresh_p(denoise_tresh_p),
         .thresh_n(denoise_tresh_n),
-        .enable(denoise_enable),
+        .enable(DENOISING),
         .data_in(cal_out),
         .data_out(denoise_out)
     );
