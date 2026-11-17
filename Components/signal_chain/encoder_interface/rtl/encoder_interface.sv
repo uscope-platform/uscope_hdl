@@ -31,46 +31,61 @@ module encoder_interface #(
 );
 
 
+    typedef struct {
+        reg [30:0] reserved; reg enable_index_tracking;
+    } encoder_if_control;
 
-    reg [31:0] cu_read_registers [5:0];
-    reg [31:0] cu_write_registers [5:0];
+    typedef struct {
+        reg [31:0] angle_dest;
+        reg [31:0] speed_dest;
+        reg [31:0] max_count;
+        reg [31:0] angle_out;
+        reg [31:0] speed_out;
+        encoder_if_control control;
+    } encoder_interface_read_registers;
+
+    typedef struct {
+        reg [31:0] angle_dest;
+        reg [31:0] speed_dest;
+        reg [31:0] max_count;
+        reg [31:0] rsvd_1;
+        reg [31:0] rsvd_2;
+        encoder_if_control control;
+    } encoder_interface_write_registers;
+
+    encoder_interface_read_registers read_registers;
+    encoder_interface_write_registers write_registers;
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(6),
-        .N_WRITE_REGISTERS(6),
-        .ADDRESS_MASK('h0FF)
+        .READ_TYPE(encoder_interface_read_registers),
+        .WRITE_TYPE(encoder_interface_write_registers),
+        .REGISTERS_WIDTH(32),
+        .ADDRESS_MASK('hff)
     ) CU (
         .clock(clock),
         .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
+        .input_registers(read_registers),
+        .output_registers(write_registers),
         .axil(axi_in)
     );
 
     wire [31:0] angle_out, speed_out;
 
-    assign cu_read_registers[2:0] = cu_write_registers[2:0];
-    assign cu_read_registers[5] = cu_write_registers[5];
-
-    assign cu_read_registers[3] = angle_out;
-    assign cu_read_registers[4] = speed_out;
-    wire [31:0] angle_dest;
-    wire [31:0] speed_dest;
-    wire [23:0] max_count;
-    wire enable_index_tracking;
+    assign read_registers.angle_dest = write_registers.angle_dest;
+    assign read_registers.speed_dest = write_registers.speed_dest;
+    assign read_registers.max_count = write_registers.max_count;
+    assign read_registers.angle_out = angle_out;
+    assign read_registers.speed_out = speed_out;
+    assign read_registers.control = write_registers.control;
 
 
-    assign angle_dest = cu_write_registers[0];
-    assign speed_dest = cu_write_registers[1];
-    assign max_count = cu_write_registers[2];
-    assign enable_index_tracking = cu_write_registers[5];
 
     angle_sensing angle_measurement(
         .clock(clock),
         .reset(reset),
-        .enable_index_tracking(enable_index_tracking),
-        .output_destination(angle_dest),
-        .max_count(max_count-1),
+        .enable_index_tracking(write_registers.control.enable_index_tracking),
+        .output_destination(write_registers.angle_dest),
+        .max_count(write_registers.max_count-1),
         .a(a),
         .b(b),
         .z(z),
@@ -85,7 +100,7 @@ module encoder_interface #(
     ) speed_measurement(
         .clock(clock),
         .reset(reset),
-        .output_destination(speed_dest),
+        .output_destination(write_registers.speed_dest),
         .z(z),
         .sample(sample_speed),
         .speed(speed),
@@ -93,3 +108,62 @@ module encoder_interface #(
     );
 
 endmodule
+
+ /**
+    {
+        "name": "encoder_interface",
+        "type": "parametric_peripheral",
+        "registers":[
+            {
+                "name": "angle_dest",
+                "n_regs": ["1"],
+                "description": "Destination of the angle measurement axis stream",
+                "direction": "RW",
+                "fields":[]
+            },
+            {
+                "name": "speed_dest",
+                "n_regs": ["1"],
+                "description": "Destination of the speed measurement axis stream",
+                "direction": "RW",
+                "fields":[]
+            },
+            {
+                "name": "max_count",
+                "n_regs": ["1"],
+                "description": "Angle counter rollover limit (counter wraps between 0 and max_count-1)",
+                "direction": "RW",
+                "fields":[]
+            },
+            {
+                "name": "angle_out",
+                "n_regs": ["1"],
+                "description": "Current angle counter value",
+                "direction": "R",
+                "fields":[]
+            },
+            {
+                "name": "speed_out",
+                "n_regs": ["1"],
+                "description": "Current speed counter value",
+                "direction": "R",
+                "fields":[]
+            },
+            {
+                "name": "control",
+                "n_regs": ["1"],
+                "description": "Encoder interface control register",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"enable_index_tracking",
+                        "description": "Enables angle counter zeroing on encoder index (z) pulses",
+                        "start_position": 0,
+                        "n_fields":["1"],
+                        "length": 1
+                    }
+                ]
+            }
+        ]
+    }
+ **/
