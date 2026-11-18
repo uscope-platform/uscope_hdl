@@ -27,62 +27,53 @@ module multi_stream_fault_detector #(
     input wire clear_fault,
     output wire fault
 );
-    
-    localparam N_REGISTERS = N_STREAMS*7;
-    reg [31:0] cu_write_registers [N_REGISTERS-1:0];
-    reg [31:0] cu_read_registers  [N_REGISTERS-1:0];
 
+    wire [31:0] fast_fault [N_STREAMS-1:0];
+    wire [31:0] slow_fault [N_STREAMS-1:0];
+
+    typedef struct {
+        reg [31:0] slow_thresholds_low[N_STREAMS];
+        reg [31:0] slow_thresholds_high[N_STREAMS];
+        reg [31:0] slow_trip_duration[N_STREAMS];
+        reg [31:0] fast_thresholds_low[N_STREAMS];
+        reg [31:0] fast_thresholds_high[N_STREAMS];
+            
+        reg [31:0] fast_fault [N_STREAMS];
+        reg [31:0] slow_fault [N_STREAMS];
+
+    } multi_stream_fault_detector_registers;
+
+    multi_stream_fault_detector_registers read_registers, write_registers;
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(N_REGISTERS),
-        .N_WRITE_REGISTERS(N_REGISTERS),
-        .REGISTERS_WIDTH(32),
+        .READ_TYPE(multi_stream_fault_detector_registers),
+        .WRITE_TYPE(multi_stream_fault_detector_registers),
         .ADDRESS_MASK('hff)
     ) CU (
         .clock(clock),
         .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
+        .input_registers(read_registers),
+        .output_registers(write_registers),
         .axil(axi_in)
     );
 
+    always_comb begin
+        read_registers = write_registers;
+        read_registers.fast_fault = fast_fault;
+        read_registers.slow_fault = slow_fault;
+    end
 
-    wire [31:0] fast_fault [N_STREAMS-1:0];
-    wire [31:0] slow_fault [N_STREAMS-1:0];
 
     reg [N_STREAMS-1:0] collated_fast_fault;
     reg [N_STREAMS-1:0] collated_slow_fault;
 
     assign fault = |collated_fast_fault | |collated_slow_fault;
 
-    wire [31:0] fast_thresholds_low [N_STREAMS-1:0];
-    wire [31:0] fast_thresholds_high [N_STREAMS-1:0];
-    wire [31:0] slow_thresholds_low [N_STREAMS-1:0];
-    wire [31:0] slow_thresholds_high [N_STREAMS-1:0];
-
-    wire [31:0] slow_trip_duration [N_STREAMS-1:0];
-
-
-    assign cu_read_registers[5*N_STREAMS-1:0] = cu_write_registers[5*N_STREAMS-1:0];
-
-
     genvar  j;
 
     generate
 
-
-        assign slow_thresholds_low = cu_write_registers[N_STREAMS-1:0];
-        assign slow_thresholds_high = cu_write_registers[2*N_STREAMS-1:N_STREAMS];
-
-        assign slow_trip_duration = cu_write_registers[3*N_STREAMS-1:2*N_STREAMS];
-
-        assign fast_thresholds_low = cu_write_registers[4*N_STREAMS-1:3*N_STREAMS];
-        assign fast_thresholds_high = cu_write_registers[5*N_STREAMS-1:4*N_STREAMS];
-
-
         for (j = 0; j<N_STREAMS; j++) begin
-            assign cu_read_registers[5*N_STREAMS + j] = fast_fault[j];
-            assign cu_read_registers[6*N_STREAMS + j] = slow_fault[j];
 
             fault_detector_core #(
                 .N_CHANNELS(N_CHANNELS[j]),
@@ -90,11 +81,11 @@ module multi_stream_fault_detector #(
             ) detector (
                 .clock(clock),
                 .reset(reset),
-                .fast_threshold_low(fast_thresholds_low[j]),
-                .fast_threshold_high(fast_thresholds_high[j]),
-                .slow_threshold_low(slow_thresholds_low[j]),
-                .slow_threshold_high(slow_thresholds_high[j]),
-                .slow_trip_duration(slow_trip_duration[j]),
+                .fast_threshold_low(write_registers.fast_thresholds_low[j]),
+                .fast_threshold_high(write_registers.fast_thresholds_high[j]),
+                .slow_threshold_low(write_registers.slow_thresholds_low[j]),
+                .slow_threshold_high(write_registers.slow_thresholds_high[j]),
+                .slow_trip_duration(write_registers.slow_trip_duration[j]),
                 .data_in(stream[j]),
                 .clear_fault(clear_fault),
                 .fast_fault(collated_fast_fault[j]),

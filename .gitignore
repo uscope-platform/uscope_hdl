@@ -21,6 +21,7 @@
 **/sim.sh
 **/.Xil/
 **/\.ipynb_checkpoints/
+**/profile_points.csv
 #SPECIFIC DIRECTORY IGNORES
 
 

@@ -29,9 +29,7 @@ module spi_master_register #(
     output reg sclk_enable,
     output reg ss,
     input wire [7:0] spi_transfer_length,
-    input wire [31:0] ss_delay,
-    input wire clock_polarity,
-    input wire latching_edge,
+    input spi_master_types::delays ss_delay,
     input wire lsb_first,
     input wire start,
     output reg done,
@@ -125,7 +123,7 @@ module spi_master_register #(
             end
             spi_assert_delay:begin
                 if(inner_sclk & ~sclk_del) begin
-                    if(assert_counter == ss_delay[15:0])begin
+                    if(assert_counter == ss_delay.assert_delay)begin
                         state <= spi_enable_clock;
                         assert_counter<= 0;
                     end else begin
@@ -159,7 +157,7 @@ module spi_master_register #(
             end
             spi_deassert_delay: begin
                 if(inner_sclk & ~sclk_del) begin
-                    if(assert_counter == ss_delay[31:16])begin
+                    if(assert_counter == ss_delay.deassert_delay)begin
                         state <= spi_idle;
                         ss <= 0;
                         done <= 1;

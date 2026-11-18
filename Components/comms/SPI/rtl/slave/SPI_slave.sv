@@ -36,37 +36,37 @@ module SPI_slave#(
 );
 
 
-    parameter N_REGISTERS = 2;
+    typedef struct packed{
+        reg [27:0] padding;
+        reg msb_first;
+        reg ss_polarity;
+        reg latching_edge;
+        reg clock_polarity;
+    } spi_slave_control_register;
 
-    reg [31:0] cu_write_registers [N_REGISTERS-1:0];
-    reg [31:0] cu_read_registers [N_REGISTERS-1:0];
-    parameter [31:0] INITIAL_OUTPUT_VALUES [N_REGISTERS-1:0] = '{
-        DEFAULT_LENGTH,
-        DEFAULT_CONFIG
-    };
+    typedef struct {
+        spi_slave_control_register control;
+        reg [31:0] transfer_length;
+    } spi_slave_registers;
+
+    spi_slave_registers registers;
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(N_REGISTERS),
-        .N_WRITE_REGISTERS(N_REGISTERS),
-        .REGISTERS_WIDTH(32),
-        .ADDRESS_MASK('h3f),
-        .INITIAL_OUTPUT_VALUES(INITIAL_OUTPUT_VALUES)
-    ) axi_if(
+        .READ_TYPE(spi_slave_registers),
+        .WRITE_TYPE(spi_slave_registers),
+        .INITIAL_OUTPUT_VALUES('{
+            control: DEFAULT_CONFIG,
+            transfer_length: DEFAULT_LENGTH
+        }),
+        .ADDRESS_MASK('hff)
+    ) CU (
         .clock(clock),
         .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
+        .input_registers(registers),
+        .output_registers(registers),
         .axil(axi_in)
     );
 
-    wire [7:0] transfer_length;
-    wire ss_polarity, latching_edge, clock_polarity, msb_first;
-
-    assign clock_polarity = cu_write_registers[0][0];
-    assign latching_edge = cu_write_registers[0][1];
-    assign ss_polarity = cu_write_registers[0][2];
-    assign msb_first = cu_write_registers[0][3];
-    assign transfer_length = cu_write_registers[1];
 
 
     reg [N_CHANNELS-1:0] s_clks;
@@ -88,12 +88,12 @@ module SPI_slave#(
                 .MISO(MISO[i]),
                 .slave_clock(s_clks[i]),
                 .enable(enable),
-                .msb_first(msb_first),
+                .msb_first(registers.control.msb_first),
                 .data_in(spi_data_in[i]),
-                .spi_transfer_length(transfer_length),
-                .clock_polarity(clock_polarity),
-                .latching_edge(latching_edge),
-                .ss_polarity(ss_polarity),
+                .spi_transfer_length(registers.transfer_length),
+                .clock_polarity(registers.control.clock_polarity),
+                .latching_edge(registers.control.latching_edge),
+                .ss_polarity(registers.control.ss_polarity),
                 .data_out(spi_data_out[i])
             );
         end
@@ -103,3 +103,56 @@ module SPI_slave#(
 
 
 endmodule
+
+
+ /**
+    {
+        "name": "SPI_slave",
+        "type": "parametric_peripheral",
+        "registers":[
+            {
+                "name": "control",
+                "n_regs": ["1"],
+                "description": "SPI slave control register",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"clock_polarity",
+                        "description": "SPI clock idle polarity (CPOL)",
+                        "start_position": 0,
+                        "n_fields":["1"],
+                        "length": 1
+                    },
+                    {
+                        "name":"latching_edge",
+                        "description": "SPI data latching edge (CPHA)",
+                        "start_position": 1,
+                        "n_fields":["1"],
+                        "length": 1
+                    },
+                    {
+                        "name":"ss_polarity",
+                        "description": "Slave select polarity",
+                        "start_position": 2,
+                        "n_fields":["1"],
+                        "length": 1
+                    },
+                    {
+                        "name":"msb_first",
+                        "description": "Bit transmission order (1 = MSB first)",
+                        "start_position": 3,
+                        "n_fields":["1"],
+                        "length": 1
+                    }
+                ]
+            },
+            {
+                "name": "transfer_length",
+                "n_regs": ["1"],
+                "description": "SPI transfer length in bits",
+                "direction": "RW",
+                "fields":[]
+            }
+        ]
+    }
+ **/

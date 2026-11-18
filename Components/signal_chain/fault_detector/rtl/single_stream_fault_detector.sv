@@ -26,44 +26,39 @@ module single_stream_fault_detector #(
     output wire        fault
 );
 
-    reg [31:0] cu_write_registers [5:0];
-    reg [31:0] cu_read_registers  [5:0];
+    wire fast_fault;
+    wire slow_fault;
 
+    typedef struct {
+        reg [31:0] slow_threshold_low;
+        reg [31:0] slow_threshold_high;
+        reg [31:0] slow_trip_duration;
+        reg [31:0] fast_threshold_low;
+        reg [31:0] fast_threshold_high;
+        reg [31:0] fault;
+    } single_stream_fault_detector_registers;
+
+    single_stream_fault_detector_registers read_registers, write_registers;
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(6),
-        .N_WRITE_REGISTERS(6),
-        .REGISTERS_WIDTH(32),
+        .READ_TYPE(single_stream_fault_detector_registers),
+        .WRITE_TYPE(single_stream_fault_detector_registers),
         .ADDRESS_MASK('hff)
     ) CU (
         .clock(clock),
         .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
+        .input_registers(read_registers),
+        .output_registers(write_registers),
         .axil(axi_in)
     );
 
+    always_comb begin
+        read_registers = write_registers;
+        read_registers.fault = {fast_fault, slow_fault};
+    end
 
-    wire fast_fault;
-    wire slow_fault;
 
     assign fault = fast_fault | slow_fault;
-
-    wire signed [31:0] fast_threshold_low;
-    wire signed [31:0] fast_threshold_high;
-    wire signed [31:0] slow_threshold_low;
-    wire signed [31:0] slow_threshold_high;
-    wire [7:0] slow_trip_duration;
-
-    assign slow_threshold_low = cu_write_registers[0][31:0];
-    assign slow_threshold_high = cu_write_registers[1][31:0];
-    assign slow_trip_duration = cu_write_registers[2][7:0];
-    assign fast_threshold_low = cu_write_registers[3][31:0];
-    assign fast_threshold_high = cu_write_registers[4][31:0];
-
-    assign cu_read_registers[4:0] = cu_write_registers[4:0];
-    assign cu_read_registers[5] = {fast_fault, slow_fault};
-
 
     fault_detector_core #(
         .N_CHANNELS(1),
@@ -71,11 +66,11 @@ module single_stream_fault_detector #(
     ) detector (
         .clock(clock),
         .reset(reset),
-        .fast_threshold_low(fast_threshold_low),
-        .fast_threshold_high(fast_threshold_high),
-        .slow_threshold_low(slow_threshold_low),
-        .slow_threshold_high(slow_threshold_high),
-        .slow_trip_duration(slow_trip_duration),
+        .fast_threshold_low(write_registers.fast_threshold_low),
+        .fast_threshold_high(write_registers.fast_threshold_high),
+        .slow_threshold_low(write_registers.slow_threshold_low),
+        .slow_threshold_high(write_registers.slow_threshold_high),
+        .slow_trip_duration(write_registers.slow_trip_duration),
         .data_in(data_in),
         .clear_fault(clear_fault),
         .fast_fault(fast_fault),
@@ -124,6 +119,28 @@ endmodule
                 "description": "Fast fault higher treshold",
                 "direction": "RW",
                 "fields":[]
+            },
+            {
+                "name": "fault",
+                "n_regs": ["1"],
+                "description": "Fault status register",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"slow_fault",
+                        "description": "Slow fault tripped",
+                        "start_position": 0,
+                        "n_fields":["1"],
+                        "length": 1
+                    }, 
+                    {
+                        "name": "fast_fault",
+                        "description": "fast fault tripped",
+                        "start_position": 1,
+                        "n_fields":["1"],
+                        "length": 1
+                    }
+                ]
             }
         ]
     }  

@@ -39,56 +39,56 @@ module spi_simplified_master#(
 );
 
 
-    localparam N_REGISTERS = 3;
+    typedef struct packed{
+        reg lsb_first;
+        reg latching_edge;
+        reg sclk_polarity;
+        reg ss_polarity;
+    } wire_format;
 
-    wire [15:0] assert_delay;
-    wire [15:0] deassert_delay;
-    wire [7:0] spi_divider;
-    wire ss_polarity, sclk_polarity, latching_edge, lsb_first;
-    wire [7:0] transfer_length;
-    wire [31:0] cu_registers [N_REGISTERS-1:0];
+    typedef struct packed{
+        reg [19:0] padding;
+        reg lsb_first;
+        reg latching_edge;
+        reg sclk_polarity;
+        reg ss_polarity;
+        reg [7:0] spi_divider;
+    } spi_simple_master_control_register;
 
-    parameter [31:0] INITIAL_REGISTER_VALUES [N_REGISTERS-1:0] = '{
-        DEFAULT_LENGTH,
-        DEFAULT_DELAYS,
-        DEFAULT_CONFIG
-    };
+    typedef struct {
+        spi_simple_master_control_register control;
+        spi_master_types::delays ss_delay;
+        reg [31:0] transfer_length;
+    } spi_simple_master_registers;
 
+    spi_simple_master_registers registers;
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(N_REGISTERS),
-        .N_WRITE_REGISTERS(N_REGISTERS),
-        .INITIAL_OUTPUT_VALUES(INITIAL_REGISTER_VALUES),
-        .REGISTERS_WIDTH(32),
-        .ADDRESS_MASK('h3f)
-    ) axi_if(
+        .READ_TYPE(spi_simple_master_registers),
+        .WRITE_TYPE(spi_simple_master_registers),
+        .INITIAL_OUTPUT_VALUES('{
+            control: DEFAULT_CONFIG,
+            ss_delay: DEFAULT_DELAYS,
+            transfer_length: DEFAULT_LENGTH
+        }),
+        .ADDRESS_MASK('hff)
+    ) CU (
         .clock(clock),
         .reset(reset),
-        .input_registers(cu_registers),
-        .output_registers(cu_registers),
+        .input_registers(registers),
+        .output_registers(registers),
         .axil(axi_in)
     );
-
-
-    assign spi_divider = cu_registers[0][7:0];
-    assign ss_polarity = cu_registers[0][8];
-    assign sclk_polarity = cu_registers[0][9];
-    assign latching_edge = cu_registers[0][10];
-    assign lsb_first = cu_registers[0][11];
-    assign assert_delay = cu_registers[1][15:0];
-    assign deassert_delay = cu_registers[1][31:16];
-    assign transfer_length = cu_registers[2];
-
 
     reg inner_ss = 0;
     reg sclk_enable = 0;
     reg generated_sclk = 0;
 
     always_ff @(posedge clock)begin
-        sclk <= sclk_polarity ? ~(generated_sclk & sclk_enable): (generated_sclk & sclk_enable);
+        sclk <= registers.control.sclk_polarity ? ~(generated_sclk & sclk_enable): (generated_sclk & sclk_enable);
     end
 
-    assign ss = ss_polarity ? ~inner_ss  : inner_ss;
+    assign ss = registers.control.ss_polarity ? ~inner_ss  : inner_ss;
 
     /////////////////////////////////////////////////////////
     //         Input latching and input control            //
@@ -97,12 +97,12 @@ module spi_simplified_master#(
         spi_data_in.ready = 1;
     end
 
-    enum logic [2:0] {
+    typedef enum logic [2:0] {
         idle = 0,
         start_delay = 1,
         transmission = 2
-    } packet_sender_state = idle;
-
+    } packet_sender_state_t;
+    packet_sender_state_t packet_sender_state = idle;
 
     wire register_done;
 
@@ -115,7 +115,7 @@ module spi_simplified_master#(
     wire [REGISTERS_WIDTH-1:0] received_data [N_CHANNELS-1:0];
     reg transmission_start = 0;
 
-always_ff @(posedge clock)begin
+    always_ff @(posedge clock)begin
             case (packet_sender_state)
                 idle:begin
                     transfered_words <= 0;
@@ -153,8 +153,6 @@ always_ff @(posedge clock)begin
             endcase
         end
 
-    reg start_register = 0;
-
     spi_master_register #(
         .REGISTERS_WIDTH(16),
         .N_CHANNELS(N_CHANNELS),
@@ -165,13 +163,11 @@ always_ff @(posedge clock)begin
         .sclk(generated_sclk),
         .mosi(mosi),
         .miso(miso),
-        .ss_delay({deassert_delay, assert_delay}),
+        .ss_delay(registers.ss_delay),
         .ss(inner_ss),
         .sclk_enable(sclk_enable),
-        .spi_transfer_length(transfer_length),
-        .clock_polarity(sclk_polarity),
-        .latching_edge(latching_edge),
-        .lsb_first(lsb_first),
+        .spi_transfer_length(registers.transfer_length),
+        .lsb_first(registers.control.lsb_first),
         .start(transmission_start),
         .done(register_done),
         .data_in(transmit_data),
@@ -186,7 +182,7 @@ always_ff @(posedge clock)begin
     logic [2:0] clk_counter = 0;
 
     always_ff @(posedge clock) begin
-        if (clk_counter >= spi_divider) begin
+        if (clk_counter >= registers.control.spi_divider) begin
             clk_counter <= 3'd0;
             generated_sclk    <= ~generated_sclk;
         end else begin
@@ -197,3 +193,85 @@ always_ff @(posedge clock)begin
 
 
 endmodule
+
+
+ /**
+    {
+        "name": "spi_simplified_master",
+        "type": "parametric_peripheral",
+        "registers":[
+            {
+                "name": "control",
+                "n_regs": ["1"],
+                "description": "SPI master control register",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"spi_divider",
+                        "description": "SPI clock divider",
+                        "start_position": 0,
+                        "n_fields":["1"],
+                        "length": 8
+                    },
+                    {
+                        "name":"ss_polarity",
+                        "description": "Slave select polarity",
+                        "start_position": 8,
+                        "n_fields":["1"],
+                        "length": 1
+                    },
+                    {
+                        "name":"sclk_polarity",
+                        "description": "SPI clock idle polarity (CPOL)",
+                        "start_position": 9,
+                        "n_fields":["1"],
+                        "length": 1
+                    },
+                    {
+                        "name":"latching_edge",
+                        "description": "SPI data latching edge (CPHA)",
+                        "start_position": 10,
+                        "n_fields":["1"],
+                        "length": 1
+                    },
+                    {
+                        "name":"lsb_first",
+                        "description": "Bit transmission order (1 = LSB first)",
+                        "start_position": 11,
+                        "n_fields":["1"],
+                        "length": 1
+                    }
+                ]
+            },
+            {
+                "name": "ss_delay",
+                "n_regs": ["1"],
+                "description": "Slave select assert/deassert delays",
+                "direction": "RW",
+                "fields":[
+                    {
+                        "name":"assert_delay",
+                        "description": "SS assertion delay in clock cycles",
+                        "start_position": 0,
+                        "n_fields":["1"],
+                        "length": 16
+                    },
+                    {
+                        "name":"deassert_delay",
+                        "description": "SS deassertion delay in clock cycles",
+                        "start_position": 16,
+                        "n_fields":["1"],
+                        "length": 16
+                    }
+                ]
+            },
+            {
+                "name": "transfer_length",
+                "n_regs": ["1"],
+                "description": "SPI transfer length in bits",
+                "direction": "RW",
+                "fields":[]
+            }
+        ]
+    }
+ **/
