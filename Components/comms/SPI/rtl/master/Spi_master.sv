@@ -42,10 +42,10 @@ module SPI_master #(
     logic [2:0] divider_setting;
     logic [4:0] chosen_spi_transfer_length;
     logic [3:0] bus_transfer_length;
-    logic [31:0] parallel_reg_in [N_CHANNELS-1:0];
-    logic [OUTPUT_WIDTH-1:0] parallel_reg_out [N_CHANNELS-1:0];
-    logic [OUTPUT_WIDTH-1:0] cu_in [N_CHANNELS-1:0];
-    logic [31:0] cu_out [N_CHANNELS-1:0];
+    logic [31:0] parallel_reg_in [N_CHANNELS];
+    logic [OUTPUT_WIDTH-1:0] parallel_reg_out [N_CHANNELS];
+    logic [OUTPUT_WIDTH-1:0] cu_in [N_CHANNELS];
+    logic [31:0] cu_out [N_CHANNELS];
     logic [N_CHANNELS-1:0] parallel_reg_valid;
     logic [31:0] spi_delay;
     logic [31:0] start_generator_period;
@@ -60,8 +60,8 @@ module SPI_master #(
     assign transfer_start = int_transfer_start | internal_start;
 
 
-    assign data_out = cu_in;
     assign data_valid = transfer_done;
+    
 
     enable_generator_core ENG(
         .clock(clock),
@@ -100,6 +100,9 @@ module SPI_master #(
     generate
         genvar i;
         for (i = 0; i < N_CHANNELS; i=i+1) begin
+
+            assign data_out[i] = cu_in[i];
+
             SpiRegister #(
                 .N_CHANNELS(N_CHANNELS)
             ) SHR(

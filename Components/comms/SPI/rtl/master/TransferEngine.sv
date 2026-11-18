@@ -23,13 +23,13 @@ module TransferEngine #(parameter N_CHANNELS=3, OUTPUT_WIDTH=32) (
     input wire [2:0] divider_setting,
     input wire spi_start_transfer,
     input wire ss_deassert_delay_enable,
-    input wire [31:0] cu_data_out [N_CHANNELS-1:0],
-    input wire [OUTPUT_WIDTH-1:0] reg_data_out [N_CHANNELS-1:0],
+    input wire [31:0] cu_data_out [N_CHANNELS],
+    input wire [OUTPUT_WIDTH-1:0] reg_data_out [N_CHANNELS],
     input wire reg_data_out_valid,
     input wire sync,
     output reg enable_clockgen,
-    output reg [OUTPUT_WIDTH-1:0] cu_data_in [N_CHANNELS-1:0],
-    output reg [31:0] reg_data_in [N_CHANNELS-1:0],
+    output reg [OUTPUT_WIDTH-1:0] cu_data_in [N_CHANNELS],
+    output reg [31:0] reg_data_in [N_CHANNELS],
     output reg register_load,
     output reg register_enable,
     output reg transfer_done,
@@ -52,10 +52,10 @@ module TransferEngine #(parameter N_CHANNELS=3, OUTPUT_WIDTH=32) (
     logic [4:0] internal_transfer_length =0; // Added register to reduce delay
 
     // REGISTER USED TO LATCH DATA TO OUTPUT AT TRANSFER START
-    logic [31:0] latched_output_data [N_CHANNELS-1:0] = '{N_CHANNELS{0}};
+    logic [31:0] latched_output_data [N_CHANNELS] = '{N_CHANNELS{0}};
 
 
-    logic [OUTPUT_WIDTH-1:0] int_cu_data_in [N_CHANNELS-1:0];
+    logic [OUTPUT_WIDTH-1:0] int_cu_data_in [N_CHANNELS];
 
     assign cu_data_in = int_cu_data_in;
 
@@ -86,6 +86,7 @@ module TransferEngine #(parameter N_CHANNELS=3, OUTPUT_WIDTH=32) (
             end
         end
     end
+    
     reg [5:0] output_delay_counter;
     reg [31:0] progress_counter;
     reg [31:0] stop_condition; 

@@ -31,8 +31,6 @@ module MC_spi_bfm_tb();
     wire  sclk, ss, out_val;
     logic [31:0] out[2:0];
 
-    reg [31:0] SPI_write_data;
-    reg SPI_write_valid;
 
     SPI_if spi_if_1();
     SPI_if spi_if_2();
@@ -76,6 +74,7 @@ module MC_spi_bfm_tb();
     axi_stream read_req();
     axi_stream read_resp();
     axi_stream write();
+    axi_stream external_spi_transfer();
 
     axis_to_axil WRITER(
         .clock(clk),
@@ -99,8 +98,7 @@ module MC_spi_bfm_tb();
         .MOSI(mosi),
         .SS(ss),
         .axi_in(axil),
-        .SPI_write_data(SPI_write_data),
-        .SPI_write_valid(SPI_write_valid)
+        .external_spi_transfer(external_spi_transfer)
     );
 
 
@@ -116,8 +114,6 @@ module MC_spi_bfm_tb();
         spi_bfm_1 = new(spi_if_1,1);
         spi_bfm_2 = new(spi_if_2,1);
         spi_bfm_3 = new(spi_if_3,1);
-        SPI_write_valid <= 0;
-        SPI_write_data <= 0;
 
         //TEST MASTER MODE
         #10 -> slave_task_start;
@@ -172,9 +168,9 @@ module MC_spi_bfm_tb();
             master_data_s2 = $urandom();
             master_data_s3 = $urandom();
 
-            write_BFM.write_dest(master_data_s1, 32'h43C00010);
-            write_BFM.write_dest(master_data_s2, 32'h43C00014);
-            write_BFM.write_dest(master_data_s3, 32'h43C00018);
+            #5 write_BFM.write_dest(master_data_s1, 32'h43C00010);
+            #5 write_BFM.write_dest(master_data_s2, 32'h43C00014);
+           #5 write_BFM.write_dest(master_data_s3, 32'h43C00018);
             #5 write_BFM.write_dest(31'h0, 32'h43C0000C);
             #120;
             #3;
@@ -236,11 +232,12 @@ module spi_checker #(
     input wire MOSI,
     output reg MISO
 );
-
+    reg [11:0] data;
     reg [11:0] slave_register = 0;
 
     always @(negedge SS) begin
-        slave_register = $urandom;
+        data = $urandom;
+        slave_register = data;
     end
 
     always @(posedge SCLK) begin
