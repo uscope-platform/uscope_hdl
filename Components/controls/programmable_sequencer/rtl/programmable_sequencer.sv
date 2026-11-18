@@ -29,50 +29,39 @@ module programmable_sequencer #(
     axi_lite.slave axi_in
 );
 
-    parameter N_REGISTERS = 2*MAX_STEPS+3;
 
-    reg [31:0] cu_write_registers [N_REGISTERS-1:0];
-    reg [31:0] cu_read_registers [N_REGISTERS-1:0];
-    
+    typedef struct packed{
+        reg [31:0] order;
+        reg [31:0] skip;
+    } programmable_sequencer_step;
 
-    localparam [31:0] INIT_VAL [N_REGISTERS-1:0] = '{default:0};
-    
+    typedef struct packed{
+        reg [31:9] padding;
+        reg burst_mode;
+        reg [7:0] n_steps;
+    } programmable_sequencer_control;
+
+    typedef struct {
+        programmable_sequencer_control control;
+        reg [31:0] reserved;
+        reg [31:0] stepping_delay;
+        programmable_sequencer_step steps [MAX_STEPS];
+    } programmable_sequencer_registers;
+
+    programmable_sequencer_registers registers;
+
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(N_REGISTERS),
-        .N_WRITE_REGISTERS(N_REGISTERS),
-        .REGISTERS_WIDTH(32),
-        .ADDRESS_MASK('hfff),
-        .INITIAL_OUTPUT_VALUES(INIT_VAL)
+        .READ_TYPE(programmable_sequencer_registers),
+        .WRITE_TYPE(programmable_sequencer_registers),
+        .ADDRESS_MASK('hfff)
     ) CU (
         .clock(clock),
         .reset(reset),
-        .input_registers(cu_read_registers),
-        .output_registers(cu_write_registers),
+        .input_registers(registers),
+        .output_registers(registers),
         .axil(axi_in)
     );
 
-    assign cu_read_registers = cu_write_registers;
-
-    wire [15:0] timebase_divider;
-    wire burst_mode;
-    wire [7:0] n_steps;
-    wire [15:0] sequence_ordering[MAX_STEPS-1:0];
-    wire [15:0] stepping_delay;
-    wire [SKIPPING_COUNTER_WIDTH-1:0] pulse_skipping_setting [MAX_STEPS-1:0];
-    
-    assign n_steps = cu_write_registers[0][7:0];
-    assign burst_mode = cu_write_registers[0][8];
-    assign timebase_divider = cu_write_registers[1];
-    assign stepping_delay = cu_write_registers[2];
-
-    genvar n;
-
-    generate
-        for(n=0; n<MAX_STEPS; n = n+1)begin
-            assign sequence_ordering[n] = cu_write_registers[3+n*2];
-            assign pulse_skipping_setting[n] = cu_write_registers[3+n*2+1];
-        end
-    endgenerate
 
     reg [SKIPPING_COUNTER_WIDTH-1:0] pulse_skipping_counters [MAX_STEPS-1:0] = '{default:0};
 
@@ -85,11 +74,13 @@ module programmable_sequencer #(
     } sequencer_state = s_idle;
 
 
-    reg [7:0] current_step;
+    reg [7:0] current_step = 0;
     reg [15:0] stepping_counter = 0;
 
     wire [SKIPPING_COUNTER_WIDTH-1:0] skipping_target;
-    assign skipping_target = pulse_skipping_setting[current_step] != 0 ? (pulse_skipping_setting[current_step] - 1) : 0;
+    assign skipping_target = registers.steps[current_step].skip != 0 ? 
+                            (registers.steps[current_step].skip - 1) :
+                             0;
 
     always_ff @(posedge clock) begin
         case (sequencer_state)
@@ -97,7 +88,7 @@ module programmable_sequencer #(
                 current_step <= 0;
                 step_start <= 0;
                 stepping_counter <= 0;
-                pulse_skipping_counters = '{MAX_STEPS{0}};
+                pulse_skipping_counters <= '{MAX_STEPS{0}};
 
                 if(enable) begin
                     sequencer_state <= s_start_step;
@@ -106,10 +97,10 @@ module programmable_sequencer #(
             s_start_step: begin
                 stepping_counter <= 0;
                 if(pulse_skipping_counters[current_step] == skipping_target)begin
-                    step_start[sequence_ordering[current_step]] <= 1;
+                    step_start[registers.steps[current_step].order] <= 1;
                     pulse_skipping_counters[current_step] <= 0;
                 end else begin
-                    skipped_starts[sequence_ordering[current_step]] <= 1;
+                    skipped_starts[registers.steps[current_step].order] <= 1;
                     pulse_skipping_counters[current_step] <= pulse_skipping_counters[current_step]+1;
                 end
                 sequencer_state <= s_wait_done;
@@ -117,15 +108,15 @@ module programmable_sequencer #(
             s_wait_done: begin
                 step_start <= 0;
                 skipped_starts <= 0;
-                if(step_done[sequence_ordering[current_step]])begin
+                if(step_done[registers.steps[current_step].order])begin
                     sequencer_state <= s_inter_step_delay;
                 end
             end
             s_inter_step_delay:begin
-                if(stepping_counter == stepping_delay) begin
-                    if(current_step == n_steps-1)begin
+                if(stepping_counter == registers.stepping_delay) begin
+                    if(current_step == registers.control.n_steps-1)begin
                         current_step <= 0;
-                        if(burst_mode) begin
+                        if(registers.control.burst_mode) begin
                             sequencer_state <= s_idle;
                         end else begin
                         sequencer_state <= s_start_step;
@@ -189,7 +180,14 @@ endmodule
             {
                 "name": "step_$",
                 "n_regs": ["MAX_STEPS"],
-                "description": "This register selects which sequencer output is active for step # $",
+                "description": "This register selects which sequencer output is active for step # $ (address 0xC + 8*$)",
+                "fields":[],
+                "direction": "RW"
+            },
+            {
+                "name": "skip_counter_$",
+                "n_regs": ["MAX_STEPS"],
+                "description": "This register sets how many potential pulses to skip for step # $ (address 0x10 + 8*$, interleaved with step_$)",
                 "fields":[],
                 "direction": "RW"
             }

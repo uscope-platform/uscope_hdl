@@ -32,10 +32,10 @@ module programmable_sequencer_tb();
 
 
     wire [7:0] start_step;
+    wire [7:0] step_done;
     wire [7:0] skipped_starts;
-    reg [7:0] step_done = 0;
     reg enable = 0;
-
+    reg [7:0] inner_done = 0;
     programmable_sequencer #(
         .MAX_STEPS(8),
         .COUNTER_WIDTH(32)
@@ -45,11 +45,11 @@ module programmable_sequencer_tb();
         .enable(enable),
         .step_done(step_done),
         .step_start(start_step),
-        .skipped_starts(skipped_starts)
-,        .axi_in(axi_master)
+        .skipped_starts(skipped_starts),
+        .axi_in(axi_master)
     );
 
-
+    assign step_done = inner_done;
 
     initial begin  
         axil_bfm = new(axi_master, 1);
@@ -103,7 +103,7 @@ module programmable_sequencer_tb();
     reg in_step = 0;
     reg [15:0] step_duration = 0;
     always_ff@(posedge clk) begin
-        step_done <= 0;
+        inner_done <= 0;
         if(|start_step || |skipped_starts)begin
             in_step <= 1;
             step_duration<= 1;
@@ -111,7 +111,7 @@ module programmable_sequencer_tb();
 
         if(in_step)begin
             if(step_duration == 35) begin
-                step_done <= 'hFF;
+                inner_done <= 'hFF;
                 step_duration <= 0;
                 in_step <= 0;
             end else begin

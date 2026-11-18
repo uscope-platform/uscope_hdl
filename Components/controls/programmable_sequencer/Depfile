@@ -1,6 +1,6 @@
 {
     "general":{
-        "project_name":"programmable sequence",
+        "project_name":"programmable_sequencer",
         "target_part":"xc7z020clg400",
         "synth_modules":[],
         "synth_tl": "programmable_sequencer",
