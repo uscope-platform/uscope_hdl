@@ -42,33 +42,35 @@ module axil_crossbar_tb();
         .slaves('{axi_m2, axi_m1})
     );
 
-    logic [31:0] input_registers [2:0] = {0,0,0};
-    logic [31:0] output_registers_1 [2:0];
+    typedef struct{
+        reg [31:0] regs [3];
+    } tb_test_type;
+
+    tb_test_type read_registers, write_registers_1, write_registers_2;
 
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(3),
-        .N_WRITE_REGISTERS(3),
+        .READ_TYPE(tb_test_type),
+        .WRITE_TYPE(tb_test_type),
         .ADDRESS_MASK('h1f)
-    ) S1 (
+    ) CU (
         .clock(clk),
         .reset(reset),
-        .input_registers(input_registers),
-        .output_registers(output_registers_1),
+        .input_registers(read_registers),
+        .output_registers(write_registers_1),
+        .trigger_out({trigger_out}),
         .axil(axi_s1)
     );
 
-
-    logic [31:0] output_registers_2 [2:0];
-
-    axil_simple_register_cu #(
-        .N_READ_REGISTERS(3),
-        .N_WRITE_REGISTERS(3),
+        axil_simple_register_cu #(
+        .READ_TYPE(tb_test_type),
+        .WRITE_TYPE(tb_test_type),
         .ADDRESS_MASK('h1f)
-    ) S2 (
+    ) CU (
         .clock(clk),
         .reset(reset),
-        .input_registers(input_registers),
-        .output_registers(output_registers_2),
+        .input_registers(read_registers),
+        .output_registers(write_registers_2),
+        .trigger_out({trigger_out}),
         .axil(axi_s2)
     );
 
@@ -89,7 +91,7 @@ module axil_crossbar_tb();
 
     end
 
-    reg [31:0] write_shadow_register_1 [2:0] = {0,0,0};
+    reg [31:0] write_shadow_register_1 [3] = '{0,0,0};
     reg [31:0] write_address_1;
     reg [31:0] write_data_1;
     // test writes
@@ -104,7 +106,7 @@ module axil_crossbar_tb();
             write_shadow_register_1[write_address_1] = write_data_1;
             axil_bfm_1.write(write_address_1, write_data_1);
             #3;
-            if(write_shadow_register_1 != output_registers_1) begin
+            if(write_shadow_register_1 != write_registers_1.regs) begin
                 $error("output registers 1 != write shadow registers 1");
             end
             #30;    
@@ -112,7 +114,7 @@ module axil_crossbar_tb();
     end 
 
     
-    reg [31:0] write_shadow_register_2 [2:0] = {0,0,0};
+    reg [31:0] write_shadow_register_2 [3] = '{0,0,0};
     reg [31:0] write_address_2;
     reg [31:0] write_data_2;
     // test writes
@@ -127,7 +129,7 @@ module axil_crossbar_tb();
             write_shadow_register_2[write_address_2] = write_data_2;
             axil_bfm_2.write(write_address_2, write_data_2);
             #3;
-            if(write_shadow_register_2 != output_registers_2) begin
+            if(write_shadow_register_2 != write_registers_2.regs) begin
                 $error("output registers 2 != write shadow registers 2");
             end
             #30;    
