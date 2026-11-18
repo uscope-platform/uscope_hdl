@@ -25,20 +25,22 @@ module axil_simple_register_cu_tb();
   
     axi_lite_BFM axil_bfm;
 
-    logic [31:0] input_registers [2:0] = {0,0,0};
-    logic [31:0] output_registers [2:0];
-    
+    typedef struct{
+        reg [31:0] regs [3];
+    } tb_test_type;
+
+    tb_test_type read_registers, write_registers;
+
     axil_simple_register_cu #(
-        .N_READ_REGISTERS(3),
-        .N_WRITE_REGISTERS(3),
-        .N_TRIGGER_REGISTERS(1),
-        .TRIGGER_REGISTERS_IDX({2}),
+        .READ_TYPE(tb_test_type),
+        .WRITE_TYPE(tb_test_type),
+        .TRIGGER_MASK('{regs: '{2: 1, default: 0}}),
         .ADDRESS_MASK('hf)
-    ) UUT (
+    ) CU (
         .clock(clk),
         .reset(reset),
-        .input_registers(input_registers),
-        .output_registers(output_registers),
+        .input_registers(read_registers),
+        .output_registers(write_registers),
         .trigger_out({trigger_out}),
         .axil(test_axi)
     );
@@ -49,7 +51,7 @@ module axil_simple_register_cu_tb();
         #0.5;
     end
     
-    reg [31:0] write_shadow_register [2:0] = {0,0,0};
+    reg [31:0] write_shadow_register [3] = '{0,0,0};
     reg [31:0] write_address;
     reg [31:0] write_data;
 
@@ -75,7 +77,7 @@ module axil_simple_register_cu_tb();
             write_shadow_register[write_address] = write_data;
             axil_bfm.write(write_address<<2, write_data);
             #3;
-            if(write_shadow_register != output_registers) begin
+            if(write_shadow_register != write_registers.regs) begin
                 $error("output registers != write shadow registers");
             end
             #30;    
@@ -108,7 +110,7 @@ module axil_simple_register_cu_tb();
     end
 
 
-    reg [31:0] read_shadow_register [2:0] = {0,0,0};
+    reg [31:0] read_shadow_register [3] = '{0,0,0};
     reg [31:0] read_address;
     reg [31:0] read_data;
 
@@ -125,13 +127,13 @@ module axil_simple_register_cu_tb();
             #10
             read_address = $urandom()%3;
             read_data = $urandom();
-            input_registers[read_address] = read_data;
+            read_registers.regs[read_address] = read_data;
             #3;
             read_func = 1;
             axil_bfm.read(read_address<<2, readback);
             read_func = 0;
             read_shadow_register[read_address] = readback;
-            if(read_shadow_register != input_registers) begin
+            if(read_shadow_register != read_registers.regs) begin
                 $error("input registers != read shadow registers");
             end
             #20;   
