@@ -74,7 +74,7 @@ module AdcProcessing #(
         .READ_TYPE(adc_processing_registers),
         .WRITE_TYPE(adc_processing_registers),
         .INITIAL_OUTPUT_VALUES('{ 
-            comparator_tresholds:{
+            comparator_tresholds:'{
                 slow: '{
                     low_falling: -16'sd32768, 
                     low_rising:  -16'sd32768,

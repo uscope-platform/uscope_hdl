@@ -108,7 +108,6 @@ module uScope_stream_dma #(
             assign unrolled_sync_ready[i] = scope_in_sync[i].ready;
 
             axi_stream_extractor #(
-                .DATA_WIDTH(DATA_WIDTH),
                 .DEST_WIDTH(32),
                 .REGISTERED(0)
             ) extractor (
