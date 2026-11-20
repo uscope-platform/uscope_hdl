@@ -1,0 +1,25 @@
+{
+    "general":{
+        "project_name":"axi_watchdog",
+        "target_part":"xc7z020clg400",
+        "synth_modules":[],
+        "synth_tl": "axi_to_axil",
+        "sim_modules":[],
+        "sim_tl":"axi_watchdog_tb",
+        "include_paths":[
+            "/public/Components/Common"
+        ]
+    },
+    "scripts":[
+        {
+            "name":"axi_to_axil_VIP_bd.tcl",
+            "type": "tcl",
+            "arguments":[]
+        }
+    ],
+    "excluded_modules":[
+        "axi_to_axil_vip_bd"
+    ],
+    "constraints": [
+    ]
+}
