@@ -15,9 +15,9 @@ How it works
   with its current value, so every signal has a value from the start of the window.
 * The clock is always traced and sets what a cycle is.
 
-The file is written by `libfst <https://github.com/gtkwave/libfst>`_, a plain C library. CMake fetches it the first
-time a test is configured, at a pinned commit, and compiles it with the library. The first configure needs the network
-and zlib.
+The file is written by `libfstwriter <https://github.com/gtkwave/libfstwriter>`_, the writer Verilator also uses for
+its traces. CMake fetches it the first time a test is configured, at a pinned commit, and compiles it with the library.
+The first configure needs the network, zlib and lz4.
 
 What is written
 ---------------

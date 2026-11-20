@@ -28,7 +28,9 @@
 #include "sctb/clocking.hpp"
 #include "sctb/options.hpp"
 
-struct fstWriterContext;
+namespace fst {
+    class Writer;
+}
 
 namespace sctb {
 
@@ -75,7 +77,7 @@ namespace sctb {
         void follow_window();
         void begin_window();
 
-        fstWriterContext *writer = nullptr;
+        fst::Writer *writer = nullptr;
         std::vector<std::unique_ptr<trace_variable>> variables;
         sc_time start;
         sc_time end;
