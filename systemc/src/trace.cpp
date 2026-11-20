@@ -16,10 +16,9 @@
 #include "sctb/trace.hpp"
 
 #include <cmath>
+#include <fstream>
 
-extern "C" {
-#include "fstapi.h"
-}
+#include "fstcpp/fstcpp_writer.h"
 
 #include "sctb/run.hpp"
 
@@ -28,18 +27,17 @@ namespace sctb {
     /// A signal in the file: where it is, how wide it is, and how to read it
     class trace_variable {
     public:
-        trace_variable(trace &owner, fstHandle handle, uint32_t bits) : owner(owner), handle(handle), bits(bits) {}
+        trace_variable(trace &owner, fst::Handle handle) : owner(owner), handle(handle) {}
         virtual ~trace_variable() = default;
 
         virtual uint64_t read() const = 0;
 
-        void dump(fstWriterContext *writer) const {fstWriterEmitValueChange64(writer, handle, bits, read());}
+        void dump(fst::Writer &writer) const {writer.emitValueChange(handle, read());}
         void changed() {owner.record(*this);}
 
     private:
         trace &owner;
-        fstHandle handle;
-        uint32_t bits;
+        fst::Handle handle;
     };
 
     namespace {
@@ -47,8 +45,8 @@ namespace sctb {
         template<typename T>
         class traced_signal : public trace_variable {
         public:
-            traced_signal(trace &owner, fstHandle handle, uint32_t bits, const sc_signal_in_if<T> &signal) :
-                trace_variable(owner, handle, bits), signal(signal) {}
+            traced_signal(trace &owner, fst::Handle handle, const sc_signal_in_if<T> &signal) :
+                trace_variable(owner, handle), signal(signal) {}
 
             uint64_t read() const override {return static_cast<uint64_t>(signal.read());}
 
@@ -65,10 +63,16 @@ namespace sctb {
         if(!opts.has("trace")) return;
 
         const std::string file = opts.get("trace");
-        writer = fstWriterCreate(file.c_str(), 1);
-        if(writer == nullptr) SC_REPORT_FATAL("sctb", ("can not write the waveform file " + file).c_str());
-        fstWriterSetTimescale(writer, get_timescale());
-        fstWriterSetScope(writer, FST_ST_VCD_MODULE, "testbench", nullptr);
+        // the writer does not say whether it could open the file, so it is checked here
+        {
+            const std::ofstream check(file, std::ios::binary);
+            if(!check) SC_REPORT_FATAL("sctb", ("can not write the waveform file " + file).c_str());
+        }
+        writer = new fst::Writer(file);
+        writer->setWriterPackType(fst::WriterPackType::LZ4);
+        writer->setTimecale(static_cast<int8_t>(get_timescale()));
+        writer->setWriter("sctb");
+        writer->setScope(fst::Hierarchy::ScopeType::VCD_MODULE, "testbench", nullptr);
 
         start = clk.get_period() * static_cast<double>(opts.get_integer("trace-start", 0));
         const int64_t cycles = opts.get_integer("trace-cycles", 0);
@@ -80,15 +84,17 @@ namespace sctb {
 
     trace::~trace() {
         if(writer == nullptr) return;
-        if(!begun) fstWriterSetUpscope(writer);
-        fstWriterClose(writer);
+        if(!begun) writer->upscope();
+        writer->close();
+        delete writer;
     }
 
     template<typename T>
     void trace::add_signal(const std::string &name, const sc_signal_in_if<T> &signal, uint32_t bits) {
         if(!is_enabled()) return;
-        const fstHandle handle = fstWriterCreateVar(writer, FST_VT_VCD_WIRE, FST_VD_IMPLICIT, bits, name.c_str(), 0);
-        variables.push_back(std::make_unique<traced_signal<T>>(*this, handle, bits, signal));
+        const fst::Handle handle = writer->createVar(fst::Hierarchy::VarType::VCD_WIRE,
+                                                    fst::Hierarchy::VarDirection::IMPLICIT, bits, name, 0);
+        variables.push_back(std::make_unique<traced_signal<T>>(*this, handle, signal));
         trace_variable &variable = *variables.back();
         spawn_on_event("trace_" + name, signal.value_changed_event(), variable, &trace_variable::changed);
     }
@@ -112,13 +118,13 @@ namespace sctb {
     void trace::record(const trace_variable &variable) {
         if(!recording) return;
         emit_time();
-        variable.dump(writer);
+        variable.dump(*writer);
     }
 
     void trace::emit_time() {
         const uint64_t now = sc_time_stamp().value();
         if(time_written && now == last_time) return;
-        fstWriterEmitTimeChange(writer, now);
+        writer->emitTimeChange(now);
         last_time = now;
         time_written = true;
     }
@@ -134,10 +140,10 @@ namespace sctb {
 
     // every signal has a value from the start of the window, so all of them are written when it opens
     void trace::begin_window() {
-        fstWriterSetUpscope(writer);
+        writer->upscope();
         emit_time();
         for(auto &variable : variables) {
-            variable->dump(writer);
+            variable->dump(*writer);
         }
         begun = true;
         recording = true;
