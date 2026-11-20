@@ -149,43 +149,41 @@ module noise_generator #(
                 .data_out(generators_out[i]),
                 .state_out(state_out[i])
             );
-
-            always_ff@(posedge clock) begin
-                generator_out.valid <= 1'b0;
-                generator_out.tlast <= 1'b0;
-                if(~reset) begin
-                    state_reg[i] <= INITIAL_STATE[i];
-                end else begin
-                    case (state)
-                        idle:begin
-                            if(trigger & |registers.active_outputs) begin
-                                state <= working;
-                                output_counter <= 0;
-                            end
-                        end
-                        working: begin
-                            if(output_counter == registers.active_outputs-1)begin
-                                state <= idle;
-                                generator_out.tlast <= 1'b1;
-                            end else begin
-                                output_counter <= output_counter + 1;
-                            end
-                            if(generator_out.ready)begin
-                                state_reg[i] <= state_out[i];
-                                generator_out.data <= {{generator_out.DATA_WIDTH-16{noise_gen_out[15]}}, noise_gen_out};
-                                generator_out.dest <= registers.output_dest[output_counter];
-                                generator_out.valid <= 1'b1;
-                            end
-                        end
-                    endcase
-                end
-            end
         end
-
-
-
     endgenerate
 
+    always_ff@(posedge clock) begin
+        generator_out.valid <= 1'b0;
+        generator_out.tlast <= 1'b0;
+        if(~reset) begin
+            for (int k = 0; k < N_PRBS_GENERATORS; k++)
+                state_reg[k] <= INITIAL_STATE[k];
+        end else begin
+            case (state)
+                idle:begin
+                    if(trigger & |registers.active_outputs) begin
+                        state <= working;
+                        output_counter <= 0;
+                    end
+                end
+                working: begin
+                    if(output_counter == registers.active_outputs-1)begin
+                        state <= idle;
+                        generator_out.tlast <= 1'b1;
+                    end else begin
+                        output_counter <= output_counter + 1;
+                    end
+                    if(generator_out.ready)begin
+                        for (int k = 0; k < N_PRBS_GENERATORS; k++)
+                            state_reg[k] <= state_out[k];
+                        generator_out.data <= {{generator_out.DATA_WIDTH-16{noise_gen_out[15]}}, noise_gen_out};
+                        generator_out.dest <= registers.output_dest[output_counter];
+                        generator_out.valid <= 1'b1;
+                    end
+                end
+            endcase
+        end
+    end
 
 endmodule
 
