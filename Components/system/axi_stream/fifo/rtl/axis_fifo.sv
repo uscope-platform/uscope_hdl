@@ -53,7 +53,12 @@ always@(posedge clock) begin
     end else begin
         out.valid <= 0;
         out.tlast <= 0;
-        if(out.ready)begin
+
+        if(out.ready && in.valid)begin // BYPASSING
+                out.dest <= in.dest;
+                out.user <= in.user;
+                out.valid <= in.valid;
+        end else if(out.ready && ~in.valid) begin // EMPTYING
             if(fill_level != 0)begin
                 {out.tlast,out.data[DATA_WIDTH-1:0]} <= fifo_memory[hp_mem_addr_r];
                 out.dest <= dest_memory[hp_mem_addr_r];
@@ -65,17 +70,14 @@ always@(posedge clock) begin
                     fill_level<= fill_level-1;
                 end
             end
-        end
-        if(in.valid)begin
+        end else if(~out.ready && in.valid) begin// FILLING
             fifo_memory[hp_mem_addr_w] <= {in.tlast, in.data};
             dest_memory[hp_mem_addr_w] <= in.dest;
             user_memory[hp_mem_addr_w] <= in.user;
             fill_level<= fill_level+1;
             if(hp_mem_addr_w == FIFO_DEPTH-1) hp_mem_addr_w <= 0;
             else hp_mem_addr_w <= hp_mem_addr_w+1;
-            
-        end
-
+        end 
     end
 end
 
