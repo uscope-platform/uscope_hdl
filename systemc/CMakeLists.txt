@@ -40,7 +40,26 @@ target_include_directories(sctb_fst SYSTEM PUBLIC ${fstwriter_SOURCE_DIR})
 target_include_directories(sctb_fst SYSTEM PRIVATE ${SCTB_LZ4_INCLUDE_DIR})
 # it is somebody else's code, its warnings are not ours to fix
 target_compile_options(sctb_fst PRIVATE -w)
-target_link_libraries(sctb_fst PUBLIC ZLIB::ZLIB ${SCTB_LZ4_LIBRARY})
+target_link_libraries(sctb_fst PUBLIC ZLIB::ZLIB)
+
+# the reader of the waveform files, which merging the trace of the device into the trace of the testbench needs. The
+# writer only writes, so the reader comes from libfst, the reference implementation of the format
+enable_language(C)
+FetchContent_Declare(libfst
+        GIT_REPOSITORY https://github.com/gtkwave/libfst
+        GIT_TAG bf53e719f099729cedc6e4e5d5400f79bd80c610)
+FetchContent_MakeAvailable(libfst)
+
+add_library(sctb_fst_reader STATIC
+        ${libfst_SOURCE_DIR}/src/fstapi.c
+        ${libfst_SOURCE_DIR}/src/fastlz.c
+        ${libfst_SOURCE_DIR}/src/lz4.c
+)
+target_include_directories(sctb_fst_reader SYSTEM PUBLIC ${libfst_SOURCE_DIR}/src)
+target_compile_definitions(sctb_fst_reader PRIVATE HAVE_FSEEKO)
+# it is somebody else's code, its warnings are not ours to fix
+target_compile_options(sctb_fst_reader PRIVATE -w)
+target_link_libraries(sctb_fst_reader PUBLIC ZLIB::ZLIB)
 
 add_library(sctb STATIC
         src/axis/bus.cpp
@@ -58,8 +77,9 @@ add_library(sctb STATIC
         src/run.cpp
         src/scoreboard.cpp
         src/trace.cpp
+        src/trace_merge.cpp
 )
 target_include_directories(sctb PUBLIC ${CMAKE_CURRENT_LIST_DIR}/includes)
 target_compile_features(sctb PUBLIC cxx_std_17)
 target_link_libraries(sctb PUBLIC SystemC::systemc)
-target_link_libraries(sctb PRIVATE sctb_fst)
+target_link_libraries(sctb PRIVATE sctb_fst sctb_fst_reader)

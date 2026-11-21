@@ -30,8 +30,16 @@ target_link_libraries(test PRIVATE sctb)
 verilate(test SYSTEMC
     TOP_MODULE axis_fifo_shim
     PREFIX Vaxis_fifo_shim
+    TRACE_FST
     SOURCES
         ${COMPONENTS}/Common/interfaces_no_timing.sv
         ${CMAKE_CURRENT_LIST_DIR}/../../rtl/axis_fifo.sv
         ${CMAKE_CURRENT_LIST_DIR}/axis_fifo_shim.sv
     VERILATOR_ARGS --no-timing -Wno-fatal -Wno-lint -Wno-style)
+
+# the tracer writes FST through lz4, which Verilator links by name
+find_path(LZ4_INCLUDE_DIR lz4.h REQUIRED)
+find_library(LZ4_LIBRARY lz4 REQUIRED)
+get_filename_component(LZ4_LIBRARY_DIR ${LZ4_LIBRARY} DIRECTORY)
+target_include_directories(test PRIVATE ${LZ4_INCLUDE_DIR})
+target_link_directories(test PRIVATE ${LZ4_LIBRARY_DIR})

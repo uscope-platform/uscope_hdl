@@ -15,7 +15,9 @@
 
 #include "sctb/trace.hpp"
 
+#include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <fstream>
 
 #include "fstcpp/fstcpp_writer.h"
@@ -59,10 +61,10 @@ namespace sctb {
 
     }
 
-    trace::trace(const options &opts, const clock &clk) : start(SC_ZERO_TIME), end(sc_max_time()) {
+    trace::trace(const options &opts, const clock &clk) :
+        file(opts.get("trace")), start(SC_ZERO_TIME), end(sc_max_time()) {
         if(!opts.has("trace")) return;
 
-        const std::string file = opts.get("trace");
         // the writer does not say whether it could open the file, so it is checked here
         {
             const std::ofstream check(file, std::ios::binary);
@@ -80,13 +82,34 @@ namespace sctb {
 
         add_signal("clock", clk.get_signal(), 1);
         spawn_every_cycle("trace_window", clk, *this, &trace::follow_window);
+        instances().push_back(this);
     }
 
     trace::~trace() {
+        auto &all = instances();
+        all.erase(std::remove(all.begin(), all.end(), this), all.end());
+        close_file();
+        // the file of the device is merged into this one, so it can only be closed once this one is
+        if(device_started) {
+            device_started = false;
+            stop_tracer();
+        }
+    }
+
+    std::vector<trace *> &trace::instances() {
+        static std::vector<trace *> all;
+        return all;
+    }
+
+    void trace::close_file() {
         if(writer == nullptr) return;
         if(!begun) writer->upscope();
         writer->close();
         delete writer;
+        writer = nullptr;
+        // a window that never opened has no value in it, and a file without values also loses its signals, so it is
+        // removed instead of left behind unreadable
+        if(!begun) std::remove(file.c_str());
     }
 
     template<typename T>
@@ -138,9 +161,18 @@ namespace sctb {
         }
     }
 
+    // the model is elaborated only once the simulation starts, and its tracer can not be given to it after the first
+    // dump, so it is set up by run() before the simulation goes on
+    void trace::start_device() {
+        if(device_started || !start_tracer) return;
+        device_started = true;
+        start_tracer();
+    }
+
     // every signal has a value from the start of the window, so all of them are written when it opens
     void trace::begin_window() {
         writer->upscope();
+        window_start = sc_time_stamp();
         emit_time();
         for(auto &variable : variables) {
             variable->dump(*writer);

@@ -16,6 +16,7 @@
 #include "sctb/run.hpp"
 
 #include "sctb/report.hpp"
+#include "sctb/trace.hpp"
 
 namespace sctb {
 
@@ -44,6 +45,15 @@ namespace sctb {
     }
 
     int run(sc_time timeout) {
+        // the tracer of a device can only be given the model once the testbench is elaborated, which is the first
+        // step of the simulation, and it has to be given it before the simulation dumps anything
+        bool has_device = false;
+        for(const trace *instance : trace::instances()) has_device = has_device || instance->has_device();
+        if(has_device) {
+            sc_start(SC_ZERO_TIME);
+            for(trace *instance : trace::instances()) instance->start_device();
+        }
+
         auto &report = reporter::instance();
         if(timeout == SC_ZERO_TIME) {
             sc_start();

@@ -19,6 +19,7 @@
 #include <systemc.h>
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -36,6 +37,8 @@ namespace sctb {
 
     class trace_variable;
 
+    int run(sc_time timeout);
+
     /// Writes the signals that are added to it to a waveform file in the FST format. It is on when the command line
     /// has --trace=<file>. When it is off, add() returns immediately, so the signals can be listed in every test.
     /// --trace-start=<cycles> and --trace-cycles=<cycles> select the part of the simulation that is written, which
@@ -49,6 +52,12 @@ namespace sctb {
         trace &operator=(const trace &) = delete;
 
         bool is_enabled() const {return writer != nullptr;}
+
+        /// Adds the signals inside the device to this waveform. The tracer of the model writes them to a file of its
+        /// own, which is merged into this one when the run ends, so the test has nothing else to do. It does nothing
+        /// when the trace is off. Defined in sctb/verilator.hpp, which needs the headers of the simulator
+        template<typename Model>
+        void add_dut(Model &model, int depth = 99);
 
         void add(const std::string &name, const sc_signal_in_if<bool> &signal);
         void add(const std::string &name, const sc_signal_in_if<uint32_t> &signal);
@@ -66,6 +75,7 @@ namespace sctb {
 
     private:
         friend class trace_variable;
+        friend int run(sc_time timeout);
 
         template<typename T>
         void add_signal(const std::string &name, const sc_signal_in_if<T> &signal, uint32_t bits);
@@ -76,11 +86,27 @@ namespace sctb {
         // called every cycle, opens and closes the part of the simulation that is written
         void follow_window();
         void begin_window();
+        void close_file();
 
+        // the traces that are on, which run() gives their device to once the testbench is elaborated
+        static std::vector<trace *> &instances();
+        bool has_device() const {return static_cast<bool>(start_tracer);}
+        // the device, whose tracer is opened when the run starts and merged into this file when it ends
+        void start_device();
+        void merge_dut();
+
+        std::string file;
         fst::Writer *writer = nullptr;
         std::vector<std::unique_ptr<trace_variable>> variables;
         sc_time start;
         sc_time end;
+        // the time the window opened, which is when the signals start being written
+        sc_time window_start;
+        // the file of the device, and the two steps of its tracer, which only sctb/verilator.hpp fills in
+        std::string device_file;
+        std::function<void()> start_tracer;
+        std::function<void()> stop_tracer;
+        bool device_started = false;
         bool begun = false;
         bool recording = false;
         bool time_written = false;

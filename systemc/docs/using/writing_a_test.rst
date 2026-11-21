@@ -57,4 +57,5 @@ must come out, waits for the pipeline to empty and runs the end of test checks.
 
 In order: the clock and the reset, the device and its connection to the two streams, the waveform, the checking, and the
 sequence started as a thread. The only callback is ``output.add_listener(scoreboard, ...)``, which hands each result
-that comes out to the scoreboard.
+that comes out to the scoreboard. A test that wants the signals inside the device adds ``trace.add_dut(dut)`` to the
+waveform, see :doc:`/architecture/waveforms`.

@@ -32,6 +32,7 @@
 #include "sctb/run.hpp"
 #include "sctb/scoreboard.hpp"
 #include "sctb/trace.hpp"
+#include "sctb/verilator.hpp"
 
 class axis_fifo_model {
 public:
@@ -127,6 +128,7 @@ int sc_main(int argc, char *argv[]) {
     trace.add("reset", reset);
     trace.add(input);
     trace.add(output);
+    trace.add_dut(dut);
 
     // the checking: the sequence says what each input must give, the sink hands what comes out to the scoreboard
     sctb::scoreboard<sctb::axis_beat<uint32_t, uint32_t, uint32_t>> scoreboard("axis_fifo", model, &axis_fifo_model::compare, clk.get_period());
@@ -135,7 +137,7 @@ int sc_main(int argc, char *argv[]) {
 
     axis_fifo_sequence sequence(model, input, clk, reset, scoreboard, n_vectors);
     sctb::spawn("sequence", sequence, &axis_fifo_sequence::run);
-    
+
     const int result = sctb::run();
     dut.final();
     return result;
