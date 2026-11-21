@@ -63,7 +63,7 @@ public:
 
     void run() {
         sctb::reset_sequence(reset, clk, reset_cycles);
-
+        clk.wait_cycles(10);
         sctb::progress progress(n_vectors);
         const sc_time start = sc_time_stamp();
         for(int64_t i = 0; i < n_vectors; i++){
