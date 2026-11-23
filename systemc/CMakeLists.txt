@@ -67,6 +67,13 @@ add_library(sctb STATIC
         src/axis/endpoints.cpp
         src/axis/master.cpp
         src/axis/monitor.cpp
+        src/axi/bus.cpp
+        src/axi/connect.cpp
+        src/axi/endpoints.cpp
+        src/axi/master.cpp
+        src/axi/monitor.cpp
+        src/axi/slave.cpp
+        src/axi/transaction.cpp
         src/axis/slave.cpp
         src/checks.cpp
         src/clocking.cpp

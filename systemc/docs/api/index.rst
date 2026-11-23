@@ -9,4 +9,5 @@ Everything is in the ``sctb`` namespace. A test includes the headers it uses, fo
 
    infrastructure
    axis
+   axi
    checking

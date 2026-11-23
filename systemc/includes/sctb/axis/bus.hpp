@@ -48,8 +48,10 @@ namespace sctb {
         uint32_t get_dest_bits() const {return dest_bits;}
         uint32_t get_user_bits() const {return user_bits;}
 
-        /// Gives the bus something that has to live as long as it does, the adapters of connect_stream
-        void adopt(std::shared_ptr<void> object) {adopted.push_back(std::move(object));}
+        /// Keeps a port view alive as long as the bus. connect_stream binds a port that is narrower than a signal to a
+        /// view of it, and a port only holds a pointer to what it is bound to, so the view has to outlive the call.
+        /// The views have a type for each width of port, so they are held without their type
+        void adopt_port_view(std::shared_ptr<void> view) {port_views.push_back(std::move(view));}
 
         sc_signal<bool> valid;
         sc_signal<bool> ready;
@@ -62,7 +64,7 @@ namespace sctb {
         uint32_t data_bits;
         uint32_t dest_bits;
         uint32_t user_bits;
-        std::vector<std::shared_ptr<void>> adopted;
+        std::vector<std::shared_ptr<void>> port_views;
     };
 
 }

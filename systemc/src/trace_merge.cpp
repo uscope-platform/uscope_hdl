@@ -67,7 +67,7 @@ namespace sctb {
         }
 
         /// Copies the signals of a file into the writer, in the scope that is open, and says where they went
-        hierarchy copy_hierarchy(fst::Writer &writer, fstReaderContext *reader) {
+        hierarchy copy_hierarchy(fst::Writer &writer, fstReaderContext *reader, bool keep_attributes) {
             hierarchy result;
             if(!fstReaderIterateHierRewind(reader)) SC_REPORT_FATAL("sctb", "can not read the signals of a waveform file");
 
@@ -100,7 +100,19 @@ namespace sctb {
                         result.widest = std::max(result.widest, entry->u.var.length);
                         break;
                     }
-                    default: // the attributes only describe the types, which the signals do not need
+                    case FST_HT_ATTRBEGIN:
+                        // the names of the values of a signal of the testbench, such as the stages of the test. The ones of
+                        // the device describe its types, which the signals do not need, and their numbers would clash
+                        if(keep_attributes) {
+                            writer.setAttrBegin(static_cast<fst::Hierarchy::AttrType>(entry->u.attr.typ),
+                                                static_cast<fst::Hierarchy::AttrSubType>(entry->u.attr.subtype),
+                                                fst::make_string_view_pair(entry->u.attr.name, entry->u.attr.name_length), entry->u.attr.arg);
+                        }
+                        break;
+                    case FST_HT_ATTREND:
+                        if(keep_attributes) writer.setAttrEnd();
+                        break;
+                    default:
                         break;
                 }
             }
@@ -161,8 +173,8 @@ namespace sctb {
         merged.setTimecale(timescale);
         merged.setWriter("sctb");
 
-        const hierarchy main_hierarchy = copy_hierarchy(merged, main_reader);
-        const hierarchy other_hierarchy = copy_hierarchy(merged, other_reader);
+        const hierarchy main_hierarchy = copy_hierarchy(merged, main_reader, true);
+        const hierarchy other_hierarchy = copy_hierarchy(merged, other_reader, false);
 
         std::vector<value_change> changes;
         read_changes(main_reader, main_hierarchy.signals, window_start.value(), end.value(), changes);

@@ -141,9 +141,14 @@ Slave
 
    .. cpp:function:: axis_slave(const std::string &name, axis_bus &bus, const clock &clk, double ready_probability = 1.0, uint64_t seed = 1)
 
-      ``ready_probability`` is the chance that ``ready`` is high in a cycle. With 1 it is always high, and the slave
-      costs no simulation time. Below 1 it is drawn every cycle from a generator that starts from ``seed``, so the
+      ``ready_probability`` is the chance that ``ready`` is high in a cycle. With 1 it is always high. Below 1 it is drawn every cycle from a generator that starts from ``seed``, so the
       back pressure is random but repeatable.
+
+   .. cpp:function:: void set_ready_probability(double ready_probability)
+
+      Changes the chance that ``ready`` is high in a cycle, from the next cycle on, so a test can sweep the back pressure.
+      The process that draws ``ready`` runs from the start for this reason, so a slave with probability 1 costs a
+      function call per cycle.
 
    .. cpp:function:: void add_listener(std::function<void(const axis_beat<data_type, dest_type, user_type> &)> listener)
 

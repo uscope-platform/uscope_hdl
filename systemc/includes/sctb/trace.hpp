@@ -25,6 +25,8 @@
 #include <vector>
 
 #include "sctb/axis/bus.hpp"
+#include "sctb/axi/bus.hpp"
+#include "sctb/axi/endpoints.hpp"
 #include "sctb/axis/endpoints.hpp"
 #include "sctb/clocking.hpp"
 #include "sctb/options.hpp"
@@ -59,6 +61,16 @@ namespace sctb {
         template<typename Model>
         void add_dut(Model &model, int depth = 99);
 
+        /// Names the stages of the test. The waveform gets a signal, test_stage, that holds the stage the test is in, shown by its name
+        /// in a viewer that reads the names of the values of a signal. It has to be called before the test starts, as the
+        /// signals of a waveform can not be added once it is being written, and it can be called in every test: it only
+        /// remembers the names when the trace is off. Up to 255 stages
+        void define_stages(const std::vector<std::string> &names);
+        /// Marks the start of a stage of the test, which is one of the names that define_stages was given. The signal
+        /// changes at the time of the call, so it is where the stage shows in the waveform. Calling it with a name that is
+        /// not one of them is an error of the test
+        void stage(const std::string &name);
+
         void add(const std::string &name, const sc_signal_in_if<bool> &signal);
         void add(const std::string &name, const sc_signal_in_if<uint32_t> &signal);
         void add(const std::string &name, const sc_signal_in_if<uint64_t> &signal);
@@ -72,6 +84,12 @@ namespace sctb {
         void add(const axis_source<beat_types...> &source) {add(source.get_bus());}
         template<typename... beat_types>
         void add(const axis_sink<beat_types...> &sink) {add(sink.get_bus());}
+
+        /// The signals of an AXI interface, the five channels, under the names they were given. The address, data,
+        /// id and user are written with the width of the interface
+        void add(const axi_bus &bus);
+        void add(const axi_driver &driver) {add(driver.get_bus());}
+        void add(const axi_responder &responder) {add(responder.get_bus());}
 
     private:
         friend class trace_variable;
@@ -94,6 +112,11 @@ namespace sctb {
         // the device, whose tracer is opened when the run starts and merged into this file when it ends
         void start_device();
         void merge_dut();
+
+        // the stages of the test: the signal that holds the current one, and the value it has
+        std::vector<std::string> stage_names;
+        trace_variable *stage_variable = nullptr;
+        uint64_t stage_value = 0;
 
         std::string file;
         fst::Writer *writer = nullptr;

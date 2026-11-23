@@ -13,10 +13,10 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef SCTB_AXIS_PORT_VIEW_HPP
-#define SCTB_AXIS_PORT_VIEW_HPP
+#ifndef SCTB_PORT_VIEW_HPP
+#define SCTB_PORT_VIEW_HPP
 
-// Private to the library: used by connect.cpp only
+// Private to the library: used by port_bind.hpp only
 
 #include <systemc.h>
 
@@ -110,4 +110,4 @@ namespace sctb {
 
 }
 
-#endif //SCTB_AXIS_PORT_VIEW_HPP
+#endif //SCTB_PORT_VIEW_HPP

@@ -61,3 +61,23 @@ well.
 The test is verilated with ``TRACE_FST``. The tracer of Verilator writes FST through lz4, which its generated target
 links by name, so the test adds the include and library directories of lz4 to its target. See
 ``Components/system/axi_stream/fifo/tb/systemc/CMakeLists.txt``.
+
+Stages of the test
+------------------
+
+A waveform of a long test is hard to read without knowing where in the test each part is. ``define_stages`` gives the
+trace the names of the stages, and ``stage`` marks the start of one::
+
+    sctb::trace trace(options, clk);
+    ...
+    trace.define_stages({"reset", "pass_through", "hung_write"});
+    ...
+    trace.stage("pass_through");   // from the sequence, where the stage starts
+
+The waveform has a signal, ``test_stage``, that changes at the call. The names are in the file as the names of its
+values, so a viewer that reads the names of values displays the name of the stage, and one that does not shows its
+number, the stages in the order they were given starting from 1, with 0 for before the first one. The
+names have to be given before the test starts, as the signals of a waveform can not be added once it is being
+written, and a stage that is not one of them is an error of the test. Both calls do nothing when the trace is off, so
+they can stay in every test. The names of the stages go through the merge with the device, which drops the ones of the
+device.

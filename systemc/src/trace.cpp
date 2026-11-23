@@ -22,6 +22,7 @@
 
 #include "fstcpp/fstcpp_writer.h"
 
+#include "sctb/report.hpp"
 #include "sctb/run.hpp"
 
 namespace sctb {
@@ -54,6 +55,17 @@ namespace sctb {
 
         private:
             const sc_signal_in_if<T> &signal;
+        };
+
+        /// The stage of the test: it does not follow a signal, the value is set by the test
+        class stage_signal : public trace_variable {
+        public:
+            stage_signal(trace &owner, fst::Handle handle, const uint64_t &value) : trace_variable(owner, handle), value(value) {}
+
+            uint64_t read() const override {return value;}
+
+        private:
+            const uint64_t &value;
         };
 
         // the power of ten of the time resolution, -9 for nanoseconds
@@ -136,6 +148,102 @@ namespace sctb {
         add(bus.dest.basename(), bus.dest, bus.get_dest_bits());
         add(bus.user.basename(), bus.user, bus.get_user_bits());
         add(bus.tlast.basename(), bus.tlast);
+    }
+
+    void trace::define_stages(const std::vector<std::string> &names) {
+        if(names.size() > 255) SC_REPORT_FATAL("sctb", "a test has up to 255 stages");
+        stage_names = names;
+        if(!is_enabled()) return;
+        if(begun) SC_REPORT_FATAL("sctb", "the stages have to be defined before the test starts, the waveform is being written");
+
+        // the value 0 is before the first stage, the stages follow it. The viewer shows the names, the table of the names
+        // goes before the signal that uses it
+        constexpr uint32_t bits = 8;
+        std::vector<std::pair<std::string, std::string>> table = {{"none", std::string(bits, '0')}};
+        for(size_t index = 0; index < names.size(); index++){
+            std::string value(bits, '0');
+            for(uint32_t bit = 0; bit < bits; bit++){
+                if(((index + 1) >> bit) & 1) value[bits - 1 - bit] = '1';
+            }
+            table.emplace_back(names[index], value);
+        }
+        // the writer wants pointers to the text
+        std::vector<std::pair<const char *, const char *>> entries;
+        for(const auto &entry : table) entries.emplace_back(entry.first.c_str(), entry.second.c_str());
+        const fst::EnumHandle names_table = writer->createEnumTable("test_stages", bits, entries);
+        writer->emitEnumTableRef(names_table);
+        const fst::Handle handle = writer->createVar(fst::Hierarchy::VarType::VCD_WIRE, fst::Hierarchy::VarDirection::IMPLICIT, bits, "test_stage", 0);
+        variables.push_back(std::make_unique<stage_signal>(*this, handle, stage_value));
+        stage_variable = variables.back().get();
+    }
+
+    void trace::stage(const std::string &name) {
+        const auto found = std::find(stage_names.begin(), stage_names.end(), name);
+        if(found == stage_names.end()) {
+            reporter::instance().error(format("the stage %s was not given to define_stages", name.c_str()));
+            return;
+        }
+        if(!is_enabled() || stage_variable == nullptr) return;
+        stage_value = static_cast<uint64_t>(found - stage_names.begin()) + 1;
+        record(*stage_variable);
+    }
+
+    void trace::add(const axi_bus &bus) {
+        const auto control = [&](const sc_signal<bool> &signal) {add(signal.basename(), signal);};
+        const auto field = [&](const sc_signal<uint32_t> &signal, uint32_t bits) {add(signal.basename(), signal, bits);};
+        const uint32_t data_bits = bus.get_data_bits();
+        const uint32_t addr_bits = bus.get_addr_bits();
+        const uint32_t id_bits = bus.get_id_bits();
+        const uint32_t user_bits = bus.get_user_bits();
+
+        field(bus.awid, id_bits);
+        add(bus.awaddr.basename(), bus.awaddr, addr_bits);
+        field(bus.awlen, 8);
+        field(bus.awsize, 3);
+        field(bus.awburst, 2);
+        control(bus.awlock);
+        field(bus.awcache, 4);
+        field(bus.awprot, 3);
+        field(bus.awqos, 4);
+        field(bus.awregion, 4);
+        field(bus.awuser, user_bits);
+        control(bus.awvalid);
+        control(bus.awready);
+
+        add(bus.wdata.basename(), bus.wdata, data_bits);
+        field(bus.wstrb, data_bits / 8);
+        control(bus.wlast);
+        field(bus.wuser, user_bits);
+        control(bus.wvalid);
+        control(bus.wready);
+
+        field(bus.bid, id_bits);
+        field(bus.bresp, 2);
+        field(bus.buser, user_bits);
+        control(bus.bvalid);
+        control(bus.bready);
+
+        field(bus.arid, id_bits);
+        add(bus.araddr.basename(), bus.araddr, addr_bits);
+        field(bus.arlen, 8);
+        field(bus.arsize, 3);
+        field(bus.arburst, 2);
+        control(bus.arlock);
+        field(bus.arcache, 4);
+        field(bus.arprot, 3);
+        field(bus.arqos, 4);
+        field(bus.arregion, 4);
+        field(bus.aruser, user_bits);
+        control(bus.arvalid);
+        control(bus.arready);
+
+        field(bus.rid, id_bits);
+        add(bus.rdata.basename(), bus.rdata, data_bits);
+        field(bus.rresp, 2);
+        control(bus.rlast);
+        field(bus.ruser, user_bits);
+        control(bus.rvalid);
+        control(bus.rready);
     }
 
     void trace::record(const trace_variable &variable) {
