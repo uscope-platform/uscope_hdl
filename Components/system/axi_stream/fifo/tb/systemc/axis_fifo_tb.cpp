@@ -71,6 +71,7 @@ public:
         const sctb::clock &clk, 
         sc_signal<bool> &reset,
         sctb::scoreboard<sctb::axis_beat<uint32_t, uint32_t, uint32_t>> &scoreboard,
+        sctb::trace &trace,
         int64_t n_vectors
     ) :
         model(model),
@@ -79,14 +80,24 @@ public:
         clk(clk),
         reset(reset), 
         scoreboard(scoreboard), 
+        trace(trace),
         n_vectors(n_vectors), 
         rng(1) {
         
     }
 
+    /// The stages of the test, in the order they happen, as the waveform shows them
+    static std::vector<std::string> stage_names() {
+        std::vector<std::string> names = {"reset", "gapped_input", "gapped_drain", "drain"};
+        for(int phase = 0; phase < ready_phases; phase++) names.push_back(ready_stage(phase));
+        return names;
+    }
+
     void run() {
+        trace.stage("reset");
         sctb::reset_sequence(reset, clk, reset_cycles);
         clk.wait_cycles(10);
+        trace.stage("gapped_input");
         run_without_backpressure();
         sctb::progress progress(n_vectors);
         // the sink is ready 10% of the time for the first tenth of the vectors, 20% for the next one, up to always
@@ -94,6 +105,7 @@ public:
         for(int64_t i = 0; i < n_vectors; i++){
             if(i % phase_vectors == 0 && i / phase_vectors < ready_phases) {
                 slave.set_ready_probability(static_cast<double>(i / phase_vectors + 1) / ready_phases);
+                trace.stage(ready_stage(static_cast<int>(i / phase_vectors)));
             }
             progress.update(i);
             auto in = model.generate(rng);
@@ -102,6 +114,7 @@ public:
         }
         progress.finish();
 
+        trace.stage("drain");
         master.idle();
         sctb::drain(scoreboard, clk, drain_cycles);
         scoreboard.finish();
@@ -110,6 +123,8 @@ public:
     }
 
 private:
+    static std::string ready_stage(int phase) {return sctb::format("ready_%d_percent", 10 * (phase + 1));}
+
     /// Beats that arrive with gaps between them, to an output that is always ready and a FIFO that is empty: each one
     /// has to go through without waiting, so it comes out one cycle after it went in. A FIFO that parks every beat in
     /// its memory first would take two, and leave the output idle for a cycle between beats that are close together
@@ -122,6 +137,7 @@ private:
             // from no gap at all to a few idle cycles
             master.idle(static_cast<int64_t>(rng() % 4));
         }
+        trace.stage("gapped_drain");
         master.idle();
         sctb::drain(scoreboard, clk, drain_cycles);
         sctb::check_latency(scoreboard, 1);
@@ -139,6 +155,7 @@ private:
     const sctb::clock &clk;
     sc_signal<bool> &reset;
     sctb::scoreboard<sctb::axis_beat<uint32_t, uint32_t, uint32_t>> &scoreboard;
+    sctb::trace &trace;
     int64_t n_vectors;
     std::mt19937_64 rng;
 };
@@ -173,13 +190,14 @@ int sc_main(int argc, char *argv[]) {
     trace.add(input);
     trace.add(output);
     trace.add_dut(dut);
+    trace.define_stages(axis_fifo_sequence::stage_names());
 
     // the checking: the sequence says what each input must give, the sink hands what comes out to the scoreboard
     sctb::scoreboard<sctb::axis_beat<uint32_t, uint32_t, uint32_t>> scoreboard("axis_fifo", model, &axis_fifo_model::compare, clk.get_period());
 
     output.add_listener(scoreboard, &sctb::scoreboard<sctb::axis_beat<uint32_t, uint32_t, uint32_t>>::observe);
 
-    axis_fifo_sequence sequence(model, input, output, clk, reset, scoreboard, n_vectors);
+    axis_fifo_sequence sequence(model, input, output, clk, reset, scoreboard, trace, n_vectors);
     sctb::spawn("sequence", sequence, &axis_fifo_sequence::run);
 
     const int result = sctb::run();
