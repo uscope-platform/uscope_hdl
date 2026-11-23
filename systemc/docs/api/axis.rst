@@ -30,8 +30,9 @@ definitions of the templates are in ``systemc/src``, so another one is a line in
 
     template class axis_master<uint16_t, uint8_t, uint32_t>;
 
-in ``axis/master.cpp``, ``axis/slave.cpp``, ``axis/monitor.cpp`` and ``axis/endpoints.cpp`` for the stream, and
-``scoreboard.cpp`` and ``checks.cpp`` for the checking, next to the ones that are already there.
+in ``axis/master.cpp``, ``axis/slave.cpp``, ``axis/monitor.cpp`` and ``axis/endpoints.cpp``, next to the ones that
+are already there. The scoreboard and the checks are not part of this: they are templates in the headers that work with
+any type of beat.
 
 Bus and transfer
 ----------------

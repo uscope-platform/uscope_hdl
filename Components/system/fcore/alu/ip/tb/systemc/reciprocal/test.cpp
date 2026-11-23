@@ -79,7 +79,7 @@ private:
 class fcore_reciprocal_sequence {
 public:
     fcore_reciprocal_sequence(const fcore_reciprocal_model &model, sctb::axis_source<> &operand_a, const sctb::clock &clk, sc_signal<bool> &reset,
-                   sctb::scoreboard<> &scoreboard, sctb::coverpoint &result_classes, sctb::covergroup &coverage, int64_t n_vectors) :
+                   sctb::scoreboard<sctb::axis_beat<>> &scoreboard, sctb::coverpoint &result_classes, sctb::covergroup &coverage, int64_t n_vectors) :
         model(model), a(operand_a.get_master()), clk(clk), reset(reset), scoreboard(scoreboard), result_classes(result_classes),
         coverage(coverage), n_vectors(n_vectors), rng(1) {}
 
@@ -123,7 +123,7 @@ private:
     sctb::axis_master<> &a;
     const sctb::clock &clk;
     sc_signal<bool> &reset;
-    sctb::scoreboard<> &scoreboard;
+    sctb::scoreboard<sctb::axis_beat<>> &scoreboard;
     sctb::coverpoint &result_classes;
     sctb::covergroup &coverage;
     int64_t n_vectors;
@@ -161,12 +161,12 @@ int sc_main(int argc, char *argv[]) {
     trace.add(result);
 
     // the checking: the sequence says what each operation must give, the sink hands what comes out to the scoreboard
-    sctb::scoreboard<> scoreboard("fcore_reciprocal_ip", model, &fcore_reciprocal_model::compare, clk.get_period());
+    sctb::scoreboard<sctb::axis_beat<>> scoreboard("fcore_reciprocal_ip", model, &fcore_reciprocal_model::compare, clk.get_period());
     sctb::coverpoint result_classes("result class", model.get_class_names());
     sctb::covergroup coverage;
     coverage.add(result_classes);
 
-    result.add_listener(scoreboard, &sctb::scoreboard<>::observe);
+    result.add_listener(scoreboard, &sctb::scoreboard<sctb::axis_beat<>>::observe);
 
     fcore_reciprocal_sequence sequence(model, operand_a, clk, reset, scoreboard, result_classes, coverage, n_vectors);
     sctb::spawn("sequence", sequence, &fcore_reciprocal_sequence::run);

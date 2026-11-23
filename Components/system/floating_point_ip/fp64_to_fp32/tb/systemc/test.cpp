@@ -144,7 +144,7 @@ private:
 class fp64_to_fp32_sequence {
 public:
     fp64_to_fp32_sequence(const fp64_to_fp32_model &model, sctb::axis_source<> &input, const sctb::clock &clk, sc_signal<bool> &reset,
-                    sctb::scoreboard<> &scoreboard, sctb::coverpoint &input_classes, sctb::covergroup &coverage, int64_t n_vectors) :
+                    sctb::scoreboard<sctb::axis_beat<>> &scoreboard, sctb::coverpoint &input_classes, sctb::covergroup &coverage, int64_t n_vectors) :
         model(model), master(input.get_master()), clk(clk), reset(reset), scoreboard(scoreboard), input_classes(input_classes), coverage(coverage), n_vectors(n_vectors), rng(1) {}
 
     void run() {
@@ -183,7 +183,7 @@ private:
     sctb::axis_master<> &master;
     const sctb::clock &clk;
     sc_signal<bool> &reset;
-    sctb::scoreboard<> &scoreboard;
+    sctb::scoreboard<sctb::axis_beat<>> &scoreboard;
     sctb::coverpoint &input_classes;
     sctb::covergroup &coverage;
     int64_t n_vectors;
@@ -221,12 +221,12 @@ int sc_main(int argc, char *argv[]) {
     trace.add(output);
 
     // the checking: the sequence says what each input must give, the sink hands what comes out to the scoreboard
-    sctb::scoreboard<> scoreboard("fp64_to_fp32", model, &fp64_to_fp32_model::compare, clk.get_period());
+    sctb::scoreboard<sctb::axis_beat<>> scoreboard("fp64_to_fp32", model, &fp64_to_fp32_model::compare, clk.get_period());
     sctb::coverpoint input_classes("input class", model.get_class_names());
     sctb::covergroup coverage;
     coverage.add(input_classes);
 
-    output.add_listener(scoreboard, &sctb::scoreboard<>::observe);
+    output.add_listener(scoreboard, &sctb::scoreboard<sctb::axis_beat<>>::observe);
 
     fp64_to_fp32_sequence sequence(model, input, clk, reset, scoreboard, input_classes, coverage, n_vectors);
     sctb::spawn("sequence", sequence, &fp64_to_fp32_sequence::run);

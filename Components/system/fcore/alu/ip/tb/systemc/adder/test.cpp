@@ -85,7 +85,7 @@ private:
 class fcore_adder_sequence {
 public:
     fcore_adder_sequence(const fcore_adder_model &model, sctb::axis_source<> &operand_a, sctb::axis_source<> &operand_b,
-                         sctb::axis_source<> &operation, const sctb::clock &clk, sc_signal<bool> &reset, sctb::scoreboard<> &scoreboard,
+                         sctb::axis_source<> &operation, const sctb::clock &clk, sc_signal<bool> &reset, sctb::scoreboard<sctb::axis_beat<>> &scoreboard,
                          sctb::coverpoint &result_classes, sctb::coverpoint &operations, sctb::covergroup &coverage, int64_t n_vectors) :
         model(model), a(operand_a.get_master()), b(operand_b.get_master()), op(operation.get_master()), clk(clk), reset(reset),
         scoreboard(scoreboard), result_classes(result_classes), operations(operations), coverage(coverage), n_vectors(n_vectors), rng(1) {}
@@ -141,7 +141,7 @@ private:
     sctb::axis_master<> &op;
     const sctb::clock &clk;
     sc_signal<bool> &reset;
-    sctb::scoreboard<> &scoreboard;
+    sctb::scoreboard<sctb::axis_beat<>> &scoreboard;
     sctb::coverpoint &result_classes;
     sctb::coverpoint &operations;
     sctb::covergroup &coverage;
@@ -186,14 +186,14 @@ int sc_main(int argc, char *argv[]) {
     trace.add(result);
 
     // the checking: the sequence says what each operation must give, the sink hands what comes out to the scoreboard
-    sctb::scoreboard<> scoreboard("fcore_adder_ip", model, &fcore_adder_model::compare, clk.get_period());
+    sctb::scoreboard<sctb::axis_beat<>> scoreboard("fcore_adder_ip", model, &fcore_adder_model::compare, clk.get_period());
     sctb::coverpoint result_classes("result class", fp32::binary_class_names());
     sctb::coverpoint operations("operation", model.get_operation_names());
     sctb::covergroup coverage;
     coverage.add(result_classes);
     coverage.add(operations);
 
-    result.add_listener(scoreboard, &sctb::scoreboard<>::observe);
+    result.add_listener(scoreboard, &sctb::scoreboard<sctb::axis_beat<>>::observe);
 
     fcore_adder_sequence sequence(model, operand_a, operand_b, operation, clk, reset, scoreboard, result_classes, operations, coverage, n_vectors);
     sctb::spawn("sequence", sequence, &fcore_adder_sequence::run);

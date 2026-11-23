@@ -70,7 +70,7 @@ Callbacks
 
 The library calls into test code through listeners. A monitor or a slave keeps a list of functions and calls them with
 every transfer. A listener is an object and one of its member functions, ``add_listener(object, &class::function)``.
-The converter tests have one: ``output.add_listener(scoreboard, &sctb::scoreboard<>::observe)``.
+The converter tests have one: ``output.add_listener(scoreboard, &sctb::scoreboard<sctb::axis_beat<>>::observe)``.
 
 One transfer, from start to finish
 ----------------------------------

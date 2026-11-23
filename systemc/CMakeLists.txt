@@ -75,7 +75,6 @@ add_library(sctb STATIC
         src/progress.cpp
         src/report.cpp
         src/run.cpp
-        src/scoreboard.cpp
         src/trace.cpp
         src/trace_merge.cpp
 )

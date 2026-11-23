@@ -6,15 +6,18 @@ Checking
 Scoreboard (``scoreboard``)
 ---------------------------
 
-.. cpp:class:: template<typename beat_type = axis_beat<>> scoreboard
+.. cpp:class:: template<typename beat_type> scoreboard
 
    Checks that what comes out of a device is what the reference model said would come out. The beats are matched
    in order. The latency is measured on the way, from the time a beat is expected (when its input went in) to the
    time it is observed (when it came out), so a test measures the depth of the pipeline without knowing it in
    advance.
 
-   ``beat_type`` is the beat of the streams it watches: ``axis_beat<>``, which is the one of a bus, or the one the
-   endpoints of the test use, for example ``axis_beat<uint32_t>``. See :cpp:struct:`axis_beat`.
+   ``beat_type`` is whatever the test compares, the scoreboard only stores it and hands it to the comparison. It is
+   not tied to any protocol: the transfer of a stream, ``axis_beat<>`` or the one the endpoints of the test use, for
+   example ``axis_beat<uint32_t>`` (see :cpp:struct:`axis_beat`), is one choice, and a transaction of another bus or a
+   packet is as good. The scoreboard and the checks that take it are templates defined in the headers, so a new type
+   needs nothing built for it.
 
    .. cpp:type:: compare_function = std::function<std::string(const beat_type &expected, const beat_type &actual, uint64_t tag)>
 
