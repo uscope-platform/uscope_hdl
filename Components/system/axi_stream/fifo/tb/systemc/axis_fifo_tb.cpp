@@ -87,6 +87,7 @@ public:
     void run() {
         sctb::reset_sequence(reset, clk, reset_cycles);
         clk.wait_cycles(10);
+        run_without_backpressure();
         sctb::progress progress(n_vectors);
         // the sink is ready 10% of the time for the first tenth of the vectors, 20% for the next one, up to always
         const int64_t phase_vectors = std::max<int64_t>(1, n_vectors / ready_phases);
@@ -109,6 +110,24 @@ public:
     }
 
 private:
+    /// Beats that arrive with gaps between them, to an output that is always ready and a FIFO that is empty: each one
+    /// has to go through without waiting, so it comes out one cycle after it went in. A FIFO that parks every beat in
+    /// its memory first would take two, and leave the output idle for a cycle between beats that are close together
+    void run_without_backpressure() {
+        slave.set_ready_probability(1.0);
+        for(int64_t i = 0; i < directed_vectors; i++){
+            auto in = model.generate(rng);
+            master.write(in);
+            scoreboard.expect(in, in.data);
+            // from no gap at all to a few idle cycles
+            master.idle(static_cast<int64_t>(rng() % 4));
+        }
+        master.idle();
+        sctb::drain(scoreboard, clk, drain_cycles);
+        sctb::check_latency(scoreboard, 1);
+    }
+
+    static constexpr int directed_vectors = 200;
     static constexpr int reset_cycles = 4;
     static constexpr int ready_phases = 10;
     // the most the sink needs to empty a full FIFO, with room to spare. The drain stops as soon as nothing is pending
