@@ -81,12 +81,21 @@ namespace sctb {
                         writer.upscope();
                         break;
                     case FST_HT_VAR: {
-                        // an alias is a second name of a signal that is already there, and it carries no values of its own
-                        if(entry->u.var.is_alias || entry->u.var.length == 0) break;
+                        if(entry->u.var.length == 0) break;
                         const auto type = static_cast<fst::Hierarchy::VarType>(entry->u.var.typ);
+                        // an alias is a second name of a signal that is already there, and it carries no values of its
+                        // own. Verilator makes one of every signal that has the same value as another, which is what
+                        // the ports of an interface are, so it has to be kept, as a name for the signal it points to
+                        fst::Handle target = 0;
+                        if(entry->u.var.is_alias) {
+                            const auto original = result.signals.find(entry->u.var.handle);
+                            if(original == result.signals.end()) break;
+                            target = original->second.handle;
+                        }
                         const fst::Handle handle = writer.createVar(
                             type, static_cast<fst::Hierarchy::VarDirection>(entry->u.var.direction),
-                            entry->u.var.length, entry->u.var.name, 0);
+                            entry->u.var.length, entry->u.var.name, target);
+                        if(entry->u.var.is_alias) break;
                         result.signals.emplace(entry->u.var.handle, merged_signal{handle, is_real(type)});
                         result.widest = std::max(result.widest, entry->u.var.length);
                         break;
