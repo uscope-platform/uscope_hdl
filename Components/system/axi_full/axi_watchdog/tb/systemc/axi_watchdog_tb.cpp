@@ -196,8 +196,16 @@ private:
         slave.set_latency(1);
     }
 
-    void hung_write() {
+    // A slave that hangs is silent from the first address on, and so it never sees one half of a transaction. The cycles
+    // are for the ready it had up when it was told to hang to go down, otherwise it takes an address the master sends
+    // in the cycle in between and then waits for data that never comes
+    void hang_slave() {
         slave.set_hung(true);
+        master.idle(2);
+    }
+
+    void hung_write() {
+        hang_slave();
         const sc_time start = sc_time_stamp();
         const sctb::axi_response response = master.write(0x40, 0xdeadbeef);
         const int64_t took = cycles_since(start);
@@ -212,7 +220,7 @@ private:
     }
 
     void hung_read() {
-        slave.set_hung(true);
+        hang_slave();
         const sc_time start = sc_time_stamp();
         uint64_t data = 0;
         const sctb::axi_response response = master.read(0x40, data);
