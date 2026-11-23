@@ -43,3 +43,8 @@ find_library(LZ4_LIBRARY lz4 REQUIRED)
 get_filename_component(LZ4_LIBRARY_DIR ${LZ4_LIBRARY} DIRECTORY)
 target_include_directories(test PRIVATE ${LZ4_INCLUDE_DIR})
 target_link_directories(test PRIVATE ${LZ4_LIBRARY_DIR})
+
+# Verilator adds -lz, -llz4 and -lpthread to the target more than once, and the linker warns about each repeat
+get_target_property(TEST_LIBRARIES test LINK_LIBRARIES)
+list(REMOVE_DUPLICATES TEST_LIBRARIES)
+set_target_properties(test PROPERTIES LINK_LIBRARIES "${TEST_LIBRARIES}")

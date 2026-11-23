@@ -13,8 +13,8 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-// Self checking testbench for fp_fp64_to_fp32, the reference is the conversion of the C++ compiler.
-// Results too small for a normal single precision number are flushed to zero, like the core does
+// Self checking testbench for axis_fifo: every beat has to come out unchanged and in the order it went in,
+// while the sink stalls the output at random
 
 #include <cstdlib>
 #include <cstring>
@@ -42,11 +42,17 @@ public:
         result.data = rng();
         result.dest = rng();
         result.user = rng();
+        result.tlast = rng() & 1;
         return result;
     }
 
     /// Empty when the result is the expected one, otherwise what is wrong with it
     std::string compare(const sctb::axis_beat<uint32_t, uint32_t, uint32_t> &expected, const sctb::axis_beat<uint32_t, uint32_t, uint32_t> &actual, uint64_t input) const {
+        // a FIFO carries every field through untouched
+        if(actual.data != expected.data) return sctb::format("data is 0x%08x, expected 0x%08x", actual.data, expected.data);
+        if(actual.dest != expected.dest) return sctb::format("dest is 0x%08x, expected 0x%08x", actual.dest, expected.dest);
+        if(actual.user != expected.user) return sctb::format("user is 0x%08x, expected 0x%08x", actual.user, expected.user);
+        if(actual.tlast != expected.tlast) return sctb::format("tlast is %d, expected %d", actual.tlast, expected.tlast);
         return {};
     }
 
@@ -57,15 +63,28 @@ private:
 
 class axis_fifo_sequence {
 public:
-    axis_fifo_sequence(const axis_fifo_model &model, sctb::axis_source<uint32_t, uint32_t, uint32_t> &input, const sctb::clock &clk, sc_signal<bool> &reset,
-                    sctb::scoreboard<sctb::axis_beat<uint32_t, uint32_t, uint32_t>> &scoreboard,  int64_t n_vectors) :
-        model(model), master(input.get_master()), clk(clk), reset(reset), scoreboard(scoreboard), n_vectors(n_vectors), rng(1) {}
+    axis_fifo_sequence(
+        const axis_fifo_model &model, 
+        sctb::axis_source<uint32_t, uint32_t, uint32_t> &input, 
+        const sctb::clock &clk, 
+        sc_signal<bool> &reset,
+        sctb::scoreboard<sctb::axis_beat<uint32_t, uint32_t, uint32_t>> &scoreboard,
+        int64_t n_vectors
+    ) :
+        model(model),
+        master(input.get_master()),
+        clk(clk),
+        reset(reset), 
+        scoreboard(scoreboard), 
+        n_vectors(n_vectors), 
+        rng(1) {
+        
+    }
 
     void run() {
         sctb::reset_sequence(reset, clk, reset_cycles);
         clk.wait_cycles(10);
         sctb::progress progress(n_vectors);
-        const sc_time start = sc_time_stamp();
         for(int64_t i = 0; i < n_vectors; i++){
             progress.update(i);
             auto in = model.generate(rng);
@@ -73,22 +92,18 @@ public:
             scoreboard.expect(in, in.data);
         }
         progress.finish();
-        sctb::check_throughput(n_vectors, sc_time_stamp() - start, clk);
 
         master.idle();
-        sctb::drain(scoreboard, clk, latency + drain_cycles);
+        sctb::drain(scoreboard, clk, drain_cycles);
         scoreboard.finish();
-        sctb::check_latency(scoreboard, latency);
         sctb::reporter::instance().info(sctb::format("%lld vectors checked", static_cast<long long>(scoreboard.get_checked())));
         sctb::finish();
     }
 
 private:
-    static constexpr int latency = 2;
     static constexpr int reset_cycles = 4;
-    static constexpr int drain_cycles = 16;
-    // dest, user and tlast are not part of the conversion, they have to come out as they went in
-    static constexpr uint32_t user_offset = 5;
+    // the most the sink needs to empty a full FIFO, with room to spare. The drain stops as soon as nothing is pending
+    static constexpr int drain_cycles = 200;
 
     const axis_fifo_model &model;
     sctb::axis_master<uint32_t, uint32_t, uint32_t> &master;
@@ -103,7 +118,7 @@ int sc_main(int argc, char *argv[]) {
     Verilated::commandArgs(argc, argv);
     sctb::init();
 
-    constexpr int64_t default_vectors = 10000;
+    constexpr int64_t default_vectors = 100000;
     const sctb::options options(argc, argv);
     const int64_t n_vectors = options.get_positional_integer(0, default_vectors);
     const axis_fifo_model model;
@@ -119,7 +134,7 @@ int sc_main(int argc, char *argv[]) {
 
     // the stream going in, driven and watched, and the one coming out, answered and watched
     sctb::axis_source<uint32_t, uint32_t, uint32_t> input("in", clk, 32);
-    sctb::axis_sink<uint32_t, uint32_t, uint32_t> output("out", clk, 32);
+    sctb::axis_sink<uint32_t, uint32_t, uint32_t> output("out", clk, 32, 0.5);
     input.connect(dut);
     output.connect(dut);
     
