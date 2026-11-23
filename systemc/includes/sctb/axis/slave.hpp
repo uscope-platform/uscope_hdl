@@ -35,6 +35,9 @@ namespace sctb {
         /// ready_probability is the chance that ready is high in a cycle, with 1 it is always high
         axis_slave(const std::string &name, axis_bus &bus, const clock &clk, double ready_probability = 1.0, uint64_t seed = 1);
 
+        /// Changes the chance that ready is high in a cycle, from the next cycle on
+        void set_ready_probability(double ready_probability) {probability = ready_probability;}
+
         void add_listener(std::function<void(const axis_beat<data_type, dest_type, user_type> &)> listener) {monitor.add_listener(listener);}
         template<typename T>
         void add_listener(T &object, void (T::*method)(const axis_beat<data_type, dest_type, user_type> &)) {monitor.add_listener(object, method);}

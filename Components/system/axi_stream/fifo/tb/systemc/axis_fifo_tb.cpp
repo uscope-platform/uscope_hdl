@@ -16,6 +16,7 @@
 // Self checking testbench for axis_fifo: every beat has to come out unchanged and in the order it went in,
 // while the sink stalls the output at random
 
+#include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <random>
@@ -66,6 +67,7 @@ public:
     axis_fifo_sequence(
         const axis_fifo_model &model, 
         sctb::axis_source<uint32_t, uint32_t, uint32_t> &input, 
+        sctb::axis_sink<uint32_t, uint32_t, uint32_t> &output, 
         const sctb::clock &clk, 
         sc_signal<bool> &reset,
         sctb::scoreboard<sctb::axis_beat<uint32_t, uint32_t, uint32_t>> &scoreboard,
@@ -73,6 +75,7 @@ public:
     ) :
         model(model),
         master(input.get_master()),
+        slave(output.get_slave()),
         clk(clk),
         reset(reset), 
         scoreboard(scoreboard), 
@@ -85,7 +88,12 @@ public:
         sctb::reset_sequence(reset, clk, reset_cycles);
         clk.wait_cycles(10);
         sctb::progress progress(n_vectors);
+        // the sink is ready 10% of the time for the first tenth of the vectors, 20% for the next one, up to always
+        const int64_t phase_vectors = std::max<int64_t>(1, n_vectors / ready_phases);
         for(int64_t i = 0; i < n_vectors; i++){
+            if(i % phase_vectors == 0 && i / phase_vectors < ready_phases) {
+                slave.set_ready_probability(static_cast<double>(i / phase_vectors + 1) / ready_phases);
+            }
             progress.update(i);
             auto in = model.generate(rng);
             master.write(in);
@@ -102,11 +110,13 @@ public:
 
 private:
     static constexpr int reset_cycles = 4;
+    static constexpr int ready_phases = 10;
     // the most the sink needs to empty a full FIFO, with room to spare. The drain stops as soon as nothing is pending
     static constexpr int drain_cycles = 200;
 
     const axis_fifo_model &model;
     sctb::axis_master<uint32_t, uint32_t, uint32_t> &master;
+    sctb::axis_slave<uint32_t, uint32_t, uint32_t> &slave;
     const sctb::clock &clk;
     sc_signal<bool> &reset;
     sctb::scoreboard<sctb::axis_beat<uint32_t, uint32_t, uint32_t>> &scoreboard;
@@ -150,7 +160,7 @@ int sc_main(int argc, char *argv[]) {
 
     output.add_listener(scoreboard, &sctb::scoreboard<sctb::axis_beat<uint32_t, uint32_t, uint32_t>>::observe);
 
-    axis_fifo_sequence sequence(model, input, clk, reset, scoreboard, n_vectors);
+    axis_fifo_sequence sequence(model, input, output, clk, reset, scoreboard, n_vectors);
     sctb::spawn("sequence", sequence, &axis_fifo_sequence::run);
 
     const int result = sctb::run();

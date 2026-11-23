@@ -24,13 +24,12 @@ namespace sctb {
                                                             uint64_t seed) :
         monitor(name + "_monitor", stream, clk), bus(stream), probability(ready_probability), rng(seed), chance(0.0, 1.0) {
         bus.ready.write(probability >= 1.0);
-        if(probability < 1.0) {
-            spawn_every_cycle(name + "_ready", clk, *this, &axis_slave::drive_ready);
-        }
+        // always running, as the probability can change during the test
+        spawn_every_cycle(name + "_ready", clk, *this, &axis_slave::drive_ready);
     }
 
     template <typename data_type, typename dest_type, typename user_type>
-    void axis_slave<data_type, dest_type, user_type>::drive_ready() {bus.ready.write(chance(rng) < probability);}
+    void axis_slave<data_type, dest_type, user_type>::drive_ready() {bus.ready.write(probability >= 1.0 || chance(rng) < probability);}
 
     template class axis_slave<>;
     template class axis_slave<uint32_t, uint32_t, uint32_t>;
