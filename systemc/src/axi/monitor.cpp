@@ -69,7 +69,8 @@ namespace sctb {
             write_addresses.pop_front();
             write_bursts.pop_front();
             if(burst.data.size() != address.beats) {
-                error(format("a write at %s of %zu beats, the address said %u", hex(address.address, 16).c_str(), burst.data.size(), address.beats));
+                error(format("write at 0x%llx: the w channel carried %zu beats, awlen says %u", static_cast<unsigned long long>(address.address),
+                             burst.data.size(), address.beats));
             }
             axi_write write;
             write.id = address.id;
@@ -80,7 +81,7 @@ namespace sctb {
         }
         if(bus.bvalid.read() && bus.bready.read()) {
             if(awaiting_response.empty()) {
-                error("a write response came out while no write was waiting for one");
+                error("write response (b channel) with no write waiting for one");
                 return;
             }
             axi_write write = std::move(awaiting_response.front());
@@ -97,7 +98,7 @@ namespace sctb {
         if(bus.rvalid.read() && bus.rready.read()) {
             if(!reading) {
                 if(read_addresses.empty()) {
-                    error("read data came out while no read was waiting for it");
+                    error("read data (r channel) with no read waiting for it");
                     return;
                 }
                 const address_beat address = read_addresses.front();
@@ -112,8 +113,8 @@ namespace sctb {
             current_read.response = worst(current_read.response, static_cast<axi_response>(bus.rresp.read() & 3));
             if(bus.rlast.read()) {
                 if(current_read.data.size() != current_read.beats) {
-                    error(format("a read at %s of %zu beats, the address said %u", hex(current_read.address, 16).c_str(), current_read.data.size(),
-                                 current_read.beats));
+                    error(format("read at 0x%llx: the r channel carried %zu beats, arlen says %u", static_cast<unsigned long long>(current_read.address),
+                                 current_read.data.size(), current_read.beats));
                 }
                 reading = false;
                 for(auto &listener : read_listeners) listener(current_read);

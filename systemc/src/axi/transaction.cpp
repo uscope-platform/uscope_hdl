@@ -21,46 +21,61 @@ namespace sctb {
 
     namespace {
 
-        std::string compare_beats(const char *what, const std::vector<uint64_t> &expected, const std::vector<uint64_t> &actual) {
+        std::string address_text(uint64_t address) {return format("0x%llx", static_cast<unsigned long long>(address));}
+
+        /// What differs in the data of two transactions: the number of beats, or the first beat that is not the same and
+        /// how many are. The transaction is named by the caller, as "write at 0x2b0" or "read of 12 beats at 0x2b0"
+        std::string compare_beats(const std::string &which, const char *what, const std::vector<uint64_t> &expected, const std::vector<uint64_t> &actual) {
             if(expected.size() != actual.size()) {
-                return format("%s has %zu beats, expected %zu", what, actual.size(), expected.size());
+                return format("%s: %zu beats of %s, expected %zu", which.c_str(), actual.size(), what, expected.size());
             }
+            size_t first = expected.size();
+            size_t different = 0;
             for(size_t beat = 0; beat < expected.size(); beat++){
-                if(expected[beat] != actual[beat]) {
-                    return format("%s of beat %zu is %s, expected %s", what, beat, hex(actual[beat], 16).c_str(), hex(expected[beat], 16).c_str());
-                }
+                if(expected[beat] == actual[beat]) continue;
+                if(first == expected.size()) first = beat;
+                different++;
             }
-            return {};
+            if(different == 0) return {};
+            return format("%s: %s of beat %zu is 0x%llx, expected 0x%llx (%zu of %zu beats differ)", which.c_str(), what, first,
+                          static_cast<unsigned long long>(actual[first]), static_cast<unsigned long long>(expected[first]), different, expected.size());
         }
 
     }
 
     std::string compare(const axi_write &expected, const axi_write &actual) {
-        if(expected.id != actual.id) return format("write id is %u, expected %u", actual.id, expected.id);
+        const std::string which = "write at " + address_text(expected.address);
         if(expected.address != actual.address) {
-            return format("write address is %s, expected %s", hex(actual.address, 16).c_str(), hex(expected.address, 16).c_str());
+            return format("write: address is %s, expected %s", address_text(actual.address).c_str(), address_text(expected.address).c_str());
         }
-        std::string difference = compare_beats("write data", expected.data, actual.data);
-        if(!difference.empty()) return format("write at %s: %s", hex(expected.address, 16).c_str(), difference.c_str());
-        if(expected.strobe != actual.strobe) return format("write at %s: the strobes are different", hex(expected.address, 16).c_str());
+        if(expected.id != actual.id) return format("%s: id is %u, expected %u", which.c_str(), actual.id, expected.id);
+        std::string difference = compare_beats(which, "data", expected.data, actual.data);
+        if(!difference.empty()) return difference;
+        for(size_t beat = 0; beat < expected.strobe.size() && beat < actual.strobe.size(); beat++){
+            if(expected.strobe[beat] != actual.strobe[beat]) {
+                return format("%s: strobe of beat %zu is 0x%x, expected 0x%x", which.c_str(), beat, actual.strobe[beat], expected.strobe[beat]);
+            }
+        }
+        if(expected.strobe.size() != actual.strobe.size()) {
+            return format("%s: %zu strobes, expected %zu", which.c_str(), actual.strobe.size(), expected.strobe.size());
+        }
         if(expected.response != actual.response) {
-            return format("write at %s: response is %s, expected %s", hex(expected.address, 16).c_str(), to_string(actual.response), to_string(expected.response));
+            return format("%s: response is %s, expected %s", which.c_str(), to_string(actual.response), to_string(expected.response));
         }
         return {};
     }
 
     std::string compare(const axi_read &expected, const axi_read &actual) {
-        if(expected.id != actual.id) return format("read id is %u, expected %u", actual.id, expected.id);
+        const std::string which = format("read of %u beats at %s", expected.beats, address_text(expected.address).c_str());
         if(expected.address != actual.address) {
-            return format("read address is %s, expected %s", hex(actual.address, 16).c_str(), hex(expected.address, 16).c_str());
+            return format("read: address is %s, expected %s", address_text(actual.address).c_str(), address_text(expected.address).c_str());
         }
-        if(expected.beats != actual.beats) {
-            return format("read at %s: %u beats, expected %u", hex(expected.address, 16).c_str(), actual.beats, expected.beats);
-        }
-        const std::string difference = compare_beats("read data", expected.data, actual.data);
-        if(!difference.empty()) return format("read at %s: %s", hex(expected.address, 16).c_str(), difference.c_str());
+        if(expected.id != actual.id) return format("%s: id is %u, expected %u", which.c_str(), actual.id, expected.id);
+        if(expected.beats != actual.beats) return format("%s: the address asked for %u beats", which.c_str(), actual.beats);
+        const std::string difference = compare_beats(which, "data", expected.data, actual.data);
+        if(!difference.empty()) return difference;
         if(expected.response != actual.response) {
-            return format("read at %s: response is %s, expected %s", hex(expected.address, 16).c_str(), to_string(actual.response), to_string(expected.response));
+            return format("%s: response is %s, expected %s", which.c_str(), to_string(actual.response), to_string(expected.response));
         }
         return {};
     }

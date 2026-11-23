@@ -81,7 +81,7 @@ namespace sctb {
             checked++;
 
             const std::string mismatch = compare(expected.beat, beat, expected.tag);
-            if(!mismatch.empty()) report.error(format("[%s] %s", name.c_str(), mismatch.c_str()));
+            if(!mismatch.empty()) report.error(format("[%s] result %lld, at %s: %s", name.c_str(), static_cast<long long>(checked), sc_time_stamp().to_string().c_str(), mismatch.c_str()));
 
             const int64_t latency = std::llround((sc_time_stamp() - expected.time) / clock_period);
             min_latency = std::min(min_latency, latency);
