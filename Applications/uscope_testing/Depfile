@@ -1,7 +1,7 @@
 {
     "general":{
         "project_name":"uscope_testing",
-        "target_part":"xc7z020clg400",
+        "board":"xilinx.com:kv260_som:part0:2.0",
 	    "synth_modules":[],
         "synth_tl": "uscope_testing",
         "sim_tl":"uscope_testing_tb",
@@ -19,24 +19,13 @@
     },
     "scripts":[
         {
-            "name":"base_zynq.tcl",
-            "type": "tcl",
-            "arguments":[]
-        },
-        {
-            "name":"float_to_fixed.tcl",
-            "type": "tcl",
-            "arguments":[]
-        }, 
-        {
-            "name":"axi_dma_VIP_bd.tcl",
+            "name":"base_zynqmp.tcl",
             "type": "tcl",
             "arguments":[]
         }
     ],
     "excluded_modules":[
-       "ps",
-       "float_to_fixed"
+       "ps"
     ],
     "constraints": []
 }

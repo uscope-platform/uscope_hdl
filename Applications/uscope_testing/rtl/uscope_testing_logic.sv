@@ -17,7 +17,10 @@
 `include "helpers.svh"
 
 
-module uscope_testing_logic (
+module uscope_testing_logic #(
+    parameter type axi_address_t  = logic [31:0],
+    axi_address_t BASE_ADDRESS = 'h43c00000
+)(
     input wire clock,
     input wire reset,
     output wire dma_done,
@@ -31,22 +34,17 @@ module uscope_testing_logic (
     axi_lite #(.INTERFACE_NAME("GPIO")) gpio_axi();
 
 
-    localparam timebase_addr = 'h43c00000;
-    localparam scope_addr = 'h43c10000;
-    localparam gpio_addr = 'h43c20000;
+    localparam axi_address_t timebase_addr = BASE_ADDRESS + 0;
+    localparam axi_address_t scope_addr = BASE_ADDRESS + 'h10000;
+    localparam axi_address_t gpio_addr = BASE_ADDRESS + 'h20000;
 
-    localparam [31:0] AXI_ADDRESSES [2:0] = '{
-        gpio_addr,
-        timebase_addr,
-        scope_addr
-    };
 
     axil_crossbar_interface #(
         .DATA_WIDTH(32),
-        .ADDR_WIDTH(32),
+        .ADDR_WIDTH($bits(axi_address_t)),
         .NM(1),
         .NS(3),
-        .SLAVE_ADDR(AXI_ADDRESSES),
+        .SLAVE_ADDR('{gpio_addr, timebase_addr,scope_addr}),
         .SLAVE_MASK('{3{32'hf0000}})
     ) axi_xbar (
         .clock(clock),

@@ -22,6 +22,8 @@
 **/.Xil/
 **/\.ipynb_checkpoints/
 **/profile_points.csv
+**/*_app_def.json
+**/*_periph_def.json
 #SPECIFIC DIRECTORY IGNORES
 
 
