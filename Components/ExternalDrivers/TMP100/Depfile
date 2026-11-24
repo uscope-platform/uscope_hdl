@@ -13,7 +13,7 @@
     },
     "scripts":[
         {
-            "name":"base_zynqmp_xvc.tcl",
+            "name":"base_zynqmp.tcl",
             "type": "tcl",
             "arguments":[]
         }
