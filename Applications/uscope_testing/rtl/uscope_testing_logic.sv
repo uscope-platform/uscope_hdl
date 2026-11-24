@@ -69,7 +69,7 @@ module uscope_testing_logic #(
         .COUNTER_WIDTH(32),
         .N_ENABLES(1),
         .EXTERNAL_TIMEBASE_ENABLE(0)
-    ) dab_timebase (
+    ) timebase (
         .clock(clock),
         .reset(reset),
         .gen_enable_in(enable),
@@ -108,6 +108,7 @@ module uscope_testing_logic #(
 
     uScope_stream_dma #(
         .SCOPE_BASE_ADDRESS(scope_addr),
+        .ADDR_WIDTH($bits(axi_address_t)),
         .OUTPUT_AXI_WIDTH(64),
         .CHANNEL_SAMPLES(1024),
         .BURST_SIZE(8)

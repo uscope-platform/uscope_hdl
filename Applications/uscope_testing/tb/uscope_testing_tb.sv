@@ -14,13 +14,8 @@
 // limitations under the License.
 `timescale 10ns / 1ns
 `include "axis_BFM.svh"
-`include "axi_lite_BFM.svh"
-`include "axi_full_bfm.svh"
 
 import reg_maps::*;
-
-//import axi_vip_pkg::*;
-//import axi_dma_vip_bd_axi_vip_0_0_pkg::*;
 
 module uscope_testing_tb();
 
@@ -32,19 +27,25 @@ module uscope_testing_tb();
      #0.5;
     end
 
-    localparam timebase_addr = 'h43c00000;
-    localparam scope_addr = 'h43c10200;
-    localparam scope_mux_addr = 'h43c10000;
-    localparam gpio_addr = 'h43c20000;
+    typedef logic[35:0] axi_address_t;
+    
+    localparam axi_address_t BASE_ADDRESS = 'h443c00000;
+
+    localparam axi_address_t timebase_addr = BASE_ADDRESS;
+    localparam axi_address_t scope_addr = BASE_ADDRESS +'h10200;
+    localparam axi_address_t scope_mux_addr = BASE_ADDRESS +'h10000;
+    localparam axi_address_t gpio_addr = BASE_ADDRESS +'h20000;
 
 
     axi_lite axi_master();
-    axi_lite_BFM axil_bfm;
     wire dma_done;
 
-    AXI #(.ID_WIDTH(2), .ADDR_WIDTH(36), .DATA_WIDTH(64))  uscope();
+    AXI #(.ID_WIDTH(2), .ADDR_WIDTH(36), .DATA_WIDTH(128))  uscope();
     
-    uscope_testing_logic uut (
+    uscope_testing_logic #(
+        .axi_address_t(axi_address_t),
+        .BASE_ADDRESS(BASE_ADDRESS)
+    ) uut (
         .clock(clk),
         .reset(reset),
         .dma_done(dma_done),
@@ -65,7 +66,7 @@ module uscope_testing_tb();
     
 
     initial begin  
-        axil_bfm = new(axi_master, 1);
+        axi_master.initialize_master();
         //Initial status
         reset <=1'h1;
         #10 reset <=1'h0;
@@ -74,37 +75,25 @@ module uscope_testing_tb();
 
         #50;
 
-        #10 axil_bfm.write(timebase_addr + reg_maps::en_gen_regs.enable, 1);
-        #10 axil_bfm.write(timebase_addr + reg_maps::en_gen_regs.period, 125);
-        #10 axil_bfm.write(timebase_addr + reg_maps::en_gen_regs.treshold, 10);
+        #10 axi_master.write(timebase_addr + reg_maps::en_gen_regs.enable, 1);
+        #10 axi_master.write(timebase_addr + reg_maps::en_gen_regs.period, 125);
+        #10 axi_master.write(timebase_addr + reg_maps::en_gen_regs.treshold, 10);
 
-        #10 axil_bfm.write(scope_addr + reg_maps::uscope_regs.buffer_addr_low, 'h3f410000);
-        #10 axil_bfm.write(scope_addr + reg_maps::uscope_regs.trigger_mode, 0);
-        #10 axil_bfm.write(scope_addr + reg_maps::uscope_regs.trigger_level, 2);
-        #10 axil_bfm.write(scope_addr + reg_maps::uscope_regs.channel_selector, 0);
-        #10 axil_bfm.write(scope_addr + reg_maps::uscope_regs.acquisition_mode, 2);
-        #10 axil_bfm.write(scope_addr + reg_maps::uscope_regs.trigger_point, 'h200);
+        #10 axi_master.write(scope_addr + reg_maps::uscope_regs.buffer_addr_low, 'h3f410000);
+        #10 axi_master.write(scope_addr + reg_maps::uscope_regs.trigger_mode, 0);
+        #10 axi_master.write(scope_addr + reg_maps::uscope_regs.trigger_level, 2);
+        #10 axi_master.write(scope_addr + reg_maps::uscope_regs.channel_selector, 0);
+        #10 axi_master.write(scope_addr + reg_maps::uscope_regs.acquisition_mode, 2);
+        #10 axi_master.write(scope_addr + reg_maps::uscope_regs.trigger_point, 'h200);
 
-        #10 axil_bfm.write(scope_mux_addr + reg_maps::uscope_mux.ch_1, 0);    
-        #10 axil_bfm.write(scope_mux_addr + reg_maps::uscope_mux.ch_2, 1);
-        #10 axil_bfm.write(scope_mux_addr + reg_maps::uscope_mux.ch_3, 2);
-        #10 axil_bfm.write(scope_mux_addr + reg_maps::uscope_mux.ch_4, 3);
-        #10 axil_bfm.write(scope_mux_addr + reg_maps::uscope_mux.ch_5, 4);
-        #10 axil_bfm.write(scope_mux_addr + reg_maps::uscope_mux.ch_6, 5);
+        #10 axi_master.write(scope_mux_addr + reg_maps::uscope_mux.ch_1, 0);    
+        #10 axi_master.write(scope_mux_addr + reg_maps::uscope_mux.ch_2, 1);
+        #10 axi_master.write(scope_mux_addr + reg_maps::uscope_mux.ch_3, 2);
+        #10 axi_master.write(scope_mux_addr + reg_maps::uscope_mux.ch_4, 3);
+        #10 axi_master.write(scope_mux_addr + reg_maps::uscope_mux.ch_5, 4);
+        #10 axi_master.write(scope_mux_addr + reg_maps::uscope_mux.ch_6, 5);
 
-        #10 axil_bfm.write(gpio_addr + reg_maps::gpio_regs.out, 1);
+        #10 axi_master.write(gpio_addr + reg_maps::gpio_regs.out, 1);
 
     end
-
-//    axi_dma_vip_bd_axi_vip_0_0_slv_mem_t slv_agent;
-
-//     initial begin
-//         slv_agent = new("slave vip agent",uscope_testing_tb.VIP.vip_bd_i.axi_vip_0.inst.IF);
-//         slv_agent.set_verbosity(400);
-//         slv_agent.start_slave();
-//         slv_agent.mem_model.set_bresp_delay(19);
-//         slv_agent.mem_model.set_inter_beat_gap(0);
-//         slv_agent.mem_model.set_bresp_delay_policy(XIL_AXI_MEMORY_DELAY_NOADJUST_FIXED);
-//     end
-
 endmodule

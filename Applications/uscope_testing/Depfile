@@ -13,7 +13,6 @@
     "bus":{
         "control":{
             "bus_interface":"control_axi",
-            "starting_module":"core_logic",
             "type":"axi_lite"
         }
     },
