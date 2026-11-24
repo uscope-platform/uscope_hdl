@@ -109,7 +109,7 @@ module uscope_testing_logic #(
     uScope_stream_dma #(
         .SCOPE_BASE_ADDRESS(scope_addr),
         .ADDR_WIDTH($bits(axi_address_t)),
-        .OUTPUT_AXI_WIDTH(64),
+        .OUTPUT_AXI_WIDTH(scope_out.DATA_WIDTH),
         .CHANNEL_SAMPLES(1024),
         .BURST_SIZE(8)
     ) scope(

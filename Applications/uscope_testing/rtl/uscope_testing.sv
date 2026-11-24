@@ -18,7 +18,7 @@ module uscope_testing();
 
     generate
     if(ARCH == "ZYNQMP") begin
-        base_zynq #(
+         base_zynqmp #(
             .FCORE_PRESENT(1)
         ) PS (        
             .logic_clock(logic_clock),
@@ -30,7 +30,7 @@ module uscope_testing();
             .dma_done(dma_done)
         );
     end else begin
-        base_zynqmp #(
+        base_zynq #(
             .FCORE_PRESENT(1)
         ) PS (        
             .logic_clock(logic_clock),

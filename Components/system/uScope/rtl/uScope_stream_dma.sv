@@ -17,7 +17,7 @@
 module uScope_stream_dma #(
     int N_CHANNELS = 6,
     int ADDR_WIDTH = 32,
-    int [ADDR_WIDTH-1:0] SCOPE_BASE_ADDRESS = 0,
+    logic [ADDR_WIDTH-1:0] SCOPE_BASE_ADDRESS = 0,
     int DATA_WIDTH = 32,
     int OUTPUT_AXI_WIDTH = 128,
     int DEST_WIDTH = 16,

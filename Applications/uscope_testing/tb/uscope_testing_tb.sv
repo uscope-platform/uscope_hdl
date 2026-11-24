@@ -75,10 +75,6 @@ module uscope_testing_tb();
 
         #50;
 
-        #10 axi_master.write(timebase_addr + reg_maps::en_gen_regs.enable, 1);
-        #10 axi_master.write(timebase_addr + reg_maps::en_gen_regs.period, 125);
-        #10 axi_master.write(timebase_addr + reg_maps::en_gen_regs.treshold, 10);
-
         #10 axi_master.write(scope_addr + reg_maps::uscope_regs.buffer_addr_low, 'h3f410000);
         #10 axi_master.write(scope_addr + reg_maps::uscope_regs.trigger_mode, 0);
         #10 axi_master.write(scope_addr + reg_maps::uscope_regs.trigger_level, 2);
@@ -92,6 +88,10 @@ module uscope_testing_tb();
         #10 axi_master.write(scope_mux_addr + reg_maps::uscope_mux.ch_4, 3);
         #10 axi_master.write(scope_mux_addr + reg_maps::uscope_mux.ch_5, 4);
         #10 axi_master.write(scope_mux_addr + reg_maps::uscope_mux.ch_6, 5);
+
+        #10 axi_master.write(timebase_addr + reg_maps::en_gen_regs.enable, 1);
+        #10 axi_master.write(timebase_addr + reg_maps::en_gen_regs.period, 1000);
+        #10 axi_master.write(timebase_addr + reg_maps::en_gen_regs.treshold, 10);
 
         #10 axi_master.write(gpio_addr + reg_maps::gpio_regs.out, 1);
 
