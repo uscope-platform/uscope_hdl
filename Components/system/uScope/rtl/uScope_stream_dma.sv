@@ -16,9 +16,9 @@
 
 module uScope_stream_dma #(
     int N_CHANNELS = 6,
-    int SCOPE_BASE_ADDRESS = 0,
-    int DATA_WIDTH = 32,
     int ADDR_WIDTH = 32,
+    int [ADDR_WIDTH-1:0] SCOPE_BASE_ADDRESS = 0,
+    int DATA_WIDTH = 32,
     int OUTPUT_AXI_WIDTH = 128,
     int DEST_WIDTH = 16,
     int CHANNEL_SAMPLES = 1024,
@@ -34,13 +34,13 @@ module uScope_stream_dma #(
 );
 
 
-    axi_lite #(.INTERFACE_NAME("MUX CONTROLLER"), .ADDR_WIDTH(ADDR_WIDTH)) mux_ctrl_axi();
-    axi_lite #(.INTERFACE_NAME("TRIGGER CONTROLLER"), .ADDR_WIDTH(ADDR_WIDTH)) uscope_axi();
-    axi_lite #(.INTERFACE_NAME("USCOPE TIMEBASE"), .ADDR_WIDTH(ADDR_WIDTH)) timebase_axi();
+    axi_lite #(.INTERFACE_NAME("MUX CONTROLLER"), .ADDR_WIDTH(axi_in.ADDR_WIDTH)) mux_ctrl_axi();
+    axi_lite #(.INTERFACE_NAME("TRIGGER CONTROLLER"), .ADDR_WIDTH(axi_in.ADDR_WIDTH)) uscope_axi();
+    axi_lite #(.INTERFACE_NAME("USCOPE TIMEBASE"), .ADDR_WIDTH(axi_in.ADDR_WIDTH)) timebase_axi();
 
     axil_crossbar_interface #(
         .DATA_WIDTH(DATA_WIDTH),
-        .ADDR_WIDTH(ADDR_WIDTH),
+        .ADDR_WIDTH(axi_in.ADDR_WIDTH),
         .NM(1),
         .NS(3),
         .SLAVE_ADDR('{
