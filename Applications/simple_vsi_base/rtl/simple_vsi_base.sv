@@ -43,7 +43,7 @@ module simple_vsi_base (
 
     wire irq;
 
-    zynqmp_PS_wrapper PS (
+    base_zynqmp PS (
         .logic_clock(clock),
         .io_clock(),
         .reset(reset),

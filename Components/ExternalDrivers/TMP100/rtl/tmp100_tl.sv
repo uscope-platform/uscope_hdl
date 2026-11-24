@@ -27,7 +27,7 @@ module tmp100_tl (
     axi_lite control_axi();
     AXI #(.ID_WIDTH(2), .ADDR_WIDTH(49), .DATA_WIDTH(128)) uscope();
 
-    zynqmp_PS_wrapper #(
+    base_zynqmp #(
         .FCORE_PRESENT(1)
     ) PS (
         .logic_clock(clock),

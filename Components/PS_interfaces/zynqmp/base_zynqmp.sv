@@ -14,7 +14,7 @@
 // limitations under the License.
 `timescale 10 ns / 100 ps
 
-module zynqmp_PS_wrapper #(
+module base_zynqmp #(
     parameter int FCORE_PRESENT = 0
 ) (
     output wire io_clock,
