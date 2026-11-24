@@ -38,12 +38,16 @@ module multichannel_constant #(
     reg [CONSTANT_WIDTH-1:0] constant_dest_memory [0:N_CONSTANTS-1][0:N_CHANNELS-1];
     reg [CONSTANT_WIDTH-1:0] constant_user_memory [0:N_CONSTANTS-1][0:N_CHANNELS-1];
 
+    typedef struct packed {
+        reg [15:0] channel_index;
+        reg [15:0] constant_index;
+    } selector_register;
+
     typedef struct {
         reg [31:0] constant_low_bytes;
         reg [31:0] constant_high_bytes;
         reg [31:0] constant_dest;
-        reg [15:0] constant_selector;
-        reg [15:0] channel_selector;
+        selector_register selector;
         reg [31:0] clear_address;
         reg [23:0] rsvd_1; reg [7:0] active_channels;
         reg [31:0] constant_user;
@@ -80,17 +84,17 @@ module multichannel_constant #(
             end
         end else begin
             if(latch_constant)begin
-                constant_data_memory[registers.constant_selector][registers.channel_selector] <= {registers.constant_high_bytes, registers.constant_low_bytes};
-                constant_dest_memory[registers.constant_selector][registers.channel_selector] <= registers.constant_dest;
-                constant_user_memory[registers.constant_selector][registers.channel_selector] <= registers.constant_user;
-                if(!active_constants[registers.constant_selector]) n_active_constants <= n_active_constants + 1;
-                active_constants[registers.constant_selector] <= 1;
+                constant_data_memory[registers.selector.constant_index][registers.selector.channel_index] <= {registers.constant_high_bytes, registers.constant_low_bytes};
+                constant_dest_memory[registers.selector.constant_index][registers.selector.channel_index] <= registers.constant_dest;
+                constant_user_memory[registers.selector.constant_index][registers.selector.channel_index] <= registers.constant_user;
+                if(!active_constants[registers.selector.constant_index]) n_active_constants <= n_active_constants + 1;
+                active_constants[registers.selector.constant_index] <= 1;
             end
             if(clear_constant)begin
-                constant_data_memory[registers.constant_selector][registers.channel_selector] <= 0;
-                constant_dest_memory[registers.constant_selector][registers.channel_selector] <= 0;
-                constant_user_memory[registers.constant_selector][registers.channel_selector] <= 0;
-                active_constants[registers.constant_selector] <= 0;
+                constant_data_memory[registers.selector.constant_index][registers.selector.channel_index] <= 0;
+                constant_dest_memory[registers.selector.constant_index][registers.selector.channel_index] <= 0;
+                constant_user_memory[registers.selector.constant_index][registers.selector.channel_index] <= 0;
+                active_constants[registers.selector.constant_index] <= 0;
                 n_active_constants <= n_active_constants - 1;
             end
         end
@@ -203,18 +207,18 @@ endmodule
                 "direction": "RW",
                 "fields": [
                     {
-                        "name": "channel_selector",
-                        "description": "Channel selector for the constant",
-                        "start_position": 0,
-                        "n_fields":["1"],
-                        "length": 16
-                    },
-                    {
-                        "name": "constant_selector",
+                        "name": "constant_index",
                         "description": "Constant selector for the constant",
                         "direction": "RW",
                         "n_fields":["1"],
+                        "start_position": 0,
+                        "length": 16
+                    },
+                    {
+                        "name": "channel_index",
+                        "description": "Channel selector for the constant",
                         "start_position": 16,
+                        "n_fields":["1"],
                         "length": 16
                     }
                 ]
